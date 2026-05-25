@@ -7,6 +7,11 @@ db.sqlite3
 # Node
 node_modules/
 dist/
+build/
+
+# Local tooling and secrets
+.tools/
+.env
 
 # Logs and local IDE files
 *.log
