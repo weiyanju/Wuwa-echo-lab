@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+db.sqlite3
+
+# Node
+node_modules/
+dist/
+
+# Logs and local IDE files
+*.log
+.idea/
