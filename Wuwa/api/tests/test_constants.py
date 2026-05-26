@@ -68,17 +68,21 @@ class ConstantsTests(SimpleTestCase):
     def test_weight_schedule_matches_sample_stages(self):
         self.assertEqual(
             constants.MODEL_WEIGHT_SCHEDULE[0]["weights"],
-            {"rule": 0.80, "bayes": 0.05, "markov": 0.15, "context": 0.00},
+            {"rule": 0.70, "bayes": 0.10, "markov": 0.10, "cycle": 0.10, "context": 0.00},
         )
         self.assertEqual(
             constants.MODEL_WEIGHT_SCHEDULE[1]["weights"],
-            {"rule": 0.65, "bayes": 0.15, "markov": 0.20, "context": 0.00},
+            {"rule": 0.48, "bayes": 0.26, "markov": 0.12, "cycle": 0.14, "context": 0.00},
         )
         self.assertEqual(
             constants.MODEL_WEIGHT_SCHEDULE[2]["weights"],
-            {"rule": 0.50, "bayes": 0.20, "markov": 0.20, "context": 0.10},
+            {"rule": 0.36, "bayes": 0.30, "markov": 0.12, "cycle": 0.16, "context": 0.06},
         )
         self.assertEqual(
             constants.MODEL_WEIGHT_SCHEDULE[3]["weights"],
-            {"rule": 0.35, "bayes": 0.25, "markov": 0.25, "context": 0.15},
+            {"rule": 0.28, "bayes": 0.34, "markov": 0.10, "cycle": 0.18, "context": 0.10},
+        )
+        self.assertEqual(
+            constants.MODEL_WEIGHT_SCHEDULE[4]["weights"],
+            {"rule": 0.25, "bayes": 0.35, "markov": 0.10, "cycle": 0.20, "context": 0.10},
         )

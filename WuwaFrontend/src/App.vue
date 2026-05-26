@@ -56,6 +56,7 @@ let suppressNextHistoryToggle = false
 let suppressNextHistoryToggleTimer = null
 const FLOATING_HISTORY_MINIMIZED_SIZE = 76
 const TERMINAL_ICON_BASE_ANGLE = 350
+const ACTIVE_MODEL_WEIGHT_EPSILON = 0.0001
 
 const echoForm = ref({
   sonata: sonataEffects.at(-1).name,
@@ -136,6 +137,55 @@ const weightRows = computed(() =>
     adjustment: prediction.value?.weight_adjustments?.[key] || null,
   })),
 )
+const modelDetailRows = computed(() => {
+  const definitions = [
+    {
+      key: 'rule',
+      title: '规则均衡',
+      role: '长期全局回归',
+      detail: '统计全局出现次数，压低历史过热词条，抬高历史偏少词条。',
+      evidence: ['全局频率偏差', '当前合法候选池', '指数型均衡修正'],
+    },
+    {
+      key: 'bayes',
+      title: '周期规律',
+      role: '历史片段复现',
+      detail: '融合精确片段和 A -> 任意 -> C 通配片段，样本越多通配片段话语权越高。',
+      evidence: ['P_bayes_exact', 'P_bayes_wildcard', '动态 alpha 平滑'],
+    },
+    {
+      key: 'markov',
+      title: '近期过热',
+      role: '跨声骸短期冷却',
+      detail: '只检查最近 12 条全局记录，候选词条出现至少 3 次才触发降温。',
+      evidence: ['最近 12 条窗口', '过热阈值 >= 3', '只惩罚不奖励'],
+    },
+    {
+      key: 'cycle',
+      title: '周期窗口',
+      role: '双爆与词条组窗口',
+      detail: '暴击窗口占 75%，非暴击词条组周期占 25%，输出窗口倾向而不是硬判定。',
+      evidence: ['双爆 / 单爆 / 冷却', '攻击/生命/防御/伤害加成/共鸣效率', '组内分配'],
+    },
+    {
+      key: 'context',
+      title: '上下文监测',
+      role: '样本足够后参与',
+      detail: '预留套装、COST、主词条、位置变量，样本不足时保持克制。',
+      evidence: ['set name', 'cost', 'main stat', 'position'],
+    },
+  ]
+  return definitions.map((definition) => {
+    const weightRow = weightRows.value.find((row) => row.key === definition.key)
+    return {
+      ...definition,
+      label: prediction.value?.model_labels?.[definition.key] || definition.title,
+      weight: weightRow?.weight ?? 0,
+      baseWeight: weightRow?.baseWeight ?? 0,
+      adjustment: weightRow?.adjustment || null,
+    }
+  })
+})
 const evaluationMetrics = computed(() => [
   {
     label: 'Log Loss',
@@ -175,14 +225,15 @@ const evaluationMetrics = computed(() => [
 ])
 const modelEvaluationRows = computed(() => {
   const rows = [
-    { key: 'rule', label: '规则基线', hitRate: 0.31, loss: 2.07, note: '合法词条池与全局均衡' },
-    { key: 'bayes', label: '周期模型', hitRate: 0.36, loss: 1.94, note: '历史词条片段重复度' },
-    { key: 'markov', label: '马尔科夫', hitRate: 0.28, loss: 2.22, note: '上一词条到下一词条' },
-    { key: 'context', label: '上下文模型', hitRate: 0.19, loss: 2.45, note: '套装、COST、主词条等变量' },
+    { key: 'rule', label: '规则均衡', hitRate: 0.31, loss: 2.07, note: '合法词条池与全局均衡' },
+    { key: 'bayes', label: '周期规律', hitRate: 0.36, loss: 1.94, note: '精确片段与通配片段' },
+    { key: 'markov', label: '近期过热', hitRate: 0.28, loss: 2.22, note: '跨声骸短期冷却' },
+    { key: 'cycle', label: '周期窗口', hitRate: 0.33, loss: 2.02, note: '双爆窗口与词条组周期' },
+    { key: 'context', label: '上下文监测', hitRate: 0.19, loss: 2.45, note: '套装、COST、主词条等变量' },
   ]
   return rows.map((row) => ({
     ...row,
-    weight: prediction.value?.weights?.[row.key] ?? { rule: 0.7, bayes: 0.25, markov: 0.05, context: 0 }[row.key],
+    weight: prediction.value?.weights?.[row.key] ?? { rule: 0.7, bayes: 0.1, markov: 0.1, cycle: 0.1, context: 0 }[row.key],
     isPreview: evaluation.value?.log_loss == null,
   }))
 })
@@ -290,6 +341,75 @@ function evaluationMetricFill(metric) {
   return `${Math.max(8, Math.min((1 - value / 3) * 100, 100))}%`
 }
 
+function statDeviation(row) {
+  return (row?.observed_rate ?? 0) - (row?.baseline_rate ?? 0)
+}
+
+function statDiagnosticClass(row) {
+  const deviation = statDeviation(row)
+  if (deviation >= 0.03) {
+    return 'hot'
+  }
+  if (deviation <= -0.03) {
+    return 'warn'
+  }
+  return 'cool'
+}
+
+function statDiagnosticText(row) {
+  const deviation = statDeviation(row)
+  if (deviation >= 0.03) {
+    return '偏高'
+  }
+  if (deviation <= -0.03) {
+    return '偏低'
+  }
+  return '稳定'
+}
+
+function contextDiagnosticClass(factor) {
+  if (factor?.status === 'monitoring' || factor?.status === 'active') {
+    return 'hot'
+  }
+  if (factor?.status === 'insufficient_data' || factor?.status === 'not_started') {
+    return 'warn'
+  }
+  return 'cool'
+}
+
+function weightDiagnosticClass(row) {
+  if ((row?.weight ?? 0) >= 0.35) {
+    return 'hot'
+  }
+  if ((row?.weight ?? 0) <= 0.05) {
+    return 'warn'
+  }
+  return 'cool'
+}
+
+function weightDiagnosticText(row) {
+  if ((row?.weight ?? 0) <= ACTIVE_MODEL_WEIGHT_EPSILON) {
+    return '未启用'
+  }
+  if ((row?.weight ?? 0) >= 0.35) {
+    return '主导'
+  }
+  if ((row?.weight ?? 0) <= 0.05) {
+    return '低权重'
+  }
+  return '参与'
+}
+
+function candidateDiagnosticClass(candidate, index) {
+  if (index === 0) {
+    return 'hot'
+  }
+  if ((candidate?.baseline_deviation ?? 0) < -0.03) {
+    return 'warn'
+  }
+  return 'cool'
+}
+
 function constrainFloatingHistoryPosition(position, size = {}) {
   if (typeof window === 'undefined') {
     return position
@@ -382,10 +502,10 @@ function getFloatingHistoryTerminalAngle(position = floatingHistoryPosition.valu
   const xRatio = clampNumber((position.x - edgePadding) / Math.max(window.innerWidth - size.width - edgePadding * 2, 1))
   const yRatio = clampNumber((position.y - edgePadding) / Math.max(window.innerHeight - size.height - edgePadding * 2, 1))
   const cornerWeights = [
-    { angle: 155, weight: (1 - xRatio) * (1 - yRatio) },
-    { angle: 205, weight: xRatio * (1 - yRatio) },
-    { angle: 25, weight: (1 - xRatio) * yRatio },
-    { angle: 335, weight: xRatio * yRatio },
+    { angle: 135, weight: (1 - xRatio) * (1 - yRatio) },
+    { angle: 225, weight: xRatio * (1 - yRatio) },
+    { angle: 45, weight: (1 - xRatio) * yRatio },
+    { angle: 315, weight: xRatio * yRatio },
   ]
   const vector = cornerWeights.reduce(
     (sum, corner) => {
@@ -581,8 +701,31 @@ function toggleFloatingHistoryPin() {
 }
 
 async function toggleFloatingHistoryShowcase() {
+  const panel = floatingHistoryRef.value
+  if (historyPanelAnimationTimer && panel) {
+    clearTimeout(historyPanelAnimationTimer)
+    historyPanelAnimationTimer = null
+    resetFloatingHistoryPanelAnimation(panel)
+  }
   const willShowcase = !isHistoryShowcase.value
   const restorePosition = floatingHistoryRestoreShowcasePosition.value
+  const startRect = panel?.getBoundingClientRect()
+  const historyCorner = getFloatingHistoryCorner(startRect)
+  const cornerMotion = getFloatingHistoryCornerMotion(historyCorner, willShowcase ? -6 : 6)
+  const inverseCornerMotion = getFloatingHistoryCornerMotion(historyCorner, willShowcase ? 6 : -6)
+  if (startRect) {
+    await animateFloatingHistoryFade(
+      panel,
+      { opacity: '1', transform: 'translate3d(0, 0, 0)', transformOrigin: `${historyCorner.horizontal} ${historyCorner.vertical}`, filter: 'blur(0)' },
+      { opacity: '0', transform: cornerMotion, transformOrigin: `${historyCorner.horizontal} ${historyCorner.vertical}`, filter: 'blur(6px)' },
+      160,
+    )
+    panel.style.transition = 'none'
+    panel.style.opacity = '0'
+    panel.style.transform = 'translate3d(0, 0, 0)'
+    panel.style.filter = 'blur(6px)'
+    panel.style.visibility = 'hidden'
+  }
   if (willShowcase) {
     floatingHistoryRestoreShowcasePosition.value = { ...floatingHistoryPosition.value }
   }
@@ -594,8 +737,18 @@ async function toggleFloatingHistoryShowcase() {
     syncTerminalIconRotation(nextPosition)
     saveFloatingHistoryPosition(nextPosition)
     floatingHistoryRestoreShowcasePosition.value = null
-    return
+  } else {
+    constrainSavedFloatingHistoryPosition()
   }
+  if (panel) {
+    panel.style.visibility = 'visible'
+  }
+  await animateFloatingHistoryFade(
+    panel,
+    { opacity: '0', transform: inverseCornerMotion, transformOrigin: `${historyCorner.horizontal} ${historyCorner.vertical}`, filter: 'blur(6px)' },
+    { opacity: '1', transform: 'translate3d(0, 0, 0)', transformOrigin: `${historyCorner.horizontal} ${historyCorner.vertical}`, filter: 'blur(0)' },
+    220,
+  )
   constrainSavedFloatingHistoryPosition()
 }
 
@@ -1260,58 +1413,83 @@ watch(
           </div>
         </section>
 
-        <section class="product-panel prediction-strip">
-          <div class="prediction-strip-head">
-            <div>
-              <span class="eyebrow">Prediction</span>
-              <h2>预测依据</h2>
-              <p v-if="prediction?.weight_stage">权重阶段 {{ prediction.weight_stage }} 条样本</p>
-            </div>
-            <p v-if="topCandidate" class="top-pick">{{ topCandidate.label }} · {{ formatPercent(topCandidate.p_final) }}</p>
-            <p v-else>等待选择声骸后生成候选排名。</p>
-          </div>
-
-          <dl v-if="prediction" class="weight-list">
-            <div v-for="row in weightRows" :key="row.key">
-              <dt>{{ row.label }}</dt>
-              <dd>
-                <strong>{{ formatPercent(row.weight) }}</strong>
-                <small v-if="row.adjustment?.hit_rate !== null">
-                  基础 {{ formatPercent(row.baseWeight) }} · 命中 {{ formatPercent(row.adjustment.hit_rate) }}
-                  {{ row.adjustment.direction === 'up' ? '上调' : row.adjustment.direction === 'down' ? '下调' : '持平' }}
-                </small>
-                <small v-else>基础 {{ formatPercent(row.baseWeight) }} · 样本不足</small>
-              </dd>
-            </div>
-          </dl>
-
-          <div v-if="prediction" class="ranking">
-            <div v-for="candidate in prediction.candidates.slice(0, 8)" :key="candidate.substat_type">
-              <strong>{{ candidate.label }}</strong>
-              <span>{{ formatPercent(candidate.p_final) }}</span>
-              <small>基线 {{ formatPercent(candidate.p_rule) }}</small>
-            </div>
-          </div>
-        </section>
       </div>
 
-      <section v-if="page === 'stats'" class="product-panel full-panel">
-        <span class="eyebrow">Analytics</span>
-        <h2>统计看板</h2>
-        <p v-if="stats">总样本量：{{ stats.total_rolls }} · {{ sampleStageText(stats.sample_stage) }}</p>
-        <div v-if="stats" class="stat-grid">
-          <article v-for="row in stats.substat_frequency" :key="row.substat_type">
-            <strong>{{ row.label }}</strong>
-            <span>{{ row.count }} 次</span>
-            <small>观察 {{ formatPercent(row.observed_rate) }} / 基线 {{ formatPercent(row.baseline_rate) }}</small>
+      <section v-if="page === 'stats'" class="product-panel prediction-strip stats-prediction-strip">
+        <div class="stats-diagnostic-head">
+          <div>
+            <span class="eyebrow">Prediction</span>
+            <h2>预测依据</h2>
+            <p v-if="prediction?.weight_stage">权重阶段 {{ prediction.weight_stage }} 条样本</p>
+            <p v-else>等待选择声骸后生成候选排名。</p>
+          </div>
+          <span v-if="topCandidate" class="stats-diagnostic-pill">{{ topCandidate.label }} · {{ formatPercent(topCandidate.p_final) }}</span>
+          <span v-else class="stats-diagnostic-pill">Prediction matrix</span>
+        </div>
+
+        <div v-if="prediction" class="weight-list diagnostic-matrix prediction-diagnostic-grid">
+          <article v-for="row in weightRows" :key="row.key" :class="weightDiagnosticClass(row)">
+            <div>
+              <strong>{{ row.label }}</strong>
+              <span>{{ weightDiagnosticText(row) }}</span>
+            </div>
+            <p>{{ formatPercent(row.weight) }}</p>
+            <small v-if="row.adjustment?.hit_rate != null">
+              基础 {{ formatPercent(row.baseWeight) }} · 命中 {{ formatPercent(row.adjustment.hit_rate) }}
+              {{ row.adjustment.direction === 'up' ? '上调' : row.adjustment.direction === 'down' ? '下调' : '持平' }}
+            </small>
+            <small v-else>基础 {{ formatPercent(row.baseWeight) }} · 样本不足</small>
           </article>
         </div>
-        <h3>上下文监控</h3>
-        <div v-if="stats" class="context-grid">
-          <article v-for="(factor, key) in stats.context_factors" :key="key">
-            <strong>{{ key }}</strong>
-            <span>{{ statusText(factor.status) }}</span>
-            <small>样本 {{ factor.sample_size }}</small>
+
+        <div v-if="prediction" class="ranking diagnostic-matrix prediction-candidate-grid">
+          <article
+            v-for="(candidate, index) in prediction.candidates.slice(0, 8)"
+            :key="candidate.substat_type"
+            :class="candidateDiagnosticClass(candidate, index)"
+          >
+            <div>
+              <strong>{{ candidate.label }}</strong>
+              <span>{{ index === 0 ? '首选' : `#${index + 1}` }}</span>
+            </div>
+            <p>{{ formatPercent(candidate.p_final) }}</p>
+            <small>基线 {{ formatPercent(candidate.p_rule) }} · 偏差 {{ formatSignedPercent(candidate.baseline_deviation) }}</small>
+          </article>
+        </div>
+      </section>
+
+      <section v-if="page === 'stats'" class="product-panel full-panel">
+        <div class="stats-diagnostic-head">
+          <div>
+            <span class="eyebrow">Analytics</span>
+            <h2>统计诊断</h2>
+            <p v-if="stats">总样本量：{{ stats.total_rolls }} · {{ sampleStageText(stats.sample_stage) }}</p>
+          </div>
+          <span class="stats-diagnostic-pill">Evidence matrix</span>
+        </div>
+
+        <div v-if="stats" class="stat-grid diagnostic-matrix">
+          <article v-for="row in stats.substat_frequency" :key="row.substat_type" :class="statDiagnosticClass(row)">
+            <div>
+              <strong>{{ row.label }}</strong>
+              <span>{{ statDiagnosticText(row) }}</span>
+            </div>
+            <p>{{ row.count }} 次</p>
+            <small>观察 {{ formatPercent(row.observed_rate) }} · 基线 {{ formatPercent(row.baseline_rate) }} · 偏差 {{ formatSignedPercent(statDeviation(row)) }}</small>
+          </article>
+        </div>
+        <div class="stats-section-heading">
+          <h3>上下文监控</h3>
+          <span>Context evidence</span>
+        </div>
+        <div v-if="stats" class="context-grid diagnostic-matrix context-diagnostic-grid">
+          <article v-for="(factor, key) in stats.context_factors" :key="key" :class="contextDiagnosticClass(factor)">
+            <div>
+              <strong>{{ key }}</strong>
+              <span>{{ statusText(factor.status) }}</span>
+            </div>
+            <p>样本 {{ factor.sample_size }}</p>
+            <small>用于判断套装、COST、主词条与位置变量是否足够稳定。</small>
           </article>
         </div>
       </section>
@@ -1321,9 +1499,70 @@ watch(
           <div>
             <span class="eyebrow">Evaluation</span>
             <h2>模型评估</h2>
-            <p>{{ evaluation?.message || '样本量不足，以下图表为评估页结构预览。' }}</p>
+            <p>{{ evaluation?.message || '按当前算法拆解融合权重、候选概率和各子模型职责。' }}</p>
           </div>
           <span class="preview-pill">当前样本 {{ stats?.total_rolls || 0 }}</span>
+        </div>
+
+        <div class="evaluation-section-title">
+          <div>
+            <h3>当前融合权重</h3>
+            <p>先看每个模型在最终概率里的话语权，再看它们各自提供什么证据。</p>
+          </div>
+          <span>{{ prediction ? '实时' : '预览' }}</span>
+        </div>
+
+        <div class="fusion-weight-grid">
+          <article v-for="row in weightRows" :key="row.key" :class="weightDiagnosticClass(row)">
+            <div>
+              <span>{{ row.label }}</span>
+              <strong>{{ formatPercent(row.weight) }}</strong>
+            </div>
+            <i><b :style="{ width: formatPercent(row.weight) }"></b></i>
+            <small v-if="row.adjustment?.hit_rate != null">
+              基础 {{ formatPercent(row.baseWeight) }} · 命中 {{ formatPercent(row.adjustment.hit_rate) }}
+              {{ row.adjustment.direction === 'up' ? '上调' : row.adjustment.direction === 'down' ? '下调' : '持平' }}
+            </small>
+            <small v-else>基础 {{ formatPercent(row.baseWeight) }} · 样本不足</small>
+          </article>
+        </div>
+
+        <div class="evaluation-section-title">
+          <div>
+            <h3>模型细节</h3>
+            <p>把当前算法拆开看：每个模型负责什么、看什么证据、当前权重是多少。</p>
+          </div>
+          <span>Model cards</span>
+        </div>
+
+        <div class="model-detail-grid">
+          <article v-for="model in modelDetailRows" :key="model.key" :class="weightDiagnosticClass(model)">
+            <header>
+              <div>
+                <span>{{ model.role }}</span>
+                <strong>{{ model.title }}</strong>
+              </div>
+              <p>{{ formatPercent(model.weight) }}</p>
+            </header>
+            <small>{{ model.detail }}</small>
+            <ul>
+              <li v-for="item in model.evidence" :key="item">{{ item }}</li>
+            </ul>
+            <footer>
+              基础 {{ formatPercent(model.baseWeight) }}
+              <template v-if="model.adjustment?.hit_rate != null">
+                · 命中 {{ formatPercent(model.adjustment.hit_rate) }}
+              </template>
+            </footer>
+          </article>
+        </div>
+
+        <div class="evaluation-section-title">
+          <div>
+            <h3>回测指标</h3>
+            <p>验证概率分布是否把真实词条放进更靠前、更高概率的位置。</p>
+          </div>
+          <span>Backtest</span>
         </div>
 
         <div class="evaluation-metrics">
@@ -1337,24 +1576,35 @@ watch(
           </article>
         </div>
 
-        <div class="evaluation-grid">
+        <div class="evaluation-grid compact-evaluation-grid">
           <section class="evaluation-card chart-card">
             <div class="chart-heading">
-              <h3>命中率回测</h3>
-              <span>预览</span>
+              <div>
+                <h3>命中率回测</h3>
+                <p>Top-k 覆盖率随候选池扩大后的验证表现</p>
+              </div>
+              <span>Backtest</span>
             </div>
-            <div class="hit-bars">
-              <div v-for="metric in evaluationMetrics.filter((item) => item.label.includes('命中率'))" :key="metric.label">
-                <span>{{ metric.label }}</span>
-                <i><b :style="{ height: evaluationMetricFill(metric) }"></b></i>
-                <strong>{{ evaluationMetricText(metric) }}</strong>
+            <div class="hit-chart">
+              <div class="hit-axis" aria-hidden="true">
+                <span>60%</span>
+                <span>40%</span>
+                <span>20%</span>
+                <span>0%</span>
+              </div>
+              <div class="hit-bars">
+                <div v-for="metric in evaluationMetrics.filter((item) => item.label.includes('命中率'))" :key="metric.label">
+                  <strong>{{ evaluationMetricText(metric) }}</strong>
+                  <i><b :style="{ height: evaluationMetricFill(metric) }"></b></i>
+                  <span>{{ metric.label }}</span>
+                </div>
               </div>
             </div>
           </section>
 
           <section class="evaluation-card">
             <div class="chart-heading">
-              <h3>子模型表现</h3>
+              <h3>子模型回测</h3>
               <span>命中率 / 损失</span>
             </div>
             <div class="model-bars">
@@ -1367,33 +1617,6 @@ watch(
                 <small>{{ row.note }}</small>
               </article>
             </div>
-          </section>
-
-          <section class="evaluation-card">
-            <div class="chart-heading">
-              <h3>当前融合权重</h3>
-              <span>{{ prediction ? '实时' : '预览' }}</span>
-            </div>
-            <div class="weight-bars">
-              <div v-for="row in modelEvaluationRows" :key="`weight-${row.key}`">
-                <span>{{ row.label }}</span>
-                <i><b :style="{ width: formatPercent(row.weight) }"></b></i>
-                <strong>{{ formatPercent(row.weight) }}</strong>
-              </div>
-            </div>
-          </section>
-
-          <section class="evaluation-card">
-            <div class="chart-heading">
-              <h3>样本阶段</h3>
-              <span>{{ sampleStageText(stats?.sample_stage) }}</span>
-            </div>
-            <ol class="stage-timeline">
-              <li v-for="stage in sampleStageRows" :key="stage.label" :class="{ active: stage.active }">
-                <strong>{{ stage.label }}</strong>
-                <span>{{ stage.text }}</span>
-              </li>
-            </ol>
           </section>
         </div>
 

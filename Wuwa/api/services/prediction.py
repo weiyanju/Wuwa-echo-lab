@@ -4,13 +4,35 @@ from math import exp
 from api.constants import MODEL_LABELS, MODEL_WEIGHT_SCHEDULE, SUBSTAT_LABELS, SUBSTAT_TYPES, TIER_TABLES
 
 
-DIRICHLET_ALPHA = 1.0
-RECENT_SEQUENCE_WINDOW = 20
+BAYES_ALPHA_MIN = 1.0
+BAYES_ALPHA_MAX = 5.0
+BAYES_ALPHA_DECAY_SAMPLES = 500
+RECENT_SEQUENCE_WINDOW = 12
 RECENT_BALANCE_STRENGTH = 0.85
+RECENT_OVERHEAT_MIN_COUNT = 3
 GLOBAL_BALANCE_STRENGTH = 0.65
 BAYES_PATTERN_MAX_PREFIX = 3
 BAYES_PATTERN_WEIGHTS = {1: 1.0, 2: 3.0, 3: 5.0}
-MODEL_KEYS = ("rule", "bayes", "markov", "context")
+BAYES_WILDCARD_MIDDLE_WEIGHT = 2.0
+BAYES_WILDCARD_WEIGHT_MIN = 0.15
+BAYES_WILDCARD_WEIGHT_MAX = 0.35
+BAYES_WILDCARD_WEIGHT_RAMP_SAMPLES = 2000
+CRIT_SUBSTATS = ("crit_rate", "crit_damage")
+SUBSTAT_GROUPS = {
+    "attack": ("atk_percent", "flat_atk"),
+    "hp": ("hp_percent", "flat_hp"),
+    "defense": ("def_percent", "flat_def"),
+    "damage_bonus": (
+        "basic_attack_damage",
+        "skill_damage",
+        "heavy_attack_damage",
+        "liberation_damage",
+    ),
+    "energy": ("energy_regen",),
+}
+CYCLE_CRIT_SIGNAL_WEIGHT = 0.75
+CYCLE_GENERAL_SIGNAL_WEIGHT = 0.25
+MODEL_KEYS = ("rule", "bayes", "markov", "cycle", "context")
 DYNAMIC_WEIGHT_MIN_EVENTS = 20
 DYNAMIC_WEIGHT_BACKTEST_WINDOW = 120
 DYNAMIC_WEIGHT_MAX_SHIFT = 0.025
@@ -110,11 +132,42 @@ def _rule_distribution(user, candidates):
     return _rule_distribution_from_counts(counts, total, candidates)
 
 
-def _bayes_distribution_from_sequence(sequence, candidates):
+def _bayes_dirichlet_alpha(sample_count):
+    sample_ratio = min(sample_count, BAYES_ALPHA_DECAY_SAMPLES) / BAYES_ALPHA_DECAY_SAMPLES
+    return BAYES_ALPHA_MAX - (BAYES_ALPHA_MAX - BAYES_ALPHA_MIN) * sample_ratio
+
+
+def _normalize_raw_distribution(raw, candidates):
+    total = sum(raw.values())
+    if total == 0:
+        return _uniform_distribution(candidates)
+    return {substat_type: value / total for substat_type, value in raw.items()}
+
+
+def _bayes_component_weights(sample_count):
+    sample_ratio = min(sample_count, BAYES_WILDCARD_WEIGHT_RAMP_SAMPLES) / BAYES_WILDCARD_WEIGHT_RAMP_SAMPLES
+    wildcard_weight = (
+        BAYES_WILDCARD_WEIGHT_MIN
+        + (BAYES_WILDCARD_WEIGHT_MAX - BAYES_WILDCARD_WEIGHT_MIN) * sample_ratio
+    )
+    return {"exact": 1 - wildcard_weight, "wildcard": wildcard_weight}
+
+
+def _blend_distributions(distributions, weights, candidates):
+    result = {}
+    for substat_type in candidates:
+        result[substat_type] = sum(
+            weights[key] * distributions[key][substat_type]
+            for key in distributions
+        )
+    return _normalize_raw_distribution(result, candidates)
+
+
+def _bayes_exact_distribution_from_sequence(sequence, candidates):
     if len(sequence) < 3:
         return _uniform_distribution(candidates)
 
-    raw = {substat_type: DIRICHLET_ALPHA for substat_type in candidates}
+    raw = {substat_type: _bayes_dirichlet_alpha(len(sequence)) for substat_type in candidates}
     max_prefix = min(BAYES_PATTERN_MAX_PREFIX, len(sequence) - 1)
     for prefix_length in range(1, max_prefix + 1):
         prefix = tuple(sequence[-prefix_length:])
@@ -126,10 +179,38 @@ def _bayes_distribution_from_sequence(sequence, candidates):
             if next_substat in raw:
                 raw[next_substat] += weight
 
-    candidate_total = sum(raw.values())
-    if candidate_total == 0:
+    return _normalize_raw_distribution(raw, candidates)
+
+
+def _bayes_wildcard_distribution_from_sequence(sequence, candidates):
+    if len(sequence) < 4:
         return _uniform_distribution(candidates)
-    return {substat_type: value / candidate_total for substat_type, value in raw.items()}
+
+    raw = {substat_type: _bayes_dirichlet_alpha(len(sequence)) for substat_type in candidates}
+    anchor = sequence[-2]
+    current_middle = sequence[-1]
+    for index in range(0, len(sequence) - 2):
+        if sequence[index] != anchor:
+            continue
+        if sequence[index + 1] == current_middle:
+            continue
+        next_substat = sequence[index + 2]
+        if next_substat in raw:
+            raw[next_substat] += BAYES_WILDCARD_MIDDLE_WEIGHT
+
+    return _normalize_raw_distribution(raw, candidates)
+
+
+def _bayes_distribution_from_sequence(sequence, candidates):
+    if len(sequence) < 3:
+        return _uniform_distribution(candidates)
+
+    component_weights = _bayes_component_weights(len(sequence))
+    distributions = {
+        "exact": _bayes_exact_distribution_from_sequence(sequence, candidates),
+        "wildcard": _bayes_wildcard_distribution_from_sequence(sequence, candidates),
+    }
+    return _blend_distributions(distributions, component_weights, candidates)
 
 
 def _bayes_distribution(user, candidates):
@@ -149,7 +230,10 @@ def _markov_distribution_from_sequence(sequence, candidates):
     raw = {}
     for substat_type in candidates:
         excess = (counts[substat_type] - expected) / max(expected, 1)
-        raw[substat_type] = exp(-RECENT_BALANCE_STRENGTH * excess)
+        if counts[substat_type] >= RECENT_OVERHEAT_MIN_COUNT and excess > 0:
+            raw[substat_type] = exp(-RECENT_BALANCE_STRENGTH * excess)
+        else:
+            raw[substat_type] = 1.0
 
     latest_type = recent_types[-1]
     streak = 0
@@ -157,7 +241,7 @@ def _markov_distribution_from_sequence(sequence, candidates):
         if substat_type != latest_type:
             break
         streak += 1
-    if latest_type in raw and streak > 1:
+    if latest_type in raw and streak >= RECENT_OVERHEAT_MIN_COUNT:
         raw[latest_type] /= streak
 
     total = sum(raw.values())
@@ -168,6 +252,226 @@ def _markov_distribution_from_sequence(sequence, candidates):
 
 def _markov_distribution(echo, candidates):
     return _markov_distribution_from_sequence(_historical_substat_sequence(echo.user), candidates)
+
+
+def _rate(sequence, substat_type, window_size):
+    window = sequence[-window_size:]
+    if not window:
+        return 0
+    return window.count(substat_type) / len(window)
+
+
+def _crit_group_rate(sequence, window_size):
+    window = sequence[-window_size:]
+    if not window:
+        return 0
+    return sum(1 for substat_type in window if substat_type in CRIT_SUBSTATS) / len(window)
+
+
+def _gap_since(sequence, substat_type):
+    for index, item in enumerate(reversed(sequence), start=1):
+        if item == substat_type:
+            return index - 1
+    return len(sequence)
+
+
+def _gap_since_any(sequence, group):
+    group = set(group)
+    for index, item in enumerate(reversed(sequence), start=1):
+        if item in group:
+            return index - 1
+    return len(sequence)
+
+
+def _recent_pair_density(sequence, window_size=12):
+    window = sequence[-window_size:]
+    if len(window) < 2:
+        return 0
+
+    pair_count = 0
+    for left, right in zip(window, window[1:]):
+        if {left, right} == set(CRIT_SUBSTATS):
+            pair_count += 1
+    return pair_count / (len(window) - 1)
+
+
+def _recent_crit_streak(sequence):
+    streak = 0
+    for substat_type in reversed(sequence):
+        if substat_type not in CRIT_SUBSTATS:
+            break
+        streak += 1
+    return streak
+
+
+def _cycle_window_probabilities_from_sequence(sequence):
+    if len(sequence) < 8:
+        return {"double": 0.25, "single_rate": 0.25, "single_damage": 0.25, "cooldown": 0.25}
+
+    recent_5_rate = _rate(sequence, "crit_rate", 5)
+    recent_5_damage = _rate(sequence, "crit_damage", 5)
+    recent_12_group = _crit_group_rate(sequence, 12)
+    recent_30_group = _crit_group_rate(sequence, 30)
+    global_group = _crit_group_rate(sequence, len(sequence))
+    gap_rate = _gap_since(sequence, "crit_rate")
+    gap_damage = _gap_since(sequence, "crit_damage")
+    gap_any = _gap_since_any(sequence, CRIT_SUBSTATS)
+    pair_density = _recent_pair_density(sequence)
+    crit_streak = _recent_crit_streak(sequence)
+    trend = recent_12_group - global_group
+
+    double_score = (
+        0.35
+        + 1.40 * max(trend, 0)
+        + 1.20 * min(recent_5_rate, recent_5_damage)
+        + 1.20 * pair_density
+        + 0.04 * min(gap_rate, 12)
+        + 0.04 * min(gap_damage, 12)
+    )
+    single_rate_score = (
+        0.35
+        + 1.60 * max(recent_5_rate - recent_5_damage, 0)
+        + 0.80 * max(recent_12_group - recent_30_group, 0)
+        + 0.03 * min(gap_damage, 12)
+    )
+    single_damage_score = (
+        0.35
+        + 1.60 * max(recent_5_damage - recent_5_rate, 0)
+        + 0.80 * max(recent_12_group - recent_30_group, 0)
+        + 0.03 * min(gap_rate, 12)
+    )
+    cooldown_score = (
+        0.35
+        + 0.75 * max(recent_12_group - global_group, 0)
+        + 0.90 * max(recent_5_rate + recent_5_damage - 0.45, 0)
+        + 0.35 * max(crit_streak - 1, 0)
+        - 0.04 * min(gap_any, 12)
+    )
+    raw = {
+        "double": max(double_score, 0.01),
+        "single_rate": max(single_rate_score, 0.01),
+        "single_damage": max(single_damage_score, 0.01),
+        "cooldown": max(cooldown_score, 0.01),
+    }
+    total = sum(raw.values())
+    return {key: value / total for key, value in raw.items()}
+
+
+def _cycle_state_distribution(candidates, state):
+    multipliers = {substat_type: 1.0 for substat_type in candidates}
+    if state == "double":
+        multipliers["crit_rate"] = 1.30
+        multipliers["crit_damage"] = 1.30
+    elif state == "single_rate":
+        multipliers["crit_rate"] = 1.45
+        multipliers["crit_damage"] = 0.92
+    elif state == "single_damage":
+        multipliers["crit_rate"] = 0.92
+        multipliers["crit_damage"] = 1.45
+    elif state == "cooldown":
+        multipliers["crit_rate"] = 0.72
+        multipliers["crit_damage"] = 0.72
+
+    raw = {substat_type: multipliers.get(substat_type, 1.0) for substat_type in candidates}
+    return _normalize_raw_distribution(raw, candidates)
+
+
+def _group_rate(sequence, group, window_size):
+    window = sequence[-window_size:]
+    if not window:
+        return 0
+    group = set(group)
+    return sum(1 for substat_type in window if substat_type in group) / len(window)
+
+
+def _group_streak(sequence, group):
+    group = set(group)
+    streak = 0
+    for substat_type in reversed(sequence):
+        if substat_type not in group:
+            break
+        streak += 1
+    return streak
+
+
+def _general_cycle_group_probabilities_from_sequence(sequence):
+    if len(sequence) < 8:
+        probability = 1 / len(SUBSTAT_GROUPS)
+        return {group_name: probability for group_name in SUBSTAT_GROUPS}
+
+    raw = {}
+    for group_name, group in SUBSTAT_GROUPS.items():
+        recent_5_rate = _group_rate(sequence, group, 5)
+        recent_12_rate = _group_rate(sequence, group, 12)
+        recent_30_rate = _group_rate(sequence, group, 30)
+        global_rate = _group_rate(sequence, group, len(sequence))
+        gap = _gap_since_any(sequence, group)
+        streak = _group_streak(sequence, group)
+        trend = recent_12_rate - global_rate
+
+        raw[group_name] = max(
+            0.01,
+            0.35
+            + 1.30 * max(trend, 0)
+            + 0.90 * recent_5_rate
+            + 0.55 * max(recent_12_rate - recent_30_rate, 0)
+            + 0.035 * min(gap, 12)
+            - 0.25 * max(streak - 2, 0),
+        )
+
+    total = sum(raw.values())
+    return {group_name: value / total for group_name, value in raw.items()}
+
+
+def _general_cycle_distribution_from_sequence(sequence, candidates):
+    if not candidates:
+        return {}
+    group_probabilities = _general_cycle_group_probabilities_from_sequence(sequence)
+    raw = {substat_type: 1.0 for substat_type in candidates}
+    for group_name, group in SUBSTAT_GROUPS.items():
+        candidate_group = [substat_type for substat_type in group if substat_type in raw]
+        if not candidate_group:
+            continue
+        multiplier = 0.70 + 1.80 * group_probabilities[group_name]
+        for substat_type in candidate_group:
+            raw[substat_type] *= multiplier
+
+    return _normalize_raw_distribution(raw, candidates)
+
+
+def _crit_cycle_distribution_from_sequence(sequence, candidates):
+    if not candidates:
+        return {}
+    if not any(substat_type in candidates for substat_type in CRIT_SUBSTATS):
+        return _uniform_distribution(candidates)
+
+    window_probabilities = _cycle_window_probabilities_from_sequence(sequence)
+    distributions = {
+        "double": _cycle_state_distribution(candidates, "double"),
+        "single_rate": _cycle_state_distribution(candidates, "single_rate"),
+        "single_damage": _cycle_state_distribution(candidates, "single_damage"),
+        "cooldown": _cycle_state_distribution(candidates, "cooldown"),
+    }
+    return _blend_distributions(distributions, window_probabilities, candidates)
+
+
+def _cycle_window_distribution_from_sequence(sequence, candidates):
+    if not candidates:
+        return {}
+
+    distributions = {
+        "crit": _crit_cycle_distribution_from_sequence(sequence, candidates),
+        "general": _general_cycle_distribution_from_sequence(sequence, candidates),
+    }
+    weights = {
+        "crit": CYCLE_CRIT_SIGNAL_WEIGHT,
+        "general": CYCLE_GENERAL_SIGNAL_WEIGHT,
+    }
+    return _blend_distributions(distributions, weights, candidates)
+
+
+def _cycle_window_distribution(echo, candidates):
+    return _cycle_window_distribution_from_sequence(_historical_substat_sequence(echo.user), candidates)
 
 
 def _context_distribution(echo, candidates):
@@ -216,6 +520,7 @@ def _dynamic_weight_result(user, base_weights):
                 "rule": _rule_distribution_from_counts(counts, total, candidates),
                 "bayes": _bayes_distribution_from_sequence(sequence, candidates),
                 "markov": _markov_distribution_from_sequence(sequence, candidates),
+                "cycle": _cycle_window_distribution_from_sequence(sequence, candidates),
                 "context": _context_distribution_for_candidates(candidates),
             }
             for key, distribution in distributions.items():
@@ -261,11 +566,10 @@ def _dynamic_weight_result(user, base_weights):
 def _weighted_distribution(distributions, weights):
     result = {}
     for substat_type in distributions["rule"]:
-        result[substat_type] = (
-            weights["rule"] * distributions["rule"][substat_type]
-            + weights["bayes"] * distributions["bayes"][substat_type]
-            + weights["markov"] * distributions["markov"][substat_type]
-            + weights["context"] * distributions["context"][substat_type]
+        result[substat_type] = sum(
+            weights[key] * distributions[key][substat_type]
+            for key in MODEL_KEYS
+            if key in weights and key in distributions
         )
     total = sum(result.values())
     if total:
@@ -286,6 +590,7 @@ def predict_next_substat(echo):
         "rule": _rule_distribution(echo.user, candidates),
         "bayes": _bayes_distribution(echo.user, candidates),
         "markov": _markov_distribution(echo, candidates),
+        "cycle": _cycle_window_distribution(echo, candidates),
         "context": _context_distribution(echo, candidates),
     }
     final = _weighted_distribution(distributions, weights)
@@ -300,6 +605,7 @@ def predict_next_substat(echo):
             "p_rule": p_rule,
             "p_bayes": distributions["bayes"][substat_type],
             "p_markov": distributions["markov"][substat_type],
+            "p_cycle": distributions["cycle"][substat_type],
             "p_context": distributions["context"][substat_type],
             "p_final": p_final,
             "baseline_deviation": p_final - p_rule,

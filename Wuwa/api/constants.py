@@ -47,15 +47,16 @@ MODEL_LABELS = {
     "rule": "规则均衡",
     "bayes": "周期规律",
     "markov": "近期序列",
+    "cycle": "双爆窗口",
     "context": "上下文监测",
 }
 
 MODEL_WEIGHT_SCHEDULE = [
-    {"min": 0, "max": 500, "weights": {"rule": 0.80, "bayes": 0.05, "markov": 0.15, "context": 0.00}},
-    {"min": 500, "max": 3000, "weights": {"rule": 0.65, "bayes": 0.15, "markov": 0.20, "context": 0.00}},
-    {"min": 3000, "max": 10000, "weights": {"rule": 0.50, "bayes": 0.20, "markov": 0.20, "context": 0.10}},
-    {"min": 10000, "max": 50000, "weights": {"rule": 0.35, "bayes": 0.25, "markov": 0.25, "context": 0.15}},
-    {"min": 50000, "max": None, "weights": {"rule": 0.35, "bayes": 0.25, "markov": 0.25, "context": 0.15}},
+    {"min": 0, "max": 500, "weights": {"rule": 0.70, "bayes": 0.10, "markov": 0.10, "cycle": 0.10, "context": 0.00}},
+    {"min": 500, "max": 3000, "weights": {"rule": 0.48, "bayes": 0.26, "markov": 0.12, "cycle": 0.14, "context": 0.00}},
+    {"min": 3000, "max": 10000, "weights": {"rule": 0.36, "bayes": 0.30, "markov": 0.12, "cycle": 0.16, "context": 0.06}},
+    {"min": 10000, "max": 50000, "weights": {"rule": 0.28, "bayes": 0.34, "markov": 0.10, "cycle": 0.18, "context": 0.10}},
+    {"min": 50000, "max": None, "weights": {"rule": 0.25, "bayes": 0.35, "markov": 0.10, "cycle": 0.20, "context": 0.10}},
 ]
 
 SAMPLE_STAGES = [
