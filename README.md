@@ -24,8 +24,10 @@ http://127.0.0.1:8000/api/health/
 
 ```powershell
 cd WuwaFrontend
-npm.cmd install
-npm.cmd run dev -- --host 127.0.0.1 --port 5173
+$env:PATH = "$PWD\..\.tools\node;$env:PATH"
+$env:npm_config_cache = "$PWD\..\.tools\npm-cache"
+..\.tools\node\npm.cmd install
+..\.tools\node\npm.cmd run dev -- --host 127.0.0.1 --port 5173
 ```
 
 Frontend development URL:

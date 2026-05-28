@@ -304,6 +304,37 @@ function evaluationMetricFill(metric) {
   return `${Math.max(8, Math.min((1 - value / 3) * 100, 100))}%`
 }
 
+function hitChartFill(metric) {
+  const value = metric.value ?? metric.preview
+  return `${Math.max(3, Math.min((value / 0.6) * 100, 100))}%`
+}
+
+function evaluationStatusText() {
+  const total = stats.value?.total_rolls || 0
+  if (total >= 3000) {
+    return '稳定'
+  }
+  if (total >= 500) {
+    return '可参考'
+  }
+  return '观察中'
+}
+
+function percentPosition(value) {
+  return `${Math.min(Math.max((value ?? 0) * 100, 0), 100)}%`
+}
+
+function fusionWeightTooltip(row) {
+  const baseText = `基础 ${formatPercent(row.baseWeight)}`
+  const hitText = row.adjustment?.hit_rate == null ? 'Top1 回测暂无' : `Top1 回测 ${formatPercent(row.adjustment.hit_rate)}`
+  const directionText = row.adjustment?.direction === 'up'
+    ? '上调'
+    : row.adjustment?.direction === 'down'
+      ? '下调'
+      : '持平'
+  return `${baseText} · ${hitText} · ${directionText}至 ${formatPercent(row.weight)}`
+}
+
 function modelMetricText(metric) {
   if (metric.type === 'percent') {
     return formatPercent(metric.value)
@@ -1578,40 +1609,81 @@ watch(
         </div>
       </section>
 
-      <section v-if="page === 'evaluation'" class="product-panel full-panel">
-        <div class="evaluation-head">
-          <div>
+      <section v-if="page === 'evaluation'" class="product-panel full-panel evaluation-panel">
+        <div class="evaluation-head evaluation-brief evaluation-compact-brief">
+          <div class="evaluation-hero-copy">
             <span class="eyebrow">Evaluation</span>
             <h2>模型评估</h2>
             <p>{{ evaluation?.message || '按当前算法拆解融合权重、候选概率和各子模型职责。' }}</p>
           </div>
-          <span class="preview-pill">当前样本 {{ stats?.total_rolls || 0 }}</span>
+          <div class="evaluation-compact-stats" aria-label="评估摘要">
+            <article>
+              <span>状态</span>
+              <strong>{{ evaluationStatusText() }}</strong>
+            </article>
+            <article>
+              <span>阶段</span>
+              <strong>{{ stats ? sampleStageText(stats.sample_stage).split('：')[0] : '等待样本' }}</strong>
+            </article>
+            <article>
+              <span>置信度</span>
+              <strong>{{ stats?.sample_stage === 'low' || (stats?.total_rolls || 0) < 500 ? '低' : '中' }}</strong>
+            </article>
+            <article>
+              <span>Top 3</span>
+              <strong>{{ evaluationMetricText(evaluationMetrics[3]) }}</strong>
+            </article>
+          </div>
         </div>
 
         <div class="evaluation-section-title">
           <div>
             <h3>当前融合权重</h3>
-            <p>先看每个模型在最终概率里的话语权，再看它们各自提供什么证据。</p>
+            <p>每个模型对最终概率的贡献。</p>
           </div>
-          <span>{{ prediction ? '实时' : '预览' }}</span>
+          <div class="fusion-title-tools">
+            <div class="fusion-shared-legend" aria-label="融合权重图例">
+              <span title="当前融合权重"><i class="legend-current-line"></i>当前</span>
+              <span title="基础权重"><i class="legend-base-line"></i>基础</span>
+              <span title="Top1 回测命中率"><i class="legend-hit-dot"></i>Top1</span>
+            </div>
+            <span class="fusion-live-pill">{{ prediction ? '实时' : '预览' }}</span>
+          </div>
         </div>
 
         <div class="fusion-weight-grid">
-          <article v-for="row in weightRows" :key="row.key" :class="weightDiagnosticClass(row)">
+          <article
+            v-for="row in weightRows"
+            :key="row.key"
+            :class="weightDiagnosticClass(row)"
+            class="fusion-weight-card"
+            :title="fusionWeightTooltip(row)"
+          >
             <div>
               <span>{{ row.label }}</span>
               <strong>{{ formatPercent(row.weight) }}</strong>
             </div>
-            <i><b :style="{ width: formatPercent(row.weight) }"></b></i>
-            <small v-if="row.adjustment?.hit_rate != null">
-              基础 {{ formatPercent(row.baseWeight) }} · 命中 {{ formatPercent(row.adjustment.hit_rate) }}
-              {{ row.adjustment.direction === 'up' ? '上调' : row.adjustment.direction === 'down' ? '下调' : '持平' }}
-            </small>
-            <small v-else>基础 {{ formatPercent(row.baseWeight) }} · 样本不足</small>
+            <i
+              class="fusion-weight-track"
+              :aria-label="fusionWeightTooltip(row)"
+            >
+              <b :style="{ width: formatPercent(row.weight) }" :title="`当前 ${formatPercent(row.weight)}`"></b>
+              <span
+                class="weight-marker base-marker"
+                :style="{ left: percentPosition(row.baseWeight) }"
+                :title="`基础 ${formatPercent(row.baseWeight)}`"
+              ></span>
+              <span
+                v-if="row.adjustment?.hit_rate != null"
+                class="weight-marker hit-marker"
+                :style="{ left: percentPosition(row.adjustment.hit_rate) }"
+                :title="`Top1 回测 ${formatPercent(row.adjustment.hit_rate)}`"
+              ></span>
+            </i>
           </article>
         </div>
 
-        <section class="model-summary-panel">
+        <section class="model-summary-panel evaluation-summary-panel">
           <article>
             <span>当前主导</span>
             <strong>{{ modelDetailSummary.dominantLabel || '暂无' }}</strong>
@@ -1632,13 +1704,76 @@ watch(
 
         <div class="evaluation-section-title">
           <div>
+            <h3>核心回测</h3>
+            <p>只保留最能判断模型质量的指标和图表。</p>
+          </div>
+          <span>Backtest</span>
+        </div>
+
+        <div class="evaluation-metrics evaluation-metrics-priority">
+          <article v-for="metric in evaluationMetrics" :key="metric.label">
+            <div>
+              <span>{{ metric.label }}</span>
+              <strong>{{ evaluationMetricText(metric) }}</strong>
+            </div>
+            <small>{{ metric.target }} · {{ metric.description }}</small>
+            <i><b :style="{ width: evaluationMetricFill(metric) }"></b></i>
+          </article>
+        </div>
+
+        <div class="evaluation-grid compact-evaluation-grid evaluation-chart-strip">
+          <section class="evaluation-card chart-card">
+            <div class="chart-heading">
+              <div>
+                <h3>命中率回测</h3>
+                <p>Top-k 覆盖率随候选池扩大后的验证表现</p>
+              </div>
+              <span>Hit rate</span>
+            </div>
+            <div class="hit-chart">
+              <div class="hit-axis" aria-hidden="true">
+                <span>60%</span>
+                <span>40%</span>
+                <span>20%</span>
+                <span>0%</span>
+              </div>
+              <div class="hit-bars">
+                <div v-for="metric in evaluationMetrics.filter((item) => item.label.includes('命中率'))" :key="metric.label">
+                  <strong>{{ evaluationMetricText(metric) }}</strong>
+                  <i><b :style="{ height: hitChartFill(metric) }"></b></i>
+                  <span>{{ metric.label }}</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="evaluation-card">
+            <div class="chart-heading">
+              <h3>子模型回测</h3>
+              <span>命中率 / 损失</span>
+            </div>
+            <div class="model-bars">
+              <article v-for="row in modelEvaluationRows" :key="row.key">
+                <div>
+                  <strong>{{ row.label }}</strong>
+                  <span>{{ formatPercent(row.hitRate) }} · Loss {{ row.loss.toFixed(2) }}</span>
+                </div>
+                <i><b :style="{ width: `${row.hitRate * 100}%` }"></b></i>
+                <small>{{ row.note }}</small>
+              </article>
+            </div>
+          </section>
+        </div>
+
+        <div class="evaluation-section-title">
+          <div>
             <h3>模型细节</h3>
-            <p>把当前算法拆开看：每个模型负责什么、看什么证据、当前权重是多少。</p>
+            <p>保留完整证据，但视觉层级后置。</p>
           </div>
           <span>Model cards</span>
         </div>
 
-        <div class="model-insight-stack">
+        <div class="model-insight-stack evaluation-detail-stack">
           <article v-for="model in modelDetailCards" :key="model.key" class="model-insight-card" :class="modelInsightClass(model)">
             <header class="model-insight-head">
               <div>
@@ -1839,69 +1974,6 @@ watch(
               </aside>
             </div>
           </article>
-        </div>
-
-        <div class="evaluation-section-title">
-          <div>
-            <h3>回测指标</h3>
-            <p>验证概率分布是否把真实词条放进更靠前、更高概率的位置。</p>
-          </div>
-          <span>Backtest</span>
-        </div>
-
-        <div class="evaluation-metrics">
-          <article v-for="metric in evaluationMetrics" :key="metric.label">
-            <div>
-              <span>{{ metric.label }}</span>
-              <strong>{{ evaluationMetricText(metric) }}</strong>
-            </div>
-            <small>{{ metric.target }} · {{ metric.description }}</small>
-            <i><b :style="{ width: evaluationMetricFill(metric) }"></b></i>
-          </article>
-        </div>
-
-        <div class="evaluation-grid compact-evaluation-grid">
-          <section class="evaluation-card chart-card">
-            <div class="chart-heading">
-              <div>
-                <h3>命中率回测</h3>
-                <p>Top-k 覆盖率随候选池扩大后的验证表现</p>
-              </div>
-              <span>Backtest</span>
-            </div>
-            <div class="hit-chart">
-              <div class="hit-axis" aria-hidden="true">
-                <span>60%</span>
-                <span>40%</span>
-                <span>20%</span>
-                <span>0%</span>
-              </div>
-              <div class="hit-bars">
-                <div v-for="metric in evaluationMetrics.filter((item) => item.label.includes('命中率'))" :key="metric.label">
-                  <strong>{{ evaluationMetricText(metric) }}</strong>
-                  <i><b :style="{ height: evaluationMetricFill(metric) }"></b></i>
-                  <span>{{ metric.label }}</span>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section class="evaluation-card">
-            <div class="chart-heading">
-              <h3>子模型回测</h3>
-              <span>命中率 / 损失</span>
-            </div>
-            <div class="model-bars">
-              <article v-for="row in modelEvaluationRows" :key="row.key">
-                <div>
-                  <strong>{{ row.label }}</strong>
-                  <span>{{ formatPercent(row.hitRate) }} · Loss {{ row.loss.toFixed(2) }}</span>
-                </div>
-                <i><b :style="{ width: `${row.hitRate * 100}%` }"></b></i>
-                <small>{{ row.note }}</small>
-              </article>
-            </div>
-          </section>
         </div>
 
         <section class="evaluation-card risk-card">
