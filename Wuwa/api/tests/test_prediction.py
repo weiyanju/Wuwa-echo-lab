@@ -187,6 +187,60 @@ class PredictionServiceTests(TestCase):
         self.assertEqual(result["model_labels"]["bayes"], "周期规律")
         self.assertEqual(result["weights"]["context"], 0.0)
 
+    def test_prediction_includes_model_diagnostics_for_evaluation_ui(self):
+        sequence = [
+            "atk_percent", "flat_atk", "crit_damage",
+            "crit_rate", "flat_atk", "crit_damage",
+            "skill_damage", "crit_rate", "crit_damage",
+            "atk_percent", "flat_atk", "crit_rate",
+        ]
+        tier_values = {
+            "atk_percent": 6.4,
+            "flat_atk": 30,
+            "crit_damage": 12.6,
+            "crit_rate": 6.3,
+            "skill_damage": 6.4,
+        }
+        base_time = timezone.now() - timedelta(minutes=len(sequence))
+        for index, substat_type in enumerate(sequence):
+            echo = EchoRecord.objects.create(
+                user=self.user,
+                echo_uid=f"diagnostic-{index}",
+                cost=1,
+                set_name="diagnostic-set",
+                main_stat="atk_percent",
+            )
+            SubstatRoll.objects.create(
+                echo=echo,
+                position=1,
+                substat_type=substat_type,
+                tier_value=tier_values[substat_type],
+                tuned_at=base_time + timedelta(minutes=index),
+            )
+
+        result = predict_next_substat(self.echo)
+        diagnostics = result["model_diagnostics"]
+
+        self.assertIn("summary", diagnostics)
+        self.assertEqual(diagnostics["summary"]["dominant_model"], "rule")
+        self.assertAlmostEqual(
+            diagnostics["bayes"]["exact_weight"] + diagnostics["bayes"]["wildcard_weight"],
+            1.0,
+            places=6,
+        )
+        self.assertGreaterEqual(diagnostics["bayes"]["alpha"], 1.0)
+        self.assertEqual(set(diagnostics["cycle"]["windows"]), {"double", "single_rate", "single_damage", "cooldown"})
+        self.assertEqual(set(diagnostics["cycle"]["group_scores"]), {"attack", "hp", "defense", "damage_bonus", "energy"})
+        self.assertEqual(diagnostics["markov"]["window_size"], 12)
+        self.assertIn("recent_counts", diagnostics["markov"])
+        self.assertIn("recent_sequence", diagnostics["markov"])
+        self.assertEqual(len(diagnostics["markov"]["recent_sequence"]), 12)
+        self.assertEqual(diagnostics["markov"]["recent_sequence"][-1]["substat_type"], "crit_rate")
+        self.assertEqual(diagnostics["markov"]["recent_sequence"][-1]["label"], "暴击率")
+        self.assertIn("penalties", diagnostics["markov"])
+        self.assertEqual(diagnostics["context"]["status"], "disabled")
+        self.assertGreater(diagnostics["context"]["recommended_samples"], result["sample_size"])
+
     def test_cycle_window_probabilities_identify_double_window(self):
         sequence = (
             ["flat_atk", "hp_percent", "def_percent", "energy_regen"] * 6

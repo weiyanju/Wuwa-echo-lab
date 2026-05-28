@@ -17,6 +17,7 @@ import {
 import { displayEchoNumericId, generateNumericEchoUid, nextEchoSequence } from './services/echoId'
 import { buildNextEchoConfig, isReusableDraft, sortVisibleEchoHistory, statusBadge } from './services/echoWorkflow'
 import { confidenceText, formatPercent, formatSignedPercent, modelWeightLabel, sampleStageText, statusText } from './services/formatters'
+import { ACTIVE_MODEL_WEIGHT_EPSILON, buildModelDetailCards } from './services/modelDetails'
 import { mainStatLabels, mainStatsByCost, substatLabels, substatOrder, tierTables } from './data/substats'
 import { sonataEffects } from './data/sonataEffects'
 import historyMinimizeIcon from './assets/icons/window-minimize.svg'
@@ -51,12 +52,13 @@ const isHistoryPinned = ref(localStorage.getItem('wuwa-floating-history-pinned')
 const isHistoryShowcase = ref(false)
 const historyFilter = ref('all')
 const historyDrag = ref(null)
+const modelInsightViews = ref({})
+const markovAxisDrag = ref(null)
 let historyPanelAnimationTimer = null
 let suppressNextHistoryToggle = false
 let suppressNextHistoryToggleTimer = null
 const FLOATING_HISTORY_MINIMIZED_SIZE = 76
 const TERMINAL_ICON_BASE_ANGLE = 350
-const ACTIVE_MODEL_WEIGHT_EPSILON = 0.0001
 
 const echoForm = ref({
   sonata: sonataEffects.at(-1).name,
@@ -137,55 +139,16 @@ const weightRows = computed(() =>
     adjustment: prediction.value?.weight_adjustments?.[key] || null,
   })),
 )
-const modelDetailRows = computed(() => {
-  const definitions = [
-    {
-      key: 'rule',
-      title: '规则均衡',
-      role: '长期全局回归',
-      detail: '统计全局出现次数，压低历史过热词条，抬高历史偏少词条。',
-      evidence: ['全局频率偏差', '当前合法候选池', '指数型均衡修正'],
-    },
-    {
-      key: 'bayes',
-      title: '周期规律',
-      role: '历史片段复现',
-      detail: '融合精确片段和 A -> 任意 -> C 通配片段，样本越多通配片段话语权越高。',
-      evidence: ['P_bayes_exact', 'P_bayes_wildcard', '动态 alpha 平滑'],
-    },
-    {
-      key: 'markov',
-      title: '近期过热',
-      role: '跨声骸短期冷却',
-      detail: '只检查最近 12 条全局记录，候选词条出现至少 3 次才触发降温。',
-      evidence: ['最近 12 条窗口', '过热阈值 >= 3', '只惩罚不奖励'],
-    },
-    {
-      key: 'cycle',
-      title: '周期窗口',
-      role: '双爆与词条组窗口',
-      detail: '暴击窗口占 75%，非暴击词条组周期占 25%，输出窗口倾向而不是硬判定。',
-      evidence: ['双爆 / 单爆 / 冷却', '攻击/生命/防御/伤害加成/共鸣效率', '组内分配'],
-    },
-    {
-      key: 'context',
-      title: '上下文监测',
-      role: '样本足够后参与',
-      detail: '预留套装、COST、主词条、位置变量，样本不足时保持克制。',
-      evidence: ['set name', 'cost', 'main stat', 'position'],
-    },
-  ]
-  return definitions.map((definition) => {
-    const weightRow = weightRows.value.find((row) => row.key === definition.key)
-    return {
-      ...definition,
-      label: prediction.value?.model_labels?.[definition.key] || definition.title,
-      weight: weightRow?.weight ?? 0,
-      baseWeight: weightRow?.baseWeight ?? 0,
-      adjustment: weightRow?.adjustment || null,
-    }
-  })
-})
+const modelDetailCards = computed(() =>
+  buildModelDetailCards({
+    prediction: prediction.value,
+    stats: stats.value,
+    evaluation: evaluation.value,
+    echoes: echoes.value,
+    labels: substatLabels,
+  }),
+)
+const modelDetailSummary = computed(() => modelDetailCards.value.summary || {})
 const evaluationMetrics = computed(() => [
   {
     label: 'Log Loss',
@@ -339,6 +302,126 @@ function evaluationMetricFill(metric) {
     return `${Math.min(value * 100, 100)}%`
   }
   return `${Math.max(8, Math.min((1 - value / 3) * 100, 100))}%`
+}
+
+function modelMetricText(metric) {
+  if (metric.type === 'percent') {
+    return formatPercent(metric.value)
+  }
+  if (metric.type === 'signedPercent') {
+    return formatSignedPercent(metric.value)
+  }
+  if (metric.type === 'decimal') {
+    return Number(metric.value || 0).toFixed(2)
+  }
+  return `${Math.round(metric.value || 0)}`
+}
+
+function modelBarText(bar) {
+  if (bar.type === 'percent') {
+    return formatPercent(bar.value)
+  }
+  if (bar.type === 'signedPercent') {
+    return formatSignedPercent(bar.value)
+  }
+  return `${Math.round(bar.value || 0)}`
+}
+
+function modelBarStyle(bar) {
+  const width = Math.max(bar.value ? 5 : 0, Math.min((bar.width || 0) * 100, 100))
+  return { width: `${width}%` }
+}
+
+function modelSegmentStyle(segment) {
+  return { width: formatPercent(segment.value) }
+}
+
+function modelInsightClass(model) {
+  return [weightDiagnosticClass(model), `model-${model.key}`, model.status]
+}
+
+function sequenceItemClass(item) {
+  const type = item?.type || ''
+  const typeClass = type ? `seq-type-${type.replaceAll('_', '-')}` : ''
+  return {
+    [typeClass]: Boolean(typeClass),
+    'seq-crit': type.includes('crit'),
+    'seq-attack': type.includes('atk') || type.includes('attack'),
+    'seq-hp': type.includes('hp'),
+    'seq-defense': type.includes('def'),
+    'seq-energy': type.includes('energy'),
+    'seq-damage': type.includes('damage') && !type.includes('crit'),
+    overheated: item?.overheated,
+  }
+}
+
+function markovAxisTrackStyle(model) {
+  const nodeCount = model?.timelineNodes?.length || 1
+  const nodeWidth = 176
+  return {
+    '--node-count': nodeCount,
+    minWidth: `max(${nodeCount * nodeWidth + 144}px, 100%)`,
+  }
+}
+
+function markovAxisKey(model) {
+  return model?.timelineNodes?.map((item) => `${item.index}:${item.type}`).join('|') || 'empty'
+}
+
+function moveMarkovAxis(event) {
+  if (!markovAxisDrag.value) {
+    return
+  }
+  const drag = markovAxisDrag.value
+  const deltaX = event.clientX - drag.startX
+  drag.element.scrollLeft = drag.startScrollLeft - deltaX
+  if (Math.abs(deltaX) > 3) {
+    drag.moved = true
+  }
+}
+
+function endMarkovAxisDrag() {
+  if (!markovAxisDrag.value) {
+    return
+  }
+  markovAxisDrag.value.element.classList.remove('dragging')
+  markovAxisDrag.value = null
+  document.removeEventListener('pointermove', moveMarkovAxis)
+  document.removeEventListener('pointerup', endMarkovAxisDrag)
+  document.removeEventListener('pointercancel', endMarkovAxisDrag)
+}
+
+function startMarkovAxisDrag(event) {
+  if (event.button !== 0) {
+    return
+  }
+  const element = event.currentTarget
+  if (!element || element.scrollWidth <= element.clientWidth) {
+    return
+  }
+  markovAxisDrag.value = {
+    element,
+    startX: event.clientX,
+    startScrollLeft: element.scrollLeft,
+    moved: false,
+  }
+  element.classList.add('dragging')
+  element.setPointerCapture?.(event.pointerId)
+  document.addEventListener('pointermove', moveMarkovAxis)
+  document.addEventListener('pointerup', endMarkovAxisDrag)
+  document.addEventListener('pointercancel', endMarkovAxisDrag)
+  event.preventDefault()
+}
+
+function modelInsightView(model) {
+  return modelInsightViews.value[model.key] || 'distribution'
+}
+
+function setModelInsightView(model, view) {
+  modelInsightViews.value = {
+    ...modelInsightViews.value,
+    [model.key]: view,
+  }
 }
 
 function statDeviation(row) {
@@ -1102,6 +1185,7 @@ onBeforeUnmount(() => {
   clearTimeout(suppressNextHistoryToggleTimer)
   suppressNextHistoryToggleTimer = null
   endFloatingHistoryDrag()
+  endMarkovAxisDrag()
   window.removeEventListener('resize', syncSetupPanelHeight)
   window.removeEventListener('resize', constrainSavedFloatingHistoryPosition)
 })
@@ -1527,6 +1611,25 @@ watch(
           </article>
         </div>
 
+        <section class="model-summary-panel">
+          <article>
+            <span>当前主导</span>
+            <strong>{{ modelDetailSummary.dominantLabel || '暂无' }}</strong>
+          </article>
+          <article>
+            <span>辅助信号</span>
+            <strong>{{ modelDetailSummary.auxiliaryLabels?.length ? modelDetailSummary.auxiliaryLabels.join(' / ') : '暂无' }}</strong>
+          </article>
+          <article>
+            <span>上下文</span>
+            <strong>{{ modelDetailSummary.contextStatus === 'enabled' ? '已启用' : '未启用' }}</strong>
+          </article>
+          <article>
+            <span>可信度</span>
+            <strong>{{ modelDetailSummary.confidenceNote || '等待更多样本形成稳定判断' }}</strong>
+          </article>
+        </section>
+
         <div class="evaluation-section-title">
           <div>
             <h3>模型细节</h3>
@@ -1535,25 +1638,206 @@ watch(
           <span>Model cards</span>
         </div>
 
-        <div class="model-detail-grid">
-          <article v-for="model in modelDetailRows" :key="model.key" :class="weightDiagnosticClass(model)">
-            <header>
+        <div class="model-insight-stack">
+          <article v-for="model in modelDetailCards" :key="model.key" class="model-insight-card" :class="modelInsightClass(model)">
+            <header class="model-insight-head">
               <div>
                 <span>{{ model.role }}</span>
-                <strong>{{ model.title }}</strong>
+                <h4>{{ model.title }}</h4>
+                <p>{{ model.detail }}</p>
               </div>
-              <p>{{ formatPercent(model.weight) }}</p>
+              <div class="model-insight-weight">
+                <strong>{{ formatPercent(model.weight) }}</strong>
+                <span>{{ model.statusLabel }}</span>
+              </div>
             </header>
-            <small>{{ model.detail }}</small>
-            <ul>
-              <li v-for="item in model.evidence" :key="item">{{ item }}</li>
-            </ul>
-            <footer>
-              基础 {{ formatPercent(model.baseWeight) }}
-              <template v-if="model.adjustment?.hit_rate != null">
-                · 命中 {{ formatPercent(model.adjustment.hit_rate) }}
-              </template>
-            </footer>
+
+            <div class="model-insight-tabs" role="tablist" :aria-label="`${model.title} 展示模式`">
+              <button
+                v-for="tab in model.tabs"
+                :key="tab.key"
+                type="button"
+                :class="{ active: modelInsightView(model) === tab.key }"
+                @click="setModelInsightView(model, tab.key)"
+              >
+                {{ tab.label }}
+              </button>
+            </div>
+
+            <div class="model-insight-body">
+              <section v-if="modelInsightView(model) === 'distribution'" class="model-insight-chart" :class="`model-chart-${model.key}`">
+                <div class="model-chart-title">
+                  <div>
+                    <strong>{{ model.chartTitle }}</strong>
+                    <span>{{ model.chartNote }}</span>
+                  </div>
+                  <small>基础 {{ formatPercent(model.baseWeight) }}</small>
+                </div>
+
+                <p class="model-player-note">{{ model.playerNote }}</p>
+
+                <div v-if="model.key === 'bayes'" class="bayes-path-grid">
+                  <article v-for="segment in model.segments" :key="segment.label">
+                    <div class="bayes-path-nodes">
+                      <span>A</span>
+                      <i></i>
+                      <span>{{ segment.label === 'Wildcard' ? '?' : 'B' }}</span>
+                      <i></i>
+                      <span>C</span>
+                    </div>
+                    <strong>{{ segment.label }} · {{ formatPercent(segment.value) }}</strong>
+                  </article>
+                </div>
+
+                <div v-if="model.windows.length" class="cycle-window-grid">
+                  <article v-for="window in model.windows" :key="window.key" :class="window.tone">
+                    <span>{{ window.label }}</span>
+                    <strong>{{ formatPercent(window.value) }}</strong>
+                    <i><b :style="{ width: formatPercent(window.value) }"></b></i>
+                  </article>
+                </div>
+
+                <div v-if="model.segments.length && model.key !== 'bayes'" class="model-segment-strip">
+                  <div
+                    v-for="segment in model.segments"
+                    :key="segment.label"
+                    :style="modelSegmentStyle(segment)"
+                  >
+                    <span>{{ segment.label }}</span>
+                    <strong>{{ formatPercent(segment.value) }}</strong>
+                  </div>
+                </div>
+
+                <div
+                  v-if="model.key === 'markov' && model.timelineNodes.length"
+                  :key="markovAxisKey(model)"
+                  class="markov-axis-chart"
+                  @pointerdown="startMarkovAxisDrag"
+                >
+                  <div
+                    class="markov-axis-track"
+                    :style="markovAxisTrackStyle(model)"
+                  >
+                    <div class="markov-axis-line" aria-hidden="true"></div>
+                    <article
+                      v-for="item in model.timelineNodes"
+                      :key="`${item.type}-${item.index}`"
+                      :class="[sequenceItemClass(item), item.track]"
+                    >
+                      <i></i>
+                      <div class="markov-node-label">
+                        <strong>{{ item.label }}</strong>
+                        <span>#{{ item.index + 1 }}</span>
+                      </div>
+                    </article>
+                  </div>
+                </div>
+
+                <div v-if="model.key === 'context'" class="context-check-grid">
+                  <article v-for="check in model.contextChecks" :key="check.key" :class="check.status">
+                    <span>{{ check.label }}</span>
+                    <strong>{{ check.sampleSize }} / {{ check.recommended }}</strong>
+                    <small>{{ check.status === 'monitoring' || check.status === 'active' ? '监测中' : '样本不足' }}</small>
+                  </article>
+                </div>
+
+                <div v-if="model.key === 'rule'" class="model-bars-large" :class="`model-bars-${model.key}`">
+                  <div v-for="bar in model.bars" :key="bar.label" :class="bar.tone">
+                    <label>
+                      <span>{{ bar.label }}</span>
+                      <strong>{{ modelBarText(bar) }}</strong>
+                    </label>
+                    <i><b :style="modelBarStyle(bar)"></b></i>
+                    <small>{{ bar.caption }}</small>
+                  </div>
+                </div>
+
+                <div v-if="model.key === 'markov' && model.penaltyBars.length" class="markov-penalty-grid">
+                  <article v-for="bar in model.penaltyBars" :key="bar.key" :class="bar.tone">
+                    <span>{{ bar.label }}</span>
+                    <strong>{{ formatPercent(bar.value) }}</strong>
+                    <small>{{ bar.caption }}</small>
+                  </article>
+                </div>
+                <p v-else-if="model.key === 'markov'" class="model-empty-chart">最近 12 条没有触发降温惩罚的词条。</p>
+
+                <div v-if="model.key === 'cycle' && model.groupBars.length" class="model-group-bars">
+                  <div v-for="bar in model.groupBars" :key="bar.key" :class="bar.tone">
+                    <label>
+                      <span>{{ bar.label }}</span>
+                      <strong>{{ modelBarText(bar) }}</strong>
+                    </label>
+                    <i><b :style="modelBarStyle(bar)"></b></i>
+                    <small>{{ bar.caption }}</small>
+                  </div>
+                </div>
+              </section>
+
+              <section v-else-if="modelInsightView(model) === 'evidence'" class="model-evidence-panel">
+                <div class="model-chart-title">
+                  <div>
+                    <strong>证据来源</strong>
+                    <span>{{ model.detail }}</span>
+                  </div>
+                  <small>{{ model.statusLabel }}</small>
+                </div>
+                <ul>
+                  <li v-for="item in model.evidence" :key="item">
+                    <strong>{{ item }}</strong>
+                    <span>{{ model.chartNote }}</span>
+                  </li>
+                </ul>
+              </section>
+
+              <section v-else class="model-backtest-panel">
+                <div class="model-chart-title">
+                  <div>
+                    <strong>回测表现</strong>
+                    <span>看这个模型当前权重、基础权重和可用回测结果。</span>
+                  </div>
+                  <small>{{ prediction ? '实时权重' : '预览' }}</small>
+                </div>
+                <div class="model-backtest-grid">
+                  <article>
+                    <span>当前权重</span>
+                    <strong>{{ formatPercent(model.weight) }}</strong>
+                  </article>
+                  <article>
+                    <span>基础权重</span>
+                    <strong>{{ formatPercent(model.baseWeight) }}</strong>
+                  </article>
+                  <article>
+                    <span>命中率</span>
+                    <strong>{{ model.hitRate == null ? '暂无' : formatPercent(model.hitRate) }}</strong>
+                  </article>
+                  <article>
+                    <span>Loss</span>
+                    <strong>{{ model.loss == null ? '暂无' : model.loss.toFixed(2) }}</strong>
+                  </article>
+                </div>
+              </section>
+
+              <aside class="model-insight-side">
+                <div class="model-metric-grid">
+                  <div v-for="metric in model.metrics" :key="metric.label">
+                    <span>{{ metric.label }}</span>
+                    <strong>{{ modelMetricText(metric) }}</strong>
+                  </div>
+                </div>
+                <ul>
+                  <li v-for="item in model.evidence" :key="item">{{ item }}</li>
+                </ul>
+                <footer>
+                  <template v-if="model.adjustment?.hit_rate != null">
+                    命中 {{ formatPercent(model.adjustment.hit_rate) }}
+                    {{ model.adjustment.direction === 'up' ? '上调' : model.adjustment.direction === 'down' ? '下调' : '持平' }}
+                  </template>
+                  <template v-else>
+                    当前阶段样本不足，维持基础权重。
+                  </template>
+                </footer>
+              </aside>
+            </div>
           </article>
         </div>
 

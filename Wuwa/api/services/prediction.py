@@ -254,6 +254,47 @@ def _markov_distribution(echo, candidates):
     return _markov_distribution_from_sequence(_historical_substat_sequence(echo.user), candidates)
 
 
+def _markov_recent_counts_from_sequence(sequence):
+    recent_types = sequence[-RECENT_SEQUENCE_WINDOW:]
+    return dict(Counter(recent_types))
+
+
+def _markov_recent_sequence_from_sequence(sequence):
+    return [
+        {
+            "substat_type": substat_type,
+            "label": SUBSTAT_LABELS.get(substat_type, substat_type),
+        }
+        for substat_type in sequence[-RECENT_SEQUENCE_WINDOW:]
+    ]
+
+
+def _markov_penalties_from_sequence(sequence, candidates):
+    recent_types = sequence[-RECENT_SEQUENCE_WINDOW:]
+    if len(recent_types) < 3:
+        return {substat_type: 0.0 for substat_type in candidates}
+
+    counts = Counter(recent_types)
+    expected = len(recent_types) / len(SUBSTAT_TYPES)
+    penalties = {}
+    for substat_type in candidates:
+        excess = (counts[substat_type] - expected) / max(expected, 1)
+        if counts[substat_type] >= RECENT_OVERHEAT_MIN_COUNT and excess > 0:
+            penalties[substat_type] = 1 - exp(-RECENT_BALANCE_STRENGTH * excess)
+        else:
+            penalties[substat_type] = 0.0
+
+    latest_type = recent_types[-1]
+    streak = 0
+    for substat_type in reversed(recent_types):
+        if substat_type != latest_type:
+            break
+        streak += 1
+    if latest_type in penalties and streak >= RECENT_OVERHEAT_MIN_COUNT:
+        penalties[latest_type] = max(penalties[latest_type], 1 - (1 / streak))
+    return penalties
+
+
 def _rate(sequence, substat_type, window_size):
     window = sequence[-window_size:]
     if not window:
@@ -474,6 +515,102 @@ def _cycle_window_distribution(echo, candidates):
     return _cycle_window_distribution_from_sequence(_historical_substat_sequence(echo.user), candidates)
 
 
+def _substat_labels_for_scores(scores):
+    return {
+        key: {
+            "value": value,
+            "label": SUBSTAT_LABELS.get(key, key),
+        }
+        for key, value in scores.items()
+    }
+
+
+def _dominant_model(weights):
+    active = {key: value for key, value in weights.items() if value > 0}
+    if not active:
+        return None
+    return max(active.items(), key=lambda item: item[1])[0]
+
+
+def _auxiliary_models(weights, dominant):
+    return [
+        key
+        for key, _ in sorted(weights.items(), key=lambda item: item[1], reverse=True)
+        if key != dominant and weights.get(key, 0) > 0
+    ][:2]
+
+
+def _context_diagnostics(total_rolls, weights):
+    recommended_samples = 3000
+    enabled = weights.get("context", 0) > 0 and total_rolls >= recommended_samples
+    status = "enabled" if enabled else "disabled"
+    factor_status = "monitoring" if enabled else "insufficient_data"
+    return {
+        "status": status,
+        "sample_size": total_rolls,
+        "recommended_samples": recommended_samples,
+        "factors": {
+            "set_name": {"label": "set name", "status": factor_status, "sample_size": total_rolls},
+            "cost": {"label": "cost", "status": factor_status, "sample_size": total_rolls},
+            "main_stat": {"label": "main stat", "status": factor_status, "sample_size": total_rolls},
+            "position": {"label": "position", "status": factor_status, "sample_size": total_rolls},
+        },
+    }
+
+
+def _model_diagnostics(sequence, candidates, total_rolls, weights, distributions):
+    bayes_weights = _bayes_component_weights(len(sequence))
+    dominant = _dominant_model(weights)
+    cycle_windows = _cycle_window_probabilities_from_sequence(sequence)
+    cycle_groups = _general_cycle_group_probabilities_from_sequence(sequence)
+    markov_counts = _markov_recent_counts_from_sequence(sequence)
+    markov_penalties = _markov_penalties_from_sequence(sequence, candidates)
+    top_rule = _top_key(distributions.get("rule", {}))
+    top_cycle_window = _top_key(cycle_windows)
+    top_penalty = _top_key(markov_penalties)
+    return {
+        "summary": {
+            "dominant_model": dominant,
+            "auxiliary_models": _auxiliary_models(weights, dominant),
+            "context_status": "disabled" if weights.get("context", 0) <= 0 else "enabled",
+            "confidence_note": "低样本阶段，结论偏观察" if total_rolls < 500 else "样本进入模型验证阶段",
+        },
+        "rule": {
+            "top_balanced_substat": top_rule,
+            "player_note": (
+                f"{SUBSTAT_LABELS[top_rule]}当前更受规则均衡关注。"
+                if top_rule else "等待更多样本后观察全局偏差。"
+            ),
+        },
+        "bayes": {
+            "exact_weight": bayes_weights["exact"],
+            "wildcard_weight": bayes_weights["wildcard"],
+            "alpha": _bayes_dirichlet_alpha(len(sequence)),
+            "player_note": "周期规律正在比较精确片段和通配片段。",
+        },
+        "markov": {
+            "window_size": RECENT_SEQUENCE_WINDOW,
+            "recent_sequence": _markov_recent_sequence_from_sequence(sequence),
+            "recent_counts": _substat_labels_for_scores(markov_counts),
+            "penalties": _substat_labels_for_scores(markov_penalties),
+            "player_note": (
+                f"{SUBSTAT_LABELS[top_penalty]}近期偏热，短期被降温。"
+                if top_penalty and markov_penalties[top_penalty] > 0
+                else "最近窗口没有明显过热词条。"
+            ),
+        },
+        "cycle": {
+            "windows": cycle_windows,
+            "group_scores": cycle_groups,
+            "player_note": (
+                f"当前更接近{top_cycle_window}窗口。"
+                if top_cycle_window else "周期窗口信号暂不明显。"
+            ),
+        },
+        "context": _context_diagnostics(total_rolls, weights),
+    }
+
+
 def _context_distribution(echo, candidates):
     return _uniform_distribution(candidates)
 
@@ -584,6 +721,7 @@ def _serializable_tier_table(substat_type):
 def predict_next_substat(echo):
     candidates = _legal_candidates(echo)
     _, total_rolls = _historical_substat_counts(echo.user)
+    sequence = _historical_substat_sequence(echo.user)
     base_weights = _model_weights(total_rolls)
     weights, weight_adjustments = _dynamic_weight_result(echo.user, base_weights)
     distributions = {
@@ -594,6 +732,7 @@ def predict_next_substat(echo):
         "context": _context_distribution(echo, candidates),
     }
     final = _weighted_distribution(distributions, weights)
+    diagnostics = _model_diagnostics(sequence, candidates, total_rolls, weights, distributions)
 
     rows = []
     for substat_type in candidates:
@@ -621,6 +760,8 @@ def predict_next_substat(echo):
         "weight_adjustments": weight_adjustments,
         "model_labels": dict(MODEL_LABELS),
         "weight_stage": _weight_stage(total_rolls),
+        "sample_size": total_rolls,
         "confidence": "low" if total_rolls < 500 else "medium",
+        "model_diagnostics": diagnostics,
         "candidates": rows,
     }
