@@ -47,7 +47,7 @@ MODEL_LABELS = {
     "rule": "规则均衡",
     "bayes": "周期规律",
     "markov": "近期序列",
-    "cycle": "双爆窗口",
+    "cycle": "词条窗口",
     "context": "上下文监测",
 }
 

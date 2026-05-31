@@ -604,7 +604,7 @@ def _model_diagnostics(sequence, candidates, total_rolls, weights, distributions
             "group_scores": cycle_groups,
             "player_note": (
                 f"当前更接近{top_cycle_window}窗口。"
-                if top_cycle_window else "周期窗口信号暂不明显。"
+                if top_cycle_window else "词条窗口信号暂不明显。"
             ),
         },
         "context": _context_diagnostics(total_rolls, weights),

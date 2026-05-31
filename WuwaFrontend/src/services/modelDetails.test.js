@@ -11,8 +11,8 @@ test('builds large model cards with chart data and disabled context state', () =
       model_labels: {
         rule: '规则均衡',
         bayes: '周期规律',
-        markov: '近期过热',
-        cycle: '周期窗口',
+        markov: '近期序列',
+        cycle: '词条窗口',
         context: '上下文监测',
       },
       candidates: [
@@ -57,7 +57,7 @@ test('builds large model cards with chart data and disabled context state', () =
   assert.deepEqual(cards.map((card) => card.key), ['rule', 'bayes', 'markov', 'cycle', 'context'])
   assert.ok(cards.every((card) => card.bars.length > 0), 'each card exposes chart bars')
   assert.ok(cards.every((card) => card.metrics.length > 0), 'each card exposes summary metrics')
-  assert.ok(cards.every((card) => card.tabs.length === 3), 'each card exposes direct tab controls')
+  assert.ok(cards.every((card) => card.tabs.length === 2), 'each card exposes non-redundant tab controls')
 
   const context = cards.find((card) => card.key === 'context')
   assert.equal(context.status, 'disabled')
@@ -70,6 +70,10 @@ test('builds large model cards with chart data and disabled context state', () =
   const cycle = cards.find((card) => card.key === 'cycle')
   assert.equal(cycle.windows.length, 4)
   assert.ok(cycle.groupBars.length > 0)
+
+  const rule = cards.find((card) => card.key === 'rule')
+  assert.equal(rule.hitRate, 0.31)
+  assert.equal(rule.loss, 2.07)
 })
 
 test('prefers backend model diagnostics over frontend approximations', () => {
@@ -102,7 +106,7 @@ test('prefers backend model diagnostics over frontend approximations', () => {
         cycle: {
           windows: { double: 0.4, single_rate: 0.2, single_damage: 0.15, cooldown: 0.25 },
           group_scores: { attack: 0.34, hp: 0.12, defense: 0.14, damage_bonus: 0.26, energy: 0.14 },
-          player_note: '当前更接近双爆窗口。',
+          player_note: '当前更接近词条窗口。',
         },
         context: {
           status: 'disabled',

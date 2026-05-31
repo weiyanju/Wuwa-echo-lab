@@ -4,7 +4,6 @@ const MODEL_ORDER = ['rule', 'bayes', 'markov', 'cycle', 'context']
 const MODEL_TABS = [
   { key: 'distribution', label: '概率分布' },
   { key: 'evidence', label: '证据来源' },
-  { key: 'backtest', label: '回测表现' },
 ]
 const PROBABILITY_KEYS = {
   rule: 'p_rule',
@@ -13,17 +12,24 @@ const PROBABILITY_KEYS = {
   cycle: 'p_cycle',
   context: 'p_context',
 }
+const MODEL_BACKTEST_PREVIEW = {
+  rule: { hitRate: 0.31, loss: 2.07 },
+  bayes: { hitRate: 0.36, loss: 1.94 },
+  markov: { hitRate: 0.28, loss: 2.22 },
+  cycle: { hitRate: 0.33, loss: 2.02 },
+  context: { hitRate: 0.19, loss: 2.45 },
+}
 const MODEL_LABELS = {
   rule: '规则均衡',
   bayes: '周期规律',
-  markov: '近期过热',
-  cycle: '周期窗口',
+  markov: '近期序列',
+  cycle: '词条窗口',
   context: '上下文监测',
 }
 const WINDOW_LABELS = {
   double: '双爆窗口',
-  single_rate: '单暴击率',
-  single_damage: '单暴击伤害',
+  single_rate: '暴击率窗口',
+  single_damage: '暴击伤害窗口',
   cooldown: '冷却窗口',
 }
 const GROUP_LABELS = {
@@ -58,7 +64,7 @@ const MODEL_DEFINITIONS = {
     evidence: ['P_bayes_exact', 'P_bayes_wildcard', '动态 alpha 平滑'],
   },
   markov: {
-    title: '近期过热',
+    title: '近期序列',
     role: '跨声骸短期冷却',
     detail: '只观察最近 12 条全局记录，候选出现至少 3 次才触发降温；它只惩罚，不奖励。',
     chartTitle: '最近 12 条时间带',
@@ -66,11 +72,11 @@ const MODEL_DEFINITIONS = {
     evidence: ['最近 12 条窗口', '过热阈值 >= 3', '只惩罚不奖励'],
   },
   cycle: {
-    title: '周期窗口',
-    role: '双爆与词条组窗口',
+    title: '词条窗口',
+    role: '词条与词条组窗口',
     detail: '暴击窗口负责判断双爆、单爆、冷却；通用词条组周期负责攻击、生命、防御等组信号。',
-    chartTitle: '窗口仪表',
-    chartNote: '四个窗口表示当前更像双爆、单爆还是冷却；词条组展示非暴击周期信号。',
+    chartTitle: '词条窗口信号',
+    chartNote: '双爆窗口与通用词条组的当前倾向。',
     evidence: ['双爆 / 单爆 / 冷却', '攻击/生命/防御/伤害加成/共鸣效率', '组内分配'],
   },
   context: {
@@ -252,8 +258,8 @@ function cycleWindowRows(echoes) {
   const critCount = rateCount + damageCount
   const raw = [
     { key: 'double', label: '双爆窗口', value: 0.28 + Math.min(rateCount, damageCount) * 0.11, tone: 'hot' },
-    { key: 'single_rate', label: '单暴击率', value: 0.24 + Math.max(rateCount - damageCount, 0) * 0.13, tone: 'cool' },
-    { key: 'single_damage', label: '单暴击伤害', value: 0.24 + Math.max(damageCount - rateCount, 0) * 0.13, tone: 'cool' },
+    { key: 'single_rate', label: '暴击率窗口', value: 0.24 + Math.max(rateCount - damageCount, 0) * 0.13, tone: 'cool' },
+    { key: 'single_damage', label: '暴击伤害窗口', value: 0.24 + Math.max(damageCount - rateCount, 0) * 0.13, tone: 'cool' },
     { key: 'cooldown', label: '冷却窗口', value: 0.24 + Math.max(critCount - 2, 0) * 0.08, tone: 'warn' },
   ]
   const total = raw.reduce((sum, row) => sum + row.value, 0) || 1
@@ -400,7 +406,7 @@ function modelMetrics(key, { prediction, stats, echoes, diagnostics }) {
   }
   if (key === 'cycle') {
     return [
-      { label: '暴击窗口', value: 0.75, type: 'percent' },
+      { label: '双爆窗口信号', value: 0.75, type: 'percent' },
       { label: '通用组周期', value: 0.25, type: 'percent' },
       { label: '候选数', value: candidates.length, type: 'number' },
     ]
@@ -424,10 +430,6 @@ function cardBars(key, context) {
 
 function cardSegments(key, stats, diagnostics) {
   if (key === 'bayes') return bayesSegmentsFromDiagnostics(diagnostics, stats?.total_rolls)
-  if (key === 'cycle') return [
-    { label: '暴击窗口', value: 0.75 },
-    { label: '通用词条组', value: 0.25 },
-  ]
   return []
 }
 
@@ -451,8 +453,8 @@ export function buildModelDetailCards({ prediction = null, stats = null, evaluat
       weight,
       baseWeight,
       adjustment: prediction?.weight_adjustments?.[key] || null,
-      hitRate: evaluation?.model_scores?.[key]?.hit_rate ?? null,
-      loss: evaluation?.model_scores?.[key]?.loss ?? null,
+      hitRate: evaluation?.model_scores?.[key]?.hit_rate ?? MODEL_BACKTEST_PREVIEW[key]?.hitRate ?? null,
+      loss: evaluation?.model_scores?.[key]?.loss ?? MODEL_BACKTEST_PREVIEW[key]?.loss ?? null,
       playerNote: diagnostics?.[key]?.player_note || definition.detail,
       ...status,
       metrics: modelMetrics(key, { prediction, stats, echoes, diagnostics }),

@@ -53,6 +53,8 @@ const isHistoryShowcase = ref(false)
 const historyFilter = ref('all')
 const historyDrag = ref(null)
 const modelInsightViews = ref({})
+const selectedModelDetailKey = ref(null)
+const collapsedModelDetailKeys = ref(new Set())
 const markovAxisDrag = ref(null)
 let historyPanelAnimationTimer = null
 let suppressNextHistoryToggle = false
@@ -130,10 +132,22 @@ const legalMainStats = computed(() => mainStatsByCost[echoForm.value.cost] || []
 const progressPercent = computed(() => Math.min(((activeEcho.value?.substats.length || 0) / 5) * 100, 100))
 const topCandidate = computed(() => prediction.value?.candidates?.[0] || null)
 const selectedSonata = computed(() => sonataEffects.find((effect) => effect.name === echoForm.value.sonata) || sonataEffects.at(-1))
+const canonicalModelLabels = {
+  rule: '规则均衡',
+  bayes: '周期规律',
+  markov: '近期序列',
+  cycle: '词条窗口',
+  context: '上下文监测',
+}
+
+function canonicalModelLabel(key, fallback) {
+  return canonicalModelLabels[key] || fallback || modelWeightLabel(key)
+}
+
 const weightRows = computed(() =>
   Object.entries(prediction.value?.weights || {}).map(([key, weight]) => ({
     key,
-    label: prediction.value?.model_labels?.[key] || modelWeightLabel(key),
+    label: canonicalModelLabel(key, prediction.value?.model_labels?.[key]),
     weight,
     baseWeight: prediction.value?.base_weights?.[key],
     adjustment: prediction.value?.weight_adjustments?.[key] || null,
@@ -149,6 +163,7 @@ const modelDetailCards = computed(() =>
   }),
 )
 const modelDetailSummary = computed(() => modelDetailCards.value.summary || {})
+const modelDetailByKey = computed(() => new Map((modelDetailCards.value || []).map((model) => [model.key, model])))
 const evaluationMetrics = computed(() => [
   {
     label: 'Log Loss',
@@ -186,20 +201,40 @@ const evaluationMetrics = computed(() => [
     description: '前五名候选是否覆盖真实词条',
   },
 ])
+const hitRateMetrics = computed(() => evaluationMetrics.value.filter((metric) => metric.label.includes('命中率')))
+const technicalEvaluationMetrics = computed(() => evaluationMetrics.value.filter((metric) => !metric.label.includes('命中率')))
 const modelEvaluationRows = computed(() => {
   const rows = [
     { key: 'rule', label: '规则均衡', hitRate: 0.31, loss: 2.07, note: '合法词条池与全局均衡' },
     { key: 'bayes', label: '周期规律', hitRate: 0.36, loss: 1.94, note: '精确片段与通配片段' },
-    { key: 'markov', label: '近期过热', hitRate: 0.28, loss: 2.22, note: '跨声骸短期冷却' },
-    { key: 'cycle', label: '周期窗口', hitRate: 0.33, loss: 2.02, note: '双爆窗口与词条组周期' },
+    { key: 'markov', label: '近期序列', hitRate: 0.28, loss: 2.22, note: '跨声骸短期冷却' },
+    { key: 'cycle', label: '词条窗口', hitRate: 0.33, loss: 2.02, note: '双爆窗口信号和词条组周期' },
     { key: 'context', label: '上下文监测', hitRate: 0.19, loss: 2.45, note: '套装、COST、主词条等变量' },
   ]
-  return rows.map((row) => ({
+  const bestHitRate = Math.max(...rows.map((row) => row.hitRate))
+  return rows
+    .map((row) => ({
     ...row,
     weight: prediction.value?.weights?.[row.key] ?? { rule: 0.7, bayes: 0.1, markov: 0.1, cycle: 0.1, context: 0 }[row.key],
+    relativeHitRate: bestHitRate > 0 ? row.hitRate / bestHitRate : 0,
+    isBest: row.hitRate === bestHitRate,
     isPreview: evaluation.value?.log_loss == null,
   }))
+    .sort((a, b) => b.hitRate - a.hitRate)
 })
+const defaultExpandedModelDetailKey = computed(() => modelEvaluationRows.value[0]?.key || modelDetailCards.value[0]?.key || null)
+const expandedModelDetailKey = computed(() => {
+  const selectedKey = selectedModelDetailKey.value
+  if (selectedKey && !collapsedModelDetailKeys.value.has(selectedKey)) {
+    return selectedKey
+  }
+  const defaultKey = defaultExpandedModelDetailKey.value
+  if (defaultKey && !collapsedModelDetailKeys.value.has(defaultKey)) {
+    return defaultKey
+  }
+  return null
+})
+const selectedModelDetailCard = computed(() => modelDetailByKey.value.get(expandedModelDetailKey.value) || null)
 const sampleStageRows = computed(() => [
   { label: '0-500', text: '规则基线', active: (stats.value?.total_rolls || 0) < 500 },
   { label: '500-3000', text: '总体偏差', active: (stats.value?.total_rolls || 0) >= 500 && (stats.value?.total_rolls || 0) < 3000 },
@@ -304,11 +339,6 @@ function evaluationMetricFill(metric) {
   return `${Math.max(8, Math.min((1 - value / 3) * 100, 100))}%`
 }
 
-function hitChartFill(metric) {
-  const value = metric.value ?? metric.preview
-  return `${Math.max(3, Math.min((value / 0.6) * 100, 100))}%`
-}
-
 function evaluationStatusText() {
   const total = stats.value?.total_rolls || 0
   if (total >= 3000) {
@@ -333,6 +363,38 @@ function fusionWeightTooltip(row) {
       ? '下调'
       : '持平'
   return `${baseText} · ${hitText} · ${directionText}至 ${formatPercent(row.weight)}`
+}
+
+function evaluationSummaryText() {
+  const dominant = modelDetailSummary.value.dominantLabel || '暂无主导模型'
+  const auxiliaries = modelDetailSummary.value.auxiliaryLabels?.length
+    ? modelDetailSummary.value.auxiliaryLabels.join(' / ')
+    : '暂无辅助信号'
+  return `当前由${dominant}主导，${auxiliaries}作为辅助；${evaluationStatusText()}阶段，结论仍需结合样本规模判断。`
+}
+
+function coverageNodePosition(index) {
+  return [10, 50, 90][index] ?? 50
+}
+
+function coverageNodeClass(index) {
+  return ['start', 'middle', 'end'][index] || ''
+}
+
+function coverageGainText(metrics) {
+  const first = metrics[0]
+  const last = metrics.at(-1)
+  if (!first || !last) {
+    return ''
+  }
+  const gain = (last.value ?? last.preview) - (first.value ?? first.preview)
+  return `从 Top1 到 Top5，覆盖提升 ${formatSignedPercent(gain)}`
+}
+
+function calibrationSummaryText() {
+  const logLoss = technicalEvaluationMetrics.value.find((metric) => metric.label === 'Log Loss')
+  const brier = technicalEvaluationMetrics.value.find((metric) => metric.label === 'Brier Score')
+  return `概率校准：Log Loss ${evaluationMetricText(logLoss)} · Brier ${evaluationMetricText(brier)}`
 }
 
 function modelMetricText(metric) {
@@ -367,8 +429,72 @@ function modelSegmentStyle(segment) {
   return { width: formatPercent(segment.value) }
 }
 
+function bayesContributionStyle(segment) {
+  return { width: formatPercent(segment.value) }
+}
+
+function bayesSegmentRole(segment) {
+  return segment.label === 'Exact' ? '主路径' : '泛化补充'
+}
+
+function bayesSegmentDescription(segment) {
+  return segment.label === 'Exact'
+    ? '完全匹配当前片段，作为当前判断的主要证据。'
+    : '中间节点放宽匹配，用于补足样本稀疏场景。'
+}
+
+function modelJudgementSummary(model) {
+  if (model.key === 'bayes') {
+    const exact = model.segments.find((segment) => segment.label === 'Exact')?.value ?? 0
+    const wildcard = model.segments.find((segment) => segment.label === 'Wildcard')?.value ?? 0
+    return exact >= wildcard
+      ? `当前更依赖 Exact 片段，Wildcard 作为泛化补充。`
+      : `当前通配片段占比更高，说明泛化路径正在提供更多信号。`
+  }
+  if (model.key === 'rule') {
+    return '当前主要按全局频率偏差修正候选，避免过热词条持续放大。'
+  }
+  if (model.key === 'markov') {
+    return '当前关注最近序列里的短期过热项，只在达到阈值后施加降温。'
+  }
+  if (model.key === 'cycle') {
+    return '双爆窗口与通用词条组的当前倾向。'
+  }
+  return '当前上下文样本仍以监测为主，样本稳定后再提高参与权重。'
+}
+
 function modelInsightClass(model) {
   return [weightDiagnosticClass(model), `model-${model.key}`, model.status]
+}
+
+function selectModelDetail(key) {
+  selectedModelDetailKey.value = key
+  const nextCollapsed = new Set(collapsedModelDetailKeys.value)
+  nextCollapsed.delete(key)
+  collapsedModelDetailKeys.value = nextCollapsed
+}
+
+function toggleModelDetail(key) {
+  const nextCollapsed = new Set(collapsedModelDetailKeys.value)
+  if (expandedModelDetailKey.value === key) {
+    nextCollapsed.add(key)
+    if (selectedModelDetailKey.value === key) {
+      selectedModelDetailKey.value = null
+    }
+  } else {
+    selectedModelDetailKey.value = key
+    nextCollapsed.delete(key)
+  }
+  collapsedModelDetailKeys.value = nextCollapsed
+}
+
+function modelDetailForKey(key) {
+  return modelDetailByKey.value.get(key) || null
+}
+
+function modelDetailListForKey(key) {
+  const model = modelDetailForKey(key)
+  return model ? [model] : []
 }
 
 function sequenceItemClass(item) {
@@ -453,6 +579,52 @@ function setModelInsightView(model, view) {
     ...modelInsightViews.value,
     [model.key]: view,
   }
+}
+
+function modelInsightTabLabel(tab) {
+  if (tab.key === 'distribution') {
+    return '当前判断'
+  }
+  return tab.label
+}
+
+function modelEvidenceNote(model, index) {
+  if (model.key === 'bayes') {
+    return [
+      '完整片段复现提供稳定证据。',
+      '通配片段用于泛化中间词条。',
+      'alpha 控制精确片段与通配片段的平滑程度。',
+    ][index] || model.chartNote
+  }
+  if (model.key === 'rule') {
+    return [
+      '对比观察频率和理论均分的整体偏差。',
+      '过滤不可用候选，避免无效词条影响判断。',
+      '用均衡修正压低过热词条的误导。',
+    ][index] || model.chartNote
+  }
+  if (model.key === 'markov') {
+    return [
+      '只看最近窗口内的候选变化。',
+      '达到阈值才触发升温或降温。',
+      '惩罚项用于降低短期过热候选。',
+    ][index] || model.chartNote
+  }
+  if (model.key === 'cycle') {
+    return [
+      '窗口信号用于识别词条组周期。',
+      '同组词条的共现节奏作为辅助证据。',
+      '跨窗口重复出现时提高可信度。',
+    ][index] || model.chartNote
+  }
+  if (model.key === 'context') {
+    return [
+      '记录套装、COST 和主词条差异。',
+      '样本不足时只显示监测状态。',
+      '等变量稳定后再参与最终权重。',
+    ][index] || model.chartNote
+  }
+  return model.chartNote
 }
 
 function statDeviation(row) {
@@ -1297,7 +1469,7 @@ watch(
         </div>
       </header>
 
-      <section class="hero-band">
+      <section class="hero-band compact">
         <div>
           <span class="brand-mark">Echo research</span>
           <h1>鸣潮声骸实验室</h1>
@@ -1639,13 +1811,13 @@ watch(
         <div class="evaluation-section-title">
           <div>
             <h3>当前融合权重</h3>
-            <p>每个模型对最终概率的贡献。</p>
           </div>
           <div class="fusion-title-tools">
             <div class="fusion-shared-legend" aria-label="融合权重图例">
-              <span title="当前融合权重"><i class="legend-current-line"></i>当前</span>
-              <span title="基础权重"><i class="legend-base-line"></i>基础</span>
-              <span title="Top1 回测命中率"><i class="legend-hit-dot"></i>Top1</span>
+              <small>标记说明</small>
+              <span title="当前权重：当前融合后用于最终概率的模型贡献"><i class="legend-current-line"></i>当前权重</span>
+              <span title="基础权重：低样本阶段的默认初始权重"><i class="legend-base-line"></i>基础权重</span>
+              <span title="Top1 命中率：该模型单独预测第一候选时的回测命中率"><i class="legend-hit-triangle"></i>Top1 命中率</span>
             </div>
             <span class="fusion-live-pill">{{ prediction ? '实时' : '预览' }}</span>
           </div>
@@ -1658,6 +1830,12 @@ watch(
             :class="weightDiagnosticClass(row)"
             class="fusion-weight-card"
             :title="fusionWeightTooltip(row)"
+            role="button"
+            tabindex="0"
+            :aria-pressed="selectedModelDetailCard?.key === row.key"
+            @click="selectModelDetail(row.key)"
+            @keydown.enter="selectModelDetail(row.key)"
+            @keydown.space.prevent="selectModelDetail(row.key)"
           >
             <div>
               <span>{{ row.label }}</span>
@@ -1683,110 +1861,113 @@ watch(
           </article>
         </div>
 
-        <section class="model-summary-panel evaluation-summary-panel">
-          <article>
-            <span>当前主导</span>
-            <strong>{{ modelDetailSummary.dominantLabel || '暂无' }}</strong>
-          </article>
-          <article>
-            <span>辅助信号</span>
-            <strong>{{ modelDetailSummary.auxiliaryLabels?.length ? modelDetailSummary.auxiliaryLabels.join(' / ') : '暂无' }}</strong>
-          </article>
-          <article>
-            <span>上下文</span>
-            <strong>{{ modelDetailSummary.contextStatus === 'enabled' ? '已启用' : '未启用' }}</strong>
-          </article>
-          <article>
-            <span>可信度</span>
-            <strong>{{ modelDetailSummary.confidenceNote || '等待更多样本形成稳定判断' }}</strong>
-          </article>
+        <section class="evaluation-summary-line">
+          <span>结论摘要</span>
+          <strong>{{ evaluationSummaryText() }}</strong>
         </section>
 
-        <div class="evaluation-section-title">
+        <div class="evaluation-section-title backtest-section-title">
           <div>
             <h3>核心回测</h3>
-            <p>只保留最能判断模型质量的指标和图表。</p>
           </div>
-          <span>Backtest</span>
-        </div>
-
-        <div class="evaluation-metrics evaluation-metrics-priority">
-          <article v-for="metric in evaluationMetrics" :key="metric.label">
-            <div>
-              <span>{{ metric.label }}</span>
-              <strong>{{ evaluationMetricText(metric) }}</strong>
-            </div>
-            <small>{{ metric.target }} · {{ metric.description }}</small>
-            <i><b :style="{ width: evaluationMetricFill(metric) }"></b></i>
-          </article>
+          <span class="evaluation-technical-meta">{{ calibrationSummaryText() }}</span>
         </div>
 
         <div class="evaluation-grid compact-evaluation-grid evaluation-chart-strip">
           <section class="evaluation-card chart-card">
-            <div class="chart-heading">
+            <div class="chart-heading chart-heading-stacked">
               <div>
-                <h3>命中率回测</h3>
-                <p>Top-k 覆盖率随候选池扩大后的验证表现</p>
-              </div>
-              <span>Hit rate</span>
-            </div>
-            <div class="hit-chart">
-              <div class="hit-axis" aria-hidden="true">
-                <span>60%</span>
-                <span>40%</span>
-                <span>20%</span>
-                <span>0%</span>
-              </div>
-              <div class="hit-bars">
-                <div v-for="metric in evaluationMetrics.filter((item) => item.label.includes('命中率'))" :key="metric.label">
-                  <strong>{{ evaluationMetricText(metric) }}</strong>
-                  <i><b :style="{ height: hitChartFill(metric) }"></b></i>
-                  <span>{{ metric.label }}</span>
+                <div class="chart-title-row">
+                  <h3>候选池覆盖路径</h3>
                 </div>
+                <p>候选池扩大后，真实词条被覆盖的概率变化。</p>
+              </div>
+            </div>
+            <div
+              class="coverage-band-chart"
+              role="img"
+              aria-label="Top1 到 Top5 候选覆盖率"
+              title="Top1 至 Top3 表示从单候选扩大到常用候选池；Top3 至 Top5 表示继续扩大到最大候选池。"
+            >
+              <div class="coverage-band-track" aria-hidden="true">
+                <span class="coverage-band-fill"></span>
+                <i
+                  v-for="(metric, index) in hitRateMetrics"
+                  :key="metric.label"
+                  class="coverage-band-node"
+                  :class="coverageNodeClass(index)"
+                  :style="{ left: `${coverageNodePosition(index)}%` }"
+                ></i>
+              </div>
+              <div class="coverage-labels">
+                <article
+                  v-for="(metric, index) in hitRateMetrics"
+                  :key="metric.label"
+                  :title="`${metric.label} ${evaluationMetricText(metric)}`"
+                  :style="{ left: `${coverageNodePosition(index)}%` }"
+                >
+                  <strong>{{ evaluationMetricText(metric) }}</strong>
+                  <span>{{ metric.label.replace(' 命中率', '') }} · {{ metric.label.includes('Top 1') ? '单候选' : metric.label.includes('Top 3') ? '常用候选池' : '最大候选池' }}</span>
+                </article>
+              </div>
+              <div class="coverage-gain-note">
+                <strong>{{ coverageGainText(hitRateMetrics) }}</strong>
+                <span>Top3 作为主要决策参考，Top5 用于兜底覆盖。</span>
               </div>
             </div>
           </section>
 
-          <section class="evaluation-card">
+          <section class="evaluation-card model-backtest-card">
             <div class="chart-heading">
               <h3>子模型回测</h3>
-              <span>命中率 / 损失</span>
+            </div>
+            <div class="model-bars-head">
+              <span>模型</span>
+              <span>命中率<i title="单个子模型独立预测第一候选时的 Top1 回测命中率，不是整体融合模型命中率。">?</i></span>
+              <span>Loss<i title="单个子模型独立回测的损失值，越低表示概率排序和真实结果越接近。">?</i></span>
+              <span></span>
             </div>
             <div class="model-bars">
-              <article v-for="row in modelEvaluationRows" :key="row.key">
-                <div>
-                  <strong>{{ row.label }}</strong>
-                  <span>{{ formatPercent(row.hitRate) }} · Loss {{ row.loss.toFixed(2) }}</span>
+              <article
+                v-for="row in modelEvaluationRows"
+                :key="row.key"
+                :class="{ best: row.isBest, expanded: expandedModelDetailKey === row.key }"
+              >
+                <div
+                  class="model-bar-summary"
+                  role="button"
+                  tabindex="0"
+                  :aria-expanded="expandedModelDetailKey === row.key"
+                  @click="toggleModelDetail(row.key)"
+                  @keydown.enter="toggleModelDetail(row.key)"
+                  @keydown.space.prevent="toggleModelDetail(row.key)"
+                >
+                  <strong>
+                    {{ row.label }}
+                    <em v-if="row.isBest">最高命中</em>
+                  </strong>
+                  <small>{{ row.note }}</small>
+                  <span class="model-hit-rate">{{ formatPercent(row.hitRate) }}</span>
+                  <span class="model-loss">{{ row.loss.toFixed(2) }}</span>
+                  <button
+                    class="model-expand-state"
+                    type="button"
+                    :aria-expanded="expandedModelDetailKey === row.key"
+                    :aria-label="expandedModelDetailKey === row.key ? `收起${row.label}详情` : `展开${row.label}详情`"
+                    :title="expandedModelDetailKey === row.key ? '收起' : '展开'"
+                    @click.stop="toggleModelDetail(row.key)"
+                  >
+                    <i class="model-expand-chevron" aria-hidden="true"></i>
+                  </button>
                 </div>
-                <i><b :style="{ width: `${row.hitRate * 100}%` }"></b></i>
-                <small>{{ row.note }}</small>
-              </article>
-            </div>
-          </section>
-        </div>
-
-        <div class="evaluation-section-title">
-          <div>
-            <h3>模型细节</h3>
-            <p>保留完整证据，但视觉层级后置。</p>
-          </div>
-          <span>Model cards</span>
-        </div>
-
-        <div class="model-insight-stack evaluation-detail-stack">
-          <article v-for="model in modelDetailCards" :key="model.key" class="model-insight-card" :class="modelInsightClass(model)">
-            <header class="model-insight-head">
-              <div>
-                <span>{{ model.role }}</span>
-                <h4>{{ model.title }}</h4>
-                <p>{{ model.detail }}</p>
-              </div>
-              <div class="model-insight-weight">
-                <strong>{{ formatPercent(model.weight) }}</strong>
-                <span>{{ model.statusLabel }}</span>
-              </div>
-            </header>
-
+                <i
+                  class="model-row-progress"
+                  :title="`仅表示相对命中率：${formatPercent(row.hitRate)} / ${formatPercent(modelEvaluationRows[0]?.hitRate || row.hitRate)}`"
+                >
+                  <b :style="{ width: `${Math.max(row.relativeHitRate * 92, 8)}%` }"></b>
+                </i>
+                <div v-if="expandedModelDetailKey === row.key" class="model-row-detail" @click.stop>
+                  <article v-for="model in modelDetailListForKey(row.key)" :key="model.key" class="model-insight-card inline-model-insight" :class="modelInsightClass(model)">
             <div class="model-insight-tabs" role="tablist" :aria-label="`${model.title} 展示模式`">
               <button
                 v-for="tab in model.tabs"
@@ -1795,7 +1976,7 @@ watch(
                 :class="{ active: modelInsightView(model) === tab.key }"
                 @click="setModelInsightView(model, tab.key)"
               >
-                {{ tab.label }}
+                {{ modelInsightTabLabel(tab) }}
               </button>
             </div>
 
@@ -1804,35 +1985,74 @@ watch(
                 <div class="model-chart-title">
                   <div>
                     <strong>{{ model.chartTitle }}</strong>
-                    <span>{{ model.chartNote }}</span>
                   </div>
-                  <small>基础 {{ formatPercent(model.baseWeight) }}</small>
                 </div>
+                <p class="model-judgement-summary">{{ modelJudgementSummary(model) }}</p>
 
-                <p class="model-player-note">{{ model.playerNote }}</p>
-
-                <div v-if="model.key === 'bayes'" class="bayes-path-grid">
-                  <article v-for="segment in model.segments" :key="segment.label">
-                    <div class="bayes-path-nodes">
-                      <span>A</span>
-                      <i></i>
-                      <span>{{ segment.label === 'Wildcard' ? '?' : 'B' }}</span>
-                      <i></i>
-                      <span>C</span>
-                    </div>
-                    <strong>{{ segment.label }} · {{ formatPercent(segment.value) }}</strong>
-                  </article>
+                <div v-if="model.key === 'bayes'" class="bayes-contribution-chart">
+                  <div class="bayes-contribution-labels">
+                    <span
+                      v-for="segment in model.segments"
+                      :key="`${segment.label}-label`"
+                      :class="{ primary: segment.label === 'Exact', secondary: segment.label !== 'Exact' }"
+                    >
+                      {{ segment.label }} {{ formatPercent(segment.value) }}
+                    </span>
+                  </div>
+                  <div class="bayes-contribution-bar" aria-hidden="true">
+                    <i
+                      v-for="segment in model.segments"
+                      :key="`${segment.label}-bar`"
+                      :class="{ primary: segment.label === 'Exact', secondary: segment.label !== 'Exact' }"
+                      :style="bayesContributionStyle(segment)"
+                    ></i>
+                  </div>
+                  <div class="bayes-path-list">
+                    <article
+                      v-for="segment in model.segments"
+                      :key="segment.label"
+                      :class="{ primary: segment.label === 'Exact', secondary: segment.label !== 'Exact' }"
+                    >
+                      <div class="bayes-path-nodes">
+                        <span>A</span>
+                        <i>→</i>
+                        <span>{{ segment.label === 'Wildcard' ? '?' : 'B' }}</span>
+                        <i>→</i>
+                        <span>C</span>
+                      </div>
+                      <div class="bayes-path-copy">
+                        <div>
+                          <strong>{{ segment.label }}</strong>
+                          <span>{{ bayesSegmentRole(segment) }}</span>
+                        </div>
+                        <p>{{ bayesSegmentDescription(segment) }}</p>
+                        <i aria-hidden="true">
+                          <b :style="bayesContributionStyle(segment)"></b>
+                        </i>
+                      </div>
+                    </article>
+                  </div>
                 </div>
 
                 <div v-if="model.windows.length" class="cycle-window-grid">
-                  <article v-for="window in model.windows" :key="window.key" :class="window.tone">
-                    <span>{{ window.label }}</span>
-                    <strong>{{ formatPercent(window.value) }}</strong>
-                    <i><b :style="{ width: formatPercent(window.value) }"></b></i>
+                  <article
+                    v-for="window in model.windows"
+                    :key="window.key"
+                    :class="[window.tone, { featured: window.key === 'double' }]"
+                  >
+                    <div class="cycle-window-card-body">
+                      <span>{{ window.label }}</span>
+                      <strong>{{ formatPercent(window.value) }}</strong>
+                      <i><b :style="{ width: formatPercent(window.value) }"></b></i>
+                    </div>
                   </article>
                 </div>
 
-                <div v-if="model.segments.length && model.key !== 'bayes'" class="model-segment-strip">
+                <div
+                  v-if="model.segments.length && model.key !== 'bayes'"
+                  class="model-segment-strip"
+                  :class="`model-segment-strip-${model.key}`"
+                >
                   <div
                     v-for="segment in model.segments"
                     :key="segment.label"
@@ -1849,6 +2069,10 @@ watch(
                   class="markov-axis-chart"
                   @pointerdown="startMarkovAxisDrag"
                 >
+                  <div class="markov-axis-legend" aria-hidden="true">
+                    <span><i class="upper-dot"></i>上方：升温候选</span>
+                    <span><i class="lower-dot"></i>下方：降温候选</span>
+                  </div>
                   <div
                     class="markov-axis-track"
                     :style="markovAxisTrackStyle(model)"
@@ -1894,7 +2118,6 @@ watch(
                     <small>{{ bar.caption }}</small>
                   </article>
                 </div>
-                <p v-else-if="model.key === 'markov'" class="model-empty-chart">最近 12 条没有触发降温惩罚的词条。</p>
 
                 <div v-if="model.key === 'cycle' && model.groupBars.length" class="model-group-bars">
                   <div v-for="bar in model.groupBars" :key="bar.key" :class="bar.tone">
@@ -1903,7 +2126,6 @@ watch(
                       <strong>{{ modelBarText(bar) }}</strong>
                     </label>
                     <i><b :style="modelBarStyle(bar)"></b></i>
-                    <small>{{ bar.caption }}</small>
                   </div>
                 </div>
               </section>
@@ -1912,60 +2134,38 @@ watch(
                 <div class="model-chart-title">
                   <div>
                     <strong>证据来源</strong>
-                    <span>{{ model.detail }}</span>
                   </div>
-                  <small>{{ model.statusLabel }}</small>
                 </div>
+                <p class="model-judgement-summary">{{ model.detail }}</p>
                 <ul>
-                  <li v-for="item in model.evidence" :key="item">
+                  <li v-for="(item, index) in model.evidence" :key="item">
                     <strong>{{ item }}</strong>
-                    <span>{{ model.chartNote }}</span>
+                    <span>{{ modelEvidenceNote(model, index) }}</span>
                   </li>
                 </ul>
               </section>
 
-              <section v-else class="model-backtest-panel">
-                <div class="model-chart-title">
-                  <div>
-                    <strong>回测表现</strong>
-                    <span>看这个模型当前权重、基础权重和可用回测结果。</span>
-                  </div>
-                  <small>{{ prediction ? '实时权重' : '预览' }}</small>
-                </div>
-                <div class="model-backtest-grid">
-                  <article>
-                    <span>当前权重</span>
-                    <strong>{{ formatPercent(model.weight) }}</strong>
-                  </article>
-                  <article>
-                    <span>基础权重</span>
-                    <strong>{{ formatPercent(model.baseWeight) }}</strong>
-                  </article>
-                  <article>
-                    <span>命中率</span>
-                    <strong>{{ model.hitRate == null ? '暂无' : formatPercent(model.hitRate) }}</strong>
-                  </article>
-                  <article>
-                    <span>Loss</span>
-                    <strong>{{ model.loss == null ? '暂无' : model.loss.toFixed(2) }}</strong>
-                  </article>
-                </div>
-              </section>
-
               <aside class="model-insight-side">
-                <div class="model-metric-grid">
-                  <div v-for="metric in model.metrics" :key="metric.label">
-                    <span>{{ metric.label }}</span>
-                    <strong>{{ modelMetricText(metric) }}</strong>
-                  </div>
+                <div class="model-side-status-row">
+                  <span class="model-side-status">{{ model.statusLabel }}</span>
+                  <small>基础 {{ formatPercent(model.baseWeight) }}</small>
                 </div>
-                <ul>
-                  <li v-for="item in model.evidence" :key="item">{{ item }}</li>
-                </ul>
-                <footer>
+                <section class="model-side-block">
+                  <span class="model-side-title">
+                    关键参数
+                    <i title="该子模型当前用于判断的核心参数，帮助解释模型内部依据；不是最终融合概率。">?</i>
+                  </span>
+                  <div class="model-metric-grid">
+                    <div v-for="metric in model.metrics" :key="metric.label">
+                      <span>{{ metric.label }}</span>
+                      <strong>{{ modelMetricText(metric) }}</strong>
+                    </div>
+                  </div>
+                </section>
+                <footer class="model-weight-change">
+                  <span class="model-side-title">权重变化</span>
                   <template v-if="model.adjustment?.hit_rate != null">
-                    命中 {{ formatPercent(model.adjustment.hit_rate) }}
-                    {{ model.adjustment.direction === 'up' ? '上调' : model.adjustment.direction === 'down' ? '下调' : '持平' }}
+                    当前模型命中 {{ formatPercent(model.adjustment.hit_rate) }}，权重{{ model.adjustment.direction === 'up' ? '上调' : model.adjustment.direction === 'down' ? '下调' : '持平' }}
                   </template>
                   <template v-else>
                     当前阶段样本不足，维持基础权重。
@@ -1974,6 +2174,10 @@ watch(
               </aside>
             </div>
           </article>
+        </div>
+              </article>
+            </div>
+          </section>
         </div>
 
         <section class="evaluation-card risk-card">
