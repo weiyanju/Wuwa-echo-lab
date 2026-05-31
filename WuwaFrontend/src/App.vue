@@ -234,7 +234,6 @@ const expandedModelDetailKey = computed(() => {
   }
   return null
 })
-const selectedModelDetailCard = computed(() => modelDetailByKey.value.get(expandedModelDetailKey.value) || null)
 const sampleStageRows = computed(() => [
   { label: '0-500', text: '规则基线', active: (stats.value?.total_rolls || 0) < 500 },
   { label: '500-3000', text: '总体偏差', active: (stats.value?.total_rolls || 0) >= 500 && (stats.value?.total_rolls || 0) < 3000 },
@@ -425,6 +424,13 @@ function modelBarStyle(bar) {
   return { width: `${width}%` }
 }
 
+function ruleDeviationStyle(bar) {
+  const width = Math.max(bar.value ? 4 : 0, Math.min((bar.width || 0) * 50, 50))
+  return bar.value < 0
+    ? { width: `${width}%`, right: '50%' }
+    : { width: `${width}%`, left: '50%' }
+}
+
 function modelSegmentStyle(segment) {
   return { width: formatPercent(segment.value) }
 }
@@ -439,8 +445,8 @@ function bayesSegmentRole(segment) {
 
 function bayesSegmentDescription(segment) {
   return segment.label === 'Exact'
-    ? '完全匹配当前片段，作为当前判断的主要证据。'
-    : '中间节点放宽匹配，用于补足样本稀疏场景。'
+    ? '历史里出现过同样走势，当前判断更有底。'
+    : '完整片段不够时，用相似走势补充参考。'
 }
 
 function modelJudgementSummary(model) {
@@ -448,19 +454,19 @@ function modelJudgementSummary(model) {
     const exact = model.segments.find((segment) => segment.label === 'Exact')?.value ?? 0
     const wildcard = model.segments.find((segment) => segment.label === 'Wildcard')?.value ?? 0
     return exact >= wildcard
-      ? `当前更依赖 Exact 片段，Wildcard 作为泛化补充。`
-      : `当前通配片段占比更高，说明泛化路径正在提供更多信号。`
+      ? `当前走势和历史完整片段更接近，判断更有把握。`
+      : `当前完整片段不够明显，会更多参考相似走势。`
   }
   if (model.key === 'rule') {
-    return '当前主要按全局频率偏差修正候选，避免过热词条持续放大。'
+    return '当前用全局分布做兜底，把过热项压低，把偏冷项补回。'
   }
   if (model.key === 'markov') {
-    return '当前关注最近序列里的短期过热项，只在达到阈值后施加降温。'
+    return '当前只看最近记录，短时间内重复太多的候选会被降温。'
   }
   if (model.key === 'cycle') {
-    return '双爆窗口与通用词条组的当前倾向。'
+    return '当前看双爆是否还在热，也看普通词条大类谁可能接棒。'
   }
-  return '当前上下文样本仍以监测为主，样本稳定后再提高参与权重。'
+  return '当前先记录装备条件差异，样本不够时不轻易参与判断。'
 }
 
 function modelInsightClass(model) {
@@ -582,46 +588,43 @@ function setModelInsightView(model, view) {
 }
 
 function modelInsightTabLabel(tab) {
-  if (tab.key === 'distribution') {
-    return '当前判断'
-  }
   return tab.label
 }
 
 function modelEvidenceNote(model, index) {
   if (model.key === 'bayes') {
     return [
-      '完整片段复现提供稳定证据。',
-      '通配片段用于泛化中间词条。',
-      'alpha 控制精确片段与通配片段的平滑程度。',
+      '历史里出现过同样片段，说明这条走势更可靠。',
+      '完整片段不够时，允许中间一步不同来找相似走势。',
+      '样本少时会放缓判断，避免少量记录把结果带偏。',
     ][index] || model.chartNote
   }
   if (model.key === 'rule') {
     return [
-      '对比观察频率和理论均分的整体偏差。',
-      '过滤不可用候选，避免无效词条影响判断。',
-      '用均衡修正压低过热词条的误导。',
+      '比较实际出词和理论均分，判断哪些词条偏热或偏冷。',
+      '只看当前声骸真的能出的词条，不把无效选项算进去。',
+      '偏得越远，拉回均衡的力度越大。',
     ][index] || model.chartNote
   }
   if (model.key === 'markov') {
     return [
-      '只看最近窗口内的候选变化。',
-      '达到阈值才触发升温或降温。',
-      '惩罚项用于降低短期过热候选。',
+      '只看最近 12 条，用来发现刚刚发生的连出。',
+      '同一候选近期出现 3 次以上，才算可能过热。',
+      '这个模型只负责降温，不负责把冷门项抬高。',
     ][index] || model.chartNote
   }
   if (model.key === 'cycle') {
     return [
-      '窗口信号用于识别词条组周期。',
-      '同组词条的共现节奏作为辅助证据。',
-      '跨窗口重复出现时提高可信度。',
+      '判断双爆现在是继续升温、单边偏向，还是进入冷却。',
+      '普通词条按攻击、生命、防御、伤害加成、共鸣效率五组观察。',
+      '先看哪一组可能接棒，再细分到具体词条。',
     ][index] || model.chartNote
   }
   if (model.key === 'context') {
     return [
-      '记录套装、COST 和主词条差异。',
-      '样本不足时只显示监测状态。',
-      '等变量稳定后再参与最终权重。',
+      '观察不同套装下，出词倾向有没有稳定差异。',
+      '把 COST 和主词条分开看，避免不同装备条件混在一起。',
+      '位置也会单独记录；样本不足时只观察，不参与判断。',
     ][index] || model.chartNote
   }
   return model.chartNote
@@ -1830,12 +1833,6 @@ watch(
             :class="weightDiagnosticClass(row)"
             class="fusion-weight-card"
             :title="fusionWeightTooltip(row)"
-            role="button"
-            tabindex="0"
-            :aria-pressed="selectedModelDetailCard?.key === row.key"
-            @click="selectModelDetail(row.key)"
-            @keydown.enter="selectModelDetail(row.key)"
-            @keydown.space.prevent="selectModelDetail(row.key)"
           >
             <div>
               <span>{{ row.label }}</span>
@@ -1982,11 +1979,6 @@ watch(
 
             <div class="model-insight-body">
               <section v-if="modelInsightView(model) === 'distribution'" class="model-insight-chart" :class="`model-chart-${model.key}`">
-                <div class="model-chart-title">
-                  <div>
-                    <strong>{{ model.chartTitle }}</strong>
-                  </div>
-                </div>
                 <p class="model-judgement-summary">{{ modelJudgementSummary(model) }}</p>
 
                 <div v-if="model.key === 'bayes'" class="bayes-contribution-chart">
@@ -2100,15 +2092,27 @@ watch(
                   </article>
                 </div>
 
-                <div v-if="model.key === 'rule'" class="model-bars-large" :class="`model-bars-${model.key}`">
-                  <div v-for="bar in model.bars" :key="bar.label" :class="bar.tone">
-                    <label>
-                      <span>{{ bar.label }}</span>
-                      <strong>{{ modelBarText(bar) }}</strong>
-                    </label>
-                    <i><b :style="modelBarStyle(bar)"></b></i>
-                    <small>{{ bar.caption }}</small>
+                <div v-if="model.key === 'rule'" class="rule-deviation-chart">
+                  <div class="rule-deviation-scale" aria-hidden="true">
+                    <span></span>
+                    <div>
+                      <span>偏冷</span>
+                      <strong>均衡线</strong>
+                      <span>偏热</span>
+                    </div>
+                    <span></span>
                   </div>
+                  <article v-for="bar in model.bars" :key="bar.label" :class="bar.tone">
+                    <div class="rule-deviation-copy">
+                      <strong>{{ bar.label }}</strong>
+                      <span>{{ bar.caption }}</span>
+                    </div>
+                    <div class="rule-deviation-axis">
+                      <i aria-hidden="true"></i>
+                      <b :style="ruleDeviationStyle(bar)"></b>
+                    </div>
+                    <strong class="rule-deviation-value">{{ modelBarText(bar) }}</strong>
+                  </article>
                 </div>
 
                 <div v-if="model.key === 'markov' && model.penaltyBars.length" class="markov-penalty-grid">
@@ -2131,11 +2135,6 @@ watch(
               </section>
 
               <section v-else-if="modelInsightView(model) === 'evidence'" class="model-evidence-panel">
-                <div class="model-chart-title">
-                  <div>
-                    <strong>证据来源</strong>
-                  </div>
-                </div>
                 <p class="model-judgement-summary">{{ model.detail }}</p>
                 <ul>
                   <li v-for="(item, index) in model.evidence" :key="item">

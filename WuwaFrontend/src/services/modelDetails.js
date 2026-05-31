@@ -2,8 +2,8 @@ export const ACTIVE_MODEL_WEIGHT_EPSILON = 0.0001
 
 const MODEL_ORDER = ['rule', 'bayes', 'markov', 'cycle', 'context']
 const MODEL_TABS = [
-  { key: 'distribution', label: '概率分布' },
-  { key: 'evidence', label: '证据来源' },
+  { key: 'distribution', label: '模型细节' },
+  { key: 'evidence', label: '指标说明' },
 ]
 const PROBABILITY_KEYS = {
   rule: 'p_rule',
@@ -49,42 +49,42 @@ const SUBSTAT_GROUPS = {
 const MODEL_DEFINITIONS = {
   rule: {
     title: '规则均衡',
-    role: '长期全局回归',
-    detail: '观察全局出现频率和理论均分的偏差，压低过热词条，抬高偏冷词条。',
+    role: '看长期分布，把出偏的词条拉回来',
+    detail: '规则均衡负责兜底：某类词条出得太多就降一点，长期偏少就补一点，让整体分布不被短期运气带歪。',
     chartTitle: '全局偏差',
-    chartNote: '观察频率相对理论均分的偏离越大，规则均衡越会反向修正。',
+    chartNote: '实际分布偏得越明显，系统拉回均衡的力度越强。',
     evidence: ['全局频率偏差', '当前合法候选池', '指数型均衡修正'],
   },
   bayes: {
     title: '周期规律',
-    role: '历史片段复现',
-    detail: '融合精确片段和 A -> 任意 -> C 通配片段，样本越多，通配片段越有话语权。',
+    role: '看历史片段，找当前最像的走势',
+    detail: '周期规律会拿当前出词顺序去对照历史。',
     chartTitle: '片段路径',
-    chartNote: 'Exact 代表完全片段复现，Wildcard 代表中间词条泛化后的片段复现。',
+    chartNote: 'Exact 高说明当前走势很像历史原片段；Wildcard 高说明完整样本不够，需要用相似走势补判断。',
     evidence: ['P_bayes_exact', 'P_bayes_wildcard', '动态 alpha 平滑'],
   },
   markov: {
     title: '近期序列',
-    role: '跨声骸短期冷却',
-    detail: '只观察最近 12 条全局记录，候选出现至少 3 次才触发降温；它只惩罚，不奖励。',
+    role: '看最近记录，给短期连出降温',
+    detail: '近期序列只盯最近 12 条。某个候选短时间内出得太密，就先降温；没明显连出时，它不会主动改判断。',
     chartTitle: '最近 12 条时间带',
-    chartNote: '相同词条越密集，越可能触发短期降温。',
+    chartNote: '最近窗口里重复越密集，短期冷却越明显。',
     evidence: ['最近 12 条窗口', '过热阈值 >= 3', '只惩罚不奖励'],
   },
   cycle: {
     title: '词条窗口',
-    role: '词条与词条组窗口',
-    detail: '暴击窗口负责判断双爆、单爆、冷却；通用词条组周期负责攻击、生命、防御等组信号。',
+    role: '看双爆节奏，也看普通词条大类',
+    detail: '词条窗口先判断双爆现在是升温、单边偏向还是冷却，再观察攻击、生命、防御等普通词条大类有没有接棒趋势。',
     chartTitle: '词条窗口信号',
-    chartNote: '双爆窗口与通用词条组的当前倾向。',
+    chartNote: '双爆窗口看暴击类是否还在热；通用词条组看其他大类谁更可能接下来冒头。',
     evidence: ['双爆 / 单爆 / 冷却', '攻击/生命/防御/伤害加成/共鸣效率', '组内分配'],
   },
   context: {
     title: '上下文监测',
-    role: '样本足够后参与',
-    detail: '预留套装、COST、主词条、位置变量；未启用时只展示监测状态，不参与最终预测。',
+    role: '看装备条件，样本够了才相信',
+    detail: '上下文监测会分开记录套装、COST、主词条和位置。样本还少时只做观察，避免把巧合当成规律。',
     chartTitle: '启用条件',
-    chartNote: '这些变量样本足够且偏差稳定后，才会提升上下文模型权重。',
+    chartNote: '只有样本够多、差异也稳定时，上下文模型才会真正参与判断。',
     evidence: ['set name', 'cost', 'main stat', 'position'],
   },
 }
