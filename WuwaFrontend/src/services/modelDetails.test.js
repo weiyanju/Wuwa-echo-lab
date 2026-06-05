@@ -62,6 +62,7 @@ test('builds large model cards with chart data and disabled context state', () =
   const context = cards.find((card) => card.key === 'context')
   assert.equal(context.status, 'disabled')
   assert.equal(context.statusLabel, '未启用')
+  assert.deepEqual(context.contextChecks.map((item) => item.label), ['COST 档位', '主词条类型'])
 
   const bayes = cards.find((card) => card.key === 'bayes')
   assert.equal(bayes.segments.length, 2)
@@ -72,8 +73,8 @@ test('builds large model cards with chart data and disabled context state', () =
   assert.ok(cycle.groupBars.length > 0)
 
   const rule = cards.find((card) => card.key === 'rule')
-  assert.equal(rule.hitRate, 0.31)
-  assert.equal(rule.loss, 2.07)
+  assert.equal(rule.hitRate, null)
+  assert.equal(rule.loss, null)
 })
 
 test('prefers backend model diagnostics over frontend approximations', () => {
@@ -128,11 +129,34 @@ test('prefers backend model diagnostics over frontend approximations', () => {
   const markov = cards.find((card) => card.key === 'markov')
   assert.equal(markov.penaltyBars[0].value, 0.42)
   assert.deepEqual(markov.recentSequence.map((item) => item.type), ['crit_rate', 'flat_atk'])
-  assert.deepEqual(markov.timelineNodes.map((item) => item.type), ['flat_atk', 'crit_rate'])
+  assert.deepEqual(markov.timelineNodes.map((item) => item.type), ['crit_rate', 'flat_atk'])
   assert.deepEqual(markov.timelineNodes.map((item) => item.index), [0, 1])
   assert.deepEqual(markov.timelineNodes.map((item) => item.track), ['upper', 'lower'])
   assert.deepEqual(markov.timelineNodes.map((item) => item.progress), [0, 1])
   assert.equal(cards.find((card) => card.key === 'context').contextChecks[0].recommended, 3000)
+})
+
+test('keeps context detail expandable when context factors are missing', () => {
+  const cards = buildModelDetailCards({
+    prediction: {
+      weights: { rule: 0.7, bayes: 0.1, markov: 0.1, cycle: 0.1, context: 0 },
+      base_weights: { rule: 0.7, bayes: 0.1, markov: 0.1, cycle: 0.1, context: 0 },
+      candidates: [],
+      model_diagnostics: {
+        context: {
+          status: 'disabled',
+          sample_size: 40,
+          recommended_samples: 3000,
+        },
+      },
+    },
+    stats: { total_rolls: 40, substat_frequency: {}, context_factors: {} },
+  })
+
+  const context = cards.find((card) => card.key === 'context')
+  assert.deepEqual(context.contextChecks.map((item) => item.label), ['套装条件', 'COST 档位', '主词条类型', '副词条位置'])
+  assert.ok(context.contextChecks.every((item) => item.sampleSize === 40))
+  assert.ok(context.contextChecks.every((item) => item.recommended === 3000))
 })
 
 test('accepts backend stats maps for substat frequency', () => {

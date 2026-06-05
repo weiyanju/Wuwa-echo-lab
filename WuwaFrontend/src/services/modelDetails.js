@@ -12,13 +12,6 @@ const PROBABILITY_KEYS = {
   cycle: 'p_cycle',
   context: 'p_context',
 }
-const MODEL_BACKTEST_PREVIEW = {
-  rule: { hitRate: 0.31, loss: 2.07 },
-  bayes: { hitRate: 0.36, loss: 1.94 },
-  markov: { hitRate: 0.28, loss: 2.22 },
-  cycle: { hitRate: 0.33, loss: 2.02 },
-  context: { hitRate: 0.19, loss: 2.45 },
-}
 const MODEL_LABELS = {
   rule: '规则均衡',
   bayes: '周期规律',
@@ -26,6 +19,17 @@ const MODEL_LABELS = {
   cycle: '词条窗口',
   context: '上下文监测',
 }
+const CONTEXT_FACTOR_LABELS = {
+  set_name: '套装条件',
+  'set name': '套装条件',
+  set: '套装条件',
+  cost: 'COST 档位',
+  main_stat: '主词条类型',
+  'main stat': '主词条类型',
+  mainStat: '主词条类型',
+  position: '副词条位置',
+}
+const CONTEXT_FACTOR_KEYS = ['set_name', 'cost', 'main_stat', 'position']
 const WINDOW_LABELS = {
   double: '双爆窗口',
   single_rate: '暴击率窗口',
@@ -50,15 +54,15 @@ const MODEL_DEFINITIONS = {
   rule: {
     title: '规则均衡',
     role: '看长期分布，把出偏的词条拉回来',
-    detail: '规则均衡负责兜底：某类词条出得太多就降一点，长期偏少就补一点，让整体分布不被短期运气带歪。',
+    detail: '该子模型会比较副词条实际分布与基线，偏离越远，修正力度越强。',
     chartTitle: '全局偏差',
     chartNote: '实际分布偏得越明显，系统拉回均衡的力度越强。',
-    evidence: ['全局频率偏差', '当前合法候选池', '指数型均衡修正'],
+    evidence: ['分布偏差', '可出词条', '修正力度'],
   },
   bayes: {
     title: '周期规律',
     role: '看历史片段，找当前最像的走势',
-    detail: '周期规律会拿当前出词顺序去对照历史。',
+    detail: '该子模型会拿副词条出词顺序去对照历史。',
     chartTitle: '片段路径',
     chartNote: 'Exact 高说明当前走势很像历史原片段；Wildcard 高说明完整样本不够，需要用相似走势补判断。',
     evidence: ['P_bayes_exact', 'P_bayes_wildcard', '动态 alpha 平滑'],
@@ -66,32 +70,37 @@ const MODEL_DEFINITIONS = {
   markov: {
     title: '近期序列',
     role: '看最近记录，给短期连出降温',
-    detail: '近期序列只盯最近 12 条。某个候选短时间内出得太密，就先降温；没明显连出时，它不会主动改判断。',
+    detail: '该子模型按录入顺序查看最近 12 条副词条；同一候选短时间内连出越多，冷却越强。',
     chartTitle: '最近 12 条时间带',
-    chartNote: '最近窗口里重复越密集，短期冷却越明显。',
-    evidence: ['最近 12 条窗口', '过热阈值 >= 3', '只惩罚不奖励'],
+    chartNote: '按录入顺序查看短期重复，重复越密集，冷却越明显。',
+    evidence: ['最近记录', '重复判断', '冷却处理'],
   },
   cycle: {
     title: '词条窗口',
     role: '看双爆节奏，也看普通词条大类',
-    detail: '词条窗口先判断双爆现在是升温、单边偏向还是冷却，再观察攻击、生命、防御等普通词条大类有没有接棒趋势。',
+    detail: '该子模型会先判断双爆是否升温、单边偏向或进入冷却，再观察普通副词条组谁更可能接棒。',
     chartTitle: '词条窗口信号',
     chartNote: '双爆窗口看暴击类是否还在热；通用词条组看其他大类谁更可能接下来冒头。',
-    evidence: ['双爆 / 单爆 / 冷却', '攻击/生命/防御/伤害加成/共鸣效率', '组内分配'],
+    evidence: ['双爆状态', '普通词条组', '具体词条'],
   },
   context: {
     title: '上下文监测',
     role: '看装备条件，样本够了才相信',
-    detail: '上下文监测会分开记录套装、COST、主词条和位置。样本还少时只做观察，避免把巧合当成规律。',
+    detail: '该子模型会观察套装、COST、主词条类型和副词条位置是否会对副词条出词倾向产生影响。',
     chartTitle: '启用条件',
-    chartNote: '只有样本够多、差异也稳定时，上下文模型才会真正参与判断。',
-    evidence: ['set name', 'cost', 'main stat', 'position'],
+    chartNote: '观察装备条件是否会改变副词条出词倾向。',
+    evidence: ['套装条件', 'COST 档位', '主词条类型', '副词条位置'],
   },
 }
 
 function clamp(value, min = 0, max = 1) {
   if (!Number.isFinite(value)) return min
   return Math.min(Math.max(value, min), max)
+}
+
+function contextFactorLabel(key, factor) {
+  const rawLabel = String(factor?.label || '').trim()
+  return CONTEXT_FACTOR_LABELS[key] || CONTEXT_FACTOR_LABELS[rawLabel] || CONTEXT_FACTOR_LABELS[rawLabel.toLowerCase()] || rawLabel || key
 }
 
 function asNumber(value, fallback = 0) {
@@ -147,8 +156,9 @@ function ruleDeviationBars(stats, prediction) {
     .map((row) => ({
       label: row.label || row.substat_type,
       value: asNumber(row.observed_rate) - asNumber(row.baseline_rate),
+      observedRate: asNumber(row.observed_rate),
+      baseRate: asNumber(row.baseline_rate),
       type: 'signedPercent',
-      caption: `观察 ${Math.round(asNumber(row.observed_rate) * 10000) / 100}% / 基线 ${Math.round(asNumber(row.baseline_rate) * 10000) / 100}%`,
       tone: asNumber(row.observed_rate) >= asNumber(row.baseline_rate) ? 'hot' : 'warn',
     }))
     .sort((left, right) => Math.abs(right.value) - Math.abs(left.value))
@@ -201,7 +211,7 @@ function withSequenceCounts(sequence) {
 }
 
 function timelineNodesFromSequence(sequence) {
-  const displaySequence = [...sequence].reverse()
+  const displaySequence = [...sequence]
   const lastIndex = Math.max(displaySequence.length - 1, 1)
   return displaySequence.map((item, index) => ({
     ...item,
@@ -345,29 +355,35 @@ function markovPenaltyBarsFromDiagnostics(diagnostics, labels) {
 function contextBars(stats, diagnostics) {
   const factors = diagnostics?.context?.factors || stats?.context_factors || {}
   const rows = Object.entries(factors).map(([key, factor]) => ({
-    label: factor?.label || key,
+    label: contextFactorLabel(key, factor),
     value: asNumber(factor?.sample_size),
     type: 'number',
-    caption: factor?.status === 'active' || factor?.status === 'monitoring' ? '监测中' : '样本不足',
+    caption: '记录进度',
     tone: factor?.status === 'active' || factor?.status === 'monitoring' ? 'hot' : 'warn',
   }))
   return rows.length ? normalizeBars(rows) : normalizeBars([
-    { label: 'set name', value: 0, type: 'number', caption: '待采样', tone: 'warn' },
-    { label: 'cost', value: 0, type: 'number', caption: '待采样', tone: 'warn' },
-    { label: 'main stat', value: 0, type: 'number', caption: '待采样', tone: 'warn' },
-    { label: 'position', value: 0, type: 'number', caption: '待采样', tone: 'warn' },
+    { label: '套装条件', value: 0, type: 'number', caption: '记录进度', tone: 'warn' },
+    { label: 'COST 档位', value: 0, type: 'number', caption: '记录进度', tone: 'warn' },
+    { label: '主词条类型', value: 0, type: 'number', caption: '记录进度', tone: 'warn' },
+    { label: '副词条位置', value: 0, type: 'number', caption: '记录进度', tone: 'warn' },
   ])
 }
 
 function contextChecksFromDiagnostics(diagnostics, stats) {
   const context = diagnostics?.context
   const factors = context?.factors || stats?.context_factors || {}
-  return Object.entries(factors).map(([key, factor]) => ({
+  const entries = Object.entries(factors)
+  const recommended = asNumber(context?.recommended_samples, 3000)
+  const fallbackSampleSize = asNumber(context?.sample_size ?? stats?.total_rolls)
+  const sourceEntries = entries.length
+    ? entries
+    : CONTEXT_FACTOR_KEYS.map((key) => [key, { sample_size: fallbackSampleSize, status: context?.status || 'insufficient_data' }])
+  return sourceEntries.map(([key, factor]) => ({
     key,
-    label: factor?.label || key,
+    label: contextFactorLabel(key, factor),
     status: factor?.status || context?.status || 'insufficient_data',
-    sampleSize: asNumber(factor?.sample_size ?? context?.sample_size),
-    recommended: asNumber(context?.recommended_samples, 3000),
+    sampleSize: asNumber(factor?.sample_size ?? fallbackSampleSize),
+    recommended,
   }))
 }
 
@@ -413,8 +429,8 @@ function modelMetrics(key, { prediction, stats, echoes, diagnostics }) {
   }
   return [
     { label: '当前权重', value: weight, type: 'percent' },
-    { label: '当前样本', value: diagnostics?.context?.sample_size ?? totalRolls, type: 'number' },
-    { label: '建议样本', value: diagnostics?.context?.recommended_samples ?? 3000, type: 'number' },
+    { label: '已记录', value: diagnostics?.context?.sample_size ?? totalRolls, type: 'number' },
+    { label: '启用参考', value: diagnostics?.context?.recommended_samples ?? 3000, type: 'number' },
   ]
 }
 
@@ -453,8 +469,9 @@ export function buildModelDetailCards({ prediction = null, stats = null, evaluat
       weight,
       baseWeight,
       adjustment: prediction?.weight_adjustments?.[key] || null,
-      hitRate: evaluation?.model_scores?.[key]?.hit_rate ?? MODEL_BACKTEST_PREVIEW[key]?.hitRate ?? null,
-      loss: evaluation?.model_scores?.[key]?.loss ?? MODEL_BACKTEST_PREVIEW[key]?.loss ?? null,
+      hitRate: evaluation?.model_scores?.[key]?.hit_rate ?? null,
+      loss: evaluation?.model_scores?.[key]?.loss ?? null,
+      evaluated: evaluation?.model_scores?.[key]?.evaluated ?? 0,
       playerNote: diagnostics?.[key]?.player_note || definition.detail,
       ...status,
       metrics: modelMetrics(key, { prediction, stats, echoes, diagnostics }),

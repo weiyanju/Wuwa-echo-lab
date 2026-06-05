@@ -55,6 +55,8 @@ const historyDrag = ref(null)
 const modelInsightViews = ref({})
 const selectedModelDetailKey = ref(null)
 const collapsedModelDetailKeys = ref(new Set())
+const hasManualModelDetailInteraction = ref(false)
+const highlightedSummaryModelKey = ref(null)
 const markovAxisDrag = ref(null)
 let historyPanelAnimationTimer = null
 let suppressNextHistoryToggle = false
@@ -144,15 +146,6 @@ function canonicalModelLabel(key, fallback) {
   return canonicalModelLabels[key] || fallback || modelWeightLabel(key)
 }
 
-const weightRows = computed(() =>
-  Object.entries(prediction.value?.weights || {}).map(([key, weight]) => ({
-    key,
-    label: canonicalModelLabel(key, prediction.value?.model_labels?.[key]),
-    weight,
-    baseWeight: prediction.value?.base_weights?.[key],
-    adjustment: prediction.value?.weight_adjustments?.[key] || null,
-  })),
-)
 const modelDetailCards = computed(() =>
   buildModelDetailCards({
     prediction: prediction.value,
@@ -164,69 +157,108 @@ const modelDetailCards = computed(() =>
 )
 const modelDetailSummary = computed(() => modelDetailCards.value.summary || {})
 const modelDetailByKey = computed(() => new Map((modelDetailCards.value || []).map((model) => [model.key, model])))
+const weightRows = computed(() =>
+  Object.entries(prediction.value?.weights || {}).map(([key, weight]) => {
+    const disabled = weight <= ACTIVE_MODEL_WEIGHT_EPSILON || modelDetailByKey.value.get(key)?.status === 'disabled'
+    return {
+      key,
+      label: canonicalModelLabel(key, prediction.value?.model_labels?.[key]),
+      weight,
+      baseWeight: prediction.value?.base_weights?.[key],
+      adjustment: prediction.value?.weight_adjustments?.[key] || null,
+      disabled,
+      statusLabel: disabled ? '未启用' : weightDiagnosticText({ weight }),
+      statusTitle: disabled ? '样本不足，暂未参与融合' : `当前参与融合，权重 ${formatPercent(weight)}`,
+    }
+  }),
+)
 const evaluationMetrics = computed(() => [
   {
     label: 'Log Loss',
     value: evaluation.value?.log_loss,
-    preview: 2.16,
     target: '越低越好',
     description: '概率分布是否把真实词条放在高概率区间',
   },
   {
     label: 'Brier Score',
     value: evaluation.value?.brier_score,
-    preview: 0.86,
     target: '越低越好',
     description: '预测概率和真实结果的平方误差',
   },
   {
     label: 'Top 1 命中率',
     value: evaluation.value?.top_1_hit_rate,
-    preview: 0.11,
     target: '越高越好',
     description: '概率第一名是否命中真实词条',
   },
   {
     label: 'Top 3 命中率',
     value: evaluation.value?.top_3_hit_rate,
-    preview: 0.34,
     target: '越高越好',
     description: '前三名候选是否覆盖真实词条',
   },
   {
     label: 'Top 5 命中率',
     value: evaluation.value?.top_5_hit_rate,
-    preview: 0.52,
     target: '越高越好',
     description: '前五名候选是否覆盖真实词条',
   },
 ])
 const hitRateMetrics = computed(() => evaluationMetrics.value.filter((metric) => metric.label.includes('命中率')))
 const technicalEvaluationMetrics = computed(() => evaluationMetrics.value.filter((metric) => !metric.label.includes('命中率')))
+const evaluationReady = computed(() => evaluation.value?.status === 'ready')
+const modelBacktestSampleCount = computed(() => Math.max(...modelEvaluationRows.value.map((row) => row.evaluated || 0), 0))
+const modelBacktestSummaryText = computed(() => (modelBacktestSampleCount.value ? `回测样本 ${modelBacktestSampleCount.value} 条` : '等待回测样本'))
+const modelBacktestNotes = {
+  rule: '全局分布修正',
+  bayes: '历史片段匹配',
+  markov: '近期重复冷却',
+  cycle: '窗口信号监测',
+  context: '样本不足，暂未参与融合',
+}
 const modelEvaluationRows = computed(() => {
-  const rows = [
-    { key: 'rule', label: '规则均衡', hitRate: 0.31, loss: 2.07, note: '合法词条池与全局均衡' },
-    { key: 'bayes', label: '周期规律', hitRate: 0.36, loss: 1.94, note: '精确片段与通配片段' },
-    { key: 'markov', label: '近期序列', hitRate: 0.28, loss: 2.22, note: '跨声骸短期冷却' },
-    { key: 'cycle', label: '词条窗口', hitRate: 0.33, loss: 2.02, note: '双爆窗口信号和词条组周期' },
-    { key: 'context', label: '上下文监测', hitRate: 0.19, loss: 2.45, note: '套装、COST、主词条等变量' },
-  ]
-  const bestHitRate = Math.max(...rows.map((row) => row.hitRate))
+  const rows = (modelDetailCards.value || []).filter((model) => model?.key)
+  const hitRates = rows.map((row) => row.hitRate).filter((value) => value != null)
+  const bestHitRate = hitRates.length ? Math.max(...hitRates) : null
+  const modelOrder = new Map(['rule', 'bayes', 'markov', 'cycle', 'context'].map((key, index) => [key, index]))
   return rows
-    .map((row) => ({
-    ...row,
-    weight: prediction.value?.weights?.[row.key] ?? { rule: 0.7, bayes: 0.1, markov: 0.1, cycle: 0.1, context: 0 }[row.key],
-    relativeHitRate: bestHitRate > 0 ? row.hitRate / bestHitRate : 0,
-    isBest: row.hitRate === bestHitRate,
-    isPreview: evaluation.value?.log_loss == null,
-  }))
-    .sort((a, b) => b.hitRate - a.hitRate)
+    .map((row) => {
+      const weight = prediction.value?.weights?.[row.key] ?? { rule: 0.7, bayes: 0.1, markov: 0.1, cycle: 0.1, context: 0 }[row.key]
+      const disabled = row.status === 'disabled' || weight <= ACTIVE_MODEL_WEIGHT_EPSILON
+      return {
+        key: row.key,
+        label: row.title,
+        hitRate: row.hitRate,
+        loss: row.loss,
+        evaluated: row.evaluated,
+        note: modelBacktestNotes[row.key] || row.role,
+        weight,
+        disabled,
+        statusLabel: row.statusLabel,
+        modelOrder: modelOrder.get(row.key) ?? 999,
+        relativeHitRate: bestHitRate > 0 && row.hitRate != null ? row.hitRate / bestHitRate : 0,
+        isBest: !disabled && evaluationReady.value && bestHitRate != null && row.hitRate === bestHitRate,
+      }
+    })
+    .sort((a, b) => {
+      if (a.disabled !== b.disabled) {
+        return a.disabled ? 1 : -1
+      }
+      if (a.disabled && b.disabled) {
+        return a.modelOrder - b.modelOrder
+      }
+      return (b.hitRate ?? -1) - (a.hitRate ?? -1)
+    })
 })
-const defaultExpandedModelDetailKey = computed(() => modelEvaluationRows.value[0]?.key || modelDetailCards.value[0]?.key || null)
+const defaultExpandedModelDetailKey = computed(() => modelEvaluationRows.value.find((row) => !row.disabled)?.key || null)
 const expandedModelDetailKey = computed(() => {
   const selectedKey = selectedModelDetailKey.value
-  if (selectedKey && !collapsedModelDetailKeys.value.has(selectedKey)) {
+  const selectedRow = modelEvaluationRows.value.find((row) => row.key === selectedKey)
+  if (selectedKey && selectedRow && !collapsedModelDetailKeys.value.has(selectedKey)) {
     return selectedKey
+  }
+  if (hasManualModelDetailInteraction.value) {
+    return null
   }
   const defaultKey = defaultExpandedModelDetailKey.value
   if (defaultKey && !collapsedModelDetailKeys.value.has(defaultKey)) {
@@ -241,6 +273,73 @@ const sampleStageRows = computed(() => [
   { label: '10000-50000', text: '顺序依赖', active: (stats.value?.total_rolls || 0) >= 10000 && (stats.value?.total_rolls || 0) < 50000 },
   { label: '50000+', text: '权重优化', active: (stats.value?.total_rolls || 0) >= 50000 },
 ])
+const sortedStatFrequency = computed(() => {
+  const rows = Object.values(stats.value?.substat_frequency || {})
+  return rows
+    .map((row) => ({
+      ...row,
+      deviation: statDeviation(row),
+      absDeviation: Math.abs(statDeviation(row)),
+    }))
+    .sort((left, right) => right.absDeviation - left.absDeviation)
+})
+const maxAbsStatDeviation = computed(() => Math.max(...sortedStatFrequency.value.map((row) => row.absDeviation), 0.01))
+const hottestStatRow = computed(() => sortedStatFrequency.value.filter((row) => row.deviation > 0).sort((left, right) => right.deviation - left.deviation)[0] || null)
+const coldestStatRow = computed(() => sortedStatFrequency.value.filter((row) => row.deviation < 0).sort((left, right) => left.deviation - right.deviation)[0] || null)
+const sampleStageProgress = computed(() => clampNumber((stats.value?.total_rolls || 0) / 50000))
+const visualSampleStageProgress = computed(() => {
+  const progress = sampleStageProgress.value
+  return progress > 0 ? Math.max(progress, 0.012) : 0
+})
+const statsReliabilityText = computed(() => {
+  const total = stats.value?.total_rolls || 0
+  if (total >= 50000) {
+    return '可优化权重'
+  }
+  if (total >= 10000) {
+    return '稳定观察'
+  }
+  if (total >= 3000) {
+    return '可作参考'
+  }
+  if (total >= 500) {
+    return '初步观察'
+  }
+  return '起步观察'
+})
+const statsSummaryItems = computed(() => [
+  {
+    label: '样本可信度',
+    value: stats.value ? statsReliabilityText.value : '等待样本',
+    tone: 'primary',
+    title: `基于 ${stats.value?.total_rolls || 0} 条样本判断当前统计可信度`,
+  },
+  {
+    label: '总样本',
+    value: `${stats.value?.total_rolls || 0} 条`,
+    title: `基于 ${stats.value?.total_rolls || 0} 条已录入副词条样本`,
+  },
+  {
+    label: '当前偏高',
+    value: hottestStatRow.value ? `${hottestStatRow.value.label} ${formatSignedPercent(hottestStatRow.value.deviation)}` : '暂无',
+    title: hottestStatRow.value ? `基于 ${stats.value?.total_rolls || 0} 条样本，${hottestStatRow.value.label} 当前观察值高于基线 ${formatSignedPercent(hottestStatRow.value.deviation)}` : `基于 ${stats.value?.total_rolls || 0} 条样本，暂无偏高项`,
+  },
+  {
+    label: '当前偏低',
+    value: coldestStatRow.value ? `${coldestStatRow.value.label} ${formatSignedPercent(coldestStatRow.value.deviation)}` : '暂无',
+    title: coldestStatRow.value ? `基于 ${stats.value?.total_rolls || 0} 条样本，${coldestStatRow.value.label} 当前观察值低于基线 ${formatSignedPercent(coldestStatRow.value.deviation)}` : `基于 ${stats.value?.total_rolls || 0} 条样本，暂无偏低项`,
+  },
+])
+const sampleStageAxisRows = computed(() => {
+  const total = stats.value?.total_rolls || 0
+  return [
+    { label: '0', caption: '规则基线', threshold: 0, active: total >= 0, current: total < 500 },
+    { label: '500', caption: '总体偏差', threshold: 500, active: total >= 500, current: total >= 500 && total < 3000 },
+    { label: '3000', caption: '上下文检验', threshold: 3000, active: total >= 3000, current: total >= 3000 && total < 10000 },
+    { label: '10000', caption: '顺序依赖', threshold: 10000, active: total >= 10000, current: total >= 10000 && total < 50000 },
+    { label: '50000+', caption: '权重优化', threshold: 50000, active: total >= 50000, current: total >= 50000 },
+  ]
+})
 const setupPanelStyle = computed(() => (setupPanelHeight.value ? { height: `${setupPanelHeight.value}px` } : {}))
 const terminalIconRotation = ref(0)
 const terminalExpandIconStyle = computed(() => ({
@@ -323,7 +422,10 @@ function generateEchoUid() {
 }
 
 function evaluationMetricText(metric) {
-  const value = metric.value ?? metric.preview
+  if (metric.value == null) {
+    return '样本不足'
+  }
+  const value = metric.value
   if (metric.label.includes('命中率')) {
     return formatPercent(value)
   }
@@ -331,7 +433,10 @@ function evaluationMetricText(metric) {
 }
 
 function evaluationMetricFill(metric) {
-  const value = metric.value ?? metric.preview
+  if (metric.value == null) {
+    return '0%'
+  }
+  const value = metric.value
   if (metric.label.includes('命中率')) {
     return `${Math.min(value * 100, 100)}%`
   }
@@ -339,6 +444,9 @@ function evaluationMetricFill(metric) {
 }
 
 function evaluationStatusText() {
+  if (evaluation.value && evaluation.value.status !== 'ready') {
+    return '样本不足'
+  }
   const total = stats.value?.total_rolls || 0
   if (total >= 3000) {
     return '稳定'
@@ -354,6 +462,9 @@ function percentPosition(value) {
 }
 
 function fusionWeightTooltip(row) {
+  if (row.disabled) {
+    return `${row.label}：${row.statusTitle}`
+  }
   const baseText = `基础 ${formatPercent(row.baseWeight)}`
   const hitText = row.adjustment?.hit_rate == null ? 'Top1 回测暂无' : `Top1 回测 ${formatPercent(row.adjustment.hit_rate)}`
   const directionText = row.adjustment?.direction === 'up'
@@ -369,7 +480,52 @@ function evaluationSummaryText() {
   const auxiliaries = modelDetailSummary.value.auxiliaryLabels?.length
     ? modelDetailSummary.value.auxiliaryLabels.join(' / ')
     : '暂无辅助信号'
-  return `当前由${dominant}主导，${auxiliaries}作为辅助；${evaluationStatusText()}阶段，结论仍需结合样本规模判断。`
+  return `当前由${dominant}主导，${auxiliaries}作为辅助。`
+}
+
+const evaluationSummaryParts = computed(() => {
+  const activeRows = weightRows.value
+    .filter((row) => (row.weight ?? 0) > ACTIVE_MODEL_WEIGHT_EPSILON)
+    .sort((left, right) => (right.weight ?? 0) - (left.weight ?? 0))
+  const dominantKey = modelDetailSummary.value.dominantModel || activeRows[0]?.key || null
+  const diagnosticAuxiliaryKeys = modelDetailSummary.value.auxiliaryModels || []
+  const auxiliaryKeys = diagnosticAuxiliaryKeys.length
+    ? diagnosticAuxiliaryKeys
+    : activeRows
+      .filter((row) => row.key !== dominantKey)
+      .slice(0, 2)
+      .map((row) => row.key)
+  const dominantLabel = dominantKey
+    ? canonicalModelLabel(dominantKey, modelDetailSummary.value.dominantLabel)
+    : modelDetailSummary.value.dominantLabel || '暂无主导模型'
+  const auxiliaries = auxiliaryKeys.length
+    ? auxiliaryKeys.map((key, index) => ({
+      key,
+      label: canonicalModelLabel(key, modelDetailSummary.value.auxiliaryLabels?.[index]),
+      weight: prediction.value?.weights?.[key] ?? null,
+    }))
+    : [{ key: null, label: modelDetailSummary.value.auxiliaryLabels?.[0] || '暂无辅助信号', weight: null }]
+  return {
+    dominant: {
+      key: dominantKey,
+      label: dominantLabel,
+      weight: prediction.value?.weights?.[dominantKey] ?? null,
+    },
+    auxiliaries,
+    motionKey: [
+      dominantKey || 'none',
+      ...auxiliaries.map((model) => model.key || model.label),
+      evaluationStatusText(),
+    ].join(':'),
+  }
+})
+
+function setSummaryModelHighlight(key) {
+  highlightedSummaryModelKey.value = key
+}
+
+function clearSummaryModelHighlight() {
+  highlightedSummaryModelKey.value = null
 }
 
 function coverageNodePosition(index) {
@@ -383,11 +539,21 @@ function coverageNodeClass(index) {
 function coverageGainText(metrics) {
   const first = metrics[0]
   const last = metrics.at(-1)
-  if (!first || !last) {
-    return ''
+  if (!first || !last || first.value == null || last.value == null) {
+    return '回测样本不足'
   }
-  const gain = (last.value ?? last.preview) - (first.value ?? first.preview)
-  return `从 Top1 到 Top5，覆盖提升 ${formatSignedPercent(gain)}`
+  const gain = last.value - first.value
+  return `Top5 相比 Top1 命中率提升 ${formatSignedPercent(gain)}，`
+}
+
+function coverageMetricLabel(metric) {
+  if (metric.label.includes('Top 1')) {
+    return 'Top 1 · 首选预测'
+  }
+  if (metric.label.includes('Top 3')) {
+    return 'Top 3 · 推荐参考'
+  }
+  return 'Top 5 · 补充检查'
 }
 
 function calibrationSummaryText() {
@@ -407,6 +573,21 @@ function modelMetricText(metric) {
     return Number(metric.value || 0).toFixed(2)
   }
   return `${Math.round(metric.value || 0)}`
+}
+
+function modelHitRateText(row) {
+  return row.hitRate == null ? '样本不足' : formatPercent(row.hitRate)
+}
+
+function modelLossText(row) {
+  return row.loss == null ? '样本不足' : row.loss.toFixed(2)
+}
+
+function modelProgressTitle(row) {
+  if (row.hitRate == null || !modelEvaluationRows.value[0]?.hitRate) {
+    return '回测样本不足，暂不显示相对命中率。'
+  }
+  return `仅表示相对命中率：${formatPercent(row.hitRate)} / ${formatPercent(modelEvaluationRows.value[0].hitRate)}`
 }
 
 function modelBarText(bar) {
@@ -429,6 +610,14 @@ function ruleDeviationStyle(bar) {
   return bar.value < 0
     ? { width: `${width}%`, right: '50%' }
     : { width: `${width}%`, left: '50%' }
+}
+
+function ruleDeviationTitle(bar) {
+  const observed = bar.observedRate == null ? null : formatPercent(bar.observedRate)
+  const base = bar.baseRate == null ? null : formatPercent(bar.baseRate)
+  return observed && base
+    ? `${bar.label}: 观察 ${observed}，基线 ${base}，偏差 ${modelBarText(bar)}`
+    : `${bar.label}: 偏差 ${modelBarText(bar)}`
 }
 
 function modelSegmentStyle(segment) {
@@ -454,19 +643,19 @@ function modelJudgementSummary(model) {
     const exact = model.segments.find((segment) => segment.label === 'Exact')?.value ?? 0
     const wildcard = model.segments.find((segment) => segment.label === 'Wildcard')?.value ?? 0
     return exact >= wildcard
-      ? `当前走势和历史完整片段更接近，判断更有把握。`
+      ? `若当前走势和历史完整片段接近，则判断更有把握。`
       : `当前完整片段不够明显，会更多参考相似走势。`
   }
   if (model.key === 'rule') {
-    return '当前用全局分布做兜底，把过热项压低，把偏冷项补回。'
+    return '副词条分布越偏离基线，修正力度越强。'
   }
   if (model.key === 'markov') {
-    return '当前只看最近记录，短时间内重复太多的候选会被降温。'
+    return '按录入顺序查看最近 12 条，重复越密集，冷却越强。'
   }
   if (model.key === 'cycle') {
-    return '当前看双爆是否还在热，也看普通词条大类谁可能接棒。'
+    return '实时观察双爆窗口和普通副词条组的当前倾向。'
   }
-  return '当前先记录装备条件差异，样本不够时不轻易参与判断。'
+  return '观察套装、COST、主词条类型和副词条位置是否会对副词条出词倾向产生影响。'
 }
 
 function modelInsightClass(model) {
@@ -474,6 +663,7 @@ function modelInsightClass(model) {
 }
 
 function selectModelDetail(key) {
+  hasManualModelDetailInteraction.value = true
   selectedModelDetailKey.value = key
   const nextCollapsed = new Set(collapsedModelDetailKeys.value)
   nextCollapsed.delete(key)
@@ -481,6 +671,7 @@ function selectModelDetail(key) {
 }
 
 function toggleModelDetail(key) {
+  hasManualModelDetailInteraction.value = true
   const nextCollapsed = new Set(collapsedModelDetailKeys.value)
   if (expandedModelDetailKey.value === key) {
     nextCollapsed.add(key)
@@ -520,15 +711,27 @@ function sequenceItemClass(item) {
 
 function markovAxisTrackStyle(model) {
   const nodeCount = model?.timelineNodes?.length || 1
-  const nodeWidth = 176
+  const nodeWidth = 184
   return {
     '--node-count': nodeCount,
-    minWidth: `max(${nodeCount * nodeWidth + 144}px, 100%)`,
+    minWidth: `max(${nodeCount * nodeWidth + 112}px, 100%)`,
   }
 }
 
 function markovAxisKey(model) {
   return model?.timelineNodes?.map((item) => `${item.index}:${item.type}`).join('|') || 'empty'
+}
+
+function contextCheckProgress(check) {
+  return clampNumber((check?.sampleSize || 0) / Math.max(check?.recommended || 1, 1))
+}
+
+function contextOverallCheck(model) {
+  return model?.contextChecks?.[0] || { sampleSize: 0, recommended: 3000 }
+}
+
+function contextOverallProgress(model) {
+  return contextCheckProgress(contextOverallCheck(model))
 }
 
 function moveMarkovAxis(event) {
@@ -577,6 +780,9 @@ function startMarkovAxisDrag(event) {
 }
 
 function modelInsightView(model) {
+  if (model.key === 'context' || model.key === 'rule') {
+    return 'evidence'
+  }
   return modelInsightViews.value[model.key] || 'distribution'
 }
 
@@ -591,6 +797,17 @@ function modelInsightTabLabel(tab) {
   return tab.label
 }
 
+function modelInsightTabs(model) {
+  if (model.key === 'context' || model.key === 'rule') {
+    return model.tabs.filter((tab) => tab.key === 'evidence')
+  }
+  return model.tabs
+}
+
+function modelShowsInsightTabs(model) {
+  return modelInsightTabs(model).length > 0
+}
+
 function modelEvidenceNote(model, index) {
   if (model.key === 'bayes') {
     return [
@@ -602,29 +819,30 @@ function modelEvidenceNote(model, index) {
   if (model.key === 'rule') {
     return [
       '比较实际出词和理论均分，判断哪些词条偏热或偏冷。',
-      '只看当前声骸真的能出的词条，不把无效选项算进去。',
-      '偏得越远，拉回均衡的力度越大。',
+      '只统计当前声骸真的可能出的副词条，避免无效选项干扰判断。',
+      '偏离基线越远，修正力度越强。',
     ][index] || model.chartNote
   }
   if (model.key === 'markov') {
     return [
-      '只看最近 12 条，用来发现刚刚发生的连出。',
-      '同一候选近期出现 3 次以上，才算可能过热。',
-      '这个模型只负责降温，不负责把冷门项抬高。',
+      '按录入顺序查看最近 12 条副词条。',
+      '同一候选短时间内重复越多，越容易触发冷却。',
+      '该子模型只负责降温，不会把冷门项主动抬高。',
     ][index] || model.chartNote
   }
   if (model.key === 'cycle') {
     return [
       '判断双爆现在是继续升温、单边偏向，还是进入冷却。',
-      '普通词条按攻击、生命、防御、伤害加成、共鸣效率五组观察。',
-      '先看哪一组可能接棒，再细分到具体词条。',
+      '观察普通副词条大类谁更可能接棒。',
+      '在更可能接棒的大类里，进一步细分到具体词条。',
     ][index] || model.chartNote
   }
   if (model.key === 'context') {
     return [
-      '观察不同套装下，出词倾向有没有稳定差异。',
-      '把 COST 和主词条分开看，避免不同装备条件混在一起。',
-      '位置也会单独记录；样本不足时只观察，不参与判断。',
+      '记录声骸套装效果，如凝夜白霜、熔山裂谷、啸谷长风等。',
+      '区分声骸 COST：COST 4 / COST 3 / COST 1。',
+      '识别主词条类型，如暴击率、暴击伤害、攻击力、属性伤害等。',
+      '标记副词条出现位置：第 1 / 2 / 3 / 4 / 5 条。',
     ][index] || model.chartNote
   }
   return model.chartNote
@@ -656,17 +874,10 @@ function statDiagnosticText(row) {
   return '稳定'
 }
 
-function contextDiagnosticClass(factor) {
-  if (factor?.status === 'monitoring' || factor?.status === 'active') {
-    return 'hot'
-  }
-  if (factor?.status === 'insufficient_data' || factor?.status === 'not_started') {
-    return 'warn'
-  }
-  return 'cool'
-}
-
 function weightDiagnosticClass(row) {
+  if (row?.disabled) {
+    return 'disabled'
+  }
   if ((row?.weight ?? 0) >= 0.35) {
     return 'hot'
   }
@@ -1705,109 +1916,97 @@ watch(
 
       </div>
 
-      <section v-if="page === 'stats'" class="product-panel prediction-strip stats-prediction-strip">
+      <section v-if="page === 'stats'" class="product-panel full-panel stats-analytics-panel">
         <div class="stats-diagnostic-head">
           <div>
-            <span class="eyebrow">Prediction</span>
-            <h2>预测依据</h2>
-            <p v-if="prediction?.weight_stage">权重阶段 {{ prediction.weight_stage }} 条样本</p>
-            <p v-else>等待选择声骸后生成候选排名。</p>
-          </div>
-          <span v-if="topCandidate" class="stats-diagnostic-pill">{{ topCandidate.label }} · {{ formatPercent(topCandidate.p_final) }}</span>
-          <span v-else class="stats-diagnostic-pill">Prediction matrix</span>
-        </div>
-
-        <div v-if="prediction" class="weight-list diagnostic-matrix prediction-diagnostic-grid">
-          <article v-for="row in weightRows" :key="row.key" :class="weightDiagnosticClass(row)">
-            <div>
-              <strong>{{ row.label }}</strong>
-              <span>{{ weightDiagnosticText(row) }}</span>
-            </div>
-            <p>{{ formatPercent(row.weight) }}</p>
-            <small v-if="row.adjustment?.hit_rate != null">
-              基础 {{ formatPercent(row.baseWeight) }} · 命中 {{ formatPercent(row.adjustment.hit_rate) }}
-              {{ row.adjustment.direction === 'up' ? '上调' : row.adjustment.direction === 'down' ? '下调' : '持平' }}
-            </small>
-            <small v-else>基础 {{ formatPercent(row.baseWeight) }} · 样本不足</small>
-          </article>
-        </div>
-
-        <div v-if="prediction" class="ranking diagnostic-matrix prediction-candidate-grid">
-          <article
-            v-for="(candidate, index) in prediction.candidates.slice(0, 8)"
-            :key="candidate.substat_type"
-            :class="candidateDiagnosticClass(candidate, index)"
-          >
-            <div>
-              <strong>{{ candidate.label }}</strong>
-              <span>{{ index === 0 ? '首选' : `#${index + 1}` }}</span>
-            </div>
-            <p>{{ formatPercent(candidate.p_final) }}</p>
-            <small>基线 {{ formatPercent(candidate.p_rule) }} · 偏差 {{ formatSignedPercent(candidate.baseline_deviation) }}</small>
-          </article>
-        </div>
-      </section>
-
-      <section v-if="page === 'stats'" class="product-panel full-panel">
-        <div class="stats-diagnostic-head">
-          <div>
-            <span class="eyebrow">Analytics</span>
             <h2>统计诊断</h2>
-            <p v-if="stats">总样本量：{{ stats.total_rolls }} · {{ sampleStageText(stats.sample_stage) }}</p>
+            <p v-if="stats">{{ sampleStageText(stats.sample_stage) }}</p>
+            <p v-else>等待样本录入后生成统计图表。</p>
           </div>
-          <span class="stats-diagnostic-pill">Evidence matrix</span>
         </div>
 
-        <div v-if="stats" class="stat-grid diagnostic-matrix">
-          <article v-for="row in stats.substat_frequency" :key="row.substat_type" :class="statDiagnosticClass(row)">
-            <div>
-              <strong>{{ row.label }}</strong>
-              <span>{{ statDiagnosticText(row) }}</span>
-            </div>
-            <p>{{ row.count }} 次</p>
-            <small>观察 {{ formatPercent(row.observed_rate) }} · 基线 {{ formatPercent(row.baseline_rate) }} · 偏差 {{ formatSignedPercent(statDeviation(row)) }}</small>
+        <div v-if="stats" class="stats-summary-bar">
+          <article v-for="item in statsSummaryItems" :key="item.label" :class="item.tone" :title="item.title">
+            <span>{{ item.label }}</span>
+            <strong>{{ item.value }}</strong>
           </article>
         </div>
-        <div class="stats-section-heading">
-          <h3>上下文监控</h3>
-          <span>Context evidence</span>
+        <div v-else class="stats-empty-state">
+          <strong>暂无统计样本</strong>
+          <p>录入声骸副词条后，会在这里显示样本分布和阶段诊断。</p>
         </div>
-        <div v-if="stats" class="context-grid diagnostic-matrix context-diagnostic-grid">
-          <article v-for="(factor, key) in stats.context_factors" :key="key" :class="contextDiagnosticClass(factor)">
-            <div>
-              <strong>{{ key }}</strong>
-              <span>{{ statusText(factor.status) }}</span>
+
+        <section v-if="stats" class="stats-chart-card substat-deviation-card">
+          <div class="stats-section-heading">
+            <h3>副词条分布偏差</h3>
+            <span>按偏差排序</span>
+          </div>
+          <div class="substat-deviation-chart" role="img" aria-label="副词条相对基线的偏差">
+            <div class="deviation-axis-labels" aria-hidden="true">
+              <span></span>
+              <div class="deviation-axis-scale">
+                <span>偏低</span>
+                <strong>基线</strong>
+                <span>偏高</span>
+              </div>
+              <span></span>
             </div>
-            <p>样本 {{ factor.sample_size }}</p>
-            <small>用于判断套装、COST、主词条与位置变量是否足够稳定。</small>
-          </article>
+            <article
+              v-for="row in sortedStatFrequency"
+              :key="row.substat_type"
+              class="substat-deviation-row"
+              :class="statDiagnosticClass(row)"
+              :title="`基于 ${stats.total_rolls || 0} 条样本，${row.label}: ${row.count} 次，观察 ${formatPercent(row.observed_rate)}，基线 ${formatPercent(row.baseline_rate)}`"
+            >
+              <div class="substat-deviation-name">
+                <strong>{{ row.label }}</strong>
+                <span>{{ row.count }} 次 · {{ formatPercent(row.observed_rate) }}</span>
+              </div>
+              <div class="substat-deviation-track">
+                <i aria-hidden="true"></i>
+                <b :style="{ width: `${Math.max(row.absDeviation / maxAbsStatDeviation * 48, row.absDeviation ? 5 : 0)}%`, left: row.deviation >= 0 ? '50%' : 'auto', right: row.deviation < 0 ? '50%' : 'auto' }"></b>
+              </div>
+              <strong class="substat-deviation-value">{{ formatSignedPercent(row.deviation) }}</strong>
+            </article>
+          </div>
+        </section>
+
+        <div v-if="stats" class="stats-chart-grid">
+          <section class="stats-chart-card sample-stage-card">
+            <div class="stats-section-heading compact">
+              <h3>样本阶段</h3>
+              <span>{{ stats.total_rolls }} / 50000+</span>
+            </div>
+            <div class="sample-stage-axis" role="img" aria-label="当前样本阶段">
+              <div class="sample-stage-track" aria-hidden="true">
+                <b :style="{ width: formatPercent(visualSampleStageProgress) }"></b>
+                <i class="sample-stage-marker" :style="{ left: formatPercent(sampleStageProgress) }"></i>
+              </div>
+              <article v-for="stage in sampleStageAxisRows" :key="stage.label" :class="{ active: stage.active, current: stage.current }">
+                <strong>{{ stage.label }}</strong>
+                <span>{{ stage.caption }}<em v-if="stage.current">当前</em></span>
+              </article>
+            </div>
+          </section>
         </div>
       </section>
 
       <section v-if="page === 'evaluation'" class="product-panel full-panel evaluation-panel">
-        <div class="evaluation-head evaluation-brief evaluation-compact-brief">
-          <div class="evaluation-hero-copy">
-            <span class="eyebrow">Evaluation</span>
-            <h2>模型评估</h2>
-            <p>{{ evaluation?.message || '按当前算法拆解融合权重、候选概率和各子模型职责。' }}</p>
-          </div>
-          <div class="evaluation-compact-stats" aria-label="评估摘要">
-            <article>
-              <span>状态</span>
-              <strong>{{ evaluationStatusText() }}</strong>
-            </article>
-            <article>
-              <span>阶段</span>
-              <strong>{{ stats ? sampleStageText(stats.sample_stage).split('：')[0] : '等待样本' }}</strong>
-            </article>
-            <article>
-              <span>置信度</span>
-              <strong>{{ stats?.sample_stage === 'low' || (stats?.total_rolls || 0) < 500 ? '低' : '中' }}</strong>
-            </article>
-            <article>
-              <span>Top 3</span>
-              <strong>{{ evaluationMetricText(evaluationMetrics[3]) }}</strong>
-            </article>
+        <div class="evaluation-status-bar">
+          <h2>模型评估</h2>
+          <div class="evaluation-status-chips" aria-label="评估摘要">
+            <span class="evaluation-status-chip state">
+              <i aria-hidden="true"></i>
+              {{ evaluationStatusText() }}
+            </span>
+            <span class="evaluation-status-chip">
+              <small>阶段</small>
+              {{ stats ? sampleStageText(stats.sample_stage).split('：')[0] : '等待样本' }}
+            </span>
+            <span class="evaluation-status-chip">
+              <small>Top 3</small>
+              {{ evaluationMetricText(evaluationMetrics[3]) }}
+            </span>
           </div>
         </div>
 
@@ -1830,12 +2029,12 @@ watch(
           <article
             v-for="row in weightRows"
             :key="row.key"
-            :class="weightDiagnosticClass(row)"
+            :class="[weightDiagnosticClass(row), { 'summary-linked': highlightedSummaryModelKey === row.key }]"
             class="fusion-weight-card"
             :title="fusionWeightTooltip(row)"
           >
             <div>
-              <span>{{ row.label }}</span>
+              <span>{{ row.label }}<em v-if="row.disabled" class="fusion-disabled-badge">{{ row.statusLabel }}</em></span>
               <strong>{{ formatPercent(row.weight) }}</strong>
             </div>
             <i
@@ -1858,9 +2057,32 @@ watch(
           </article>
         </div>
 
-        <section class="evaluation-summary-line">
-          <span>结论摘要</span>
-          <strong>{{ evaluationSummaryText() }}</strong>
+        <section
+          class="evaluation-summary-line"
+          :class="evaluationSummaryParts.dominant.key ? `summary-dominant-${evaluationSummaryParts.dominant.key}` : ''"
+        >
+          <span class="evaluation-summary-kicker">结论摘要</span>
+          <strong :key="evaluationSummaryParts.motionKey" class="evaluation-summary-copy">
+            当前由<span
+              class="summary-model-link summary-model-link-dominant"
+              :class="{ active: evaluationSummaryParts.dominant.key && highlightedSummaryModelKey === evaluationSummaryParts.dominant.key }"
+              :tabindex="evaluationSummaryParts.dominant.key ? 0 : -1"
+              :title="`定位到${evaluationSummaryParts.dominant.label}`"
+              @mouseenter="setSummaryModelHighlight(evaluationSummaryParts.dominant.key)"
+              @mouseleave="clearSummaryModelHighlight"
+              @focus="setSummaryModelHighlight(evaluationSummaryParts.dominant.key)"
+              @blur="clearSummaryModelHighlight"
+            >{{ evaluationSummaryParts.dominant.label }}</span>主导，<template v-for="(model, index) in evaluationSummaryParts.auxiliaries" :key="`${model.key || model.label}-${index}`"><span
+                class="summary-model-link summary-model-link-auxiliary"
+                :class="{ active: model.key && highlightedSummaryModelKey === model.key }"
+                :tabindex="model.key ? 0 : -1"
+                :title="`定位到${model.label}`"
+                @mouseenter="setSummaryModelHighlight(model.key)"
+                @mouseleave="clearSummaryModelHighlight"
+                @focus="setSummaryModelHighlight(model.key)"
+                @blur="clearSummaryModelHighlight"
+              >{{ model.label }}</span><template v-if="index < evaluationSummaryParts.auxiliaries.length - 1"> / </template></template>作为辅助。
+          </strong>
         </section>
 
         <div class="evaluation-section-title backtest-section-title">
@@ -1875,16 +2097,15 @@ watch(
             <div class="chart-heading chart-heading-stacked">
               <div>
                 <div class="chart-title-row">
-                  <h3>候选池覆盖路径</h3>
+                  <h3>预测范围命中率</h3>
                 </div>
-                <p>候选池扩大后，真实词条被覆盖的概率变化。</p>
               </div>
             </div>
             <div
               class="coverage-band-chart"
               role="img"
-              aria-label="Top1 到 Top5 候选覆盖率"
-              title="Top1 至 Top3 表示从单候选扩大到常用候选池；Top3 至 Top5 表示继续扩大到最大候选池。"
+              aria-label="Top1 到 Top5 预测范围命中率"
+              title="Top1 表示首选预测；Top3 表示推荐参考；Top5 表示补充检查。"
             >
               <div class="coverage-band-track" aria-hidden="true">
                 <span class="coverage-band-fill"></span>
@@ -1904,12 +2125,12 @@ watch(
                   :style="{ left: `${coverageNodePosition(index)}%` }"
                 >
                   <strong>{{ evaluationMetricText(metric) }}</strong>
-                  <span>{{ metric.label.replace(' 命中率', '') }} · {{ metric.label.includes('Top 1') ? '单候选' : metric.label.includes('Top 3') ? '常用候选池' : '最大候选池' }}</span>
+                  <span>{{ coverageMetricLabel(metric) }}</span>
                 </article>
               </div>
               <div class="coverage-gain-note">
                 <strong>{{ coverageGainText(hitRateMetrics) }}</strong>
-                <span>Top3 作为主要决策参考，Top5 用于兜底覆盖。</span>
+                <span>{{ evaluationReady ? 'Top3 适合作为推荐参考，Top5 适合做补充检查。' : '积累更多副词条记录后自动计算。' }}</span>
               </div>
             </div>
           </section>
@@ -1917,6 +2138,7 @@ watch(
           <section class="evaluation-card model-backtest-card">
             <div class="chart-heading">
               <h3>子模型回测</h3>
+              <span :title="modelBacktestSummaryText">{{ modelBacktestSummaryText }}</span>
             </div>
             <div class="model-bars-head">
               <span>模型</span>
@@ -1928,7 +2150,8 @@ watch(
               <article
                 v-for="row in modelEvaluationRows"
                 :key="row.key"
-                :class="{ best: row.isBest, expanded: expandedModelDetailKey === row.key }"
+                :class="{ best: row.isBest, expanded: expandedModelDetailKey === row.key, disabled: row.disabled }"
+                :title="row.evaluated ? `${row.label}基于 ${row.evaluated} 条样本回测` : `${row.label}等待回测样本`"
               >
                 <div
                   class="model-bar-summary"
@@ -1942,10 +2165,13 @@ watch(
                   <strong>
                     {{ row.label }}
                     <em v-if="row.isBest">最高命中</em>
+                    <em v-else-if="row.disabled" class="disabled-model-badge">{{ row.statusLabel || '未启用' }}</em>
                   </strong>
-                  <small>{{ row.note }}</small>
-                  <span class="model-hit-rate">{{ formatPercent(row.hitRate) }}</span>
-                  <span class="model-loss">{{ row.loss.toFixed(2) }}</span>
+                  <small>
+                    <span>{{ row.note }}</span>
+                  </small>
+                  <span class="model-hit-rate">{{ modelHitRateText(row) }}</span>
+                  <span class="model-loss">{{ modelLossText(row) }}</span>
                   <button
                     class="model-expand-state"
                     type="button"
@@ -1959,15 +2185,16 @@ watch(
                 </div>
                 <i
                   class="model-row-progress"
-                  :title="`仅表示相对命中率：${formatPercent(row.hitRate)} / ${formatPercent(modelEvaluationRows[0]?.hitRate || row.hitRate)}`"
+                  :title="modelProgressTitle(row)"
                 >
-                  <b :style="{ width: `${Math.max(row.relativeHitRate * 92, 8)}%` }"></b>
+                  <b :style="{ width: row.hitRate == null ? '0%' : `${Math.max(row.relativeHitRate * 92, 8)}%` }"></b>
                 </i>
-                <div v-if="expandedModelDetailKey === row.key" class="model-row-detail" @click.stop>
-                  <article v-for="model in modelDetailListForKey(row.key)" :key="model.key" class="model-insight-card inline-model-insight" :class="modelInsightClass(model)">
-            <div class="model-insight-tabs" role="tablist" :aria-label="`${model.title} 展示模式`">
+                <Transition name="model-row-detail">
+                  <div v-if="expandedModelDetailKey === row.key" class="model-row-detail" @click.stop>
+                    <article v-for="model in modelDetailListForKey(row.key)" :key="model.key" class="model-insight-card inline-model-insight" :class="modelInsightClass(model)">
+            <div v-if="modelShowsInsightTabs(model)" class="model-insight-tabs" role="tablist" :aria-label="`${model.title} 展示模式`">
               <button
-                v-for="tab in model.tabs"
+                v-for="tab in modelInsightTabs(model)"
                 :key="tab.key"
                 type="button"
                 :class="{ active: modelInsightView(model) === tab.key }"
@@ -2058,60 +2285,65 @@ watch(
                 <div
                   v-if="model.key === 'markov' && model.timelineNodes.length"
                   :key="markovAxisKey(model)"
-                  class="markov-axis-chart"
-                  @pointerdown="startMarkovAxisDrag"
+                  class="markov-axis-shell"
                 >
-                  <div class="markov-axis-legend" aria-hidden="true">
-                    <span><i class="upper-dot"></i>上方：升温候选</span>
-                    <span><i class="lower-dot"></i>下方：降温候选</span>
-                  </div>
                   <div
-                    class="markov-axis-track"
-                    :style="markovAxisTrackStyle(model)"
+                    class="markov-axis-chart"
+                    @pointerdown="startMarkovAxisDrag"
                   >
-                    <div class="markov-axis-line" aria-hidden="true"></div>
-                    <article
-                      v-for="item in model.timelineNodes"
-                      :key="`${item.type}-${item.index}`"
-                      :class="[sequenceItemClass(item), item.track]"
-                    >
-                      <i></i>
-                      <div class="markov-node-label">
-                        <strong>{{ item.label }}</strong>
-                        <span>#{{ item.index + 1 }}</span>
+                    <div class="markov-legend-row" aria-hidden="true">
+                      <div class="markov-axis-legend">
+                        <span><i class="normal-dot"></i>普通记录</span>
+                        <span><i class="hot-dot"></i>触发冷却</span>
                       </div>
-                    </article>
+                    </div>
+                    <div
+                      class="markov-axis-track"
+                      :style="markovAxisTrackStyle(model)"
+                    >
+                      <div class="markov-axis-line" aria-hidden="true"></div>
+                      <div
+                        v-for="item in model.timelineNodes"
+                        :key="`${item.type}-${item.index}`"
+                        class="markov-axis-node"
+                        :class="[sequenceItemClass(item), item.track]"
+                      >
+                        <i></i>
+                        <div class="markov-node-label">
+                          <strong>{{ item.label }}</strong>
+                          <span>#{{ item.index + 1 }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="markov-time-legend" aria-hidden="true">
+                    <b></b>
                   </div>
                 </div>
 
-                <div v-if="model.key === 'context'" class="context-check-grid">
-                  <article v-for="check in model.contextChecks" :key="check.key" :class="check.status">
-                    <span>{{ check.label }}</span>
-                    <strong>{{ check.sampleSize }} / {{ check.recommended }}</strong>
-                    <small>{{ check.status === 'monitoring' || check.status === 'active' ? '监测中' : '样本不足' }}</small>
-                  </article>
-                </div>
-
-                <div v-if="model.key === 'rule'" class="rule-deviation-chart">
-                  <div class="rule-deviation-scale" aria-hidden="true">
-                    <span></span>
+                <div v-if="model.key === 'context'" class="context-check-grid" aria-label="上下文监测条件">
+                  <div class="context-overall-progress">
                     <div>
-                      <span>偏冷</span>
-                      <strong>均衡线</strong>
-                      <span>偏热</span>
+                      <span>上下文样本</span>
+                      <strong>{{ contextOverallCheck(model).sampleSize }} / {{ contextOverallCheck(model).recommended }}</strong>
                     </div>
-                    <span></span>
+                    <i aria-hidden="true">
+                      <b :style="{ width: formatPercent(contextOverallProgress(model)) }"></b>
+                    </i>
                   </div>
-                  <article v-for="bar in model.bars" :key="bar.label" :class="bar.tone">
-                    <div class="rule-deviation-copy">
-                      <strong>{{ bar.label }}</strong>
-                      <span>{{ bar.caption }}</span>
-                    </div>
-                    <div class="rule-deviation-axis">
-                      <i aria-hidden="true"></i>
-                      <b :style="ruleDeviationStyle(bar)"></b>
-                    </div>
-                    <strong class="rule-deviation-value">{{ modelBarText(bar) }}</strong>
+                  <div class="context-check-head">
+                    <span>观测维度</span>
+                    <span>状态</span>
+                  </div>
+                  <article
+                    v-for="check in model.contextChecks"
+                    :key="check.key"
+                    class="context-check-row"
+                    :class="check.status"
+                    :title="check.label"
+                  >
+                    <strong class="context-check-name">{{ check.label }}</strong>
+                    <span class="context-check-state">纳入观察</span>
                   </article>
                 </div>
 
@@ -2172,33 +2404,13 @@ watch(
                 </footer>
               </aside>
             </div>
-          </article>
-        </div>
               </article>
-            </div>
-          </section>
+                  </div>
+                </Transition>
+                  </article>
+                </div>
+              </section>
         </div>
-
-        <section class="evaluation-card risk-card">
-          <div class="chart-heading">
-            <h3>结论风险提示</h3>
-            <span>防误判</span>
-          </div>
-          <div class="risk-grid">
-            <article>
-              <strong>样本不足时不下结论</strong>
-              <span>低样本阶段只展示波动，不把随机噪声解释成规律。</span>
-            </article>
-            <article>
-              <strong>权重调整看验证集表现</strong>
-              <span>某个模型频繁命中后才逐步上调，避免一次好运气改变系统判断。</span>
-            </article>
-            <article>
-              <strong>套装影响需要显著证据</strong>
-              <span>后台持续记录套装变量，样本足够且偏差稳定后才提升上下文模型权重。</span>
-            </article>
-          </div>
-        </section>
       </section>
     </section>
   </main>

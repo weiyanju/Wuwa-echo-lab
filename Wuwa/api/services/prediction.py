@@ -632,8 +632,7 @@ def _normalize_weights(weights):
     return {key: value / total for key, value in weights.items()}
 
 
-def _dynamic_weight_result(user, base_weights):
-    events = _historical_roll_events(user)
+def _dynamic_weight_result_from_events(events, base_weights):
     if len(events) < DYNAMIC_WEIGHT_MIN_EVENTS:
         return dict(base_weights), {
             key: {"hit_rate": None, "evaluated": 0, "direction": "flat", "shift": 0.0}
@@ -698,6 +697,10 @@ def _dynamic_weight_result(user, base_weights):
         }
 
     return _normalize_weights(adjusted), adjustments
+
+
+def _dynamic_weight_result(user, base_weights):
+    return _dynamic_weight_result_from_events(_historical_roll_events(user), base_weights)
 
 
 def _weighted_distribution(distributions, weights):

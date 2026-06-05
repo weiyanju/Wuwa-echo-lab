@@ -19,7 +19,7 @@ from api.serializers import (
     serialize_roll,
     update_echo_from_payload,
 )
-from api.services.evaluation import empty_evaluation
+from api.services.evaluation import build_model_evaluation
 from api.services.prediction import predict_next_substat
 from api.services.statistics import build_user_statistics
 
@@ -175,4 +175,4 @@ def stats(request):
 @api_login_required
 @require_GET
 def model_evaluation(request):
-    return JsonResponse(empty_evaluation())
+    return JsonResponse(build_model_evaluation(request.user))
