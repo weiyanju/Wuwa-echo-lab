@@ -50,6 +50,7 @@ const floatingHistoryRestoreShowcasePosition = ref(null)
 const isHistoryMinimized = ref(localStorage.getItem('wuwa-floating-history-minimized') === 'true')
 const isHistoryPinned = ref(localStorage.getItem('wuwa-floating-history-pinned') === 'true')
 const isHistoryShowcase = ref(false)
+const themeMode = ref(readInitialTheme())
 const historyFilter = ref('all')
 const historyDrag = ref(null)
 const modelInsightViews = ref({})
@@ -72,6 +73,8 @@ const echoForm = ref({
 })
 
 const activeEcho = computed(() => echoes.value.find((echo) => echo.id === activeEchoId.value) || null)
+const isDarkTheme = computed(() => themeMode.value === 'dark')
+const themeToggleLabel = computed(() => (isDarkTheme.value ? '切换到日间模式' : '切换到夜间模式'))
 const sortedEchoes = computed(() => sortVisibleEchoHistory(echoes.value))
 const historyFilterOptions = computed(() => {
   const visibleEchoes = sortedEchoes.value
@@ -441,6 +444,22 @@ function evaluationMetricFill(metric) {
     return `${Math.min(value * 100, 100)}%`
   }
   return `${Math.max(8, Math.min((1 - value / 3) * 100, 100))}%`
+}
+
+function readInitialTheme() {
+  const saved = localStorage.getItem('wuwa-theme')
+  if (saved === 'dark' || saved === 'light') {
+    return saved
+  }
+  if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches) {
+    return 'dark'
+  }
+  return 'light'
+}
+
+function toggleTheme() {
+  themeMode.value = isDarkTheme.value ? 'light' : 'dark'
+  localStorage.setItem('wuwa-theme', themeMode.value)
 }
 
 function evaluationStatusText() {
@@ -1627,7 +1646,7 @@ watch(
 </script>
 
 <template>
-  <main class="app-shell">
+  <main class="app-shell" :class="{ 'theme-dark': isDarkTheme }">
     <section v-if="loading" class="auth-shell">
       <div class="auth-copy">
         <span class="brand-mark">Wuwa Echo Lab</span>
@@ -1679,6 +1698,16 @@ watch(
         </nav>
         <div class="account-actions">
           <span class="uid-chip">UID {{ playerUid }}</span>
+          <button
+            class="theme-toggle-button"
+            type="button"
+            :aria-pressed="isDarkTheme"
+            :aria-label="themeToggleLabel"
+            :title="themeToggleLabel"
+            @click="toggleTheme"
+          >
+            <span class="theme-toggle-icon" aria-hidden="true"></span>
+          </button>
           <button class="button-ghost" @click="signOut">退出</button>
         </div>
       </header>
