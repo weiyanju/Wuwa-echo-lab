@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="WuwaAssistant.Core/WuwaAssistant.Core.csproj" />
+  <Project Path="WuwaAssistant.Tests/WuwaAssistant.Tests.csproj" />
+  <Project Path="WuwaAssistant/WuwaAssistant.csproj" />
+</Solution>

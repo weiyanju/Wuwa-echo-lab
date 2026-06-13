@@ -3,42 +3,63 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import {
   addSubstat,
   createEcho,
-  getMe,
   getModelEvaluation,
   getPrediction,
   getStats,
   listEchoes,
-  login,
-  logout,
-  register,
+  listRecognitionSessions,
+  listRecognitionSnapshots,
+  revertRecognitionSnapshot,
   undoLastSubstat,
   updateEcho,
 } from './services/api'
-import { displayEchoNumericId, generateNumericEchoUid, nextEchoSequence } from './services/echoId'
+import { useAuth } from './composables/useAuth'
+import { useGameAccount } from './composables/useGameAccount'
+import { displayEchoNumericId } from './services/echoId'
 import { buildNextEchoConfig, isReusableDraft, sortVisibleEchoHistory, statusBadge } from './services/echoWorkflow'
 import { confidenceText, formatPercent, formatSignedPercent, modelWeightLabel, sampleStageText, statusText } from './services/formatters'
 import { ACTIVE_MODEL_WEIGHT_EPSILON, buildModelDetailCards } from './services/modelDetails'
+import { normalizePlayerUid } from './services/playerUid'
 import { mainStatLabels, mainStatsByCost, substatLabels, substatOrder, tierTables } from './data/substats'
 import { sonataEffects } from './data/sonataEffects'
-import historyMinimizeIcon from './assets/icons/window-minimize.svg'
-import historyPinnedIcon from './assets/icons/pinned.svg'
-import historyShowcaseIcon from './assets/icons/layout-list.svg'
+import chevronDownIcon from './assets/icons/chevron-down.svg'
+import checkIcon from './assets/icons/check.svg'
+import historyMinimizeIcon from './assets/icons/panel-left.svg'
+import historyPinnedIcon from './assets/icons/pin.svg'
+import historyShowcaseIcon from './assets/icons/layout-list-lucide.svg'
+import moonIcon from './assets/icons/moon.svg'
+import historyTerminalDarkIcon from './assets/icons/pangu-terminal-dark.png'
 import historyTerminalIcon from './assets/icons/rovers-terminal-expand.png'
+import refreshIcon from './assets/icons/refresh-cw.svg'
+import sunIcon from './assets/icons/sun.svg'
+import xIcon from './assets/icons/x.svg'
 
-const user = ref(null)
+const auth = useAuth()
+const gameAccount = useGameAccount()
+const user = auth.user
 const page = ref('workspace')
-const authUid = ref(localStorage.getItem('wuwa-player-uid') || '')
+const authForm = ref({
+  username: localStorage.getItem('wuwa-login-username') || '',
+  password: '',
+  mode: 'login',
+})
+const uidBinding = ref('')
 const saveLogin = ref(localStorage.getItem('wuwa-save-login') === 'true')
 const error = ref('')
 const loading = ref(true)
 const saving = ref(false)
+const pendingTierKey = ref('')
 
 const echoes = ref([])
 const activeEchoId = ref(null)
 const prediction = ref(null)
 const stats = ref(null)
 const evaluation = ref(null)
-const playerUid = ref(localStorage.getItem('wuwa-player-uid') || '')
+const recognitionSessions = ref([])
+const recognitionSnapshots = ref([])
+const revertingSnapshotId = ref(null)
+const recognitionRefreshing = ref(false)
+const recognitionRefreshStatus = ref('')
 const createPanelRef = ref(null)
 const galleryPanelRef = ref(null)
 const setupPanelHeight = ref(null)
@@ -62,8 +83,15 @@ const markovAxisDrag = ref(null)
 let historyPanelAnimationTimer = null
 let suppressNextHistoryToggle = false
 let suppressNextHistoryToggleTimer = null
+let insightsRefreshTimer = null
+let activeRefreshTimer = null
+let recognitionRefreshFeedbackTimer = null
+let activePredictionRefreshToken = 0
 const FLOATING_HISTORY_MINIMIZED_SIZE = 76
-const TERMINAL_ICON_BASE_ANGLE = 350
+// Terminal mouth angle in each unrotated asset. Angles use the app convention:
+// 0deg points to 12 o'clock and increases clockwise.
+const TERMINAL_ICON_LIGHT_MOUTH_ANGLE = 350
+const TERMINAL_ICON_DARK_MOUTH_ANGLE = 10
 
 const echoForm = ref({
   sonata: sonataEffects.at(-1).name,
@@ -137,6 +165,34 @@ const legalMainStats = computed(() => mainStatsByCost[echoForm.value.cost] || []
 const progressPercent = computed(() => Math.min(((activeEcho.value?.substats.length || 0) / 5) * 100, 100))
 const topCandidate = computed(() => prediction.value?.candidates?.[0] || null)
 const selectedSonata = computed(() => sonataEffects.find((effect) => effect.name === echoForm.value.sonata) || sonataEffects.at(-1))
+const selectedGameAccountId = computed(() => gameAccount.defaultAccount.value?.id || null)
+const boundPlayerUid = computed(() => gameAccount.defaultAccount.value?.uid || '')
+const latestRecognitionSession = computed(() => recognitionSessions.value[0] || null)
+const recognitionReviewRows = computed(() => recognitionSnapshots.value.filter((snapshot) => (
+  ['saved', 'conflict', 'rejected', 'ignored_duplicate'].includes(snapshot.status)
+)))
+const recognitionMetrics = computed(() => {
+  const session = latestRecognitionSession.value || {}
+  return [
+    { key: 'saved_roll_count', label: '保存词条', value: session.saved_roll_count || 0 },
+    { key: 'snapshot_count', label: '识别快照', value: session.snapshot_count || 0 },
+    { key: 'conflict_count', label: '待处理', value: session.conflict_count || 0 },
+  ]
+})
+const recognitionSecondarySummary = computed(() => {
+  const session = latestRecognitionSession.value || {}
+  return `新建声骸 ${session.created_echo_count || 0} · 补录声骸 ${session.updated_echo_count || 0} · 已回滚 ${session.reverted_count || 0}`
+})
+const recognitionRefreshIcon = computed(() => {
+  if (recognitionRefreshStatus.value === 'success') {
+    return checkIcon
+  }
+  if (recognitionRefreshStatus.value === 'error') {
+    return xIcon
+  }
+  return refreshIcon
+})
+const recognitionRefreshDisabled = computed(() => saving.value || recognitionRefreshing.value || Boolean(recognitionRefreshStatus.value))
 const canonicalModelLabels = {
   rule: '规则均衡',
   bayes: '周期规律',
@@ -345,9 +401,15 @@ const sampleStageAxisRows = computed(() => {
 })
 const setupPanelStyle = computed(() => (setupPanelHeight.value ? { height: `${setupPanelHeight.value}px` } : {}))
 const terminalIconRotation = ref(0)
+const minimizedHistoryTerminalIcon = computed(() => (isDarkTheme.value ? historyTerminalDarkIcon : historyTerminalIcon))
 const terminalExpandIconStyle = computed(() => ({
   '--terminal-angle': `${terminalIconRotation.value}deg`,
 }))
+
+function iconMask(source) {
+  return { '--icon-url': `url("${source}")` }
+}
+
 const floatingHistoryStyle = computed(() => {
   if (typeof window !== 'undefined' && window.matchMedia('(max-width: 860px)').matches) {
     return {}
@@ -409,21 +471,6 @@ function resetEchoForm() {
   echoForm.value.is_continuous_tuning = false
 }
 
-function setPlayerUid(value) {
-  playerUid.value = value.trim()
-  localStorage.setItem('wuwa-player-uid', playerUid.value)
-}
-
-function generateEchoUid() {
-  return generateNumericEchoUid({
-    playerUid: playerUid.value,
-    sonataId: selectedSonata.value.id,
-    cost: echoForm.value.cost,
-    mainStat: echoForm.value.main_stat,
-    sequence: nextEchoSequence(playerUid.value),
-  })
-}
-
 function evaluationMetricText(metric) {
   if (metric.value == null) {
     return '样本不足'
@@ -447,10 +494,6 @@ function evaluationMetricFill(metric) {
 }
 
 function readInitialTheme() {
-  const saved = localStorage.getItem('wuwa-theme')
-  if (saved === 'dark' || saved === 'light') {
-    return saved
-  }
   if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches) {
     return 'dark'
   }
@@ -459,7 +502,7 @@ function readInitialTheme() {
 
 function toggleTheme() {
   themeMode.value = isDarkTheme.value ? 'light' : 'dark'
-  localStorage.setItem('wuwa-theme', themeMode.value)
+  nextTick(() => syncTerminalIconRotation())
 }
 
 function evaluationStatusText() {
@@ -1040,7 +1083,8 @@ function getFloatingHistoryTerminalAngle(position = floatingHistoryPosition.valu
 }
 
 function syncTerminalIconRotation(position = floatingHistoryPosition.value) {
-  const targetRotation = getFloatingHistoryTerminalAngle(position) - TERMINAL_ICON_BASE_ANGLE
+  const mouthAngle = isDarkTheme.value ? TERMINAL_ICON_DARK_MOUTH_ANGLE : TERMINAL_ICON_LIGHT_MOUTH_ANGLE
+  const targetRotation = getFloatingHistoryTerminalAngle(position) - mouthAngle
   terminalIconRotation.value = getClosestEquivalentAngle(targetRotation, terminalIconRotation.value)
 }
 
@@ -1348,68 +1392,111 @@ function constrainSavedFloatingHistoryPosition() {
 
 async function bootstrap() {
   try {
-    user.value = await getMe()
-    await refreshAll()
-  } catch {
-    user.value = null
-    if (saveLogin.value && authUid.value) {
-      await submitUidLogin()
+    const currentUser = await auth.loadMe()
+    if (currentUser) {
+      await gameAccount.loadGameAccounts()
+      uidBinding.value = boundPlayerUid.value
+      if (!gameAccount.workspaceLocked.value) {
+        await refreshAll()
+      } else {
+        resetWorkspaceState()
+      }
     }
+  } catch (err) {
+    error.value = err.message
   } finally {
     loading.value = false
   }
 }
 
-function uidCredentials(uid) {
-  const normalizedUid = uid.trim()
-  return {
-    username: `wuwa_${normalizedUid}`,
-    password: `wuwa_uid_${normalizedUid}`,
-  }
-}
-
-async function submitUidLogin() {
+async function submitAuth() {
   error.value = ''
-  const uid = authUid.value.trim()
-  if (!uid) {
-    error.value = '请填写游戏 UID。'
+  const username = authForm.value.username.trim()
+  const password = authForm.value.password
+  if (!username || !password) {
+    error.value = '请填写用户名和密码。'
     return
   }
   try {
-    const credentials = uidCredentials(uid)
-    try {
-      await login(credentials)
-    } catch {
-      await register(credentials)
-      await login(credentials)
+    const payload = { username, password }
+    if (authForm.value.mode === 'register') {
+      await auth.signUp(payload)
+    } else {
+      await auth.signIn(payload)
     }
-    setPlayerUid(uid)
     localStorage.setItem('wuwa-save-login', saveLogin.value ? 'true' : 'false')
-    user.value = await getMe()
-    await refreshAll()
+    if (saveLogin.value) {
+      localStorage.setItem('wuwa-login-username', username)
+    } else {
+      localStorage.removeItem('wuwa-login-username')
+    }
+    await gameAccount.loadGameAccounts()
+    uidBinding.value = boundPlayerUid.value
+    if (gameAccount.workspaceLocked.value) {
+      resetWorkspaceState()
+    } else {
+      await refreshAll()
+    }
   } catch (err) {
     error.value = err.message
   }
 }
 
-async function signOut() {
-  await logout()
-  user.value = null
+function resetWorkspaceState() {
   echoes.value = []
   activeEchoId.value = null
   prediction.value = null
   stats.value = null
   evaluation.value = null
-  if (!saveLogin.value) {
-    authUid.value = ''
-    setPlayerUid('')
+  recognitionSessions.value = []
+  recognitionSnapshots.value = []
+}
+
+function handleUidBindingInput() {
+  uidBinding.value = normalizePlayerUid(uidBinding.value)
+}
+
+async function submitUidBinding() {
+  error.value = ''
+  const uid = normalizePlayerUid(uidBinding.value)
+  uidBinding.value = uid
+  if (!uid) {
+    error.value = '请填写游戏 UID。'
+    return
+  }
+
+  saving.value = true
+  try {
+    resetWorkspaceState()
+    await gameAccount.bindDefaultUid(uidBinding.value)
+    await refreshAll()
+  } catch (err) {
+    error.value = err.message
+  } finally {
+    saving.value = false
   }
 }
 
+async function signOut() {
+  await auth.signOut()
+  gameAccount.accounts.value = []
+  uidBinding.value = ''
+  resetWorkspaceState()
+  if (!saveLogin.value) {
+    authForm.value.username = ''
+    localStorage.removeItem('wuwa-login-username')
+  }
+  authForm.value.password = ''
+}
+
 async function refreshAll() {
-  const echoData = await listEchoes()
+  if (gameAccount.workspaceLocked.value || !selectedGameAccountId.value) {
+    resetWorkspaceState()
+    return
+  }
+  const echoData = await listEchoes(selectedGameAccountId.value)
   echoes.value = echoData.results || []
-  if (!echoes.value.length && playerUid.value) {
+  if (!echoes.value.length && boundPlayerUid.value) {
     const draftEcho = await createEchoWithConfig()
     if (draftEcho) {
       echoes.value = [draftEcho]
@@ -1429,8 +1516,9 @@ async function refreshAll() {
     echoForm.value.is_continuous_tuning = currentEcho.is_continuous_tuning
   }
   await refreshActive()
-  stats.value = await getStats()
-  evaluation.value = await getModelEvaluation()
+  stats.value = await getStats(selectedGameAccountId.value)
+  evaluation.value = await getModelEvaluation(selectedGameAccountId.value)
+  await refreshRecognition({ silent: true })
 }
 
 async function refreshActive() {
@@ -1438,11 +1526,208 @@ async function refreshActive() {
     prediction.value = null
     return
   }
-  prediction.value = await getPrediction(activeEchoId.value)
+  const echoId = activeEchoId.value
+  const token = ++activePredictionRefreshToken
+  const nextPrediction = await getPrediction(echoId)
+  if (token === activePredictionRefreshToken && activeEchoId.value === echoId) {
+    prediction.value = nextPrediction
+  }
+}
+
+function setRecognitionRefreshStatus(status) {
+  clearTimeout(recognitionRefreshFeedbackTimer)
+  recognitionRefreshStatus.value = status
+  if (status) {
+    recognitionRefreshFeedbackTimer = setTimeout(() => {
+      recognitionRefreshStatus.value = ''
+      recognitionRefreshFeedbackTimer = null
+    }, 900)
+  }
+}
+
+async function refreshRecognition({ silent = false } = {}) {
+  if (!selectedGameAccountId.value) {
+    recognitionSessions.value = []
+    recognitionSnapshots.value = []
+    return
+  }
+  if (recognitionRefreshing.value) {
+    return
+  }
+  recognitionRefreshing.value = true
+  if (!silent) {
+    recognitionRefreshStatus.value = ''
+  }
+  try {
+    const [sessionData, snapshotData] = await Promise.all([
+      listRecognitionSessions(selectedGameAccountId.value),
+      listRecognitionSnapshots(selectedGameAccountId.value, ['saved', 'conflict', 'rejected', 'ignored_duplicate']),
+    ])
+    recognitionSessions.value = sessionData.results || []
+    recognitionSnapshots.value = snapshotData.results || []
+    if (!silent) {
+      setRecognitionRefreshStatus('success')
+    }
+  } catch (err) {
+    if (!silent) {
+      error.value = err.message
+      setRecognitionRefreshStatus('error')
+      return
+    }
+    throw err
+  } finally {
+    recognitionRefreshing.value = false
+  }
+}
+
+function recognitionStatusText(status) {
+  return {
+    saved: '已保存',
+    conflict: '需复查',
+    rejected: '已丢弃',
+    ignored_duplicate: '重复快照',
+    reverted: '已回滚',
+  }[status] || status || '未知'
+}
+
+function recognitionStatusClass(snapshot) {
+  return `recognition-status-${snapshot.status || 'unknown'}`
+}
+
+function recognitionSnapshotTitle(snapshot) {
+  if (snapshot.status === 'saved') {
+    return `快照 #${snapshot.snapshot_id} 已写入 ${snapshot.created_roll_count || 0} 条词条`
+  }
+  if (snapshot.error_code === 'duplicate_detail_screenshot_hash') {
+    return `快照 #${snapshot.snapshot_id} 与已有截图重复`
+  }
+  return `快照 #${snapshot.snapshot_id} ${recognitionStatusText(snapshot.status)}`
+}
+
+async function revertSnapshot(snapshot) {
+  if (!snapshot?.snapshot_id || revertingSnapshotId.value) {
+    return
+  }
+  error.value = ''
+  revertingSnapshotId.value = snapshot.snapshot_id
+  try {
+    await revertRecognitionSnapshot(snapshot.snapshot_id)
+    await refreshAll()
+  } catch (err) {
+    error.value = err.message
+  } finally {
+    revertingSnapshotId.value = null
+  }
+}
+
+function replaceEcho(nextEcho) {
+  echoes.value = echoes.value.map((echo) => (echo.id === nextEcho.id ? nextEcho : echo))
+}
+
+function appendRollToEcho(echoId, roll) {
+  echoes.value = echoes.value.map((echo) => {
+    if (echo.id !== echoId) {
+      return echo
+    }
+    const nextRolls = [...echo.substats.filter((item) => item.id !== roll.id), roll]
+      .sort((left, right) => left.position - right.position || left.id - right.id)
+    return {
+      ...echo,
+      substats: nextRolls,
+      status: nextRolls.length >= 5 ? 'completed' : 'in_progress',
+      last_tuned_at: roll.tuned_at,
+    }
+  })
+}
+
+function replaceOptimisticRollInEcho(echoId, optimisticRollId, roll) {
+  echoes.value = echoes.value.map((echo) => {
+    if (echo.id !== echoId) {
+      return echo
+    }
+    const nextRolls = echo.substats
+      .map((item) => (item.id === optimisticRollId ? roll : item))
+      .sort((left, right) => left.position - right.position || left.id - right.id)
+    return {
+      ...echo,
+      substats: nextRolls,
+      status: nextRolls.length >= 5 ? 'completed' : 'in_progress',
+      last_tuned_at: roll.tuned_at,
+    }
+  })
+}
+
+function removeOptimisticRollFromEcho(echoId, optimisticRollId) {
+  echoes.value = echoes.value.map((echo) => {
+    if (echo.id !== echoId) {
+      return echo
+    }
+    const nextRolls = echo.substats.filter((item) => item.id !== optimisticRollId)
+    return {
+      ...echo,
+      substats: nextRolls,
+      status: nextRolls.length >= 5 ? 'completed' : 'in_progress',
+      last_tuned_at: nextRolls.at(-1)?.tuned_at || null,
+    }
+  })
+}
+
+function buildOptimisticRoll(row, tier) {
+  return {
+    id: -Date.now(),
+    position: (activeEcho.value?.substats.length || 0) + 1,
+    substat_type: row.substat_type,
+    tier_value: tier.value,
+    enhance_phase: '',
+    tuning_order: null,
+    tuned_at: new Date().toISOString(),
+    optimistic: true,
+  }
+}
+
+function refreshInsightsInBackground() {
+  if (!selectedGameAccountId.value) {
+    return
+  }
+  clearTimeout(insightsRefreshTimer)
+  insightsRefreshTimer = setTimeout(() => {
+    Promise.all([
+      getStats(selectedGameAccountId.value),
+      getModelEvaluation(selectedGameAccountId.value),
+    ])
+      .then(([nextStats, nextEvaluation]) => {
+        stats.value = nextStats
+        evaluation.value = nextEvaluation
+      })
+      .catch((err) => {
+        error.value = err.message
+      })
+  }, 1000)
+}
+
+function refreshActiveInBackground() {
+  clearTimeout(activeRefreshTimer)
+  activeRefreshTimer = setTimeout(() => {
+    refreshActive().catch((err) => {
+      error.value = err.message
+    })
+  }, 300)
+}
+
+function tierButtonKey(row, tier) {
+  return `${row.substat_type}:${tier.value}`
+}
+
+function isTierPending(row, tier) {
+  return pendingTierKey.value === tierButtonKey(row, tier)
+}
+
+function rowHasPendingTier(row) {
+  return pendingTierKey.value.startsWith(`${row.substat_type}:`)
 }
 
 async function createEchoWithConfig(config = echoForm.value) {
-  if (!playerUid.value) {
+  if (gameAccount.workspaceLocked.value || !selectedGameAccountId.value) {
     error.value = '请先填写你的游戏 UID。'
     return null
   }
@@ -1453,7 +1738,6 @@ async function createEchoWithConfig(config = echoForm.value) {
   echoForm.value.is_continuous_tuning = config.is_continuous_tuning ?? true
   try {
     const echo = await createEcho({
-      echo_uid: generateEchoUid(),
       display_name: '',
       cost: echoForm.value.cost,
       set_name: echoForm.value.sonata,
@@ -1461,7 +1745,7 @@ async function createEchoWithConfig(config = echoForm.value) {
       source: '',
       tuning_batch_id: '',
       is_continuous_tuning: echoForm.value.is_continuous_tuning,
-    })
+    }, selectedGameAccountId.value)
     echoes.value = [echo, ...echoes.value]
     activeEchoId.value = echo.id
     return echo
@@ -1516,7 +1800,6 @@ async function applyEchoConfig(partialConfig) {
   if (isReusableDraft(activeEcho.value)) {
     try {
       const updated = await updateEcho(activeEcho.value.id, {
-        echo_uid: generateEchoUid(),
         cost: nextConfig.cost,
         set_name: nextConfig.sonata,
         main_stat: nextConfig.main_stat,
@@ -1567,25 +1850,35 @@ async function selectEcho(echoId) {
 }
 
 async function clickTier(row, tier) {
-  if (row.recorded || saving.value) {
+  if (row.recorded || pendingTierKey.value) {
     return
   }
-  saving.value = true
+  pendingTierKey.value = tierButtonKey(row, tier)
   error.value = ''
+  let optimisticRoll = null
+  let optimisticEchoId = null
   try {
     const echo = await ensureActiveEcho()
     if (!echo) {
       return
     }
-    await addSubstat(echo.id, {
+    optimisticEchoId = echo.id
+    optimisticRoll = buildOptimisticRoll(row, tier)
+    appendRollToEcho(echo.id, optimisticRoll)
+    const roll = await addSubstat(echo.id, {
       substat_type: row.substat_type,
       tier_value: tier.value,
     })
-    await refreshAll()
+    replaceOptimisticRollInEcho(echo.id, optimisticRoll.id, roll)
+    refreshActiveInBackground()
+    refreshInsightsInBackground()
   } catch (err) {
+    if (optimisticEchoId && optimisticRoll) {
+      removeOptimisticRollFromEcho(optimisticEchoId, optimisticRoll.id)
+    }
     error.value = err.message
   } finally {
-    saving.value = false
+    pendingTierKey.value = ''
   }
 }
 
@@ -1596,8 +1889,10 @@ async function undoActiveSubstat() {
   saving.value = true
   error.value = ''
   try {
-    await undoLastSubstat(activeEcho.value.id)
-    await refreshAll()
+    const result = await undoLastSubstat(activeEcho.value.id)
+    replaceEcho(result.echo)
+    await refreshActive()
+    refreshInsightsInBackground()
   } catch (err) {
     error.value = err.message
   } finally {
@@ -1620,6 +1915,12 @@ onBeforeUnmount(() => {
   historyPanelAnimationTimer = null
   clearTimeout(suppressNextHistoryToggleTimer)
   suppressNextHistoryToggleTimer = null
+  clearTimeout(insightsRefreshTimer)
+  insightsRefreshTimer = null
+  clearTimeout(activeRefreshTimer)
+  activeRefreshTimer = null
+  clearTimeout(recognitionRefreshFeedbackTimer)
+  recognitionRefreshFeedbackTimer = null
   endFloatingHistoryDrag()
   endMarkovAxisDrag()
   window.removeEventListener('resize', syncSetupPanelHeight)
@@ -1639,7 +1940,7 @@ watch(
 )
 
 watch(
-  () => `${activeEchoId.value}:${activeEcho.value?.substats.length || 0}:${echoForm.value.cost}:${echoForm.value.main_stat}:${echoForm.value.sonata}`,
+  () => `${activeEchoId.value}:${echoForm.value.cost}:${echoForm.value.main_stat}:${echoForm.value.sonata}`,
   syncSetupPanelHeight,
   { flush: 'post' },
 )
@@ -1674,18 +1975,82 @@ watch(
         </div>
       </div>
 
-      <form class="auth-form product-panel" @submit.prevent="submitUidLogin">
+      <form class="auth-form product-panel" @submit.prevent="submitAuth">
         <label>
-          游戏 UID
-          <input v-model="authUid" inputmode="numeric" autocomplete="username" />
+          用户名
+          <input v-model="authForm.username" autocomplete="username" />
+        </label>
+        <label>
+          密码
+          <input v-model="authForm.password" type="password" autocomplete="current-password" />
         </label>
         <label class="checkbox-row save-login-row">
           <input v-model="saveLogin" type="checkbox" />
-          保存登录，下次自动进入
+          记住用户名
         </label>
         <p v-if="error" class="error-text">{{ error }}</p>
-        <button class="button-buy" type="submit">进入研究台</button>
+        <div class="auth-mode-actions">
+          <button :class="{ active: authForm.mode === 'login' }" type="button" @click="authForm.mode = 'login'">登录</button>
+          <button :class="{ active: authForm.mode === 'register' }" type="button" @click="authForm.mode = 'register'">注册</button>
+        </div>
+        <button class="button-buy" type="submit">{{ authForm.mode === 'register' ? '创建账号并进入' : '进入研究台' }}</button>
       </form>
+    </section>
+
+    <section v-else-if="gameAccount.workspaceLocked.value" class="uid-setup-shell">
+      <header class="uid-setup-topbar">
+        <a class="wordmark" href="#" @click.prevent="page = 'workspace'">Wuwa Echo Lab</a>
+        <nav class="pill-tabs disabled-tabs" aria-label="页面">
+          <button class="active" type="button" disabled>工作台</button>
+          <button type="button" disabled>统计</button>
+          <button type="button" disabled>评估</button>
+        </nav>
+        <div class="account-actions uid-switcher">
+          <div class="uid-chip">
+            <i class="uid-status-dot" aria-hidden="true"></i>
+            <span class="uid-chip-label">UID</span>
+            <span class="uid-chip-value">{{ boundPlayerUid || '未绑定' }}</span>
+          </div>
+          <button
+            class="theme-toggle-button"
+            type="button"
+            :aria-pressed="isDarkTheme"
+            :aria-label="themeToggleLabel"
+            :title="themeToggleLabel"
+            @click="toggleTheme"
+          >
+            <span class="ui-line-icon theme-toggle-icon" :style="iconMask(isDarkTheme ? sunIcon : moonIcon)" aria-hidden="true"></span>
+          </button>
+          <button class="button-ghost" @click="signOut">退出</button>
+        </div>
+      </header>
+
+      <div class="uid-setup-content">
+        <p v-if="error" class="error-text">{{ error }}</p>
+
+        <section class="locked-workbench product-panel">
+          <div class="section-heading">
+            <h2>绑定鸣潮 UID</h2>
+            <p>用于保存声骸记录和统计数据。</p>
+          </div>
+          <form class="uid-binding-form" @submit.prevent="submitUidBinding">
+            <label>
+              UID
+              <input
+                v-model="uidBinding"
+                inputmode="numeric"
+                autocomplete="off"
+                placeholder="输入你的 UID"
+                :disabled="saving || gameAccount.loading.value"
+                @input="handleUidBindingInput"
+              />
+            </label>
+            <button class="button-buy" type="submit" :disabled="saving || gameAccount.loading.value">
+              {{ saving ? '保存中' : '保存' }}
+            </button>
+          </form>
+        </section>
+      </div>
     </section>
 
     <section v-else class="dashboard">
@@ -1696,8 +2061,12 @@ watch(
           <button :class="{ active: page === 'stats' }" @click="page = 'stats'">统计</button>
           <button :class="{ active: page === 'evaluation' }" @click="page = 'evaluation'">评估</button>
         </nav>
-        <div class="account-actions">
-          <span class="uid-chip">UID {{ playerUid }}</span>
+        <div class="account-actions uid-switcher">
+          <div class="uid-chip">
+            <i class="uid-status-dot" aria-hidden="true"></i>
+            <span class="uid-chip-label">UID</span>
+            <span class="uid-chip-value">{{ boundPlayerUid || '未绑定' }}</span>
+          </div>
           <button
             class="theme-toggle-button"
             type="button"
@@ -1706,7 +2075,7 @@ watch(
             :title="themeToggleLabel"
             @click="toggleTheme"
           >
-            <span class="theme-toggle-icon" aria-hidden="true"></span>
+            <span class="ui-line-icon theme-toggle-icon" :style="iconMask(isDarkTheme ? sunIcon : moonIcon)" aria-hidden="true"></span>
           </button>
           <button class="button-ghost" @click="signOut">退出</button>
         </div>
@@ -1726,6 +2095,69 @@ watch(
       </section>
 
       <p v-if="error" class="error-text">{{ error }}</p>
+
+      <section
+        v-if="page === 'workspace'"
+        class="recognition-panel product-panel"
+        :class="{ 'recognition-panel-empty': !recognitionReviewRows.length }"
+      >
+        <div class="recognition-panel-head">
+          <div class="recognition-title-lockup">
+            <span class="recognition-live-dot" aria-hidden="true"></span>
+            <div>
+              <span class="eyebrow">Local recognition</span>
+              <h2>本地自动识别</h2>
+            </div>
+          </div>
+          <button
+            class="recognition-refresh-button icon-button"
+            type="button"
+            :class="[recognitionRefreshStatus, { refreshing: recognitionRefreshing }]"
+            :disabled="recognitionRefreshDisabled"
+            :aria-busy="recognitionRefreshing"
+            aria-label="刷新识别结果"
+            title="刷新识别结果"
+            @click="refreshRecognition"
+          >
+            <span class="ui-line-icon" :style="iconMask(recognitionRefreshIcon)" aria-hidden="true"></span>
+          </button>
+        </div>
+
+        <div class="recognition-summary-strip" aria-label="识别会话摘要">
+          <div class="recognition-state-copy">
+            <strong>{{ recognitionReviewRows.length ? `${recognitionReviewRows.length} 条记录待查看` : '暂无待处理记录' }}</strong>
+            <span>{{ latestRecognitionSession ? '本地助手的识别结果会同步到当前 UID。' : '启动本地助手后，这里会显示最新识别结果。' }}</span>
+          </div>
+          <div class="recognition-metric-grid">
+            <article v-for="metric in recognitionMetrics" :key="metric.key">
+              <strong>{{ metric.value }}</strong>
+              <span>{{ metric.label }}</span>
+            </article>
+          </div>
+        </div>
+
+        <div v-if="recognitionReviewRows.length" class="recognition-review-list" aria-label="识别快照列表">
+          <article
+            v-for="snapshot in recognitionReviewRows"
+            :key="snapshot.snapshot_id"
+            class="recognition-review-row"
+            :class="recognitionStatusClass(snapshot)"
+          >
+            <div>
+              <strong>{{ recognitionSnapshotTitle(snapshot) }}</strong>
+              <span>{{ recognitionStatusText(snapshot.status) }}</span>
+            </div>
+            <button
+              v-if="snapshot.status === 'saved'"
+              type="button"
+              :disabled="revertingSnapshotId === snapshot.snapshot_id"
+              @click="revertSnapshot(snapshot)"
+            >
+              {{ revertingSnapshotId === snapshot.snapshot_id ? '回滚中' : '回滚' }}
+            </button>
+          </article>
+        </div>
+      </section>
 
       <div v-if="page === 'workspace'" class="workspace-grid">
         <div class="workspace-sidebar">
@@ -1837,6 +2269,7 @@ watch(
               :key="row.substat_type"
               class="substat-row"
               :class="{ recorded: row.recorded, 'top-predicted-row': row.topPredicted && !row.recorded }"
+              v-memo="[row.recorded?.id, row.recorded?.tier_value, row.candidate?.p_final, row.candidate?.baseline_deviation, row.topPredicted, rowHasPendingTier(row)]"
             >
               <div class="substat-meta">
                 <strong>{{ row.label }}</strong>
@@ -1849,7 +2282,7 @@ watch(
                   v-for="tier in row.tier_table"
                   :key="`${row.substat_type}-${tier.value}`"
                   type="button"
-                  :disabled="Boolean(row.recorded) || saving"
+                  :disabled="Boolean(row.recorded) || isTierPending(row, tier)"
                   @click="clickTier(row, tier)"
                 >
                   <strong>{{ tier.value }}</strong>
@@ -1878,13 +2311,14 @@ watch(
           </div>
           <div class="floating-history-actions">
             <button type="button" :class="{ active: isHistoryPinned }" :aria-label="isHistoryPinned ? '取消固定历史声骸' : '固定历史声骸'" :title="isHistoryPinned ? '取消固定' : '固定'" @click.stop="toggleFloatingHistoryPin">
-              <img class="history-action-icon" :src="historyPinnedIcon" alt="" aria-hidden="true" draggable="false" />
+              <span class="ui-line-icon history-action-icon" :style="iconMask(historyPinnedIcon)" aria-hidden="true"></span>
             </button>
             <button type="button" :class="{ active: isHistoryShowcase }" :aria-label="isHistoryShowcase ? '收起展示历史声骸' : '展示全部历史声骸'" :title="isHistoryShowcase ? '收起展示' : '展示全部'" @click.stop="toggleFloatingHistoryShowcase">
-              <img class="history-action-icon" :src="historyShowcaseIcon" alt="" aria-hidden="true" draggable="false" />
+              <span class="ui-line-icon history-action-icon" :style="iconMask(historyShowcaseIcon)" aria-hidden="true"></span>
             </button>
             <button type="button" :aria-label="isHistoryMinimized ? '展开历史声骸' : '缩小历史声骸'" :title="isHistoryMinimized ? '展开' : '缩小'" @click.stop="toggleFloatingHistorySize">
-              <img class="history-action-icon" :class="{ 'terminal-expand-icon': isHistoryMinimized }" :style="isHistoryMinimized ? terminalExpandIconStyle : null" :src="isHistoryMinimized ? historyTerminalIcon : historyMinimizeIcon" alt="" aria-hidden="true" draggable="false" />
+              <img v-if="isHistoryMinimized" class="history-action-icon terminal-expand-icon" :style="terminalExpandIconStyle" :src="minimizedHistoryTerminalIcon" alt="" aria-hidden="true" draggable="false" />
+              <span v-else class="ui-line-icon history-action-icon" :style="iconMask(historyMinimizeIcon)" aria-hidden="true"></span>
             </button>
             <p class="floating-history-count">{{ filteredHistoryEchoes.length }} / {{ sortedEchoes.length }} 个记录</p>
           </div>
@@ -1945,7 +2379,7 @@ watch(
 
       </div>
 
-      <section v-if="page === 'stats'" class="product-panel full-panel stats-analytics-panel">
+      <section v-if="!gameAccount.workspaceLocked.value && page === 'stats'" class="product-panel full-panel stats-analytics-panel">
         <div class="stats-diagnostic-head">
           <div>
             <h2>统计诊断</h2>
@@ -2020,7 +2454,7 @@ watch(
         </div>
       </section>
 
-      <section v-if="page === 'evaluation'" class="product-panel full-panel evaluation-panel">
+      <section v-if="!gameAccount.workspaceLocked.value && page === 'evaluation'" class="product-panel full-panel evaluation-panel">
         <div class="evaluation-status-bar">
           <h2>模型评估</h2>
           <div class="evaluation-status-chips" aria-label="评估摘要">
@@ -2209,7 +2643,7 @@ watch(
                     :title="expandedModelDetailKey === row.key ? '收起' : '展开'"
                     @click.stop="toggleModelDetail(row.key)"
                   >
-                    <i class="model-expand-chevron" aria-hidden="true"></i>
+                    <span class="ui-line-icon model-expand-chevron" :style="iconMask(chevronDownIcon)" aria-hidden="true"></span>
                   </button>
                 </div>
                 <i

@@ -8,6 +8,7 @@ from api.services.statistics import build_user_statistics
 class StatisticsServiceTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="tester", password="pw")
+        self.user.game_accounts.update(uid="123456789")
 
     def test_empty_statistics_reports_recording_stage(self):
         stats = build_user_statistics(self.user)

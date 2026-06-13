@@ -9,10 +9,16 @@ node_modules/
 dist/
 build/
 
+# .NET
+bin/
+obj/
+
 # Local tooling and secrets
 .tools/
 .env
+backups/
 
 # Logs and local IDE files
 *.log
 .idea/
+.vs/

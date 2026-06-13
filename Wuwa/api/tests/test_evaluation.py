@@ -45,6 +45,7 @@ class EvaluationServiceTests(SimpleTestCase):
 class ModelEvaluationBacktestTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="tester", password="pw")
+        self.user.game_accounts.update(uid="123456789")
 
     def _add_roll(self, index, substat_type):
         tier_values = {

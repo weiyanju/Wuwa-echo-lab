@@ -20,6 +20,7 @@ from api.services.prediction import (
 class PredictionServiceTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="tester", password="pw")
+        self.user.game_accounts.update(uid="123456789")
         self.echo = EchoRecord.objects.create(
             user=self.user,
             echo_uid="e-1",
