@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Windows;
+using System.Windows.Controls;
 using WuwaAssistant.Core;
 
 namespace WuwaAssistant;
@@ -16,6 +17,8 @@ public partial class MainWindow : Window
 
     private ApiSession session;
     private WuwaApiClient? client;
+    private ApiUser? user;
+    private GameAccount? selectedAccount;
     private RecognitionSessionResult? currentSession;
     private int? LastSnapshotId;
 
@@ -23,31 +26,50 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         session = ApiSession.Load(sessionPath);
-        SetActionButtonsEnabled(false);
-        AppendLog("Ready. Set backend URL and log in.");
+        client = CreateDefaultClient(session);
+        InitializeShell();
+        AppendLog("请先登录系统账号。");
     }
 
-    private async void LoginButton_Click(object sender, RoutedEventArgs e)
+    public MainWindow(WuwaApiClient client, ApiSession session, ApiUser user, GameAccount selectedAccount)
     {
-        await RunUiActionAsync("Login", async () =>
+        InitializeComponent();
+        this.client = client;
+        this.session = session;
+        this.user = user;
+        this.selectedAccount = selectedAccount;
+        InitializeShell();
+        AppendLog(selectedAccount.WorkspaceLocked
+            ? "已进入助手。当前账号还没有绑定 UID，请在首页初始化。"
+            : $"已进入助手。当前 UID：{selectedAccount.Uid}。");
+    }
+
+    private void InitializeShell()
+    {
+        SelectPage("Home");
+        RefreshAccountState();
+    }
+
+    private async void BindUidButton_Click(object sender, RoutedEventArgs e)
+    {
+        await RunUiActionAsync("Initialize game UID", async () =>
         {
-            var rawUsername = UsernameBox.Text;
-            var rawPassword = PasswordBox.Password;
-            var username = NormalizeLoginInput(rawUsername);
-            var password = NormalizeLoginInput(rawPassword);
-            AppendLog($"Login input: username='{username}', password length={password.Length}, normalized={HasNormalized(rawUsername, username) || HasNormalized(rawPassword, password)}.");
-            client = CreateClient();
-            var user = await client.LoginAsync(username, password);
-            session.Save(sessionPath);
-            StatusText.Text = $"Logged in: {user.Username}";
-            AppendLog($"Logged in as {user.Username}.");
-            await LoadAccountsAsync();
-        });
-    }
+            if (selectedAccount is null)
+            {
+                throw new InvalidOperationException("请先登录系统账号。");
+            }
 
-    private async void LoadAccountsButton_Click(object sender, RoutedEventArgs e)
-    {
-        await RunUiActionAsync("Load accounts", LoadAccountsAsync);
+            var uid = NormalizeInput(InitialUidBox.Text);
+            if (string.IsNullOrWhiteSpace(uid))
+            {
+                throw new InvalidOperationException("请输入游戏 UID。");
+            }
+
+            selectedAccount = await RequireClient().UpdateGameAccountAsync(selectedAccount.Id, uid, isDefault: true);
+            InitialUidBox.Text = "";
+            RefreshAccountState();
+            AppendLog($"UID 已初始化：{selectedAccount.Uid}。");
+        });
     }
 
     private async void CreateSessionButton_Click(object sender, RoutedEventArgs e)
@@ -56,8 +78,10 @@ public partial class MainWindow : Window
         {
             var account = SelectedAccountOrThrow();
             EnsureWorkspaceUnlocked(account);
-            currentSession = await RequireClient().CreateRecognitionSessionAsync(account.Account.Id);
-            AppendLog($"Created recognition session #{currentSession.Id} for UID {account.Account.Uid}.");
+            currentSession = await RequireClient().CreateRecognitionSessionAsync(account.Id);
+            RecognitionStateText.Text = $"会话 #{currentSession.Id}";
+            RecognitionSummaryText.Text = $"会话 #{currentSession.Id}";
+            AppendLog($"Created recognition session #{currentSession.Id} for UID {account.Uid}.");
         });
     }
 
@@ -67,11 +91,13 @@ public partial class MainWindow : Window
         {
             var account = SelectedAccountOrThrow();
             EnsureWorkspaceUnlocked(account);
-            currentSession ??= await RequireClient().CreateRecognitionSessionAsync(account.Account.Id);
-            var payload = SampleSnapshotPayloadFactory.Create(account.Account.Id, currentSession.Id);
+            currentSession ??= await RequireClient().CreateRecognitionSessionAsync(account.Id);
+            var payload = SampleSnapshotPayloadFactory.Create(account.Id, currentSession.Id);
             var snapshot = await RequireClient().SubmitSampleSnapshotAsync(payload);
             LastSnapshotId = snapshot.SnapshotId;
             LastSnapshotText.Text = $"Last snapshot #{snapshot.SnapshotId}: {snapshot.Status}";
+            RecognitionStateText.Text = $"快照 #{snapshot.SnapshotId}: {snapshot.Status}";
+            RecognitionSummaryText.Text = $"快照 #{snapshot.SnapshotId}: {snapshot.Status}";
             AppendLog($"Submitted sample snapshot #{snapshot.SnapshotId}. Status: {snapshot.Status}.");
             AppendJson(snapshot);
         });
@@ -88,76 +114,88 @@ public partial class MainWindow : Window
 
             var snapshot = await RequireClient().RevertSnapshotAsync(LastSnapshotId.Value);
             LastSnapshotText.Text = $"Last snapshot #{snapshot.SnapshotId}: {snapshot.Status}";
+            RecognitionStateText.Text = $"快照 #{snapshot.SnapshotId}: {snapshot.Status}";
+            RecognitionSummaryText.Text = $"快照 #{snapshot.SnapshotId}: {snapshot.Status}";
             AppendLog($"Reverted snapshot #{snapshot.SnapshotId}. Status: {snapshot.Status}.");
             AppendJson(snapshot);
         });
     }
 
-    private void AccountCombo_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    private void NavButton_Click(object sender, RoutedEventArgs e)
     {
-        if (AccountCombo.SelectedItem is not AccountListItem item)
+        if (sender is Button { Tag: string page })
         {
-            AccountHintText.Text = "Select a GameAccount.";
-            SetActionButtonsEnabled(false);
-            return;
-        }
-
-        AccountHintText.Text = item.Account.WorkspaceLocked
-            ? "This account has no bound UID. Bind UID in the web app first."
-            : $"UID {item.Account.Uid} is ready.";
-        SetActionButtonsEnabled(!item.Account.WorkspaceLocked);
-    }
-
-    private async Task LoadAccountsAsync()
-    {
-        var accounts = await RequireClient().GetGameAccountsAsync();
-        AccountCombo.ItemsSource = accounts.Select(account => new AccountListItem(account)).ToList();
-        AccountCombo.SelectedIndex = accounts.Count > 0 ? 0 : -1;
-        AppendLog($"Loaded {accounts.Count} GameAccount record(s).");
-        if (accounts.Count == 0)
-        {
-            AccountHintText.Text = "No GameAccount found. Register or log in from the web app first.";
+            SelectPage(page);
         }
     }
 
-    private WuwaApiClient CreateClient()
+    private void SelectPage(string page)
     {
-        session = ApiSession.Load(sessionPath);
-        var handler = new HttpClientHandler
+        HomePagePanel.Visibility = page == "Home" ? Visibility.Visible : Visibility.Collapsed;
+        RecognitionPagePanel.Visibility = page == "Recognition" ? Visibility.Visible : Visibility.Collapsed;
+        CaptureOcrPagePanel.Visibility = page == "CaptureOcr" ? Visibility.Visible : Visibility.Collapsed;
+        DiagnosticsPagePanel.Visibility = page == "Diagnostics" ? Visibility.Visible : Visibility.Collapsed;
+        SettingsPagePanel.Visibility = page == "Settings" ? Visibility.Visible : Visibility.Collapsed;
+        SetActiveNavButton(page);
+    }
+
+    private void SetActiveNavButton(string page)
+    {
+        foreach (var button in new[] { HomeTabButton, RecognitionTabButton, CaptureOcrTabButton, DiagnosticsTabButton, SettingsTabButton })
         {
-            UseProxy = false,
-        };
-        return new WuwaApiClient(new HttpClient(handler), new AssistantSettings(BackendUrlBox.Text), session);
+            var isActive = button.Tag as string == page;
+            button.Style = (Style)FindResource(isActive ? "NavButtonActive" : "NavButton");
+        }
+    }
+
+    private void RefreshAccountState()
+    {
+        StatusText.Text = user is null ? "未登录" : $"账号：{user.Username}";
+        AccountSummaryText.Text = user?.Username ?? "未登录";
+
+        if (selectedAccount is null)
+        {
+            ShellStatusText.Text = "UID 未选择";
+            CurrentUidText.Text = "未选择";
+            RecognitionSummaryText.Text = "等待登录";
+            UidSetupPanel.Visibility = Visibility.Collapsed;
+        }
+        else if (selectedAccount.WorkspaceLocked)
+        {
+            ShellStatusText.Text = "UID 未绑定";
+            CurrentUidText.Text = "未绑定";
+            RecognitionSummaryText.Text = "等待绑定 UID";
+            UidSetupPanel.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            ShellStatusText.Text = $"UID {selectedAccount.Uid}";
+            CurrentUidText.Text = selectedAccount.Uid;
+            RecognitionSummaryText.Text = "可创建识别会话";
+            UidSetupPanel.Visibility = Visibility.Collapsed;
+        }
+
+        SetActionButtonsEnabled(IsSelectedAccountReady());
     }
 
     private WuwaApiClient RequireClient()
     {
-        client ??= CreateClient();
+        client ??= CreateDefaultClient(session);
         return client;
     }
 
-    private AccountListItem SelectedAccountOrThrow()
+    private GameAccount SelectedAccountOrThrow()
     {
-        return AccountCombo.SelectedItem as AccountListItem
-            ?? throw new InvalidOperationException("Load and select a GameAccount first.");
+        return selectedAccount
+            ?? throw new InvalidOperationException("请先登录并选择游戏 UID。");
     }
 
-    private static void EnsureWorkspaceUnlocked(AccountListItem item)
+    private static void EnsureWorkspaceUnlocked(GameAccount account)
     {
-        if (item.Account.WorkspaceLocked)
+        if (account.WorkspaceLocked)
         {
-            throw new InvalidOperationException("Selected GameAccount has no bound UID. Bind UID in the web app first.");
+            throw new InvalidOperationException("Selected GameAccount has no bound UID.");
         }
-    }
-
-    private static string NormalizeLoginInput(string value)
-    {
-        return value.Normalize(NormalizationForm.FormKC).Trim();
-    }
-
-    private static bool HasNormalized(string original, string normalized)
-    {
-        return !string.Equals(original, normalized, StringComparison.Ordinal);
     }
 
     private async Task RunUiActionAsync(string action, Func<Task> run)
@@ -180,8 +218,7 @@ public partial class MainWindow : Window
 
     private void SetBusy(bool busy)
     {
-        LoginButton.IsEnabled = !busy;
-        LoadAccountsButton.IsEnabled = !busy;
+        BindUidButton.IsEnabled = !busy && selectedAccount is { WorkspaceLocked: true };
         CreateSessionButton.IsEnabled = !busy && IsSelectedAccountReady();
         SubmitSampleButton.IsEnabled = !busy && IsSelectedAccountReady();
         RevertButton.IsEnabled = !busy && LastSnapshotId is not null;
@@ -189,6 +226,7 @@ public partial class MainWindow : Window
 
     private void SetActionButtonsEnabled(bool enabled)
     {
+        BindUidButton.IsEnabled = selectedAccount is { WorkspaceLocked: true };
         CreateSessionButton.IsEnabled = enabled;
         SubmitSampleButton.IsEnabled = enabled;
         RevertButton.IsEnabled = enabled && LastSnapshotId is not null;
@@ -196,7 +234,7 @@ public partial class MainWindow : Window
 
     private bool IsSelectedAccountReady()
     {
-        return AccountCombo.SelectedItem is AccountListItem { Account.WorkspaceLocked: false };
+        return selectedAccount is { WorkspaceLocked: false };
     }
 
     private void AppendLog(string message)
@@ -212,10 +250,17 @@ public partial class MainWindow : Window
         DiagnosticsBox.ScrollToEnd();
     }
 
-    private sealed record AccountListItem(GameAccount Account)
+    private static WuwaApiClient CreateDefaultClient(ApiSession session)
     {
-        public string DisplayName => Account.WorkspaceLocked
-            ? $"#{Account.Id} - UID not bound"
-            : $"#{Account.Id} - UID {Account.Uid}";
+        var handler = new HttpClientHandler
+        {
+            UseProxy = false,
+        };
+        return new WuwaApiClient(new HttpClient(handler), new AssistantSettings("http://127.0.0.1:8000"), session);
+    }
+
+    private static string NormalizeInput(string value)
+    {
+        return value.Normalize(NormalizationForm.FormKC).Trim();
     }
 }

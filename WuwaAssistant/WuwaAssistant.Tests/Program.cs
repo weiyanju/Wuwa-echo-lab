@@ -14,9 +14,15 @@ var tests = new (string Name, Func<Task> Run)[]
     ("login stores csrf and session cookies", LoginStoresCookiesAsync),
     ("login reports invalid credentials clearly", LoginReportsInvalidCredentialsAsync),
     ("login reports html csrf failure clearly", LoginReportsHtmlCsrfFailureAsync),
+    ("register stores csrf and session cookies", RegisterStoresCookiesAsync),
     ("game accounts are loaded and locked accounts are detected", GameAccountsLoadAsync),
+    ("game account uid can be initialized", GameAccountUidCanBeInitializedAsync),
     ("sample recognition flow creates session, submits snapshot, and reverts", RecognitionFlowAsync),
-    ("wpf shell exposes milestone seven controls", WpfShellExposesMilestoneControlsAsync),
+    ("login window owns auth only and auto opens assistant", LoginWindowOwnsAuthOnlyAndAutoOpensAssistantAsync),
+    ("main shell exposes assistant feature tabs only", MainShellExposesAssistantFeatureTabsOnlyAsync),
+    ("main shell home owns uid initialization", MainShellHomeOwnsUidInitializationAsync),
+    ("assistant shell styles use rounded controls and navigation states", AssistantShellStylesUseRoundedControlsAndNavigationStatesAsync),
+    ("phase eight project structure separates pages view models and styles", PhaseEightProjectStructureAsync),
 };
 
 var failures = 0;
@@ -160,8 +166,60 @@ async Task LoginReportsHtmlCsrfFailureAsync()
     var client = new WuwaApiClient(new HttpClient(handler), new AssistantSettings("http://127.0.0.1:8000"), new ApiSession());
 
     var ex = await AssertThrowsAsync<InvalidOperationException>(() => client.LoginAsync("aaa", "pw12345"));
-    AssertContains("后端拒绝了登录请求", ex.Message, "csrf failure message");
+    AssertContains("服务拒绝了登录请求", ex.Message, "csrf failure message");
     AssertContains("HTTP 403", ex.Message, "csrf failure status");
+}
+
+async Task RegisterStoresCookiesAsync()
+{
+    var handler = new FakeHttpMessageHandler(async request =>
+    {
+        if (request.Method == HttpMethod.Get && request.RequestUri?.PathAndQuery == "/api/health/")
+        {
+            var response = JsonResponse(new { status = "ok" });
+            response.Headers.Add("Set-Cookie", "csrftoken=csrf-123; Path=/");
+            return response;
+        }
+
+        if (request.Method == HttpMethod.Post && request.RequestUri?.PathAndQuery == "/api/auth/register/")
+        {
+            AssertEqual("csrf-123", request.Headers.GetValues("X-CSRFToken").Single(), "register csrf header");
+            using var body = await JsonDocument.ParseAsync(await request.Content!.ReadAsStreamAsync());
+            AssertEqual("new-user", body.RootElement.GetProperty("username").GetString(), "register username");
+            AssertEqual("pw12345", body.RootElement.GetProperty("password").GetString(), "register password");
+
+            var response = JsonResponse(new
+            {
+                id = 10,
+                username = "new-user",
+                default_game_account = new
+                {
+                    id = 44,
+                    uid = "",
+                    server = "",
+                    nickname = "",
+                    is_default = true,
+                    workspace_locked = true,
+                    next_echo_sequence = 1,
+                    created_at = "2026-06-13T00:00:00+08:00",
+                    updated_at = "2026-06-13T00:00:00+08:00",
+                },
+                workspace_locked = true,
+            });
+            response.Headers.Add("Set-Cookie", "sessionid=session-456; Path=/; HttpOnly");
+            return response;
+        }
+
+        throw new InvalidOperationException($"Unexpected request {request.Method} {request.RequestUri}");
+    });
+
+    var session = new ApiSession();
+    var client = new WuwaApiClient(new HttpClient(handler), new AssistantSettings("http://127.0.0.1:8000"), session);
+
+    var user = await client.RegisterAsync("new-user", "pw12345");
+
+    AssertEqual("new-user", user.Username, "registered username");
+    AssertEqual("session-456", session.Cookies["sessionid"], "stored session cookie");
 }
 
 async Task GameAccountsLoadAsync()
@@ -197,6 +255,37 @@ async Task GameAccountsLoadAsync()
     AssertEqual(7, accounts[0].Id, "account id");
     AssertEqual("123456", accounts[0].Uid, "account uid");
     AssertEqual(false, accounts[0].WorkspaceLocked, "workspace lock");
+}
+
+async Task GameAccountUidCanBeInitializedAsync()
+{
+    var handler = new FakeHttpMessageHandler(async request =>
+    {
+        AssertEqual(HttpMethod.Patch, request.Method, "uid init method");
+        AssertEqual("/api/game-accounts/7/", request.RequestUri?.PathAndQuery, "uid init path");
+        using var body = await JsonDocument.ParseAsync(await request.Content!.ReadAsStreamAsync());
+        AssertEqual("123456789", body.RootElement.GetProperty("uid").GetString(), "uid init value");
+        AssertEqual(true, body.RootElement.GetProperty("is_default").GetBoolean(), "uid init default");
+
+        return JsonResponse(new
+        {
+            id = 7,
+            uid = "123456789",
+            server = "",
+            nickname = "",
+            is_default = true,
+            workspace_locked = false,
+            next_echo_sequence = 1,
+            created_at = "2026-06-13T00:00:00+08:00",
+            updated_at = "2026-06-13T00:00:00+08:00",
+        });
+    });
+
+    var client = NewAuthenticatedClient(handler);
+    var account = await client.UpdateGameAccountAsync(7, "123456789", isDefault: true);
+
+    AssertEqual("123456789", account.Uid, "initialized uid");
+    AssertEqual(false, account.WorkspaceLocked, "initialized workspace lock");
 }
 
 async Task RecognitionFlowAsync()
@@ -304,38 +393,181 @@ async Task RecognitionFlowAsync()
     AssertEqual("POST /api/recognition/sessions/,POST /api/recognition/snapshots/,POST /api/recognition/snapshots/55/revert/", string.Join(",", seen), "recognition request order");
 }
 
-Task WpfShellExposesMilestoneControlsAsync()
+Task LoginWindowOwnsAuthOnlyAndAutoOpensAssistantAsync()
 {
-    var xaml = File.ReadAllText(Path.Combine(Environment.CurrentDirectory, "WuwaAssistant", "MainWindow.xaml"));
-    var code = File.ReadAllText(Path.Combine(Environment.CurrentDirectory, "WuwaAssistant", "MainWindow.xaml.cs"));
+    var appXaml = File.ReadAllText(Path.Combine(AppProjectRoot(), "App.xaml"));
+    var loginXaml = File.ReadAllText(Path.Combine(AppProjectRoot(), "LoginWindow.xaml"));
+    var loginCode = File.ReadAllText(Path.Combine(AppProjectRoot(), "LoginWindow.xaml.cs"));
 
     foreach (var name in new[]
     {
-        "BackendUrlBox",
         "UsernameBox",
         "PasswordBox",
         "LoginButton",
-        "LoadAccountsButton",
-        "AccountCombo",
-        "CreateSessionButton",
-        "SubmitSampleButton",
-        "RevertButton",
-        "DiagnosticsBox",
+        "RegisterButton",
     })
     {
-        AssertContains(name, xaml, $"xaml control {name}");
+        AssertContains(name, loginXaml, $"login xaml control {name}");
     }
 
-    AssertContains("ApiSession.Load", code, "session persistence load");
-    AssertContains("session.Save", code, "session persistence save");
-    AssertContains("UseProxy = false", code, "local backend bypasses system proxy");
-    AssertContains("NormalizeLoginInput(rawPassword)", code, "login trims accidental password whitespace");
-    AssertContains("NormalizationForm.FormKC", code, "login normalizes full-width input");
-    AssertContains("password length=", code, "login logs password length for diagnostics");
-    AssertContains("new WuwaApiClient", code, "api client creation");
+    AssertContains("StartupUri=\"LoginWindow.xaml\"", appXaml, "app starts with login window");
+    AssertDoesNotContain("BackendUrlBox", loginXaml, "backend address hidden from user login UI");
+    AssertDoesNotContain("AccountSection", loginXaml, "uid selection removed from login UI");
+    AssertDoesNotContain("AccountCombo", loginXaml, "uid combo removed from login UI");
+    AssertDoesNotContain("InitialUidBox", loginXaml, "uid input removed from login UI");
+    AssertDoesNotContain("EnterAssistantButton", loginXaml, "enter assistant button removed from login UI");
+    AssertContains("RegisterAsync", loginCode, "login window supports registration");
+    AssertContains("OpenAssistantAfterAuthAsync", loginCode, "login window auto opens assistant after auth");
+    AssertContains("ResolveStartupAccountAsync", loginCode, "login window resolves startup game account");
+    AssertContains("SelectStartupAccount", loginCode, "login window keeps startup account selection explicit");
+    AssertContains("account.IsDefault && !account.WorkspaceLocked", loginCode, "default ready account is preferred");
+    AssertContains("account => !account.WorkspaceLocked", loginCode, "first ready account is fallback");
+    AssertContains("account => account.IsDefault", loginCode, "locked default account is final fallback");
+    AssertDoesNotContain("UpdateGameAccountAsync", loginCode, "login window no longer initializes UID");
+    AssertContains("new MainWindow", loginCode, "login window opens assistant shell");
+    return Task.CompletedTask;
+}
+
+Task MainShellExposesAssistantFeatureTabsOnlyAsync()
+{
+    var xaml = File.ReadAllText(Path.Combine(AppProjectRoot(), "MainWindow.xaml"));
+    var code = File.ReadAllText(Path.Combine(AppProjectRoot(), "MainWindow.xaml.cs"));
+
+    AssertContains("MinWidth=\"820\"", xaml, "compact minimum width");
+    AssertContains("MinHeight=\"560\"", xaml, "compact minimum height");
+    AssertContains("AssistantNav", xaml, "left navigation container");
+    AssertContains("HomeTabButton", xaml, "home tab button");
+    AssertContains("RecognitionTabButton", xaml, "recognition tab button");
+    AssertContains("CaptureOcrTabButton", xaml, "capture ocr tab button");
+    AssertContains("DiagnosticsTabButton", xaml, "diagnostics tab button");
+    AssertContains("SettingsTabButton", xaml, "settings tab button");
+    AssertContains("HomePagePanel", xaml, "home page panel");
+    AssertContains("ShellStatusText", xaml, "always visible shell status");
+    AssertContains("RecognitionStateText", xaml, "always visible recognition status");
+    AssertContains("CreateSessionButton", xaml, "recognition session button");
+    AssertContains("SubmitSampleButton", xaml, "sample snapshot button");
+    AssertContains("RevertButton", xaml, "revert button");
+    AssertContains("DiagnosticsBox", xaml, "diagnostics box");
+    AssertDoesNotContain("ConnectionTabButton", xaml, "connection removed from assistant tabs");
+    AssertDoesNotContain("GameAccountTabButton", xaml, "game account removed from assistant tabs");
+    AssertDoesNotContain("BackendUrlBox", xaml, "backend address hidden from assistant shell");
     AssertContains("SampleSnapshotPayloadFactory.Create", code, "sample payload button");
+    AssertContains("selectedAccount", code, "assistant shell receives selected account");
     AssertContains("LastSnapshotId", code, "last snapshot state");
     return Task.CompletedTask;
+}
+
+Task MainShellHomeOwnsUidInitializationAsync()
+{
+    var xaml = File.ReadAllText(Path.Combine(AppProjectRoot(), "MainWindow.xaml"));
+    var code = File.ReadAllText(Path.Combine(AppProjectRoot(), "MainWindow.xaml.cs"));
+
+    AssertContains("SelectPage(\"Home\")", code, "main shell starts on home");
+    AssertContains("CurrentUidText", xaml, "home shows selected uid");
+    AssertContains("AccountSummaryText", xaml, "home shows account summary");
+    AssertContains("RecognitionSummaryText", xaml, "home shows recognition summary");
+    AssertContains("UidSetupPanel", xaml, "home owns uid setup panel");
+    AssertContains("InitialUidBox", xaml, "home owns uid input");
+    AssertContains("BindUidButton", xaml, "home owns uid initialization button");
+    AssertContains("BindUidButton_Click", code, "uid initialization click handler");
+    AssertContains("NormalizeInput(InitialUidBox.Text)", code, "uid input is normalized");
+    AssertContains("UpdateGameAccountAsync(selectedAccount.Id, uid, isDefault: true)", code, "uid initialization persists to backend");
+    AssertContains("RefreshAccountState", code, "account state refreshes after uid changes");
+    AssertContains("UidSetupPanel.Visibility", code, "uid setup visibility follows lock state");
+    AssertContains("SetActionButtonsEnabled(IsSelectedAccountReady())", code, "recognition buttons follow selected account readiness");
+    return Task.CompletedTask;
+}
+
+Task AssistantShellStylesUseRoundedControlsAndNavigationStatesAsync()
+{
+    var controls = File.ReadAllText(Path.Combine(AppProjectRoot(), "Styles", "Controls.xaml"));
+    var layout = File.ReadAllText(Path.Combine(AppProjectRoot(), "Styles", "Layout.xaml"));
+    var xaml = File.ReadAllText(Path.Combine(AppProjectRoot(), "MainWindow.xaml"));
+    var code = File.ReadAllText(Path.Combine(AppProjectRoot(), "MainWindow.xaml.cs"));
+
+    AssertContains("CornerRadius=\"8\"", controls, "buttons use assistant rounded corners");
+    AssertContains("FocusVisualStyle\" Value=\"{x:Null}\"", controls, "default focus rectangles are removed");
+    AssertContains("x:Key=\"NavButtonActive\"", controls, "navigation has selected style");
+    AssertContains("x:Key=\"CautionButton\"", controls, "revert action has cautious secondary style");
+    AssertContains("x:Key=\"StatusChip\"", layout, "status chips are rounded borders");
+    AssertContains("Style=\"{StaticResource StatusChip}\"", xaml, "header status uses rounded chip border");
+    AssertContains("Style=\"{StaticResource CautionButton}\"", xaml, "revert button uses caution style");
+    AssertContains("SetActiveNavButton", code, "nav selection updates active style");
+    return Task.CompletedTask;
+}
+
+Task PhaseEightProjectStructureAsync()
+{
+    var appRoot = AppProjectRoot();
+    var coreRoot = CoreProjectRoot();
+
+    foreach (var relativePath in new[]
+    {
+        Path.Combine("Views", "ConnectionPage.xaml"),
+        Path.Combine("Views", "GameAccountPage.xaml"),
+        Path.Combine("Views", "RecognitionPage.xaml"),
+        Path.Combine("Views", "CaptureOcrPage.xaml"),
+        Path.Combine("Views", "DiagnosticsPage.xaml"),
+        Path.Combine("Views", "SettingsPage.xaml"),
+        Path.Combine("ViewModels", "ShellViewModel.cs"),
+        Path.Combine("ViewModels", "ConnectionViewModel.cs"),
+        Path.Combine("ViewModels", "GameAccountViewModel.cs"),
+        Path.Combine("ViewModels", "RecognitionViewModel.cs"),
+        Path.Combine("ViewModels", "CaptureOcrViewModel.cs"),
+        Path.Combine("ViewModels", "DiagnosticsViewModel.cs"),
+        Path.Combine("ViewModels", "SettingsViewModel.cs"),
+        Path.Combine("Styles", "Colors.xaml"),
+        Path.Combine("Styles", "Controls.xaml"),
+        Path.Combine("Styles", "Layout.xaml"),
+    })
+    {
+        AssertFileExists(Path.Combine(appRoot, relativePath), $"app structure {relativePath}");
+    }
+
+    foreach (var directory in new[]
+    {
+        "Auth",
+        "Connection",
+        "GameAccounts",
+        "Recognition",
+        "Capture",
+        "Ocr",
+        "Diagnostics",
+        "Settings",
+        "Storage",
+        "Api",
+    })
+    {
+        AssertDirectoryExists(Path.Combine(coreRoot, directory), $"core module {directory}");
+    }
+
+    return Task.CompletedTask;
+}
+
+string AppProjectRoot()
+{
+    return Path.Combine(SolutionRoot(), "WuwaAssistant", "WuwaAssistant");
+}
+
+string CoreProjectRoot()
+{
+    return Path.Combine(SolutionRoot(), "WuwaAssistant", "WuwaAssistant.Core");
+}
+
+string SolutionRoot()
+{
+    var directory = new DirectoryInfo(Environment.CurrentDirectory);
+    while (directory is not null)
+    {
+        if (Directory.Exists(Path.Combine(directory.FullName, "WuwaAssistant", "WuwaAssistant")))
+        {
+            return directory.FullName;
+        }
+
+        directory = directory.Parent;
+    }
+
+    throw new InvalidOperationException($"Could not locate solution root from {Environment.CurrentDirectory}.");
 }
 
 WuwaApiClient NewAuthenticatedClient(HttpMessageHandler handler)
@@ -390,6 +622,22 @@ void AssertDoesNotContain(string expected, string actual, string label)
     if (actual.Contains(expected, StringComparison.Ordinal))
     {
         throw new InvalidOperationException($"{label}: expected not to contain {expected}, got {actual}");
+    }
+}
+
+void AssertFileExists(string path, string label)
+{
+    if (!File.Exists(path))
+    {
+        throw new InvalidOperationException($"{label}: expected file {path} to exist");
+    }
+}
+
+void AssertDirectoryExists(string path, string label)
+{
+    if (!Directory.Exists(path))
+    {
+        throw new InvalidOperationException($"{label}: expected directory {path} to exist");
     }
 }
 
