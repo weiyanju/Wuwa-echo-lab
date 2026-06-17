@@ -4,6 +4,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from accounts.models import GameAccount
+from api.responses import error_response
 from api.serializers import json_body
 from api.views import api_login_required
 
@@ -15,6 +16,9 @@ from .serializers import (
     serialize_roll,
     update_echo_from_payload,
 )
+
+ECHO_NOT_FOUND_MESSAGE = "声骸不存在。"
+NO_ROLL_TO_UNDO_MESSAGE = "没有可撤回的副词条。"
 
 
 def game_account_for_request(request):
@@ -62,7 +66,7 @@ def echo_detail(request, echo_id):
     try:
         echo = owned_echo_or_404(request.user, echo_id)
     except ObjectDoesNotExist:
-        return JsonResponse({"error": "声骸不存在。"}, status=404)
+        return error_response(ECHO_NOT_FOUND_MESSAGE, status=404)
 
     if request.method == "DELETE":
         deleted_echo_id = echo.id
@@ -86,7 +90,7 @@ def substat_create(request, echo_id):
         existing_roll_count = SubstatRoll.objects.filter(echo=echo).count()
         roll = create_substat_roll(echo, json_body(request), existing_roll_count=existing_roll_count)
     except ObjectDoesNotExist:
-        return JsonResponse({"error": "声骸不存在。"}, status=404)
+        return error_response(ECHO_NOT_FOUND_MESSAGE, status=404)
     except (ValidationError, ValueError, TypeError, IntegrityError) as exc:
         return JsonResponse({"error": str(exc)}, status=400)
     return JsonResponse(serialize_roll(roll), status=201)
@@ -98,11 +102,11 @@ def substat_undo_last(request, echo_id):
     try:
         echo = owned_echo_or_404(request.user, echo_id)
     except ObjectDoesNotExist:
-        return JsonResponse({"error": "声骸不存在。"}, status=404)
+        return error_response(ECHO_NOT_FOUND_MESSAGE, status=404)
 
     last_roll = echo.substat_rolls.order_by("-position", "-id").first()
     if last_roll is None:
-        return JsonResponse({"error": "没有可撤回的副词条。"}, status=400)
+        return error_response(NO_ROLL_TO_UNDO_MESSAGE, status=400)
 
     removed = serialize_roll(last_roll)
     last_roll.delete()

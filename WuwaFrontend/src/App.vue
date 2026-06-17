@@ -20,6 +20,14 @@ import { buildNextEchoConfig, isReusableDraft, sortVisibleEchoHistory, statusBad
 import { confidenceText, formatPercent, formatSignedPercent, modelWeightLabel, sampleStageText, statusText } from './services/formatters'
 import { ACTIVE_MODEL_WEIGHT_EPSILON, buildModelDetailCards } from './services/modelDetails'
 import { normalizePlayerUid } from './services/playerUid'
+import {
+  canonicalModelLabels,
+  evaluationMetricDefinitions,
+  modelBacktestNotes,
+  modelOrder,
+  sampleStageAxisDefinitions,
+  sampleStageDefinitions,
+} from './data/modelPresentation'
 import { mainStatLabels, mainStatsByCost, substatLabels, substatOrder, tierTables } from './data/substats'
 import { sonataEffects } from './data/sonataEffects'
 import chevronDownIcon from './assets/icons/chevron-down.svg'
@@ -193,14 +201,6 @@ const recognitionRefreshIcon = computed(() => {
   return refreshIcon
 })
 const recognitionRefreshDisabled = computed(() => saving.value || recognitionRefreshing.value || Boolean(recognitionRefreshStatus.value))
-const canonicalModelLabels = {
-  rule: '规则均衡',
-  bayes: '周期规律',
-  markov: '近期序列',
-  cycle: '词条窗口',
-  context: '上下文监测',
-}
-
 function canonicalModelLabel(key, fallback) {
   return canonicalModelLabels[key] || fallback || modelWeightLabel(key)
 }
@@ -231,55 +231,22 @@ const weightRows = computed(() =>
     }
   }),
 )
-const evaluationMetrics = computed(() => [
-  {
-    label: 'Log Loss',
-    value: evaluation.value?.log_loss,
-    target: '越低越好',
-    description: '概率分布是否把真实词条放在高概率区间',
-  },
-  {
-    label: 'Brier Score',
-    value: evaluation.value?.brier_score,
-    target: '越低越好',
-    description: '预测概率和真实结果的平方误差',
-  },
-  {
-    label: 'Top 1 命中率',
-    value: evaluation.value?.top_1_hit_rate,
-    target: '越高越好',
-    description: '概率第一名是否命中真实词条',
-  },
-  {
-    label: 'Top 3 命中率',
-    value: evaluation.value?.top_3_hit_rate,
-    target: '越高越好',
-    description: '前三名候选是否覆盖真实词条',
-  },
-  {
-    label: 'Top 5 命中率',
-    value: evaluation.value?.top_5_hit_rate,
-    target: '越高越好',
-    description: '前五名候选是否覆盖真实词条',
-  },
-])
+const evaluationMetrics = computed(() =>
+  evaluationMetricDefinitions.map((metric) => ({
+    ...metric,
+    value: evaluation.value?.[metric.key],
+  })),
+)
 const hitRateMetrics = computed(() => evaluationMetrics.value.filter((metric) => metric.label.includes('命中率')))
 const technicalEvaluationMetrics = computed(() => evaluationMetrics.value.filter((metric) => !metric.label.includes('命中率')))
 const evaluationReady = computed(() => evaluation.value?.status === 'ready')
 const modelBacktestSampleCount = computed(() => Math.max(...modelEvaluationRows.value.map((row) => row.evaluated || 0), 0))
 const modelBacktestSummaryText = computed(() => (modelBacktestSampleCount.value ? `回测样本 ${modelBacktestSampleCount.value} 条` : '等待回测样本'))
-const modelBacktestNotes = {
-  rule: '全局分布修正',
-  bayes: '历史片段匹配',
-  markov: '近期重复冷却',
-  cycle: '窗口信号监测',
-  context: '样本不足，暂未参与融合',
-}
 const modelEvaluationRows = computed(() => {
   const rows = (modelDetailCards.value || []).filter((model) => model?.key)
   const hitRates = rows.map((row) => row.hitRate).filter((value) => value != null)
   const bestHitRate = hitRates.length ? Math.max(...hitRates) : null
-  const modelOrder = new Map(['rule', 'bayes', 'markov', 'cycle', 'context'].map((key, index) => [key, index]))
+  const modelOrderByKey = new Map(modelOrder.map((key, index) => [key, index]))
   return rows
     .map((row) => {
       const weight = prediction.value?.weights?.[row.key] ?? { rule: 0.7, bayes: 0.1, markov: 0.1, cycle: 0.1, context: 0 }[row.key]
@@ -294,7 +261,7 @@ const modelEvaluationRows = computed(() => {
         weight,
         disabled,
         statusLabel: row.statusLabel,
-        modelOrder: modelOrder.get(row.key) ?? 999,
+        modelOrder: modelOrderByKey.get(row.key) ?? 999,
         relativeHitRate: bestHitRate > 0 && row.hitRate != null ? row.hitRate / bestHitRate : 0,
         isBest: !disabled && evaluationReady.value && bestHitRate != null && row.hitRate === bestHitRate,
       }
@@ -325,13 +292,14 @@ const expandedModelDetailKey = computed(() => {
   }
   return null
 })
-const sampleStageRows = computed(() => [
-  { label: '0-500', text: '规则基线', active: (stats.value?.total_rolls || 0) < 500 },
-  { label: '500-3000', text: '总体偏差', active: (stats.value?.total_rolls || 0) >= 500 && (stats.value?.total_rolls || 0) < 3000 },
-  { label: '3000-10000', text: '上下文检验', active: (stats.value?.total_rolls || 0) >= 3000 && (stats.value?.total_rolls || 0) < 10000 },
-  { label: '10000-50000', text: '顺序依赖', active: (stats.value?.total_rolls || 0) >= 10000 && (stats.value?.total_rolls || 0) < 50000 },
-  { label: '50000+', text: '权重优化', active: (stats.value?.total_rolls || 0) >= 50000 },
-])
+const sampleStageRows = computed(() => {
+  const total = stats.value?.total_rolls || 0
+  return sampleStageDefinitions.map((stage) => ({
+    label: stage.label,
+    text: stage.text,
+    active: total >= stage.min && total < stage.max,
+  }))
+})
 const sortedStatFrequency = computed(() => {
   const rows = Object.values(stats.value?.substat_frequency || {})
   return rows
@@ -391,13 +359,11 @@ const statsSummaryItems = computed(() => [
 ])
 const sampleStageAxisRows = computed(() => {
   const total = stats.value?.total_rolls || 0
-  return [
-    { label: '0', caption: '规则基线', threshold: 0, active: total >= 0, current: total < 500 },
-    { label: '500', caption: '总体偏差', threshold: 500, active: total >= 500, current: total >= 500 && total < 3000 },
-    { label: '3000', caption: '上下文检验', threshold: 3000, active: total >= 3000, current: total >= 3000 && total < 10000 },
-    { label: '10000', caption: '顺序依赖', threshold: 10000, active: total >= 10000, current: total >= 10000 && total < 50000 },
-    { label: '50000+', caption: '权重优化', threshold: 50000, active: total >= 50000, current: total >= 50000 },
-  ]
+  return sampleStageAxisDefinitions.map((stage) => ({
+    ...stage,
+    active: total >= stage.threshold,
+    current: total >= stage.threshold && total < stage.max,
+  }))
 })
 const setupPanelStyle = computed(() => (setupPanelHeight.value ? { height: `${setupPanelHeight.value}px` } : {}))
 const terminalIconRotation = ref(0)
