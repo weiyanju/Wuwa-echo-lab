@@ -99,6 +99,21 @@ def get_session(user, session_id):
     return RecognitionSession.objects.get(id=session_id, user=user)
 
 
+def update_session(user, session_id, payload):
+    status = _string(payload, "status", default="", max_length=20)
+    if status not in RecognitionSession.Status.values:
+        raise RecognitionPayloadError("status is invalid.")
+
+    session = RecognitionSession.objects.get(id=session_id, user=user)
+    session.status = status
+    if status == RecognitionSession.Status.ACTIVE:
+        session.ended_at = None
+    elif session.ended_at is None:
+        session.ended_at = timezone.now()
+    session.save(update_fields=["status", "ended_at", "updated_at"])
+    return session
+
+
 def list_snapshots(user, game_account_id, statuses=None, limit=20):
     account = _game_account_for_user(user, game_account_id)
     queryset = RecognitionSnapshot.objects.filter(game_account=account, user=user).select_related("session")

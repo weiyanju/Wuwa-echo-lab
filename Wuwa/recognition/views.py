@@ -7,7 +7,16 @@ from api.serializers import json_body
 from api.views import api_login_required
 
 from .serializers import serialize_session, serialize_snapshot_result
-from .services import RecognitionPayloadError, create_session, get_session, list_sessions, list_snapshots, revert_snapshot, submit_snapshot
+from .services import (
+    RecognitionPayloadError,
+    create_session,
+    get_session,
+    list_sessions,
+    list_snapshots,
+    revert_snapshot,
+    submit_snapshot,
+    update_session,
+)
 
 
 @api_login_required
@@ -33,12 +42,17 @@ def recognition_session_list(request):
 
 
 @api_login_required
-@require_http_methods(["GET"])
+@require_http_methods(["GET", "PATCH"])
 def recognition_session_detail(request, session_id):
     try:
-        session = get_session(request.user, session_id)
+        if request.method == "PATCH":
+            session = update_session(request.user, session_id, json_body(request))
+        else:
+            session = get_session(request.user, session_id)
     except ObjectDoesNotExist:
         return JsonResponse({"error": "Recognition session not found."}, status=404)
+    except (RecognitionPayloadError, ValidationError, ValueError, TypeError) as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
     return JsonResponse(serialize_session(session))
 
 

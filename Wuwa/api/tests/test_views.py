@@ -359,6 +359,41 @@ class ApiViewTests(TestCase):
 
         self.assertEqual(response.status_code, 404)
 
+    def test_delete_owned_echo_removes_record_and_substats(self):
+        self.client.login(username="tester", password="pw12345")
+        echo = EchoRecord.objects.create(
+            user=self.user,
+            echo_uid="e-delete",
+            cost=1,
+            set_name="Set",
+            main_stat="atk_percent",
+        )
+        SubstatRoll.objects.create(echo=echo, position=1, substat_type="crit_rate", tier_value=6.3)
+
+        response = self.client.delete(reverse("echo_detail", args=[echo.id]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["deleted_echo_id"], echo.id)
+        self.assertFalse(EchoRecord.objects.filter(id=echo.id).exists())
+        self.assertFalse(SubstatRoll.objects.filter(echo_id=echo.id).exists())
+
+    def test_delete_echo_requires_ownership(self):
+        other = User.objects.create_user(username="other-delete", password="pw12345")
+        other.game_accounts.update(uid="987654321")
+        echo = EchoRecord.objects.create(
+            user=other,
+            echo_uid="other-delete-1",
+            cost=1,
+            set_name="Other set",
+            main_stat="atk_percent",
+        )
+        self.client.login(username="tester", password="pw12345")
+
+        response = self.client.delete(reverse("echo_detail", args=[echo.id]))
+
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue(EchoRecord.objects.filter(id=echo.id).exists())
+
     def test_get_only_endpoints_reject_post(self):
         self.client.login(username="tester", password="pw12345")
         echo = EchoRecord.objects.create(
@@ -576,6 +611,41 @@ class RecognitionApiViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["id"], session["id"])
+
+    def test_patch_recognition_session_can_end_owned_session(self):
+        session = self._create_session()
+
+        response = self.client.patch(
+            reverse("recognition_session_detail", args=[session["id"]]),
+            data=json.dumps({"status": "ended"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["status"], "ended")
+        self.assertIsNotNone(body["ended_at"])
+
+        db_session = RecognitionSession.objects.get(id=session["id"])
+        self.assertEqual(db_session.status, RecognitionSession.Status.ENDED)
+        self.assertIsNotNone(db_session.ended_at)
+
+    def test_patch_recognition_session_requires_ownership(self):
+        other = User.objects.create_user(username="other-session-patch", password="pw12345")
+        other_account = other.game_accounts.get()
+        other_account.uid = "987654321"
+        other_account.save()
+        other_session = RecognitionSession.objects.create(user=other, game_account=other_account)
+
+        response = self.client.patch(
+            reverse("recognition_session_detail", args=[other_session.id]),
+            data=json.dumps({"status": "ended"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 404)
+        other_session.refresh_from_db()
+        self.assertEqual(other_session.status, RecognitionSession.Status.ACTIVE)
 
     def test_sample_snapshot_import_creates_formal_echo_and_roll(self):
         session = self._create_session()

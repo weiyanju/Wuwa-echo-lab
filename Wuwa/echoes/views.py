@@ -57,12 +57,18 @@ def owned_echo_or_404(user, echo_id, *, prefetch_rolls=True):
 
 
 @api_login_required
-@require_http_methods(["GET", "PATCH"])
+@require_http_methods(["GET", "PATCH", "DELETE"])
 def echo_detail(request, echo_id):
     try:
         echo = owned_echo_or_404(request.user, echo_id)
     except ObjectDoesNotExist:
         return JsonResponse({"error": "声骸不存在。"}, status=404)
+
+    if request.method == "DELETE":
+        deleted_echo_id = echo.id
+        echo.delete()
+        return JsonResponse({"deleted_echo_id": deleted_echo_id})
+
     if request.method == "PATCH":
         try:
             echo = update_echo_from_payload(echo, json_body(request))
