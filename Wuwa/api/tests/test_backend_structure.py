@@ -28,3 +28,18 @@ class BackendStructureTests(SimpleTestCase):
         services = import_module("echoes.services")
 
         self.assertTrue(callable(services.create_substat_roll))
+
+    def test_recognition_services_are_split_by_workflow(self):
+        facade = import_module("recognition.services")
+        sessions = import_module("recognition.session_services")
+        snapshots = import_module("recognition.snapshot_services")
+
+        self.assertTrue(callable(sessions.create_session))
+        self.assertTrue(callable(sessions.update_session))
+        self.assertTrue(callable(snapshots.submit_snapshot))
+        self.assertTrue(callable(snapshots.revert_snapshot))
+        self.assertIs(facade.create_session, sessions.create_session)
+        self.assertIs(facade.submit_snapshot, snapshots.submit_snapshot)
+
+        facade_source = (Path(__file__).resolve().parents[2] / "recognition" / "services.py").read_text(encoding="utf-8")
+        self.assertLessEqual(len(facade_source.splitlines()), 30)

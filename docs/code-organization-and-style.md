@@ -419,6 +419,15 @@ Wuwa/
 - `constants.py`：稳定常量，不放动态配置。
 - `tests/`：对应行为测试。
 
+当单个领域同时包含多个独立工作流时，可以使用同级 `*_services.py` 或 `services/` 包拆分。当前 `recognition/` 使用：
+
+- `services.py`：公开 facade，不承载具体流程。
+- `session_services.py`：session 工作流。
+- `snapshot_services.py`：snapshot、去重和回滚工作流。
+- `service_support.py`：跨 workflow 的 payload helper、ownership helper 和结果类型。
+
+facade 的职责是保持稳定导入路径，不允许重新增长为业务实现中心。
+
 ### 6.2 后端约束
 
 - view 层不能变成业务中心。

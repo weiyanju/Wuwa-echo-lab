@@ -241,6 +241,15 @@ Wuwa/
 - `analytics/`：统计、预测、评估
 - `wuwa/`：Django 项目配置
 
+`recognition/` 当前业务流程按职责拆分：
+
+- `services.py`：稳定兼容 facade，只导出公开 service API。
+- `session_services.py`：识别会话创建、读取、列表和状态更新。
+- `snapshot_services.py`：识别快照校验、提交、去重和回滚。
+- `service_support.py`：payload 解析、ownership 查询和 service 结果类型。
+
+新增识别业务应进入对应 workflow 文件，不再回填到 facade。
+
 ### 5.2 Vue 前端结构
 
 当前前端长期结构为：
