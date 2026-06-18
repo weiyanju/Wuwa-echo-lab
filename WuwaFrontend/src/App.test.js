@@ -3,14 +3,14 @@ import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 
 test('context detail progress uses the local clamp helper', async () => {
-  const source = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
+  const source = await readFile(new URL('./features/evaluation/EvaluationBacktest.vue', import.meta.url), 'utf8')
 
   assert.match(source, /function contextCheckProgress\(check\) \{\s+return clampNumber\(/)
   assert.doesNotMatch(source, /function contextCheckProgress\(check\) \{\s+return clamp\(/)
 })
 
 test('context and rule details show evidence directly with a single evidence tab', async () => {
-  const source = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
+  const source = await readFile(new URL('./features/evaluation/EvaluationBacktest.vue', import.meta.url), 'utf8')
 
   assert.match(source, /function modelInsightView\(model\) \{\s+if \(model\.key === 'context' \|\| model\.key === 'rule'\) \{\s+return 'evidence'/)
   assert.match(source, /function modelInsightTabs\(model\) \{\s+if \(model\.key === 'context' \|\| model\.key === 'rule'\) \{\s+return model\.tabs\.filter\(\(tab\) => tab\.key === 'evidence'\)/)
@@ -307,18 +307,17 @@ test('evaluation summary keeps original copy while styling dominant and auxiliar
 })
 
 test('model detail rows animate when expanded or collapsed', async () => {
-  const appSource = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
+  const backtestSource = await readFile(new URL('./features/evaluation/EvaluationBacktest.vue', import.meta.url), 'utf8')
   const styleSource = await readFile(new URL('./style.css', import.meta.url), 'utf8')
 
-  assert.match(appSource, /import chevronDownIcon from '\.\/assets\/icons\/chevron-down\.svg'/)
-  assert.match(appSource, /const hasManualModelDetailInteraction = ref\(false\)/)
-  assert.match(appSource, /if \(hasManualModelDetailInteraction\.value\) \{\s+return null/)
-  assert.match(appSource, /function toggleModelDetail\(key\) \{\s+hasManualModelDetailInteraction\.value = true/)
-  assert.match(appSource, /function selectModelDetail\(key\) \{\s+hasManualModelDetailInteraction\.value = true/)
-  assert.match(appSource, /<Transition name="model-row-detail">/)
-  assert.match(appSource, /class="ui-line-icon model-expand-chevron"/)
-  assert.match(appSource, /iconMask\(chevronDownIcon\)/)
-  assert.match(appSource, /v-if="expandedModelDetailKey === row\.key" class="model-row-detail"/)
+  assert.match(backtestSource, /import chevronDownIcon from '\.\.\/\.\.\/assets\/icons\/chevron-down\.svg'/)
+  assert.match(backtestSource, /const hasManualModelDetailInteraction = ref\(false\)/)
+  assert.match(backtestSource, /if \(hasManualModelDetailInteraction\.value\) \{\s+return null/)
+  assert.match(backtestSource, /function toggleModelDetail\(key\) \{\s+hasManualModelDetailInteraction\.value = true/)
+  assert.match(backtestSource, /<Transition name="model-row-detail">/)
+  assert.match(backtestSource, /class="ui-line-icon model-expand-chevron"/)
+  assert.match(backtestSource, /iconMask\(chevronDownIcon\)/)
+  assert.match(backtestSource, /v-if="expandedModelDetailKey === row\.key" class="model-row-detail"/)
   assert.match(styleSource, /\.model-row-detail-enter-active,\s+\.model-row-detail-leave-active \{/)
   assert.match(styleSource, /\.model-row-detail-enter-from,\s+\.model-row-detail-leave-to \{/)
   assert.match(styleSource, /opacity 220ms ease/)
@@ -327,17 +326,17 @@ test('model detail rows animate when expanded or collapsed', async () => {
 })
 
 test('disabled backtest models are de-emphasized and sorted last', async () => {
-  const appSource = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
+  const backtestSource = await readFile(new URL('./features/evaluation/EvaluationBacktest.vue', import.meta.url), 'utf8')
   const overviewSource = await readFile(new URL('./features/evaluation/EvaluationOverview.vue', import.meta.url), 'utf8')
   const styleSource = await readFile(new URL('./style.css', import.meta.url), 'utf8')
 
-  assert.match(appSource, /const disabled = row\.status === 'disabled' \|\| weight <= ACTIVE_MODEL_WEIGHT_EPSILON/)
-  assert.match(appSource, /if \(a\.disabled !== b\.disabled\) \{\s+return a\.disabled \? 1 : -1/)
-  assert.match(appSource, /const defaultExpandedModelDetailKey = computed\(\(\) => modelEvaluationRows\.value\.find\(\(row\) => !row\.disabled\)\?\.key \|\| null\)/)
-  assert.match(appSource, /if \(selectedKey && selectedRow && !collapsedModelDetailKeys\.value\.has\(selectedKey\)\) \{/)
-  assert.doesNotMatch(appSource, /selectedRow && !selectedRow\.disabled/)
-  assert.match(appSource, /disabled: row\.disabled/)
-  assert.match(appSource, /class="disabled-model-badge"/)
+  assert.match(backtestSource, /const disabled = row\.status === 'disabled' \|\| weight <= ACTIVE_MODEL_WEIGHT_EPSILON/)
+  assert.match(backtestSource, /if \(a\.disabled !== b\.disabled\) \{\s+return a\.disabled \? 1 : -1/)
+  assert.match(backtestSource, /const defaultExpandedModelDetailKey = computed\(\(\) => modelEvaluationRows\.value\.find\(\(row\) => !row\.disabled\)\?\.key \|\| null\)/)
+  assert.match(backtestSource, /if \(selectedKey && selectedRow && !collapsedModelDetailKeys\.value\.has\(selectedKey\)\) \{/)
+  assert.doesNotMatch(backtestSource, /selectedRow && !selectedRow\.disabled/)
+  assert.match(backtestSource, /disabled: row\.disabled/)
+  assert.match(backtestSource, /class="disabled-model-badge"/)
   assert.match(overviewSource, /样本不足，暂未参与融合/)
   assert.match(styleSource, /\.model-bars article\.disabled,/)
   assert.match(styleSource, /\.model-bars article\.disabled \.model-row-progress b \{/)
@@ -375,38 +374,38 @@ test('rule model detail keeps only evidence and does not duplicate statistics ch
 })
 
 test('evaluation metrics use backend values instead of preview fallbacks', async () => {
-  const appSource = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
+  const backtestSource = await readFile(new URL('./features/evaluation/EvaluationBacktest.vue', import.meta.url), 'utf8')
   const detailSource = await readFile(new URL('./services/modelDetails.js', import.meta.url), 'utf8')
 
-  assert.doesNotMatch(appSource, /preview:\s*(2\.16|0\.86|0\.11|0\.34|0\.52)/)
-  assert.match(appSource, /if \(metric\.value == null\) \{\s+return '样本不足'/)
-  assert.match(appSource, /const evaluationReady = computed\(\(\) => evaluation\.value\?\.status === 'ready'/)
+  assert.doesNotMatch(backtestSource, /preview:\s*(2\.16|0\.86|0\.11|0\.34|0\.52)/)
+  assert.match(backtestSource, /if \(metric\?\.value == null\) \{\s+return '样本不足'/)
+  assert.match(backtestSource, /const evaluationReady = computed\(\(\) => props\.evaluation\?\.status === 'ready'/)
   assert.doesNotMatch(detailSource, /MODEL_BACKTEST_PREVIEW/)
   assert.ok(detailSource.includes('hitRate: evaluation?.model_scores?.[key]?.hit_rate ?? null'))
   assert.ok(detailSource.includes('loss: evaluation?.model_scores?.[key]?.loss ?? null'))
 })
 
 test('evaluation page exposes evaluated sample counts and gates confidence labels', async () => {
-  const appSource = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
+  const backtestSource = await readFile(new URL('./features/evaluation/EvaluationBacktest.vue', import.meta.url), 'utf8')
   const overviewSource = await readFile(new URL('./features/evaluation/EvaluationOverview.vue', import.meta.url), 'utf8')
   const detailSource = await readFile(new URL('./services/modelDetails.js', import.meta.url), 'utf8')
 
   assert.ok(detailSource.includes('evaluated: evaluation?.model_scores?.[key]?.evaluated ?? 0'))
-  assert.match(appSource, /const modelBacktestSummaryText = computed\(\(\) => \(modelBacktestSampleCount\.value \? `回测样本 \$\{modelBacktestSampleCount\.value\} 条` : '等待回测样本'\)\)/)
-  assert.match(appSource, /<span :title="modelBacktestSummaryText">\{\{ modelBacktestSummaryText \}\}<\/span>/)
-  assert.match(appSource, /:title="row\.evaluated \? `\$\{row\.label\}基于 \$\{row\.evaluated\} 条样本回测` : `\$\{row\.label\}等待回测样本`"/)
-  assert.doesNotMatch(appSource, /function modelEvaluatedText/)
-  assert.match(appSource, /isBest: !disabled && evaluationReady\.value && bestHitRate != null && row\.hitRate === bestHitRate/)
+  assert.match(backtestSource, /const modelBacktestSummaryText = computed\(\(\) => \(modelBacktestSampleCount\.value \? `回测样本 \$\{modelBacktestSampleCount\.value\} 条` : '等待回测样本'\)\)/)
+  assert.match(backtestSource, /<span :title="modelBacktestSummaryText">\{\{ modelBacktestSummaryText \}\}<\/span>/)
+  assert.match(backtestSource, /:title="row\.evaluated \? `\$\{row\.label\}基于 \$\{row\.evaluated\} 条样本回测` : `\$\{row\.label\}等待回测样本`"/)
+  assert.doesNotMatch(backtestSource, /function modelEvaluatedText/)
+  assert.match(backtestSource, /isBest: !disabled && evaluationReady\.value && bestHitRate != null && row\.hitRate === bestHitRate/)
   assert.match(overviewSource, /if \(props\.evaluation && props\.evaluation\.status !== 'ready'\) \{\s+return '样本不足'/)
-  assert.doesNotMatch(appSource, /<span>\{\{ modelEvaluatedText\(row\) \}\}<\/span>/)
+  assert.doesNotMatch(backtestSource, /<span>\{\{ modelEvaluatedText\(row\) \}\}<\/span>/)
 })
 
 test('coverage band nodes keep colored fills in dark mode', async () => {
-  const appSource = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
+  const backtestSource = await readFile(new URL('./features/evaluation/EvaluationBacktest.vue', import.meta.url), 'utf8')
   const styleSource = await readFile(new URL('./style.css', import.meta.url), 'utf8')
 
-  assert.match(appSource, /class="coverage-band-node"/)
-  assert.match(appSource, /:class="coverageNodeClass\(index\)"/)
+  assert.match(backtestSource, /class="coverage-band-node"/)
+  assert.match(backtestSource, /:class="coverageNodeClass\(index\)"/)
   assert.match(styleSource, /--coverage-node-color: #1769d2;/)
   assert.match(styleSource, /--coverage-node-glow: rgba\(23, 105, 210, 0\.24\);/)
   assert.match(styleSource, /\.coverage-band-node\.middle \{\s+--coverage-node-color: #218b93;/)
