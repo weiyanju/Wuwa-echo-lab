@@ -20,7 +20,7 @@ test('context and rule details show evidence directly with a single evidence tab
 })
 
 test('evaluation summary model names highlight linked fusion cards', async () => {
-  const source = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
+  const source = await readFile(new URL('./features/evaluation/EvaluationOverview.vue', import.meta.url), 'utf8')
 
   assert.match(source, /const highlightedSummaryModelKey = ref\(null\)/)
   assert.match(source, /class="summary-model-link summary-model-link-dominant"/)
@@ -292,7 +292,7 @@ test('new echo creation lets backend allocate echo uid', async () => {
 })
 
 test('evaluation summary keeps original copy while styling dominant and auxiliary models differently', async () => {
-  const source = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
+  const source = await readFile(new URL('./features/evaluation/EvaluationOverview.vue', import.meta.url), 'utf8')
 
   assert.match(source, /const activeRows = weightRows\.value/)
   assert.match(source, /const dominantKey = modelDetailSummary\.value\.dominantModel \|\| activeRows\[0\]\?\.key \|\| null/)
@@ -328,6 +328,7 @@ test('model detail rows animate when expanded or collapsed', async () => {
 
 test('disabled backtest models are de-emphasized and sorted last', async () => {
   const appSource = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
+  const overviewSource = await readFile(new URL('./features/evaluation/EvaluationOverview.vue', import.meta.url), 'utf8')
   const styleSource = await readFile(new URL('./style.css', import.meta.url), 'utf8')
 
   assert.match(appSource, /const disabled = row\.status === 'disabled' \|\| weight <= ACTIVE_MODEL_WEIGHT_EPSILON/)
@@ -337,22 +338,22 @@ test('disabled backtest models are de-emphasized and sorted last', async () => {
   assert.doesNotMatch(appSource, /selectedRow && !selectedRow\.disabled/)
   assert.match(appSource, /disabled: row\.disabled/)
   assert.match(appSource, /class="disabled-model-badge"/)
-  assert.match(appSource, /样本不足，暂未参与融合/)
+  assert.match(overviewSource, /样本不足，暂未参与融合/)
   assert.match(styleSource, /\.model-bars article\.disabled,/)
   assert.match(styleSource, /\.model-bars article\.disabled \.model-row-progress b \{/)
   assert.match(styleSource, /\.disabled-model-badge/)
 })
 
 test('disabled fusion weight cards are dynamically de-emphasized', async () => {
-  const appSource = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
+  const overviewSource = await readFile(new URL('./features/evaluation/EvaluationOverview.vue', import.meta.url), 'utf8')
   const styleSource = await readFile(new URL('./style.css', import.meta.url), 'utf8')
 
-  assert.match(appSource, /const disabled = weight <= ACTIVE_MODEL_WEIGHT_EPSILON \|\| modelDetailByKey\.value\.get\(key\)\?\.status === 'disabled'/)
-  assert.match(appSource, /statusLabel: disabled \? '未启用' : weightDiagnosticText\(\{ weight \}\)/)
-  assert.match(appSource, /statusTitle: disabled \? '样本不足，暂未参与融合' : `当前参与融合，权重 \$\{formatPercent\(weight\)\}`/)
-  assert.match(appSource, /<em v-if="row\.disabled" class="fusion-disabled-badge">\{\{ row\.statusLabel \}\}<\/em>/)
-  assert.match(appSource, /if \(row\.disabled\) \{\s+return `\$\{row\.label\}：\$\{row\.statusTitle\}`/)
-  assert.match(appSource, /if \(row\?\.disabled\) \{\s+return 'disabled'/)
+  assert.match(overviewSource, /const disabled = weight <= ACTIVE_MODEL_WEIGHT_EPSILON \|\| modelDetailByKey\.value\.get\(key\)\?\.status === 'disabled'/)
+  assert.match(overviewSource, /statusLabel: disabled \? '未启用' : weightDiagnosticText\(\{ weight \}\)/)
+  assert.match(overviewSource, /statusTitle: disabled \? '样本不足，暂未参与融合' : `当前参与融合，权重 \$\{formatPercent\(weight\)\}`/)
+  assert.match(overviewSource, /<em v-if="row\.disabled" class="fusion-disabled-badge">\{\{ row\.statusLabel \}\}<\/em>/)
+  assert.match(overviewSource, /if \(row\.disabled\) \{\s+return `\$\{row\.label\}：\$\{row\.statusTitle\}`/)
+  assert.match(overviewSource, /if \(row\?\.disabled\) \{\s+return 'disabled'/)
   assert.match(styleSource, /\.fusion-weight-card\.disabled,/)
   assert.match(styleSource, /\.fusion-disabled-badge/)
   assert.match(styleSource, /\.fusion-weight-card\.disabled b \{/)
@@ -387,6 +388,7 @@ test('evaluation metrics use backend values instead of preview fallbacks', async
 
 test('evaluation page exposes evaluated sample counts and gates confidence labels', async () => {
   const appSource = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
+  const overviewSource = await readFile(new URL('./features/evaluation/EvaluationOverview.vue', import.meta.url), 'utf8')
   const detailSource = await readFile(new URL('./services/modelDetails.js', import.meta.url), 'utf8')
 
   assert.ok(detailSource.includes('evaluated: evaluation?.model_scores?.[key]?.evaluated ?? 0'))
@@ -395,7 +397,7 @@ test('evaluation page exposes evaluated sample counts and gates confidence label
   assert.match(appSource, /:title="row\.evaluated \? `\$\{row\.label\}基于 \$\{row\.evaluated\} 条样本回测` : `\$\{row\.label\}等待回测样本`"/)
   assert.doesNotMatch(appSource, /function modelEvaluatedText/)
   assert.match(appSource, /isBest: !disabled && evaluationReady\.value && bestHitRate != null && row\.hitRate === bestHitRate/)
-  assert.match(appSource, /if \(evaluation\.value && evaluation\.value\.status !== 'ready'\) \{\s+return '样本不足'/)
+  assert.match(overviewSource, /if \(props\.evaluation && props\.evaluation\.status !== 'ready'\) \{\s+return '样本不足'/)
   assert.doesNotMatch(appSource, /<span>\{\{ modelEvaluatedText\(row\) \}\}<\/span>/)
 })
 

@@ -8,7 +8,7 @@ async function lineCount(relativePath) {
 }
 
 test('frontend high-attraction entry files do not grow beyond the refactor baseline', async () => {
-  assert.ok(await lineCount('./App.vue') <= 2590, 'App.vue must not grow beyond 2590 lines')
+  assert.ok(await lineCount('./App.vue') <= 2390, 'App.vue must not grow beyond 2390 lines')
   assert.ok(await lineCount('./style.css') <= 8080, 'style.css must not grow beyond 8080 lines')
 })
 
