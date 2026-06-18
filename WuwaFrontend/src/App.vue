@@ -30,17 +30,15 @@ import {
 } from './data/modelPresentation'
 import { mainStatLabels, mainStatsByCost, substatLabels, substatOrder, tierTables } from './data/substats'
 import { sonataEffects } from './data/sonataEffects'
+import RecognitionReviewPanel from './features/recognition/RecognitionReviewPanel.vue'
 import chevronDownIcon from './assets/icons/chevron-down.svg'
-import checkIcon from './assets/icons/check.svg'
 import historyMinimizeIcon from './assets/icons/panel-left.svg'
 import historyPinnedIcon from './assets/icons/pin.svg'
 import historyShowcaseIcon from './assets/icons/layout-list-lucide.svg'
 import moonIcon from './assets/icons/moon.svg'
 import historyTerminalDarkIcon from './assets/icons/pangu-terminal-dark.png'
 import historyTerminalIcon from './assets/icons/rovers-terminal-expand.png'
-import refreshIcon from './assets/icons/refresh-cw.svg'
 import sunIcon from './assets/icons/sun.svg'
-import xIcon from './assets/icons/x.svg'
 
 const auth = useAuth()
 const gameAccount = useGameAccount()
@@ -186,19 +184,6 @@ const recognitionMetrics = computed(() => {
     { key: 'snapshot_count', label: '识别快照', value: session.snapshot_count || 0 },
     { key: 'conflict_count', label: '待处理', value: session.conflict_count || 0 },
   ]
-})
-const recognitionSecondarySummary = computed(() => {
-  const session = latestRecognitionSession.value || {}
-  return `新建声骸 ${session.created_echo_count || 0} · 补录声骸 ${session.updated_echo_count || 0} · 已回滚 ${session.reverted_count || 0}`
-})
-const recognitionRefreshIcon = computed(() => {
-  if (recognitionRefreshStatus.value === 'success') {
-    return checkIcon
-  }
-  if (recognitionRefreshStatus.value === 'error') {
-    return xIcon
-  }
-  return refreshIcon
 })
 const recognitionRefreshDisabled = computed(() => saving.value || recognitionRefreshing.value || Boolean(recognitionRefreshStatus.value))
 function canonicalModelLabel(key, fallback) {
@@ -1546,30 +1531,6 @@ async function refreshRecognition({ silent = false } = {}) {
   }
 }
 
-function recognitionStatusText(status) {
-  return {
-    saved: '已保存',
-    conflict: '需复查',
-    rejected: '已丢弃',
-    ignored_duplicate: '重复快照',
-    reverted: '已回滚',
-  }[status] || status || '未知'
-}
-
-function recognitionStatusClass(snapshot) {
-  return `recognition-status-${snapshot.status || 'unknown'}`
-}
-
-function recognitionSnapshotTitle(snapshot) {
-  if (snapshot.status === 'saved') {
-    return `快照 #${snapshot.snapshot_id} 已写入 ${snapshot.created_roll_count || 0} 条词条`
-  }
-  if (snapshot.error_code === 'duplicate_detail_screenshot_hash') {
-    return `快照 #${snapshot.snapshot_id} 与已有截图重复`
-  }
-  return `快照 #${snapshot.snapshot_id} ${recognitionStatusText(snapshot.status)}`
-}
-
 async function revertSnapshot(snapshot) {
   if (!snapshot?.snapshot_id || revertingSnapshotId.value) {
     return
@@ -2062,68 +2023,18 @@ watch(
 
       <p v-if="error" class="error-text">{{ error }}</p>
 
-      <section
+      <RecognitionReviewPanel
         v-if="page === 'workspace'"
-        class="recognition-panel product-panel"
-        :class="{ 'recognition-panel-empty': !recognitionReviewRows.length }"
-      >
-        <div class="recognition-panel-head">
-          <div class="recognition-title-lockup">
-            <span class="recognition-live-dot" aria-hidden="true"></span>
-            <div>
-              <span class="eyebrow">Local recognition</span>
-              <h2>本地自动识别</h2>
-            </div>
-          </div>
-          <button
-            class="recognition-refresh-button icon-button"
-            type="button"
-            :class="[recognitionRefreshStatus, { refreshing: recognitionRefreshing }]"
-            :disabled="recognitionRefreshDisabled"
-            :aria-busy="recognitionRefreshing"
-            aria-label="刷新识别结果"
-            title="刷新识别结果"
-            @click="refreshRecognition"
-          >
-            <span class="ui-line-icon" :style="iconMask(recognitionRefreshIcon)" aria-hidden="true"></span>
-          </button>
-        </div>
-
-        <div class="recognition-summary-strip" aria-label="识别会话摘要">
-          <div class="recognition-state-copy">
-            <strong>{{ recognitionReviewRows.length ? `${recognitionReviewRows.length} 条记录待查看` : '暂无待处理记录' }}</strong>
-            <span>{{ latestRecognitionSession ? '本地助手的识别结果会同步到当前 UID。' : '启动本地助手后，这里会显示最新识别结果。' }}</span>
-          </div>
-          <div class="recognition-metric-grid">
-            <article v-for="metric in recognitionMetrics" :key="metric.key">
-              <strong>{{ metric.value }}</strong>
-              <span>{{ metric.label }}</span>
-            </article>
-          </div>
-        </div>
-
-        <div v-if="recognitionReviewRows.length" class="recognition-review-list" aria-label="识别快照列表">
-          <article
-            v-for="snapshot in recognitionReviewRows"
-            :key="snapshot.snapshot_id"
-            class="recognition-review-row"
-            :class="recognitionStatusClass(snapshot)"
-          >
-            <div>
-              <strong>{{ recognitionSnapshotTitle(snapshot) }}</strong>
-              <span>{{ recognitionStatusText(snapshot.status) }}</span>
-            </div>
-            <button
-              v-if="snapshot.status === 'saved'"
-              type="button"
-              :disabled="revertingSnapshotId === snapshot.snapshot_id"
-              @click="revertSnapshot(snapshot)"
-            >
-              {{ revertingSnapshotId === snapshot.snapshot_id ? '回滚中' : '回滚' }}
-            </button>
-          </article>
-        </div>
-      </section>
+        :latest-session="latestRecognitionSession"
+        :metrics="recognitionMetrics"
+        :refresh-disabled="recognitionRefreshDisabled"
+        :refresh-status="recognitionRefreshStatus"
+        :refreshing="recognitionRefreshing"
+        :reverting-snapshot-id="revertingSnapshotId"
+        :review-rows="recognitionReviewRows"
+        @refresh="refreshRecognition"
+        @revert="revertSnapshot"
+      />
 
       <div v-if="page === 'workspace'" class="workspace-grid">
         <div class="workspace-sidebar">
