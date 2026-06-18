@@ -16,10 +16,9 @@ import {
 import { useAuth } from './composables/useAuth'
 import { useGameAccount } from './composables/useGameAccount'
 import { displayEchoNumericId } from './services/echoId'
-import { buildNextEchoConfig, isReusableDraft } from './services/echoWorkflow'
+import { buildNextEchoConfig, isReusableDraft, sortVisibleEchoHistory } from './services/echoWorkflow'
 import { confidenceText, formatPercent, formatSignedPercent } from './services/formatters'
 import { buildModelDetailCards } from './services/modelDetails'
-import { normalizePlayerUid } from './services/playerUid'
 import { mainStatLabels, mainStatsByCost, substatLabels, substatOrder, tierTables } from './data/substats'
 import { sonataEffects } from './data/sonataEffects'
 import LoginView from './features/auth/LoginView.vue'
@@ -28,6 +27,7 @@ import EvaluationOverview from './features/evaluation/EvaluationOverview.vue'
 import FloatingHistoryPanel from './features/history/FloatingHistoryPanel.vue'
 import RecognitionReviewPanel from './features/recognition/RecognitionReviewPanel.vue'
 import StatisticsView from './features/statistics/StatisticsView.vue'
+import UidSetupView from './features/workspace/UidSetupView.vue'
 import moonIcon from './assets/icons/moon.svg'
 import sunIcon from './assets/icons/sun.svg'
 
@@ -35,7 +35,6 @@ const auth = useAuth()
 const gameAccount = useGameAccount()
 const user = auth.user
 const page = ref('workspace')
-const uidBinding = ref('')
 const error = ref('')
 const loading = ref(true)
 const saving = ref(false)
@@ -68,6 +67,7 @@ const echoForm = ref({
 })
 
 const activeEcho = computed(() => echoes.value.find((echo) => echo.id === activeEchoId.value) || null)
+const visibleEchoCount = computed(() => sortVisibleEchoHistory(echoes.value).length)
 const isDarkTheme = computed(() => themeMode.value === 'dark')
 const themeToggleLabel = computed(() => (isDarkTheme.value ? '切换到日间模式' : '切换到夜间模式'))
 const activeSubstatTypes = computed(() => new Set((activeEcho.value?.substats || []).map((roll) => roll.substat_type)))
@@ -162,7 +162,6 @@ async function bootstrap() {
     const currentUser = await auth.loadMe()
     if (currentUser) {
       await gameAccount.loadGameAccounts()
-      uidBinding.value = boundPlayerUid.value
       if (!gameAccount.workspaceLocked.value) {
         await refreshAll()
       } else {
@@ -192,7 +191,6 @@ async function submitAuth({ username, password, mode, saveLogin }) {
       localStorage.removeItem('wuwa-login-username')
     }
     await gameAccount.loadGameAccounts()
-    uidBinding.value = boundPlayerUid.value
     if (gameAccount.workspaceLocked.value) {
       resetWorkspaceState()
     } else {
@@ -213,23 +211,12 @@ function resetWorkspaceState() {
   recognitionSnapshots.value = []
 }
 
-function handleUidBindingInput() {
-  uidBinding.value = normalizePlayerUid(uidBinding.value)
-}
-
-async function submitUidBinding() {
+async function submitUidBinding(uid) {
   error.value = ''
-  const uid = normalizePlayerUid(uidBinding.value)
-  uidBinding.value = uid
-  if (!uid) {
-    error.value = '请填写游戏 UID。'
-    return
-  }
-
   saving.value = true
   try {
     resetWorkspaceState()
-    await gameAccount.bindDefaultUid(uidBinding.value)
+    await gameAccount.bindDefaultUid(uid)
     await refreshAll()
   } catch (err) {
     error.value = err.message
@@ -241,7 +228,6 @@ async function submitUidBinding() {
 async function signOut() {
   await auth.signOut()
   gameAccount.accounts.value = []
-  uidBinding.value = ''
   resetWorkspaceState()
 }
 
@@ -676,61 +662,18 @@ watch(
 
     <LoginView v-else-if="!user" :error="error" @submit="submitAuth" />
 
-    <section v-else-if="gameAccount.workspaceLocked.value" class="uid-setup-shell">
-      <header class="uid-setup-topbar">
-        <a class="wordmark" href="#" @click.prevent="page = 'workspace'">Wuwa Echo Lab</a>
-        <nav class="pill-tabs disabled-tabs" aria-label="页面">
-          <button class="active" type="button" disabled>工作台</button>
-          <button type="button" disabled>统计</button>
-          <button type="button" disabled>评估</button>
-        </nav>
-        <div class="account-actions uid-switcher">
-          <div class="uid-chip">
-            <i class="uid-status-dot" aria-hidden="true"></i>
-            <span class="uid-chip-label">UID</span>
-            <span class="uid-chip-value">{{ boundPlayerUid || '未绑定' }}</span>
-          </div>
-          <button
-            class="theme-toggle-button"
-            type="button"
-            :aria-pressed="isDarkTheme"
-            :aria-label="themeToggleLabel"
-            :title="themeToggleLabel"
-            @click="toggleTheme"
-          >
-            <span class="ui-line-icon theme-toggle-icon" :style="iconMask(isDarkTheme ? sunIcon : moonIcon)" aria-hidden="true"></span>
-          </button>
-          <button class="button-ghost" @click="signOut">退出</button>
-        </div>
-      </header>
-
-      <div class="uid-setup-content">
-        <p v-if="error" class="error-text">{{ error }}</p>
-
-        <section class="locked-workbench product-panel">
-          <div class="section-heading">
-            <h2>绑定鸣潮 UID</h2>
-            <p>用于保存声骸记录和统计数据。</p>
-          </div>
-          <form class="uid-binding-form" @submit.prevent="submitUidBinding">
-            <label>
-              UID
-              <input
-                v-model="uidBinding"
-                inputmode="numeric"
-                autocomplete="off"
-                placeholder="输入你的 UID"
-                :disabled="saving || gameAccount.loading.value"
-                @input="handleUidBindingInput"
-              />
-            </label>
-            <button class="button-buy" type="submit" :disabled="saving || gameAccount.loading.value">
-              {{ saving ? '保存中' : '保存' }}
-            </button>
-          </form>
-        </section>
-      </div>
-    </section>
+    <UidSetupView
+      v-else-if="gameAccount.workspaceLocked.value"
+      :bound-uid="boundPlayerUid"
+      :saving="saving"
+      :loading="gameAccount.loading.value"
+      :error="error"
+      :is-dark-theme="isDarkTheme"
+      :theme-toggle-label="themeToggleLabel"
+      @bind="submitUidBinding"
+      @toggle-theme="toggleTheme"
+      @sign-out="signOut"
+    />
 
     <section v-else class="dashboard">
       <header class="topbar">
@@ -767,7 +710,7 @@ watch(
           <p>记录调谐样本，实时校准副词条概率与模型证据。</p>
         </div>
         <div class="hero-stats">
-          <div><strong>{{ sortedEchoes.length }}</strong><span>历史声骸</span></div>
+          <div><strong>{{ visibleEchoCount }}</strong><span>历史声骸</span></div>
           <div><strong>{{ stats?.total_rolls || 0 }}</strong><span>总样本</span></div>
           <div><strong>{{ prediction ? confidenceText(prediction.confidence) : '低' }}</strong><span>置信度</span></div>
         </div>

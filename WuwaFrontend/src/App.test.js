@@ -78,9 +78,10 @@ test('topbar exposes an accessible theme toggle that resets to system color sche
 
 test('topbar uid chip shows the bound game account uid without local quick switching', async () => {
   const appSource = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
+  const uidSetupSource = await readFile(new URL('./features/workspace/UidSetupView.vue', import.meta.url), 'utf8')
   const styleSource = await readFile(new URL('./style.css', import.meta.url), 'utf8')
 
-  assert.match(appSource, /import \{ normalizePlayerUid \} from '\.\/services\/playerUid'/)
+  assert.match(uidSetupSource, /import \{ normalizePlayerUid \} from '\.\.\/\.\.\/services\/playerUid'/)
   assert.match(appSource, /const boundPlayerUid = computed\(\(\) => gameAccount\.defaultAccount\.value\?\.uid \|\| ''\)/)
   assert.match(appSource, /class="uid-chip"/)
   assert.match(appSource, /class="uid-status-dot"/)
@@ -111,9 +112,19 @@ test('floating history controls use the shared line icon system', async () => {
   assert.match(readmeSource, /Lucide Icons/)
 })
 
+test('workspace hero owns a visible history count after the history panel extraction', async () => {
+  const appSource = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
+
+  assert.match(appSource, /import \{ buildNextEchoConfig, isReusableDraft, sortVisibleEchoHistory \} from '\.\/services\/echoWorkflow'/)
+  assert.match(appSource, /const visibleEchoCount = computed\(\(\) => sortVisibleEchoHistory\(echoes\.value\)\.length\)/)
+  assert.match(appSource, /<div><strong>\{\{ visibleEchoCount \}\}<\/strong><span>历史声骸<\/span><\/div>/)
+  assert.doesNotMatch(appSource, /\{\{ sortedEchoes\.length \}\}/)
+})
+
 test('milestone 3 uses account login and locks workbench until default game uid is bound', async () => {
   const appSource = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
   const loginSource = await readFile(new URL('./features/auth/LoginView.vue', import.meta.url), 'utf8')
+  const uidSetupSource = await readFile(new URL('./features/workspace/UidSetupView.vue', import.meta.url), 'utf8')
   const styleSource = await readFile(new URL('./style.css', import.meta.url), 'utf8')
 
   assert.match(appSource, /import \{ useAuth \} from '\.\/composables\/useAuth'/)
@@ -127,10 +138,12 @@ test('milestone 3 uses account login and locks workbench until default game uid 
   assert.match(appSource, /await gameAccount\.loadGameAccounts\(\)/)
   assert.match(appSource, /const selectedGameAccountId = computed\(\(\) => gameAccount\.defaultAccount\.value\?\.id \|\| null\)/)
   assert.match(appSource, /const boundPlayerUid = computed\(\(\) => gameAccount\.defaultAccount\.value\?\.uid \|\| ''\)/)
-  assert.match(appSource, /v-else-if="gameAccount\.workspaceLocked\.value" class="uid-setup-shell"/)
-  assert.match(appSource, /<section class="locked-workbench product-panel">/)
-  assert.match(appSource, /@submit\.prevent="submitUidBinding"/)
-  assert.match(appSource, /await gameAccount\.bindDefaultUid\(uidBinding\.value\)/)
+  assert.match(appSource, /import UidSetupView from '\.\/features\/workspace\/UidSetupView\.vue'/)
+  assert.match(appSource, /v-else-if="gameAccount\.workspaceLocked\.value"/)
+  assert.match(appSource, /@bind="submitUidBinding"/)
+  assert.match(uidSetupSource, /<section class="locked-workbench product-panel">/)
+  assert.match(uidSetupSource, /@submit\.prevent="submitUidBinding"/)
+  assert.match(appSource, /await gameAccount\.bindDefaultUid\(uid\)/)
   assert.match(appSource, /await refreshAll\(\)/)
   assert.doesNotMatch(appSource, /uidCredentials/)
   assert.doesNotMatch(appSource, /submitUidLogin/)
@@ -144,10 +157,10 @@ test('milestone 3 uses account login and locks workbench until default game uid 
 })
 
 test('locked uid binding state shows a focused setup page without workbench chrome', async () => {
-  const appSource = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
+  const appSource = `${await readFile(new URL('./App.vue', import.meta.url), 'utf8')}\n${await readFile(new URL('./features/workspace/UidSetupView.vue', import.meta.url), 'utf8')}`
   const styleSource = await readFile(new URL('./style.css', import.meta.url), 'utf8')
 
-  assert.match(appSource, /<section v-else-if="gameAccount\.workspaceLocked\.value" class="uid-setup-shell">/)
+  assert.match(appSource, /<UidSetupView[\s\S]+v-else-if="gameAccount\.workspaceLocked\.value"/)
   assert.match(appSource, /<header class="uid-setup-topbar">/)
   assert.match(appSource, /class="pill-tabs disabled-tabs"/)
   assert.match(appSource, /disabled>工作台<\/button>/)
