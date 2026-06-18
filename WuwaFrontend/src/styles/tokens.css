@@ -1,0 +1,26 @@
+:root {
+  --primary: #0064e0;
+  --primary-deep: #0457cb;
+  --ink-button: #000000;
+  --ink-deep: #0a1317;
+  --ink: #1c1e21;
+  --charcoal: #444950;
+  --steel: #5d6c7b;
+  --stone: #8595a4;
+  --canvas: #ffffff;
+  --surface-soft: #f1f4f7;
+  --hairline: #ced0d4;
+  --hairline-soft: #dee3e9;
+  --critical: #e41e3f;
+  --critical-deep: #bd1730;
+  --warning: #f7b928;
+  --success: #31a24c;
+  --shadow-rail: rgba(20, 22, 26, 0.22) 0 1px 4px 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif;
+  color: var(--ink-deep);
+  background: var(--canvas);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
