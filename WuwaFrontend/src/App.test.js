@@ -98,16 +98,16 @@ test('topbar uid chip shows the bound game account uid without local quick switc
 })
 
 test('floating history controls use the shared line icon system', async () => {
-  const appSource = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
+  const historySource = await readFile(new URL('./features/history/FloatingHistoryPanel.vue', import.meta.url), 'utf8')
   const readmeSource = await readFile(new URL('./assets/icons/README.md', import.meta.url), 'utf8')
 
-  assert.match(appSource, /import historyPinnedIcon from '\.\/assets\/icons\/pin\.svg'/)
-  assert.match(appSource, /import historyShowcaseIcon from '\.\/assets\/icons\/layout-list-lucide\.svg'/)
-  assert.match(appSource, /import historyMinimizeIcon from '\.\/assets\/icons\/panel-left\.svg'/)
-  assert.match(appSource, /class="ui-line-icon history-action-icon"/)
-  assert.match(appSource, /iconMask\(historyPinnedIcon\)/)
-  assert.match(appSource, /iconMask\(historyShowcaseIcon\)/)
-  assert.match(appSource, /iconMask\(historyMinimizeIcon\)/)
+  assert.match(historySource, /import historyPinnedIcon from '\.\.\/\.\.\/assets\/icons\/pin\.svg'/)
+  assert.match(historySource, /import historyShowcaseIcon from '\.\.\/\.\.\/assets\/icons\/layout-list-lucide\.svg'/)
+  assert.match(historySource, /import historyMinimizeIcon from '\.\.\/\.\.\/assets\/icons\/panel-left\.svg'/)
+  assert.match(historySource, /class="ui-line-icon history-action-icon"/)
+  assert.match(historySource, /iconMask\(historyPinnedIcon\)/)
+  assert.match(historySource, /iconMask\(historyShowcaseIcon\)/)
+  assert.match(historySource, /iconMask\(historyMinimizeIcon\)/)
   assert.match(readmeSource, /Lucide Icons/)
 })
 
