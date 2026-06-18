@@ -9,7 +9,7 @@ async function lineCount(relativePath) {
 
 test('frontend high-attraction entry files do not grow beyond the refactor baseline', async () => {
   assert.ok(await lineCount('./App.vue') <= 2590, 'App.vue must not grow beyond 2590 lines')
-  assert.ok(await lineCount('./style.css') <= 8470, 'style.css must not grow beyond 8470 lines')
+  assert.ok(await lineCount('./style.css') <= 8080, 'style.css must not grow beyond 8080 lines')
 })
 
 test('global styles import shared tokens and base rules', async () => {
@@ -32,4 +32,15 @@ test('recognition feature owns its styles', async () => {
   assert.match(recognition, /\.product-panel\.recognition-panel \{/)
   assert.match(recognition, /\.app-shell\.theme-dark \.recognition-summary-strip/)
   assert.doesNotMatch(entry, /\.recognition-panel \{/)
+})
+
+test('statistics feature owns its base and responsive styles', async () => {
+  const entry = await readFile(new URL('./style.css', import.meta.url), 'utf8')
+  const statistics = await readFile(new URL('./styles/features/statistics.css', import.meta.url), 'utf8')
+
+  assert.match(entry, /@import '\.\/styles\/features\/statistics\.css';/)
+  assert.match(statistics, /\.stats-analytics-panel \{/)
+  assert.match(statistics, /\.substat-deviation-chart \{/)
+  assert.match(statistics, /@media \(max-width: 860px\)/)
+  assert.doesNotMatch(entry, /\.stats-analytics-panel \{/)
 })
