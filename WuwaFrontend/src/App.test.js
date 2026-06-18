@@ -256,6 +256,7 @@ test('milestone 6 shows recognition summary, review list, and revert action', as
 
 test('tier clicks update the active echo without blocking on full workspace refresh', async () => {
   const appSource = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
+  const workbenchSource = await readFile(new URL('./features/workspace/EchoWorkbenchView.vue', import.meta.url), 'utf8')
   const styleSource = await readFile(new URL('./style.css', import.meta.url), 'utf8')
   const clickTierBody = appSource.match(/async function clickTier\(row, tier\) \{[\s\S]+?\n\}/)?.[0] || ''
   const undoBody = appSource.match(/async function undoActiveSubstat\(\) \{[\s\S]+?\n\}/)?.[0] || ''
@@ -268,7 +269,6 @@ test('tier clicks update the active echo without blocking on full workspace refr
   assert.match(appSource, /let insightsRefreshTimer = null/)
   assert.match(appSource, /clearTimeout\(insightsRefreshTimer\)/)
   assert.match(appSource, /setTimeout\(\(\) => \{/)
-  assert.match(appSource, /function rowHasPendingTier\(row\)/)
   assert.match(clickTierBody, /const roll = await addSubstat/)
   assert.match(clickTierBody, /appendRollToEcho\(echo\.id, optimisticRoll\)/)
   assert.match(clickTierBody, /replaceOptimisticRollInEcho\(echo\.id, optimisticRoll\.id, roll\)/)
@@ -277,9 +277,9 @@ test('tier clicks update the active echo without blocking on full workspace refr
   assert.doesNotMatch(clickTierBody, /saving\.value = true/)
   assert.doesNotMatch(clickTierBody, /await refreshActive\(\)/)
   assert.doesNotMatch(clickTierBody, /refreshAll\(\)/)
-  assert.match(appSource, /:disabled="Boolean\(row\.recorded\) \|\| isTierPending\(row, tier\)"/)
-  assert.match(appSource, /v-memo="\[row\.recorded\?\.id, row\.recorded\?\.tier_value, row\.candidate\?\.p_final, row\.candidate\?\.baseline_deviation, row\.topPredicted, rowHasPendingTier\(row\)\]"/)
-  assert.doesNotMatch(appSource, /:disabled="Boolean\(row\.recorded\) \|\| saving"/)
+  assert.match(workbenchSource, /:disabled="Boolean\(row\.recorded\) \|\| isTierPending\(row, tier\)"/)
+  assert.match(workbenchSource, /v-memo="\[row\.recorded\?\.id, row\.recorded\?\.tier_value, row\.candidate\?\.p_final, row\.candidate\?\.baseline_deviation, row\.topPredicted, pendingTierKey\]"/)
+  assert.doesNotMatch(workbenchSource, /:disabled="Boolean\(row\.recorded\) \|\| saving"/)
   assert.doesNotMatch(appSource, /activeEchoId\.value\}:\$\{activeEcho\.value\?\.substats\.length/)
   assert.match(styleSource, /\.substat-row \{[\s\S]+contain: layout paint;/)
   assert.match(undoBody, /replaceEcho\(result\.echo\)/)

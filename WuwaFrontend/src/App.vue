@@ -1,5 +1,5 @@
 ﻿<script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import {
   addSubstat,
   createEcho,
@@ -15,11 +15,10 @@ import {
 } from './services/api'
 import { useAuth } from './composables/useAuth'
 import { useGameAccount } from './composables/useGameAccount'
-import { displayEchoNumericId } from './services/echoId'
 import { buildNextEchoConfig, isReusableDraft, sortVisibleEchoHistory } from './services/echoWorkflow'
-import { confidenceText, formatPercent, formatSignedPercent } from './services/formatters'
+import { confidenceText } from './services/formatters'
 import { buildModelDetailCards } from './services/modelDetails'
-import { mainStatLabels, mainStatsByCost, substatLabels, substatOrder, tierTables } from './data/substats'
+import { mainStatsByCost, substatLabels, substatOrder, tierTables } from './data/substats'
 import { sonataEffects } from './data/sonataEffects'
 import LoginView from './features/auth/LoginView.vue'
 import EvaluationBacktest from './features/evaluation/EvaluationBacktest.vue'
@@ -27,6 +26,7 @@ import EvaluationOverview from './features/evaluation/EvaluationOverview.vue'
 import FloatingHistoryPanel from './features/history/FloatingHistoryPanel.vue'
 import RecognitionReviewPanel from './features/recognition/RecognitionReviewPanel.vue'
 import StatisticsView from './features/statistics/StatisticsView.vue'
+import EchoWorkbenchView from './features/workspace/EchoWorkbenchView.vue'
 import UidSetupView from './features/workspace/UidSetupView.vue'
 import moonIcon from './assets/icons/moon.svg'
 import sunIcon from './assets/icons/sun.svg'
@@ -50,9 +50,6 @@ const recognitionSnapshots = ref([])
 const revertingSnapshotId = ref(null)
 const recognitionRefreshing = ref(false)
 const recognitionRefreshStatus = ref('')
-const createPanelRef = ref(null)
-const galleryPanelRef = ref(null)
-const setupPanelHeight = ref(null)
 const themeMode = ref(readInitialTheme())
 let insightsRefreshTimer = null
 let activeRefreshTimer = null
@@ -70,7 +67,6 @@ const activeEcho = computed(() => echoes.value.find((echo) => echo.id === active
 const visibleEchoCount = computed(() => sortVisibleEchoHistory(echoes.value).length)
 const isDarkTheme = computed(() => themeMode.value === 'dark')
 const themeToggleLabel = computed(() => (isDarkTheme.value ? '切换到日间模式' : '切换到夜间模式'))
-const activeSubstatTypes = computed(() => new Set((activeEcho.value?.substats || []).map((roll) => roll.substat_type)))
 const candidateByType = computed(() => {
   const pairs = (prediction.value?.candidates || []).map((candidate) => [candidate.substat_type, candidate])
   return new Map(pairs)
@@ -85,10 +81,7 @@ const matrixRows = computed(() =>
     topPredicted: topCandidate.value?.substat_type === substatType,
   })),
 )
-const legalMainStats = computed(() => mainStatsByCost[echoForm.value.cost] || [])
-const progressPercent = computed(() => Math.min(((activeEcho.value?.substats.length || 0) / 5) * 100, 100))
 const topCandidate = computed(() => prediction.value?.candidates?.[0] || null)
-const selectedSonata = computed(() => sonataEffects.find((effect) => effect.name === echoForm.value.sonata) || sonataEffects.at(-1))
 const selectedGameAccountId = computed(() => gameAccount.defaultAccount.value?.id || null)
 const boundPlayerUid = computed(() => gameAccount.defaultAccount.value?.uid || '')
 const latestRecognitionSession = computed(() => recognitionSessions.value[0] || null)
@@ -113,37 +106,9 @@ const modelDetailCards = computed(() =>
     labels: substatLabels,
   }),
 )
-const setupPanelStyle = computed(() => (setupPanelHeight.value ? { height: `${setupPanelHeight.value}px` } : {}))
 
 function iconMask(source) {
   return { '--icon-url': `url("${source}")` }
-}
-
-function waitForFrame() {
-  return new Promise((resolve) => {
-    requestAnimationFrame(() => resolve())
-  })
-}
-
-async function syncSetupPanelHeight() {
-  await nextTick()
-  await waitForFrame()
-  if (!createPanelRef.value || !galleryPanelRef.value || window.matchMedia('(max-width: 860px)').matches) {
-    setupPanelHeight.value = null
-    return
-  }
-  setupPanelHeight.value = Math.ceil(galleryPanelRef.value.getBoundingClientRect().height)
-}
-
-function setCost(cost) {
-  echoForm.value.cost = cost
-  if (!legalMainStats.value.includes(echoForm.value.main_stat)) {
-    echoForm.value.main_stat = legalMainStats.value[0]
-  }
-}
-
-function resetEchoForm() {
-  echoForm.value.is_continuous_tuning = false
 }
 
 function readInitialTheme() {
@@ -436,14 +401,6 @@ function tierButtonKey(row, tier) {
   return `${row.substat_type}:${tier.value}`
 }
 
-function isTierPending(row, tier) {
-  return pendingTierKey.value === tierButtonKey(row, tier)
-}
-
-function rowHasPendingTier(row) {
-  return pendingTierKey.value.startsWith(`${row.substat_type}:`)
-}
-
 async function createEchoWithConfig(config = echoForm.value) {
   if (gameAccount.workspaceLocked.value || !selectedGameAccountId.value) {
     error.value = '请先填写你的游戏 UID。'
@@ -620,8 +577,6 @@ async function undoActiveSubstat() {
 
 onMounted(async () => {
   await bootstrap()
-  await syncSetupPanelHeight()
-  window.addEventListener('resize', syncSetupPanelHeight)
 })
 
 onBeforeUnmount(() => {
@@ -631,24 +586,7 @@ onBeforeUnmount(() => {
   activeRefreshTimer = null
   clearTimeout(recognitionRefreshFeedbackTimer)
   recognitionRefreshFeedbackTimer = null
-  window.removeEventListener('resize', syncSetupPanelHeight)
 })
-
-watch(
-  page,
-  async (nextPage) => {
-    if (nextPage === 'workspace') {
-      await syncSetupPanelHeight()
-    }
-  },
-  { flush: 'post' },
-)
-
-watch(
-  () => `${activeEchoId.value}:${echoForm.value.cost}:${echoForm.value.main_stat}:${echoForm.value.sonata}`,
-  syncSetupPanelHeight,
-  { flush: 'post' },
-)
 </script>
 
 <template>
@@ -732,140 +670,18 @@ watch(
       />
 
       <div v-if="page === 'workspace'" class="workspace-grid">
-        <div class="workspace-sidebar">
-        <aside ref="createPanelRef" class="product-panel create-panel" :style="setupPanelStyle">
-          <div class="section-heading">
-            <span class="eyebrow">Echo setup</span>
-            <h2>初始化声骸</h2>
-            <p>选择套装、COST 和主词条，开始录入当前声骸。</p>
-          </div>
-
-          <form class="echo-form" @submit.prevent>
-            <fieldset>
-              <legend>套装</legend>
-              <div class="sonata-grid">
-                <button
-                  v-for="effect in sonataEffects"
-                  :key="effect.id"
-                  type="button"
-                  :class="{ active: echoForm.sonata === effect.name }"
-                  @click="applyEchoConfig({ sonata: effect.name })"
-                >
-                  <img :src="effect.icon" :alt="effect.name" />
-                  <span>{{ effect.name }}</span>
-                </button>
-              </div>
-            </fieldset>
-
-            <fieldset>
-              <legend>COST</legend>
-              <div class="option-row cost-row">
-                <button v-for="cost in [1, 3, 4]" :key="cost" type="button" :class="{ active: echoForm.cost === cost }" @click="applyEchoConfig({ cost })">
-                  {{ cost }}C
-                </button>
-              </div>
-            </fieldset>
-
-            <fieldset>
-              <legend>主词条</legend>
-              <div class="option-row">
-                <button
-                  v-for="mainStat in legalMainStats"
-                  :key="mainStat"
-                  type="button"
-                  :class="{ active: echoForm.main_stat === mainStat }"
-                  @click="applyEchoConfig({ main_stat: mainStat })"
-                >
-                  {{ mainStatLabels[mainStat] }}
-                </button>
-              </div>
-            </fieldset>
-
-            <label class="checkbox-row">
-              <input v-model="echoForm.is_continuous_tuning" type="checkbox" @change="applyEchoConfig({ is_continuous_tuning: echoForm.is_continuous_tuning })" />
-              同一批连续调谐
-            </label>
-          </form>
-
-          </aside>
-
-        </div>
-
-        <section ref="galleryPanelRef" class="gallery-panel">
-          <div class="active-summary">
-            <div class="active-identity">
-              <span class="eyebrow">Active echo</span>
-              <h3 class="active-section-title">当前声骸</h3>
-              <p class="active-echo-id">{{ activeEcho ? displayEchoNumericId(activeEcho) : '选择或新增声骸' }}</p>
-              <div v-if="activeEcho" class="active-config-chips" aria-label="当前声骸配置">
-                <span>{{ activeEcho.cost }}C</span>
-                <span>{{ activeEcho.set_name }}</span>
-                <span>{{ mainStatLabels[activeEcho.main_stat] || activeEcho.main_stat }}</span>
-              </div>
-            </div>
-            <div v-if="activeEcho" class="roll-strip" :class="{ empty: !activeEcho.substats.length }">
-              <span v-for="roll in activeEcho.substats" :key="roll.id">
-                <strong>{{ roll.position }}.</strong>
-                {{ substatLabels[roll.substat_type] }} {{ roll.tier_value }}%
-              </span>
-              <button
-                class="undo-roll-button"
-                type="button"
-                :disabled="saving || !activeEcho.substats.length"
-                title="撤回上一次录入的副词条"
-                @click="undoActiveSubstat"
-              >
-                撤回
-              </button>
-            </div>
-            <div class="active-control-panel">
-              <div class="progress-card">
-                <strong>{{ activeEcho?.substats.length || 0 }}/5</strong>
-                <span>已录入</span>
-                <div class="progress-track"><i :style="{ width: `${progressPercent}%` }"></i></div>
-              </div>
-              <div v-if="activeEcho" class="active-actions" aria-label="当前声骸操作">
-                <button class="button-danger" type="button" :disabled="saving" @click="discardActiveEcho">
-                  弃置
-                </button>
-                <button class="button-next" type="button" :disabled="saving" @click="createNextEchoFromActive">
-                  下一个
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div v-if="activeEcho" class="substat-matrix">
-            <article
-              v-for="row in matrixRows"
-              :key="row.substat_type"
-              class="substat-row"
-              :class="{ recorded: row.recorded, 'top-predicted-row': row.topPredicted && !row.recorded }"
-              v-memo="[row.recorded?.id, row.recorded?.tier_value, row.candidate?.p_final, row.candidate?.baseline_deviation, row.topPredicted, rowHasPendingTier(row)]"
-            >
-              <div class="substat-meta">
-                <strong>{{ row.label }}</strong>
-                <span v-if="row.recorded">已录入：{{ row.recorded.tier_value }}</span>
-                <span v-else-if="row.candidate">预测 {{ formatPercent(row.candidate.p_final) }}</span>
-                <small v-if="row.candidate">较基线 {{ formatSignedPercent(row.candidate.baseline_deviation) }}</small>
-              </div>
-              <div class="tier-grid">
-                <button
-                  v-for="tier in row.tier_table"
-                  :key="`${row.substat_type}-${tier.value}`"
-                  type="button"
-                  :disabled="Boolean(row.recorded) || isTierPending(row, tier)"
-                  @click="clickTier(row, tier)"
-                >
-                  <strong>{{ tier.value }}</strong>
-                  <span>{{ formatPercent(tier.probability) }}</span>
-                </button>
-              </div>
-            </article>
-          </div>
-
-          <p v-else class="empty-text">先选择套装、COST 和主词条，再开始逐条点击录入。</p>
-        </section>
+        <EchoWorkbenchView
+          :config="echoForm"
+          :active-echo="activeEcho"
+          :matrix-rows="matrixRows"
+          :saving="saving"
+          :pending-tier-key="pendingTierKey"
+          @config-change="applyEchoConfig"
+          @undo="undoActiveSubstat"
+          @discard="discardActiveEcho"
+          @next="createNextEchoFromActive"
+          @select-tier="clickTier($event.row, $event.tier)"
+        />
 
         <FloatingHistoryPanel
           :echoes="echoes"
