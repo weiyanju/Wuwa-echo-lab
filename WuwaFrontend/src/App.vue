@@ -25,12 +25,11 @@ import {
   evaluationMetricDefinitions,
   modelBacktestNotes,
   modelOrder,
-  sampleStageAxisDefinitions,
-  sampleStageDefinitions,
 } from './data/modelPresentation'
 import { mainStatLabels, mainStatsByCost, substatLabels, substatOrder, tierTables } from './data/substats'
 import { sonataEffects } from './data/sonataEffects'
 import RecognitionReviewPanel from './features/recognition/RecognitionReviewPanel.vue'
+import StatisticsView from './features/statistics/StatisticsView.vue'
 import chevronDownIcon from './assets/icons/chevron-down.svg'
 import historyMinimizeIcon from './assets/icons/panel-left.svg'
 import historyPinnedIcon from './assets/icons/pin.svg'
@@ -276,79 +275,6 @@ const expandedModelDetailKey = computed(() => {
     return defaultKey
   }
   return null
-})
-const sampleStageRows = computed(() => {
-  const total = stats.value?.total_rolls || 0
-  return sampleStageDefinitions.map((stage) => ({
-    label: stage.label,
-    text: stage.text,
-    active: total >= stage.min && total < stage.max,
-  }))
-})
-const sortedStatFrequency = computed(() => {
-  const rows = Object.values(stats.value?.substat_frequency || {})
-  return rows
-    .map((row) => ({
-      ...row,
-      deviation: statDeviation(row),
-      absDeviation: Math.abs(statDeviation(row)),
-    }))
-    .sort((left, right) => right.absDeviation - left.absDeviation)
-})
-const maxAbsStatDeviation = computed(() => Math.max(...sortedStatFrequency.value.map((row) => row.absDeviation), 0.01))
-const hottestStatRow = computed(() => sortedStatFrequency.value.filter((row) => row.deviation > 0).sort((left, right) => right.deviation - left.deviation)[0] || null)
-const coldestStatRow = computed(() => sortedStatFrequency.value.filter((row) => row.deviation < 0).sort((left, right) => left.deviation - right.deviation)[0] || null)
-const sampleStageProgress = computed(() => clampNumber((stats.value?.total_rolls || 0) / 50000))
-const visualSampleStageProgress = computed(() => {
-  const progress = sampleStageProgress.value
-  return progress > 0 ? Math.max(progress, 0.012) : 0
-})
-const statsReliabilityText = computed(() => {
-  const total = stats.value?.total_rolls || 0
-  if (total >= 50000) {
-    return '可优化权重'
-  }
-  if (total >= 10000) {
-    return '稳定观察'
-  }
-  if (total >= 3000) {
-    return '可作参考'
-  }
-  if (total >= 500) {
-    return '初步观察'
-  }
-  return '起步观察'
-})
-const statsSummaryItems = computed(() => [
-  {
-    label: '样本可信度',
-    value: stats.value ? statsReliabilityText.value : '等待样本',
-    tone: 'primary',
-    title: `基于 ${stats.value?.total_rolls || 0} 条样本判断当前统计可信度`,
-  },
-  {
-    label: '总样本',
-    value: `${stats.value?.total_rolls || 0} 条`,
-    title: `基于 ${stats.value?.total_rolls || 0} 条已录入副词条样本`,
-  },
-  {
-    label: '当前偏高',
-    value: hottestStatRow.value ? `${hottestStatRow.value.label} ${formatSignedPercent(hottestStatRow.value.deviation)}` : '暂无',
-    title: hottestStatRow.value ? `基于 ${stats.value?.total_rolls || 0} 条样本，${hottestStatRow.value.label} 当前观察值高于基线 ${formatSignedPercent(hottestStatRow.value.deviation)}` : `基于 ${stats.value?.total_rolls || 0} 条样本，暂无偏高项`,
-  },
-  {
-    label: '当前偏低',
-    value: coldestStatRow.value ? `${coldestStatRow.value.label} ${formatSignedPercent(coldestStatRow.value.deviation)}` : '暂无',
-    title: coldestStatRow.value ? `基于 ${stats.value?.total_rolls || 0} 条样本，${coldestStatRow.value.label} 当前观察值低于基线 ${formatSignedPercent(coldestStatRow.value.deviation)}` : `基于 ${stats.value?.total_rolls || 0} 条样本，暂无偏低项`,
-  },
-])
-const sampleStageAxisRows = computed(() => {
-  const total = stats.value?.total_rolls || 0
-  return sampleStageAxisDefinitions.map((stage) => ({
-    ...stage,
-    active: total >= stage.threshold,
-    current: total >= stage.threshold && total < stage.max,
-  }))
 })
 const setupPanelStyle = computed(() => (setupPanelHeight.value ? { height: `${setupPanelHeight.value}px` } : {}))
 const terminalIconRotation = ref(0)
@@ -859,32 +785,6 @@ function modelEvidenceNote(model, index) {
     ][index] || model.chartNote
   }
   return model.chartNote
-}
-
-function statDeviation(row) {
-  return (row?.observed_rate ?? 0) - (row?.baseline_rate ?? 0)
-}
-
-function statDiagnosticClass(row) {
-  const deviation = statDeviation(row)
-  if (deviation >= 0.03) {
-    return 'hot'
-  }
-  if (deviation <= -0.03) {
-    return 'warn'
-  }
-  return 'cool'
-}
-
-function statDiagnosticText(row) {
-  const deviation = statDeviation(row)
-  if (deviation >= 0.03) {
-    return '偏高'
-  }
-  if (deviation <= -0.03) {
-    return '偏低'
-  }
-  return '稳定'
 }
 
 function weightDiagnosticClass(row) {
@@ -2256,80 +2156,10 @@ watch(
 
       </div>
 
-      <section v-if="!gameAccount.workspaceLocked.value && page === 'stats'" class="product-panel full-panel stats-analytics-panel">
-        <div class="stats-diagnostic-head">
-          <div>
-            <h2>统计诊断</h2>
-            <p v-if="stats">{{ sampleStageText(stats.sample_stage) }}</p>
-            <p v-else>等待样本录入后生成统计图表。</p>
-          </div>
-        </div>
-
-        <div v-if="stats" class="stats-summary-bar">
-          <article v-for="item in statsSummaryItems" :key="item.label" :class="item.tone" :title="item.title">
-            <span>{{ item.label }}</span>
-            <strong>{{ item.value }}</strong>
-          </article>
-        </div>
-        <div v-else class="stats-empty-state">
-          <strong>暂无统计样本</strong>
-          <p>录入声骸副词条后，会在这里显示样本分布和阶段诊断。</p>
-        </div>
-
-        <section v-if="stats" class="stats-chart-card substat-deviation-card">
-          <div class="stats-section-heading">
-            <h3>副词条分布偏差</h3>
-            <span>按偏差排序</span>
-          </div>
-          <div class="substat-deviation-chart" role="img" aria-label="副词条相对基线的偏差">
-            <div class="deviation-axis-labels" aria-hidden="true">
-              <span></span>
-              <div class="deviation-axis-scale">
-                <span>偏低</span>
-                <strong>基线</strong>
-                <span>偏高</span>
-              </div>
-              <span></span>
-            </div>
-            <article
-              v-for="row in sortedStatFrequency"
-              :key="row.substat_type"
-              class="substat-deviation-row"
-              :class="statDiagnosticClass(row)"
-              :title="`基于 ${stats.total_rolls || 0} 条样本，${row.label}: ${row.count} 次，观察 ${formatPercent(row.observed_rate)}，基线 ${formatPercent(row.baseline_rate)}`"
-            >
-              <div class="substat-deviation-name">
-                <strong>{{ row.label }}</strong>
-                <span>{{ row.count }} 次 · {{ formatPercent(row.observed_rate) }}</span>
-              </div>
-              <div class="substat-deviation-track">
-                <i aria-hidden="true"></i>
-                <b :style="{ width: `${Math.max(row.absDeviation / maxAbsStatDeviation * 48, row.absDeviation ? 5 : 0)}%`, left: row.deviation >= 0 ? '50%' : 'auto', right: row.deviation < 0 ? '50%' : 'auto' }"></b>
-              </div>
-              <strong class="substat-deviation-value">{{ formatSignedPercent(row.deviation) }}</strong>
-            </article>
-          </div>
-        </section>
-
-        <div v-if="stats" class="stats-chart-grid">
-          <section class="stats-chart-card sample-stage-card">
-            <div class="stats-section-heading compact">
-              <h3>样本阶段</h3>
-              <span>{{ stats.total_rolls }} / 50000+</span>
-            </div>
-            <div class="sample-stage-axis" role="img" aria-label="当前样本阶段">
-              <div class="sample-stage-track" aria-hidden="true">
-                <b :style="{ width: formatPercent(visualSampleStageProgress) }"></b>
-                <i class="sample-stage-marker" :style="{ left: formatPercent(sampleStageProgress) }"></i>
-              </div>
-              <article v-for="stage in sampleStageAxisRows" :key="stage.label" :class="{ active: stage.active, current: stage.current }">
-                <strong>{{ stage.label }}</strong>
-                <span>{{ stage.caption }}<em v-if="stage.current">当前</em></span>
-              </article>
-            </div>
-          </section>
-        </div>
-      </section>
+      <StatisticsView
+        v-if="!gameAccount.workspaceLocked.value && page === 'stats'"
+        :stats="stats"
+      />
 
       <section v-if="!gameAccount.workspaceLocked.value && page === 'evaluation'" class="product-panel full-panel evaluation-panel">
         <div class="evaluation-status-bar">
