@@ -253,6 +253,42 @@ WPF 本地助手大部分时间会在后台运行，因此性能优化必须服�
 
 如果未来出现新的工程质量专项，应先写在阶段计划或 working 文档中。专项完成后，把长期事实回写到本文。
 
+### 8.1 功能开发文档闭环
+
+每个可以独立验收的功能、阶段或重构单元，必须遵循以下闭环：
+
+1. 开发前阅读顶层总规范。
+2. 阅读该功能对应的专项规范、接口契约和既有设计记录。
+3. 明确模块归属、数据边界、性能目标、测试范围和验收标准。
+4. 实施过程中遇到会改变产品流程、API、数据库、OCR 引擎、第三方依赖、隐私边界或长期架构的问题时，先确认再实现。
+5. 功能完成后运行与风险相匹配的验证。
+6. 在 `docs/archive/` 写入本次功能的实施与验收记录。
+7. 只把已经成为长期事实的变化同步回顶层规范。
+
+开发前默认阅读顺序：
+
+1. [`product-principles-and-scope.md`](./product-principles-and-scope.md)
+2. [`architecture.md`](./architecture.md)
+3. 本文与 [`code-organization-and-style.md`](./code-organization-and-style.md)
+4. [`api-and-data-contracts.md`](./api-and-data-contracts.md)
+5. [`security-privacy-and-data-boundaries.md`](./security-privacy-and-data-boundaries.md)
+6. [`performance-and-background-runtime.md`](./performance-and-background-runtime.md)
+7. [`product-interface-principles.md`](./product-interface-principles.md) 与对应端 UI 规范
+8. 当前功能对应的阶段计划、专项设计或历史决策记录
+
+不要求每次开发机械地修改全部文档。同步范围按实际变化确定：
+
+- 架构 owner、模块边界或依赖方向变化：更新 `architecture.md`。
+- 目录、命名、复用方式或代码职责变化：更新 `code-organization-and-style.md`。
+- API、字段、状态、持久化或数据库关系变化：更新 `api-and-data-contracts.md`。
+- UI 长期原则或公共组件规则变化：更新统一界面原则和对应端 UI 规范。
+- 后台运行、OCR、缓存、资源占用策略变化：更新 `performance-and-background-runtime.md`。
+- 权限、截图、日志、账号或云端数据边界变化：更新 `security-privacy-and-data-boundaries.md`。
+- 产品优先级或阶段顺序变化：更新 `roadmap-and-prioritization.md`。
+- 仅按既有规范完成实现：只写归档记录，不重复修改顶层规范。
+
+归档记录是“本次实际做了什么”的证据，不是新的长期规则来源。归档内容与顶层规范冲突时，以当前顶层规范为准。
+
 ---
 
 ## 9. 给 Codex 与后续协作者的默认约束
@@ -263,3 +299,5 @@ WPF 本地助手大部分时间会在后台运行，因此性能优化必须服�
 - 不把代码质量问题伪装成 UI 小修
 - 不把 UI 问题伪装成架构重构
 - 改完必须按风险跑对应验证
+- 下一部分功能开始前，先按第 8.1 节重新读取总规范和对应专项文档
+- 每个独立验收单元完成后，必须补充 `docs/archive/` 实施记录并同步受影响的长期规范
