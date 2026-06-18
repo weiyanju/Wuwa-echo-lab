@@ -22,6 +22,7 @@ import { buildModelDetailCards } from './services/modelDetails'
 import { normalizePlayerUid } from './services/playerUid'
 import { mainStatLabels, mainStatsByCost, substatLabels, substatOrder, tierTables } from './data/substats'
 import { sonataEffects } from './data/sonataEffects'
+import LoginView from './features/auth/LoginView.vue'
 import EvaluationBacktest from './features/evaluation/EvaluationBacktest.vue'
 import EvaluationOverview from './features/evaluation/EvaluationOverview.vue'
 import FloatingHistoryPanel from './features/history/FloatingHistoryPanel.vue'
@@ -34,13 +35,7 @@ const auth = useAuth()
 const gameAccount = useGameAccount()
 const user = auth.user
 const page = ref('workspace')
-const authForm = ref({
-  username: localStorage.getItem('wuwa-login-username') || '',
-  password: '',
-  mode: 'login',
-})
 const uidBinding = ref('')
-const saveLogin = ref(localStorage.getItem('wuwa-save-login') === 'true')
 const error = ref('')
 const loading = ref(true)
 const saving = ref(false)
@@ -181,23 +176,17 @@ async function bootstrap() {
   }
 }
 
-async function submitAuth() {
+async function submitAuth({ username, password, mode, saveLogin }) {
   error.value = ''
-  const username = authForm.value.username.trim()
-  const password = authForm.value.password
-  if (!username || !password) {
-    error.value = '请填写用户名和密码。'
-    return
-  }
   try {
     const payload = { username, password }
-    if (authForm.value.mode === 'register') {
+    if (mode === 'register') {
       await auth.signUp(payload)
     } else {
       await auth.signIn(payload)
     }
-    localStorage.setItem('wuwa-save-login', saveLogin.value ? 'true' : 'false')
-    if (saveLogin.value) {
+    localStorage.setItem('wuwa-save-login', saveLogin ? 'true' : 'false')
+    if (saveLogin) {
       localStorage.setItem('wuwa-login-username', username)
     } else {
       localStorage.removeItem('wuwa-login-username')
@@ -254,11 +243,6 @@ async function signOut() {
   gameAccount.accounts.value = []
   uidBinding.value = ''
   resetWorkspaceState()
-  if (!saveLogin.value) {
-    authForm.value.username = ''
-    localStorage.removeItem('wuwa-login-username')
-  }
-  authForm.value.password = ''
 }
 
 async function refreshAll() {
@@ -690,47 +674,7 @@ watch(
       </div>
     </section>
 
-    <section v-else-if="!user" class="auth-shell auth-shell-home">
-      <div class="auth-hero">
-        <div class="auth-copy">
-          <span class="brand-mark">Wuwa Echo Lab</span>
-          <h1>鸣潮声骸实验室</h1>
-        </div>
-        <div class="showcase-card login-info-card" aria-label="工具说明">
-          <div>
-            <span class="eyebrow">Echo tracker</span>
-            <h2>声骸记录</h2>
-            <p>记录套装、COST、主词条、副词条类型与数值档位，持续沉淀样本。</p>
-          </div>
-          <div class="login-info-grid">
-            <div><strong>点击录入</strong><span>套装和档位都用按钮选择，减少手输。</span></div>
-            <div><strong>概率排名</strong><span>输出候选副词条概率、基线偏离和依据。</span></div>
-            <div><strong>谨慎判断</strong><span>套装、顺序、时间等变量只在样本足够时参与判断。</span></div>
-          </div>
-        </div>
-      </div>
-
-      <form class="auth-form product-panel" @submit.prevent="submitAuth">
-        <label>
-          用户名
-          <input v-model="authForm.username" autocomplete="username" />
-        </label>
-        <label>
-          密码
-          <input v-model="authForm.password" type="password" autocomplete="current-password" />
-        </label>
-        <label class="checkbox-row save-login-row">
-          <input v-model="saveLogin" type="checkbox" />
-          记住用户名
-        </label>
-        <p v-if="error" class="error-text">{{ error }}</p>
-        <div class="auth-mode-actions">
-          <button :class="{ active: authForm.mode === 'login' }" type="button" @click="authForm.mode = 'login'">登录</button>
-          <button :class="{ active: authForm.mode === 'register' }" type="button" @click="authForm.mode = 'register'">注册</button>
-        </div>
-        <button class="button-buy" type="submit">{{ authForm.mode === 'register' ? '创建账号并进入' : '进入研究台' }}</button>
-      </form>
-    </section>
+    <LoginView v-else-if="!user" :error="error" @submit="submitAuth" />
 
     <section v-else-if="gameAccount.workspaceLocked.value" class="uid-setup-shell">
       <header class="uid-setup-topbar">

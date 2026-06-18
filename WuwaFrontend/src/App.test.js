@@ -113,11 +113,16 @@ test('floating history controls use the shared line icon system', async () => {
 
 test('milestone 3 uses account login and locks workbench until default game uid is bound', async () => {
   const appSource = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
+  const loginSource = await readFile(new URL('./features/auth/LoginView.vue', import.meta.url), 'utf8')
   const styleSource = await readFile(new URL('./style.css', import.meta.url), 'utf8')
 
   assert.match(appSource, /import \{ useAuth \} from '\.\/composables\/useAuth'/)
   assert.match(appSource, /import \{ useGameAccount \} from '\.\/composables\/useGameAccount'/)
-  assert.match(appSource, /const authForm = ref\(\{\s+username: localStorage\.getItem\('wuwa-login-username'\) \|\| '',\s+password: '',\s+mode: 'login'/)
+  assert.match(appSource, /import LoginView from '\.\/features\/auth\/LoginView\.vue'/)
+  assert.match(appSource, /<LoginView v-else-if="!user" :error="error" @submit="submitAuth" \/>/)
+  assert.match(loginSource, /const authForm = ref\(\{\s+username: localStorage\.getItem\('wuwa-login-username'\) \|\| '',\s+password: '',\s+mode: 'login'/)
+  assert.match(appSource, /async function submitAuth\(\{ username, password, mode, saveLogin \}\)/)
+  assert.match(appSource, /localStorage\.setItem\('wuwa-save-login', saveLogin \? 'true' : 'false'\)/)
   assert.match(appSource, /await auth\.signIn\(payload\)/)
   assert.match(appSource, /await gameAccount\.loadGameAccounts\(\)/)
   assert.match(appSource, /const selectedGameAccountId = computed\(\(\) => gameAccount\.defaultAccount\.value\?\.id \|\| null\)/)
