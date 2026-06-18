@@ -9,7 +9,7 @@ async function lineCount(relativePath) {
 
 test('frontend high-attraction entry files do not grow beyond the refactor baseline', async () => {
   assert.ok(await lineCount('./App.vue') <= 2590, 'App.vue must not grow beyond 2590 lines')
-  assert.ok(await lineCount('./style.css') <= 8790, 'style.css must not grow beyond 8790 lines')
+  assert.ok(await lineCount('./style.css') <= 8470, 'style.css must not grow beyond 8470 lines')
 })
 
 test('global styles import shared tokens and base rules', async () => {
@@ -22,4 +22,14 @@ test('global styles import shared tokens and base rules', async () => {
   assert.match(tokens, /:root \{/)
   assert.match(base, /body \{/)
   assert.doesNotMatch(entry, /^:root \{/m)
+})
+
+test('recognition feature owns its styles', async () => {
+  const entry = await readFile(new URL('./style.css', import.meta.url), 'utf8')
+  const recognition = await readFile(new URL('./styles/features/recognition.css', import.meta.url), 'utf8')
+
+  assert.match(entry, /@import '\.\/styles\/features\/recognition\.css';/)
+  assert.match(recognition, /\.product-panel\.recognition-panel \{/)
+  assert.match(recognition, /\.app-shell\.theme-dark \.recognition-summary-strip/)
+  assert.doesNotMatch(entry, /\.recognition-panel \{/)
 })
