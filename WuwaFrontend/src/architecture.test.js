@@ -16,10 +16,11 @@ test('frontend high-attraction entry files do not grow beyond the refactor basel
   assert.ok(await lineCount('./features/workspace/EchoWorkbenchView.vue') <= 210, 'EchoWorkbenchView.vue must not grow beyond 210 lines')
   assert.ok(await lineCount('./features/workspace/useEchoWorkspace.js') <= 400, 'useEchoWorkspace.js must not grow beyond 400 lines')
   assert.ok(await lineCount('./features/recognition/useRecognitionReview.js') <= 145, 'useRecognitionReview.js must not grow beyond 145 lines')
-  assert.ok(await lineCount('./style.css') <= 6330, 'style.css must not grow beyond 6330 lines')
+  assert.ok(await lineCount('./style.css') <= 5610, 'style.css must not grow beyond 5610 lines')
   assert.ok(await lineCount('./styles/shell.css') <= 830, 'shell.css must not grow beyond 830 lines')
   assert.ok(await lineCount('./styles/features/history.css') <= 885, 'history.css must not grow beyond 885 lines')
   assert.ok(await lineCount('./styles/features/auth.css') <= 265, 'auth.css must not grow beyond 265 lines')
+  assert.ok(await lineCount('./styles/features/workspace.css') <= 810, 'workspace.css must not grow beyond 810 lines')
 })
 
 test('global styles import shared tokens and base rules', async () => {
@@ -100,4 +101,20 @@ test('auth feature owns login layout, information, dark, and responsive styles',
   assert.match(auth, /@media \(max-width: 520px\)[\s\S]+\.login-info-card p \{[\s\S]+white-space: normal;/)
   assert.doesNotMatch(entry, /\.auth-shell \{/)
   assert.doesNotMatch(entry, /\.login-info-grid \{/)
+})
+
+test('workspace feature owns uid setup, workbench, matrix, dark, and responsive styles', async () => {
+  const entry = await readFile(new URL('./style.css', import.meta.url), 'utf8')
+  const workspace = await readFile(new URL('./styles/features/workspace.css', import.meta.url), 'utf8')
+
+  assert.match(entry, /@import '\.\/styles\/features\/workspace\.css';/)
+  assert.match(workspace, /\.uid-setup-shell \{/)
+  assert.match(workspace, /\.workspace-grid \{/)
+  assert.match(workspace, /\.sonata-grid \{/)
+  assert.match(workspace, /\.substat-matrix \{/)
+  assert.match(workspace, /\.app-shell\.theme-dark \.active-summary/)
+  assert.match(workspace, /@media \(max-width: 860px\)/)
+  assert.match(workspace, /@media \(max-width: 520px\)/)
+  assert.doesNotMatch(entry, /\.uid-setup-shell \{/)
+  assert.doesNotMatch(entry, /\.workspace-grid \{/)
 })
