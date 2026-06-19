@@ -16,7 +16,8 @@ test('frontend high-attraction entry files do not grow beyond the refactor basel
   assert.ok(await lineCount('./features/workspace/EchoWorkbenchView.vue') <= 210, 'EchoWorkbenchView.vue must not grow beyond 210 lines')
   assert.ok(await lineCount('./features/workspace/useEchoWorkspace.js') <= 400, 'useEchoWorkspace.js must not grow beyond 400 lines')
   assert.ok(await lineCount('./features/recognition/useRecognitionReview.js') <= 145, 'useRecognitionReview.js must not grow beyond 145 lines')
-  assert.ok(await lineCount('./style.css') <= 8080, 'style.css must not grow beyond 8080 lines')
+  assert.ok(await lineCount('./style.css') <= 7370, 'style.css must not grow beyond 7370 lines')
+  assert.ok(await lineCount('./styles/shell.css') <= 830, 'shell.css must not grow beyond 830 lines')
 })
 
 test('global styles import shared tokens and base rules', async () => {
@@ -50,4 +51,20 @@ test('statistics feature owns its base and responsive styles', async () => {
   assert.match(statistics, /\.substat-deviation-chart \{/)
   assert.match(statistics, /@media \(max-width: 860px\)/)
   assert.doesNotMatch(entry, /\.stats-analytics-panel \{/)
+})
+
+test('application shell owns navigation, account, theme, and hero styles', async () => {
+  const entry = await readFile(new URL('./style.css', import.meta.url), 'utf8')
+  const shell = await readFile(new URL('./styles/shell.css', import.meta.url), 'utf8')
+
+  assert.match(entry, /@import '\.\/styles\/shell\.css';/)
+  assert.match(shell, /\.dashboard \{/)
+  assert.match(shell, /\.topbar \{/)
+  assert.match(shell, /\.uid-chip \{/)
+  assert.match(shell, /\.theme-toggle-button \{/)
+  assert.match(shell, /\.hero-band \{/)
+  assert.match(shell, /\.app-shell\.theme-dark \.topbar/)
+  assert.match(shell, /@media \(max-width: 860px\)/)
+  assert.doesNotMatch(entry, /\.dashboard \{/)
+  assert.doesNotMatch(entry, /\.hero-band \{/)
 })

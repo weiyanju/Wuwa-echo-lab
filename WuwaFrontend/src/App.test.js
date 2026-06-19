@@ -31,6 +31,7 @@ test('evaluation summary model names highlight linked fusion cards', async () =>
 test('topbar exposes an accessible theme toggle that resets to system color scheme on load', async () => {
   const appSource = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
   const styleSource = await readFile(new URL('./style.css', import.meta.url), 'utf8')
+  const shellStyleSource = await readFile(new URL('./styles/shell.css', import.meta.url), 'utf8')
 
   assert.match(appSource, /const themeMode = ref\(readInitialTheme\(\)\)/)
   assert.match(appSource, /const isDarkTheme = computed\(\(\) => themeMode\.value === 'dark'\)/)
@@ -48,14 +49,14 @@ test('topbar exposes an accessible theme toggle that resets to system color sche
   assert.match(appSource, /iconMask\(isDarkTheme \? sunIcon : moonIcon\)/)
   assert.match(styleSource, /\.ui-line-icon \{/)
   assert.match(styleSource, /\.app-shell\.theme-dark \{/)
-  assert.match(styleSource, /\.theme-toggle-button \{/)
-  assert.match(styleSource, /\.theme-dark \.theme-toggle-icon \{/)
+  assert.match(shellStyleSource, /\.theme-toggle-button \{/)
+  assert.match(shellStyleSource, /\.theme-dark \.theme-toggle-icon \{/)
   assert.match(styleSource, /\.app-shell\.theme-dark \.history-filter-chip \{/)
   assert.match(styleSource, /\.app-shell\.theme-dark \.echo-roll-list span \{/)
   assert.match(styleSource, /\.app-shell\.theme-dark \.active-config-chips span \{/)
   assert.match(styleSource, /\.app-shell\.theme-dark \.active-summary \{/)
   assert.match(styleSource, /\.app-shell\.theme-dark \.tier-grid button \{/)
-  assert.match(styleSource, /\.app-shell\.theme-dark \.topbar \.pill-tabs \{/)
+  assert.match(shellStyleSource, /\.app-shell\.theme-dark \.topbar \.pill-tabs \{/)
   assert.match(styleSource, /\.app-shell\.theme-dark \.auth-shell-home \.showcase-card,/) 
   assert.match(styleSource, /\.app-shell\.theme-dark \.login-info-grid div \{/)
   assert.match(styleSource, /\.app-shell\.theme-dark \.button-buy \{/)
@@ -79,7 +80,7 @@ test('topbar exposes an accessible theme toggle that resets to system color sche
 test('topbar uid chip shows the bound game account uid without local quick switching', async () => {
   const appSource = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
   const uidSetupSource = await readFile(new URL('./features/workspace/UidSetupView.vue', import.meta.url), 'utf8')
-  const styleSource = await readFile(new URL('./style.css', import.meta.url), 'utf8')
+  const shellStyleSource = await readFile(new URL('./styles/shell.css', import.meta.url), 'utf8')
 
   assert.match(uidSetupSource, /import \{ normalizePlayerUid \} from '\.\.\/\.\.\/services\/playerUid'/)
   assert.match(appSource, /const boundPlayerUid = computed\(\(\) => gameAccount\.defaultAccount\.value\?\.uid \|\| ''\)/)
@@ -93,9 +94,9 @@ test('topbar uid chip shows the bound game account uid without local quick switc
   assert.doesNotMatch(appSource, /switchPlayerUid/)
   assert.doesNotMatch(appSource, /readRecentPlayerUids/)
   assert.doesNotMatch(appSource, /addRecentPlayerUid/)
-  assert.match(styleSource, /\.uid-status-dot \{/)
-  assert.match(styleSource, /\.uid-chip-label \{/)
-  assert.match(styleSource, /\.uid-chip-value \{/)
+  assert.match(shellStyleSource, /\.uid-status-dot \{/)
+  assert.match(shellStyleSource, /\.uid-chip-label \{/)
+  assert.match(shellStyleSource, /\.uid-chip-value \{/)
 })
 
 test('floating history controls use the shared line icon system', async () => {
