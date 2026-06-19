@@ -1,0 +1,260 @@
+
+
+.app-shell.theme-dark .auth-shell-home::after {
+  background: rgba(8, 15, 21, 0.46);
+}
+
+.app-shell.theme-dark .auth-shell-home .showcase-card,
+.app-shell.theme-dark .auth-shell-home .auth-form.product-panel {
+  border-color: rgba(83, 107, 124, 0.66);
+  background:
+    linear-gradient(180deg, rgba(25, 39, 50, 0.92), rgba(20, 32, 42, 0.9)),
+    #17232d;
+  box-shadow: 0 22px 56px rgba(0, 0, 0, 0.28);
+}
+
+.app-shell.theme-dark .auth-shell-home .auth-copy .brand-mark {
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(15, 25, 33, 0.36);
+}
+
+.app-shell.theme-dark .login-info-card p,
+.app-shell.theme-dark .login-info-grid span {
+  color: #a9bac7;
+}
+
+.app-shell.theme-dark .login-info-grid div {
+  border-color: rgba(63, 86, 102, 0.7);
+  background: rgba(29, 42, 53, 0.68);
+}
+
+.app-shell.theme-dark .login-info-grid div::before {
+  color: #8dc3ff;
+  background: rgba(47, 98, 143, 0.28);
+}
+
+.app-shell.theme-dark .login-info-grid strong {
+  color: #e7eef4;
+}
+
+.auth-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 440px);
+  gap: clamp(40px, 6vw, 88px);
+  width: min(1280px, calc(100% - 64px));
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: clamp(48px, 7vh, 88px) 0;
+  align-items: center;
+}
+
+.auth-shell-home {
+  position: relative;
+  isolation: isolate;
+}
+
+.auth-shell-home::before {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  content: "";
+  background-image:
+    linear-gradient(90deg, rgba(6, 10, 14, 0.68), rgba(6, 10, 14, 0.4) 45%, rgba(246, 248, 250, 0.2)),
+    url("https://4kwallpapers.com/images/wallpapers/wuthering-waves-thaw-of-eons-video-game-3840x2160-19488.jpg");
+  background-position: center;
+  background-size: cover;
+}
+
+.auth-shell-home::after {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  content: "";
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: saturate(1.08);
+}
+
+.auth-shell-home .auth-copy .brand-mark,
+.auth-shell-home .auth-copy h1,
+.auth-shell-home .auth-copy p {
+  color: var(--canvas);
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.36);
+}
+
+.auth-shell-home .showcase-card,
+.auth-shell-home .auth-form.product-panel {
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 18px 48px rgba(6, 10, 14, 0.14);
+}
+
+.auth-hero {
+  display: grid;
+  gap: 28px;
+  min-width: 0;
+}
+
+.auth-copy {
+  display: grid;
+  gap: 24px;
+  max-width: 760px;
+}
+
+.auth-shell-home .auth-copy {
+  max-width: 860px;
+  align-content: center;
+}
+
+.auth-shell-home .auth-copy .brand-mark {
+  width: max-content;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  border-radius: 999px;
+  padding: 8px 13px;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(10px);
+}
+
+.auth-shell-home .auth-copy h1 {
+  max-width: 820px;
+  font-size: clamp(48px, 6vw, 78px);
+  font-weight: 800;
+  line-height: 1.04;
+  letter-spacing: 0;
+}
+
+.auth-copy p {
+  max-width: 680px;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1.25;
+}
+
+.auth-form.product-panel {
+  align-self: center;
+  box-shadow: var(--shadow-rail);
+}
+
+.auth-form {
+  display: grid;
+  gap: 16px;
+}
+
+.auth-mode-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.auth-mode-actions button {
+  height: 38px;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  color: var(--muted);
+  background: var(--canvas-soft);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.auth-mode-actions button.active {
+  border-color: rgba(24, 118, 242, 0.36);
+  color: #0f5fd1;
+  background: rgba(24, 118, 242, 0.1);
+}
+
+.login-info-grid span {
+  color: var(--steel);
+  font-size: 14px;
+}
+
+.login-info-card {
+  align-content: start;
+}
+
+.login-info-card h2 {
+  margin-top: 8px;
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.18;
+}
+
+.login-info-card p {
+  margin-bottom: 0;
+  color: #4f6070;
+  font-size: 16px;
+  line-height: 1.55;
+  white-space: nowrap;
+}
+
+.login-info-grid {
+  display: grid;
+  gap: 8px;
+  counter-reset: login-info;
+}
+
+.login-info-grid div {
+  position: relative;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  border: 1px solid rgba(206, 224, 238, 0.74);
+  border-radius: 14px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.62);
+  counter-increment: login-info;
+}
+
+.login-info-grid div::before {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  color: #315d83;
+  background: #edf6ff;
+  font-size: 12px;
+  font-weight: 700;
+  content: counter(login-info, decimal-leading-zero);
+}
+
+.login-info-grid strong {
+  grid-column: 2;
+  color: var(--ink-deep);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.login-info-grid span {
+  grid-column: 2;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+@media (max-width: 860px) {
+  .auth-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-shell {
+    width: min(100% - 32px, 760px);
+  }
+
+  .auth-shell {
+    padding: 40px 0 56px;
+  }
+}
+
+@media (max-width: 520px) {
+  .auth-shell {
+    width: min(100% - 24px, 480px);
+  }
+
+  .auth-copy p {
+    font-size: 16px;
+  }
+
+  .login-info-card p {
+    white-space: normal;
+  }
+}

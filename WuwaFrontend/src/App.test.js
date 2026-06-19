@@ -33,6 +33,7 @@ test('topbar exposes an accessible theme toggle that resets to system color sche
   const styleSource = await readFile(new URL('./style.css', import.meta.url), 'utf8')
   const shellStyleSource = await readFile(new URL('./styles/shell.css', import.meta.url), 'utf8')
   const historyStyleSource = await readFile(new URL('./styles/features/history.css', import.meta.url), 'utf8')
+  const authStyleSource = await readFile(new URL('./styles/features/auth.css', import.meta.url), 'utf8')
 
   assert.match(appSource, /const themeMode = ref\(readInitialTheme\(\)\)/)
   assert.match(appSource, /const isDarkTheme = computed\(\(\) => themeMode\.value === 'dark'\)/)
@@ -58,8 +59,8 @@ test('topbar exposes an accessible theme toggle that resets to system color sche
   assert.match(styleSource, /\.app-shell\.theme-dark \.active-summary \{/)
   assert.match(styleSource, /\.app-shell\.theme-dark \.tier-grid button \{/)
   assert.match(shellStyleSource, /\.app-shell\.theme-dark \.topbar \.pill-tabs \{/)
-  assert.match(styleSource, /\.app-shell\.theme-dark \.auth-shell-home \.showcase-card,/) 
-  assert.match(styleSource, /\.app-shell\.theme-dark \.login-info-grid div \{/)
+  assert.match(authStyleSource, /\.app-shell\.theme-dark \.auth-shell-home \.showcase-card,/)
+  assert.match(authStyleSource, /\.app-shell\.theme-dark \.login-info-grid div \{/)
   assert.match(styleSource, /\.app-shell\.theme-dark \.button-buy \{/)
   assert.match(styleSource, /\.app-shell\.theme-dark \.error-text \{/)
   assert.match(styleSource, /\.app-shell\.theme-dark \.stats-summary-bar article,/) 

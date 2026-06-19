@@ -16,9 +16,10 @@ test('frontend high-attraction entry files do not grow beyond the refactor basel
   assert.ok(await lineCount('./features/workspace/EchoWorkbenchView.vue') <= 210, 'EchoWorkbenchView.vue must not grow beyond 210 lines')
   assert.ok(await lineCount('./features/workspace/useEchoWorkspace.js') <= 400, 'useEchoWorkspace.js must not grow beyond 400 lines')
   assert.ok(await lineCount('./features/recognition/useRecognitionReview.js') <= 145, 'useRecognitionReview.js must not grow beyond 145 lines')
-  assert.ok(await lineCount('./style.css') <= 6560, 'style.css must not grow beyond 6560 lines')
+  assert.ok(await lineCount('./style.css') <= 6330, 'style.css must not grow beyond 6330 lines')
   assert.ok(await lineCount('./styles/shell.css') <= 830, 'shell.css must not grow beyond 830 lines')
   assert.ok(await lineCount('./styles/features/history.css') <= 885, 'history.css must not grow beyond 885 lines')
+  assert.ok(await lineCount('./styles/features/auth.css') <= 265, 'auth.css must not grow beyond 265 lines')
 })
 
 test('global styles import shared tokens and base rules', async () => {
@@ -83,4 +84,20 @@ test('history feature owns panel, filters, records, and responsive styles', asyn
   assert.match(history, /@media \(max-width: 520px\)/)
   assert.doesNotMatch(entry, /\.floating-history-panel \{/)
   assert.doesNotMatch(entry, /\.history-filter-chip \{/)
+})
+
+test('auth feature owns login layout, information, dark, and responsive styles', async () => {
+  const entry = await readFile(new URL('./style.css', import.meta.url), 'utf8')
+  const auth = await readFile(new URL('./styles/features/auth.css', import.meta.url), 'utf8')
+
+  assert.match(entry, /@import '\.\/styles\/features\/auth\.css';/)
+  assert.match(auth, /\.auth-shell \{/)
+  assert.match(auth, /\.auth-mode-actions \{/)
+  assert.match(auth, /\.login-info-grid \{/)
+  assert.match(auth, /\.app-shell\.theme-dark \.auth-shell-home::after/)
+  assert.match(auth, /@media \(max-width: 860px\)/)
+  assert.match(auth, /@media \(max-width: 520px\)/)
+  assert.match(auth, /@media \(max-width: 520px\)[\s\S]+\.login-info-card p \{[\s\S]+white-space: normal;/)
+  assert.doesNotMatch(entry, /\.auth-shell \{/)
+  assert.doesNotMatch(entry, /\.login-info-grid \{/)
 })
