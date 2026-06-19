@@ -256,31 +256,39 @@ Wuwa/
 
 ```text
 WuwaFrontend/src/
-  components/
+  features/
+    auth/
+    evaluation/
+    history/
+    recognition/
+    statistics/
+    workspace/
   composables/
   data/
   services/
+  styles/
   assets/
-  public/
   App.vue
 ```
 
-短期允许保持当前结构，但后续 UI 与代码质量重构时，应逐步向 feature owner 收口：
+当前 feature owner：
 
-```text
-WuwaFrontend/src/
-  app/
-  features/
-  shared/
-  services/
-  data/
-```
+- `features/workspace/`：声骸工作台视图与 `useEchoWorkspace` 核心工作流。
+- `features/recognition/`：识别复核视图、展示映射与 `useRecognitionReview` 工作流。
+- `features/statistics/`：统计页面与统计展示映射。
+- `features/evaluation/`：评估概览和回测详情。
+- `features/history/`：浮动历史面板及其交互状态。
+- `features/auth/`：登录与注册表单视图。
+- `composables/`：跨 feature 的认证和 `GameAccount` 状态。
+- `styles/`：共享 token、基础规则和 feature 样式。
+- `App.vue`：页面、主题及跨 feature 刷新编排。
 
 新增代码默认规则：
 
 - API 调用进入 `services/`
-- 页面状态组合进入 `composables/` 或未来 `features/*/hooks`
-- 可复用 UI 进入 `components/`
+- feature 内页面状态和工作流进入对应 `features/*/use*.js`
+- 跨 feature 状态进入 `composables/`
+- 可复用 UI 进入 `components/`；页面级 UI 进入对应 `features/*`
 - 稳定共享格式化进入 `shared/`
 - 业务数据常量进入 `data/`
 - 静态资源进入 `assets/` 或 `public/`

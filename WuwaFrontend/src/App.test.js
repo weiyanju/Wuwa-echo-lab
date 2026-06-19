@@ -116,7 +116,7 @@ test('workspace hero owns a visible history count after the history panel extrac
   const appSource = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
   const workspaceSource = await readFile(new URL('./features/workspace/useEchoWorkspace.js', import.meta.url), 'utf8')
 
-  assert.match(workspaceSource, /import \{ buildNextEchoConfig, isReusableDraft, sortVisibleEchoHistory \} from '\.\.\/\.\.\/services\/echoWorkflow'/)
+  assert.match(workspaceSource, /import \{ buildNextEchoConfig, isReusableDraft, sortVisibleEchoHistory \} from '\.\.\/\.\.\/services\/echoWorkflow\.js'/)
   assert.match(workspaceSource, /const visibleEchoCount = computed\(\(\) => sortVisibleEchoHistory\(echoes\.value\)\.length\)/)
   assert.match(appSource, /<div><strong>\{\{ visibleEchoCount \}\}<\/strong><span>历史声骸<\/span><\/div>/)
   assert.doesNotMatch(appSource, /\{\{ sortedEchoes\.length \}\}/)
@@ -194,10 +194,11 @@ test('milestone 3 scopes frontend data calls to the selected game account', asyn
   const workspaceSource = await readFile(new URL('./features/workspace/useEchoWorkspace.js', import.meta.url), 'utf8')
 
   assert.match(appSource, /selectedGameAccountId,/)
-  assert.match(workspaceSource, /await listEchoes\(selectedGameAccountId\.value\)/)
-  assert.match(workspaceSource, /await createEcho\(\{\s+display_name: '',[\s\S]+?\}, selectedGameAccountId\.value\)/)
-  assert.match(workspaceSource, /stats\.value = await getStats\(selectedGameAccountId\.value\)/)
-  assert.match(workspaceSource, /evaluation\.value = await getModelEvaluation\(selectedGameAccountId\.value\)/)
+  assert.match(workspaceSource, /const accountId = selectedGameAccountId\.value/)
+  assert.match(workspaceSource, /await listEchoes\(accountId\)/)
+  assert.match(workspaceSource, /await createEcho\(\{\s+display_name: '',[\s\S]+?\}, accountId\)/)
+  assert.match(workspaceSource, /const nextStats = await getStats\(accountId\)/)
+  assert.match(workspaceSource, /const nextEvaluation = await getModelEvaluation\(accountId\)/)
 })
 
 test('milestone 6 shows recognition summary, review list, and revert action', async () => {

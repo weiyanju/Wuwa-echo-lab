@@ -448,7 +448,9 @@ WuwaFrontend/src/
   components/
   composables/
   data/
+  features/
   services/
+  styles/
   App.vue
 ```
 
@@ -458,19 +460,22 @@ WuwaFrontend/src/
 - `composables/`：可复用状态和工作流。
 - `components/`：可复用 UI 组件。
 - `data/`：静态数据。
+- `features/`：按业务 owner 组织的页面级视图、展示映射和 feature composable。
 - `assets/`：图片、图标和视觉资源。
-- `App.vue`：短期可保留入口编排，长期应逐步变薄。
+- `styles/`：共享 token、基础规则和 feature 样式。
+- `App.vue`：只保留全局页面、主题和跨 feature 编排。
 
 ### 7.1 Vue 新代码落点
 
 | 功能 | 默认落点 |
 | --- | --- |
 | API 请求 | `src/services/*Api.js` |
-| 可复用状态 | `src/composables/use*.js` |
+| 跨 feature 状态 | `src/composables/use*.js` |
+| feature 状态与工作流 | `src/features/<owner>/use*.js` |
 | 纯格式化 | `src/services/formatters.js` 或独立 formatter 文件 |
 | 静态鸣潮数据 | `src/data/` |
 | 可复用 UI | `src/components/` |
-| 页面级大模块 | 后续应建立 `src/views/` 或 `src/features/`，不要继续塞进 `App.vue` |
+| 页面级大模块 | `src/features/<owner>/`，不要回填到 `App.vue` |
 
 ### 7.2 Vue 约束
 

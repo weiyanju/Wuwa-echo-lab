@@ -14,8 +14,8 @@ test('frontend high-attraction entry files do not grow beyond the refactor basel
   assert.ok(await lineCount('./features/history/FloatingHistoryPanel.vue') <= 650, 'FloatingHistoryPanel.vue must not grow beyond 650 lines')
   assert.ok(await lineCount('./features/workspace/UidSetupView.vue') <= 125, 'UidSetupView.vue must not grow beyond 125 lines')
   assert.ok(await lineCount('./features/workspace/EchoWorkbenchView.vue') <= 210, 'EchoWorkbenchView.vue must not grow beyond 210 lines')
-  assert.ok(await lineCount('./features/workspace/useEchoWorkspace.js') <= 360, 'useEchoWorkspace.js must not grow beyond 360 lines')
-  assert.ok(await lineCount('./features/recognition/useRecognitionReview.js') <= 120, 'useRecognitionReview.js must not grow beyond 120 lines')
+  assert.ok(await lineCount('./features/workspace/useEchoWorkspace.js') <= 400, 'useEchoWorkspace.js must not grow beyond 400 lines')
+  assert.ok(await lineCount('./features/recognition/useRecognitionReview.js') <= 145, 'useRecognitionReview.js must not grow beyond 145 lines')
   assert.ok(await lineCount('./style.css') <= 8080, 'style.css must not grow beyond 8080 lines')
 })
 

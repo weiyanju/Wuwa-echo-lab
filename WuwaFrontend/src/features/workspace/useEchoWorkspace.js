@@ -8,11 +8,11 @@ import {
   listEchoes,
   undoLastSubstat,
   updateEcho,
-} from '../../services/api'
-import { buildNextEchoConfig, isReusableDraft, sortVisibleEchoHistory } from '../../services/echoWorkflow'
-import { buildModelDetailCards } from '../../services/modelDetails'
-import { mainStatsByCost, substatLabels, substatOrder, tierTables } from '../../data/substats'
-import { sonataEffects } from '../../data/sonataEffects'
+} from '../../services/api.js'
+import { buildNextEchoConfig, isReusableDraft, sortVisibleEchoHistory } from '../../services/echoWorkflow.js'
+import { buildModelDetailCards } from '../../services/modelDetails.js'
+import { mainStatsByCost, substatLabels, substatOrder, tierTables } from '../../data/substats.js'
+import { sonataEffects } from '../../data/sonataEffects.js'
 
 export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, workspaceLocked, onError }) {
   const saving = ref(false)
@@ -31,6 +31,8 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
   let insightsRefreshTimer = null
   let activeRefreshTimer = null
   let activePredictionRefreshToken = 0
+  let lifecycleGeneration = 0
+  let refreshRequestId = 0
 
   const activeEcho = computed(() => echoes.value.find((echo) => echo.id === activeEchoId.value) || null)
   const visibleEchoCount = computed(() => sortVisibleEchoHistory(echoes.value).length)
@@ -69,6 +71,15 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
   }
 
   function reset() {
+    lifecycleGeneration += 1
+    refreshRequestId += 1
+    activePredictionRefreshToken += 1
+    clearTimeout(insightsRefreshTimer)
+    insightsRefreshTimer = null
+    clearTimeout(activeRefreshTimer)
+    activeRefreshTimer = null
+    saving.value = false
+    pendingTierKey.value = ''
     echoes.value = []
     activeEchoId.value = null
     prediction.value = null
@@ -90,11 +101,20 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
   }
 
   async function refresh() {
-    if (workspaceLocked.value || !selectedGameAccountId.value) {
+    const accountId = selectedGameAccountId.value
+    if (workspaceLocked.value || !accountId) {
       reset()
       return
     }
-    const echoData = await listEchoes(selectedGameAccountId.value)
+    const generation = lifecycleGeneration
+    const requestId = ++refreshRequestId
+    const isCurrent = () => (
+      generation === lifecycleGeneration
+      && requestId === refreshRequestId
+      && accountId === selectedGameAccountId.value
+    )
+    const echoData = await listEchoes(accountId)
+    if (!isCurrent()) return
     echoes.value = echoData.results || []
     if (!echoes.value.length && boundPlayerUid.value) {
       const draftEcho = await createEchoWithConfig()
@@ -110,8 +130,13 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
     }
     syncFormFromEcho(activeEcho.value)
     await refreshActive()
-    stats.value = await getStats(selectedGameAccountId.value)
-    evaluation.value = await getModelEvaluation(selectedGameAccountId.value)
+    if (!isCurrent()) return
+    const nextStats = await getStats(accountId)
+    if (!isCurrent()) return
+    stats.value = nextStats
+    const nextEvaluation = await getModelEvaluation(accountId)
+    if (!isCurrent()) return
+    evaluation.value = nextEvaluation
   }
 
   function replaceEcho(nextEcho) {
@@ -159,21 +184,31 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
   }
 
   function refreshInsightsInBackground() {
-    if (!selectedGameAccountId.value) return
+    const accountId = selectedGameAccountId.value
+    if (!accountId) return
+    const generation = lifecycleGeneration
+    const isCurrent = () => generation === lifecycleGeneration && accountId === selectedGameAccountId.value
     clearTimeout(insightsRefreshTimer)
     insightsRefreshTimer = setTimeout(() => {
-      Promise.all([getStats(selectedGameAccountId.value), getModelEvaluation(selectedGameAccountId.value)])
+      Promise.all([getStats(accountId), getModelEvaluation(accountId)])
         .then(([nextStats, nextEvaluation]) => {
+          if (!isCurrent()) return
           stats.value = nextStats
           evaluation.value = nextEvaluation
         })
-        .catch(reportError)
+        .catch((err) => {
+          if (isCurrent()) reportError(err)
+        })
     }, 1000)
   }
 
   function refreshActiveInBackground() {
+    const accountId = selectedGameAccountId.value
+    const generation = lifecycleGeneration
     clearTimeout(activeRefreshTimer)
-    activeRefreshTimer = setTimeout(() => refreshActive().catch(reportError), 300)
+    activeRefreshTimer = setTimeout(() => refreshActive().catch((err) => {
+      if (generation === lifecycleGeneration && accountId === selectedGameAccountId.value) reportError(err)
+    }), 300)
   }
 
   function tierButtonKey(row, tier) {
@@ -181,10 +216,12 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
   }
 
   async function createEchoWithConfig(config = echoForm.value) {
-    if (workspaceLocked.value || !selectedGameAccountId.value) {
+    const accountId = selectedGameAccountId.value
+    if (workspaceLocked.value || !accountId) {
       onError('请先填写你的游戏 UID。')
       return null
     }
+    const generation = lifecycleGeneration
     const previousForm = { ...echoForm.value }
     echoForm.value = {
       sonata: config.sonata,
@@ -201,11 +238,13 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
         source: '',
         tuning_batch_id: '',
         is_continuous_tuning: echoForm.value.is_continuous_tuning,
-      }, selectedGameAccountId.value)
+      }, accountId)
+      if (generation !== lifecycleGeneration || accountId !== selectedGameAccountId.value) return null
       echoes.value = [echo, ...echoes.value]
       activeEchoId.value = echo.id
       return echo
     } catch (err) {
+      if (generation !== lifecycleGeneration || accountId !== selectedGameAccountId.value) return null
       echoForm.value = previousForm
       reportError(err)
       return null
@@ -322,10 +361,7 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
   }
 
   function dispose() {
-    clearTimeout(insightsRefreshTimer)
-    insightsRefreshTimer = null
-    clearTimeout(activeRefreshTimer)
-    activeRefreshTimer = null
+    reset()
   }
 
   return {

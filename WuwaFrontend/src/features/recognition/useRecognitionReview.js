@@ -3,7 +3,7 @@ import {
   listRecognitionSessions,
   listRecognitionSnapshots,
   revertRecognitionSnapshot,
-} from '../../services/api'
+} from '../../services/api.js'
 
 export function useRecognitionReview({ selectedGameAccountId, saving, onError }) {
   const sessions = ref([])
@@ -12,6 +12,8 @@ export function useRecognitionReview({ selectedGameAccountId, saving, onError })
   const refreshing = ref(false)
   const refreshStatus = ref('')
   let refreshFeedbackTimer = null
+  let lifecycleGeneration = 0
+  let refreshRequestId = 0
 
   const latestSession = computed(() => sessions.value[0] || null)
   const reviewRows = computed(() => snapshots.value.filter((snapshot) => (
@@ -39,33 +41,50 @@ export function useRecognitionReview({ selectedGameAccountId, saving, onError })
   }
 
   function reset() {
+    lifecycleGeneration += 1
+    refreshRequestId += 1
+    clearTimeout(refreshFeedbackTimer)
+    refreshFeedbackTimer = null
     sessions.value = []
     snapshots.value = []
+    revertingSnapshotId.value = null
+    refreshing.value = false
+    refreshStatus.value = ''
   }
 
   async function refresh({ silent = false } = {}) {
-    if (!selectedGameAccountId.value) {
+    const accountId = selectedGameAccountId.value
+    if (!accountId) {
       reset()
       return
     }
     if (refreshing.value) {
       return
     }
+    const generation = lifecycleGeneration
+    const requestId = ++refreshRequestId
+    const isCurrent = () => (
+      generation === lifecycleGeneration
+      && requestId === refreshRequestId
+      && accountId === selectedGameAccountId.value
+    )
     refreshing.value = true
     if (!silent) {
       refreshStatus.value = ''
     }
     try {
       const [sessionData, snapshotData] = await Promise.all([
-        listRecognitionSessions(selectedGameAccountId.value),
-        listRecognitionSnapshots(selectedGameAccountId.value, ['saved', 'conflict', 'rejected', 'ignored_duplicate']),
+        listRecognitionSessions(accountId),
+        listRecognitionSnapshots(accountId, ['saved', 'conflict', 'rejected', 'ignored_duplicate']),
       ])
+      if (!isCurrent()) return
       sessions.value = sessionData.results || []
       snapshots.value = snapshotData.results || []
       if (!silent) {
         setRefreshStatus('success')
       }
     } catch (err) {
+      if (!isCurrent()) return
       if (!silent) {
         onError(err.message)
         setRefreshStatus('error')
@@ -73,7 +92,7 @@ export function useRecognitionReview({ selectedGameAccountId, saving, onError })
       }
       throw err
     } finally {
-      refreshing.value = false
+      if (isCurrent()) refreshing.value = false
     }
   }
 
@@ -81,18 +100,22 @@ export function useRecognitionReview({ selectedGameAccountId, saving, onError })
     if (!snapshot?.snapshot_id || revertingSnapshotId.value) {
       return false
     }
-    revertingSnapshotId.value = snapshot.snapshot_id
+    const snapshotId = snapshot.snapshot_id
+    const accountId = selectedGameAccountId.value
+    const generation = lifecycleGeneration
+    revertingSnapshotId.value = snapshotId
     try {
-      await revertRecognitionSnapshot(snapshot.snapshot_id)
-      return true
+      await revertRecognitionSnapshot(snapshotId)
+      return generation === lifecycleGeneration && accountId === selectedGameAccountId.value
     } finally {
-      revertingSnapshotId.value = null
+      if (generation === lifecycleGeneration && revertingSnapshotId.value === snapshotId) {
+        revertingSnapshotId.value = null
+      }
     }
   }
 
   function dispose() {
-    clearTimeout(refreshFeedbackTimer)
-    refreshFeedbackTimer = null
+    reset()
   }
 
   return {
