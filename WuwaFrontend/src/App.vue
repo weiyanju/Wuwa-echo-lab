@@ -7,9 +7,6 @@ import {
   getPrediction,
   getStats,
   listEchoes,
-  listRecognitionSessions,
-  listRecognitionSnapshots,
-  revertRecognitionSnapshot,
   undoLastSubstat,
   updateEcho,
 } from './services/api'
@@ -25,6 +22,7 @@ import EvaluationBacktest from './features/evaluation/EvaluationBacktest.vue'
 import EvaluationOverview from './features/evaluation/EvaluationOverview.vue'
 import FloatingHistoryPanel from './features/history/FloatingHistoryPanel.vue'
 import RecognitionReviewPanel from './features/recognition/RecognitionReviewPanel.vue'
+import { useRecognitionReview } from './features/recognition/useRecognitionReview'
 import StatisticsView from './features/statistics/StatisticsView.vue'
 import EchoWorkbenchView from './features/workspace/EchoWorkbenchView.vue'
 import UidSetupView from './features/workspace/UidSetupView.vue'
@@ -45,15 +43,9 @@ const activeEchoId = ref(null)
 const prediction = ref(null)
 const stats = ref(null)
 const evaluation = ref(null)
-const recognitionSessions = ref([])
-const recognitionSnapshots = ref([])
-const revertingSnapshotId = ref(null)
-const recognitionRefreshing = ref(false)
-const recognitionRefreshStatus = ref('')
 const themeMode = ref(readInitialTheme())
 let insightsRefreshTimer = null
 let activeRefreshTimer = null
-let recognitionRefreshFeedbackTimer = null
 let activePredictionRefreshToken = 0
 
 const echoForm = ref({
@@ -84,19 +76,25 @@ const matrixRows = computed(() =>
 const topCandidate = computed(() => prediction.value?.candidates?.[0] || null)
 const selectedGameAccountId = computed(() => gameAccount.defaultAccount.value?.id || null)
 const boundPlayerUid = computed(() => gameAccount.defaultAccount.value?.uid || '')
-const latestRecognitionSession = computed(() => recognitionSessions.value[0] || null)
-const recognitionReviewRows = computed(() => recognitionSnapshots.value.filter((snapshot) => (
-  ['saved', 'conflict', 'rejected', 'ignored_duplicate'].includes(snapshot.status)
-)))
-const recognitionMetrics = computed(() => {
-  const session = latestRecognitionSession.value || {}
-  return [
-    { key: 'saved_roll_count', label: '保存词条', value: session.saved_roll_count || 0 },
-    { key: 'snapshot_count', label: '识别快照', value: session.snapshot_count || 0 },
-    { key: 'conflict_count', label: '待处理', value: session.conflict_count || 0 },
-  ]
+const {
+  dispose: disposeRecognition,
+  latestSession: latestRecognitionSession,
+  metrics: recognitionMetrics,
+  refresh: refreshRecognition,
+  refreshDisabled: recognitionRefreshDisabled,
+  refreshing: recognitionRefreshing,
+  refreshStatus: recognitionRefreshStatus,
+  reset: resetRecognition,
+  revert: revertRecognition,
+  revertingSnapshotId,
+  reviewRows: recognitionReviewRows,
+} = useRecognitionReview({
+  selectedGameAccountId,
+  saving,
+  onError: (message) => {
+    error.value = message
+  },
 })
-const recognitionRefreshDisabled = computed(() => saving.value || recognitionRefreshing.value || Boolean(recognitionRefreshStatus.value))
 const modelDetailCards = computed(() =>
   buildModelDetailCards({
     prediction: prediction.value,
@@ -172,8 +170,7 @@ function resetWorkspaceState() {
   prediction.value = null
   stats.value = null
   evaluation.value = null
-  recognitionSessions.value = []
-  recognitionSnapshots.value = []
+  resetRecognition()
 }
 
 async function submitUidBinding(uid) {
@@ -241,65 +238,14 @@ async function refreshActive() {
   }
 }
 
-function setRecognitionRefreshStatus(status) {
-  clearTimeout(recognitionRefreshFeedbackTimer)
-  recognitionRefreshStatus.value = status
-  if (status) {
-    recognitionRefreshFeedbackTimer = setTimeout(() => {
-      recognitionRefreshStatus.value = ''
-      recognitionRefreshFeedbackTimer = null
-    }, 900)
-  }
-}
-
-async function refreshRecognition({ silent = false } = {}) {
-  if (!selectedGameAccountId.value) {
-    recognitionSessions.value = []
-    recognitionSnapshots.value = []
-    return
-  }
-  if (recognitionRefreshing.value) {
-    return
-  }
-  recognitionRefreshing.value = true
-  if (!silent) {
-    recognitionRefreshStatus.value = ''
-  }
-  try {
-    const [sessionData, snapshotData] = await Promise.all([
-      listRecognitionSessions(selectedGameAccountId.value),
-      listRecognitionSnapshots(selectedGameAccountId.value, ['saved', 'conflict', 'rejected', 'ignored_duplicate']),
-    ])
-    recognitionSessions.value = sessionData.results || []
-    recognitionSnapshots.value = snapshotData.results || []
-    if (!silent) {
-      setRecognitionRefreshStatus('success')
-    }
-  } catch (err) {
-    if (!silent) {
-      error.value = err.message
-      setRecognitionRefreshStatus('error')
-      return
-    }
-    throw err
-  } finally {
-    recognitionRefreshing.value = false
-  }
-}
-
 async function revertSnapshot(snapshot) {
-  if (!snapshot?.snapshot_id || revertingSnapshotId.value) {
-    return
-  }
   error.value = ''
-  revertingSnapshotId.value = snapshot.snapshot_id
   try {
-    await revertRecognitionSnapshot(snapshot.snapshot_id)
-    await refreshAll()
+    if (await revertRecognition(snapshot)) {
+      await refreshAll()
+    }
   } catch (err) {
     error.value = err.message
-  } finally {
-    revertingSnapshotId.value = null
   }
 }
 
@@ -584,8 +530,7 @@ onBeforeUnmount(() => {
   insightsRefreshTimer = null
   clearTimeout(activeRefreshTimer)
   activeRefreshTimer = null
-  clearTimeout(recognitionRefreshFeedbackTimer)
-  recognitionRefreshFeedbackTimer = null
+  disposeRecognition()
 })
 </script>
 
