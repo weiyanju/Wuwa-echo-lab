@@ -32,6 +32,7 @@ test('topbar exposes an accessible theme toggle that resets to system color sche
   const appSource = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
   const styleSource = await readFile(new URL('./style.css', import.meta.url), 'utf8')
   const shellStyleSource = await readFile(new URL('./styles/shell.css', import.meta.url), 'utf8')
+  const historyStyleSource = await readFile(new URL('./styles/features/history.css', import.meta.url), 'utf8')
 
   assert.match(appSource, /const themeMode = ref\(readInitialTheme\(\)\)/)
   assert.match(appSource, /const isDarkTheme = computed\(\(\) => themeMode\.value === 'dark'\)/)
@@ -51,8 +52,8 @@ test('topbar exposes an accessible theme toggle that resets to system color sche
   assert.match(styleSource, /\.app-shell\.theme-dark \{/)
   assert.match(shellStyleSource, /\.theme-toggle-button \{/)
   assert.match(shellStyleSource, /\.theme-dark \.theme-toggle-icon \{/)
-  assert.match(styleSource, /\.app-shell\.theme-dark \.history-filter-chip \{/)
-  assert.match(styleSource, /\.app-shell\.theme-dark \.echo-roll-list span \{/)
+  assert.match(historyStyleSource, /\.app-shell\.theme-dark \.history-filter-chip \{/)
+  assert.match(historyStyleSource, /\.app-shell\.theme-dark \.echo-roll-list span \{/)
   assert.match(styleSource, /\.app-shell\.theme-dark \.active-config-chips span \{/)
   assert.match(styleSource, /\.app-shell\.theme-dark \.active-summary \{/)
   assert.match(styleSource, /\.app-shell\.theme-dark \.tier-grid button \{/)

@@ -16,8 +16,9 @@ test('frontend high-attraction entry files do not grow beyond the refactor basel
   assert.ok(await lineCount('./features/workspace/EchoWorkbenchView.vue') <= 210, 'EchoWorkbenchView.vue must not grow beyond 210 lines')
   assert.ok(await lineCount('./features/workspace/useEchoWorkspace.js') <= 400, 'useEchoWorkspace.js must not grow beyond 400 lines')
   assert.ok(await lineCount('./features/recognition/useRecognitionReview.js') <= 145, 'useRecognitionReview.js must not grow beyond 145 lines')
-  assert.ok(await lineCount('./style.css') <= 7370, 'style.css must not grow beyond 7370 lines')
+  assert.ok(await lineCount('./style.css') <= 6560, 'style.css must not grow beyond 6560 lines')
   assert.ok(await lineCount('./styles/shell.css') <= 830, 'shell.css must not grow beyond 830 lines')
+  assert.ok(await lineCount('./styles/features/history.css') <= 885, 'history.css must not grow beyond 885 lines')
 })
 
 test('global styles import shared tokens and base rules', async () => {
@@ -67,4 +68,19 @@ test('application shell owns navigation, account, theme, and hero styles', async
   assert.match(shell, /@media \(max-width: 860px\)/)
   assert.doesNotMatch(entry, /\.dashboard \{/)
   assert.doesNotMatch(entry, /\.hero-band \{/)
+})
+
+test('history feature owns panel, filters, records, and responsive styles', async () => {
+  const entry = await readFile(new URL('./style.css', import.meta.url), 'utf8')
+  const history = await readFile(new URL('./styles/features/history.css', import.meta.url), 'utf8')
+
+  assert.match(entry, /@import '\.\/styles\/features\/history\.css';/)
+  assert.match(history, /\.floating-history-panel \{/)
+  assert.match(history, /\.history-filter-chip \{/)
+  assert.match(history, /\.echo-item \{/)
+  assert.match(history, /\.app-shell\.theme-dark \.floating-history-panel/)
+  assert.match(history, /@media \(max-width: 860px\)/)
+  assert.match(history, /@media \(max-width: 520px\)/)
+  assert.doesNotMatch(entry, /\.floating-history-panel \{/)
+  assert.doesNotMatch(entry, /\.history-filter-chip \{/)
 })
