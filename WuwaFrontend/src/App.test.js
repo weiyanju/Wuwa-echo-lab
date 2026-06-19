@@ -114,9 +114,10 @@ test('floating history controls use the shared line icon system', async () => {
 
 test('workspace hero owns a visible history count after the history panel extraction', async () => {
   const appSource = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
+  const workspaceSource = await readFile(new URL('./features/workspace/useEchoWorkspace.js', import.meta.url), 'utf8')
 
-  assert.match(appSource, /import \{ buildNextEchoConfig, isReusableDraft, sortVisibleEchoHistory \} from '\.\/services\/echoWorkflow'/)
-  assert.match(appSource, /const visibleEchoCount = computed\(\(\) => sortVisibleEchoHistory\(echoes\.value\)\.length\)/)
+  assert.match(workspaceSource, /import \{ buildNextEchoConfig, isReusableDraft, sortVisibleEchoHistory \} from '\.\.\/\.\.\/services\/echoWorkflow'/)
+  assert.match(workspaceSource, /const visibleEchoCount = computed\(\(\) => sortVisibleEchoHistory\(echoes\.value\)\.length\)/)
   assert.match(appSource, /<div><strong>\{\{ visibleEchoCount \}\}<\/strong><span>历史声骸<\/span><\/div>/)
   assert.doesNotMatch(appSource, /\{\{ sortedEchoes\.length \}\}/)
 })
@@ -190,11 +191,13 @@ test('locked uid binding state shows a focused setup page without workbench chro
 
 test('milestone 3 scopes frontend data calls to the selected game account', async () => {
   const appSource = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
+  const workspaceSource = await readFile(new URL('./features/workspace/useEchoWorkspace.js', import.meta.url), 'utf8')
 
-  assert.match(appSource, /await listEchoes\(selectedGameAccountId\.value\)/)
-  assert.match(appSource, /await createEcho\(\{\s+display_name: '',[\s\S]+?\}, selectedGameAccountId\.value\)/)
-  assert.match(appSource, /stats\.value = await getStats\(selectedGameAccountId\.value\)/)
-  assert.match(appSource, /evaluation\.value = await getModelEvaluation\(selectedGameAccountId\.value\)/)
+  assert.match(appSource, /selectedGameAccountId,/)
+  assert.match(workspaceSource, /await listEchoes\(selectedGameAccountId\.value\)/)
+  assert.match(workspaceSource, /await createEcho\(\{\s+display_name: '',[\s\S]+?\}, selectedGameAccountId\.value\)/)
+  assert.match(workspaceSource, /stats\.value = await getStats\(selectedGameAccountId\.value\)/)
+  assert.match(workspaceSource, /evaluation\.value = await getModelEvaluation\(selectedGameAccountId\.value\)/)
 })
 
 test('milestone 6 shows recognition summary, review list, and revert action', async () => {
@@ -259,18 +262,19 @@ test('milestone 6 shows recognition summary, review list, and revert action', as
 test('tier clicks update the active echo without blocking on full workspace refresh', async () => {
   const appSource = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
   const workbenchSource = await readFile(new URL('./features/workspace/EchoWorkbenchView.vue', import.meta.url), 'utf8')
+  const workspaceSource = await readFile(new URL('./features/workspace/useEchoWorkspace.js', import.meta.url), 'utf8')
   const styleSource = await readFile(new URL('./style.css', import.meta.url), 'utf8')
-  const clickTierBody = appSource.match(/async function clickTier\(row, tier\) \{[\s\S]+?\n\}/)?.[0] || ''
-  const undoBody = appSource.match(/async function undoActiveSubstat\(\) \{[\s\S]+?\n\}/)?.[0] || ''
+  const clickTierBody = workspaceSource.match(/async function clickTier\(row, tier\) \{[\s\S]+?\n  \}/)?.[0] || ''
+  const undoBody = workspaceSource.match(/async function undoActiveSubstat\(\) \{[\s\S]+?\n  \}/)?.[0] || ''
 
-  assert.match(appSource, /function appendRollToEcho\(echoId, roll\)/)
-  assert.match(appSource, /function refreshInsightsInBackground\(\)/)
-  assert.match(appSource, /function refreshActiveInBackground\(\)/)
-  assert.match(appSource, /const pendingTierKey = ref\(''\)/)
-  assert.match(appSource, /let activePredictionRefreshToken = 0/)
-  assert.match(appSource, /let insightsRefreshTimer = null/)
-  assert.match(appSource, /clearTimeout\(insightsRefreshTimer\)/)
-  assert.match(appSource, /setTimeout\(\(\) => \{/)
+  assert.match(workspaceSource, /function appendRollToEcho\(echoId, roll\)/)
+  assert.match(workspaceSource, /function refreshInsightsInBackground\(\)/)
+  assert.match(workspaceSource, /function refreshActiveInBackground\(\)/)
+  assert.match(workspaceSource, /const pendingTierKey = ref\(''\)/)
+  assert.match(workspaceSource, /let activePredictionRefreshToken = 0/)
+  assert.match(workspaceSource, /let insightsRefreshTimer = null/)
+  assert.match(workspaceSource, /clearTimeout\(insightsRefreshTimer\)/)
+  assert.match(workspaceSource, /setTimeout\(\(\) => \{/)
   assert.match(clickTierBody, /const roll = await addSubstat/)
   assert.match(clickTierBody, /appendRollToEcho\(echo\.id, optimisticRoll\)/)
   assert.match(clickTierBody, /replaceOptimisticRollInEcho\(echo\.id, optimisticRoll\.id, roll\)/)
@@ -282,7 +286,7 @@ test('tier clicks update the active echo without blocking on full workspace refr
   assert.match(workbenchSource, /:disabled="Boolean\(row\.recorded\) \|\| isTierPending\(row, tier\)"/)
   assert.match(workbenchSource, /v-memo="\[row\.recorded\?\.id, row\.recorded\?\.tier_value, row\.candidate\?\.p_final, row\.candidate\?\.baseline_deviation, row\.topPredicted, pendingTierKey\]"/)
   assert.doesNotMatch(workbenchSource, /:disabled="Boolean\(row\.recorded\) \|\| saving"/)
-  assert.doesNotMatch(appSource, /activeEchoId\.value\}:\$\{activeEcho\.value\?\.substats\.length/)
+  assert.doesNotMatch(workspaceSource, /activeEchoId\.value\}:\$\{activeEcho\.value\?\.substats\.length/)
   assert.match(styleSource, /\.substat-row \{[\s\S]+contain: layout paint;/)
   assert.match(undoBody, /replaceEcho\(result\.echo\)/)
   assert.match(undoBody, /refreshInsightsInBackground\(\)/)
@@ -290,12 +294,12 @@ test('tier clicks update the active echo without blocking on full workspace refr
 })
 
 test('tier clicks optimistically update before waiting for the save request', async () => {
-  const appSource = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
-  const clickTierBody = appSource.match(/async function clickTier\(row, tier\) \{[\s\S]+?\n\}/)?.[0] || ''
+  const workspaceSource = await readFile(new URL('./features/workspace/useEchoWorkspace.js', import.meta.url), 'utf8')
+  const clickTierBody = workspaceSource.match(/async function clickTier\(row, tier\) \{[\s\S]+?\n  \}/)?.[0] || ''
 
-  assert.match(appSource, /function buildOptimisticRoll\(row, tier\)/)
-  assert.match(appSource, /function removeOptimisticRollFromEcho\(echoId, optimisticRollId\)/)
-  assert.match(appSource, /function replaceOptimisticRollInEcho\(echoId, optimisticRollId, roll\)/)
+  assert.match(workspaceSource, /function buildOptimisticRoll\(row, tier\)/)
+  assert.match(workspaceSource, /function removeOptimisticRollFromEcho\(echoId, optimisticRollId\)/)
+  assert.match(workspaceSource, /function replaceOptimisticRollInEcho\(echoId, optimisticRollId, roll\)/)
   assert.match(clickTierBody, /optimisticRoll = buildOptimisticRoll\(row, tier\)/)
   assert.match(clickTierBody, /appendRollToEcho\(echo\.id, optimisticRoll\)[\s\S]+const roll = await addSubstat/)
   assert.match(clickTierBody, /replaceOptimisticRollInEcho\(echo\.id, optimisticRoll\.id, roll\)/)
@@ -303,7 +307,7 @@ test('tier clicks optimistically update before waiting for the save request', as
 })
 
 test('new echo creation lets backend allocate echo uid', async () => {
-  const source = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
+  const source = await readFile(new URL('./features/workspace/useEchoWorkspace.js', import.meta.url), 'utf8')
 
   assert.doesNotMatch(source, /generateNumericEchoUid/)
   assert.doesNotMatch(source, /nextEchoSequence/)
