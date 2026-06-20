@@ -30,7 +30,10 @@ test('evaluation summary model names highlight linked fusion cards', async () =>
 
 test('topbar exposes an accessible theme toggle that resets to system color scheme on load', async () => {
   const appSource = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
-  const styleSource = await readFile(new URL('./style.css', import.meta.url), 'utf8')
+  const styleSource = [
+    await readFile(new URL('./style.css', import.meta.url), 'utf8'),
+    await readFile(new URL('./styles/features/evaluation.css', import.meta.url), 'utf8'),
+  ].join('\n')
   const shellStyleSource = await readFile(new URL('./styles/shell.css', import.meta.url), 'utf8')
   const historyStyleSource = await readFile(new URL('./styles/features/history.css', import.meta.url), 'utf8')
   const authStyleSource = await readFile(new URL('./styles/features/auth.css', import.meta.url), 'utf8')
@@ -163,7 +166,10 @@ test('milestone 3 uses account login and locks workbench until default game uid 
 
 test('locked uid binding state shows a focused setup page without workbench chrome', async () => {
   const appSource = `${await readFile(new URL('./App.vue', import.meta.url), 'utf8')}\n${await readFile(new URL('./features/workspace/UidSetupView.vue', import.meta.url), 'utf8')}`
-  const styleSource = await readFile(new URL('./style.css', import.meta.url), 'utf8')
+  const styleSource = [
+    await readFile(new URL('./style.css', import.meta.url), 'utf8'),
+    await readFile(new URL('./styles/features/evaluation.css', import.meta.url), 'utf8'),
+  ].join('\n')
   const workspaceStyleSource = await readFile(new URL('./styles/features/workspace.css', import.meta.url), 'utf8')
 
   assert.match(appSource, /<UidSetupView[\s\S]+v-else-if="gameAccount\.workspaceLocked\.value"/)
@@ -338,7 +344,10 @@ test('evaluation summary keeps original copy while styling dominant and auxiliar
 
 test('model detail rows animate when expanded or collapsed', async () => {
   const backtestSource = await readFile(new URL('./features/evaluation/EvaluationBacktest.vue', import.meta.url), 'utf8')
-  const styleSource = await readFile(new URL('./style.css', import.meta.url), 'utf8')
+  const styleSource = [
+    await readFile(new URL('./style.css', import.meta.url), 'utf8'),
+    await readFile(new URL('./styles/features/evaluation.css', import.meta.url), 'utf8'),
+  ].join('\n')
 
   assert.match(backtestSource, /import chevronDownIcon from '\.\.\/\.\.\/assets\/icons\/chevron-down\.svg'/)
   assert.match(backtestSource, /const hasManualModelDetailInteraction = ref\(false\)/)
@@ -358,7 +367,10 @@ test('model detail rows animate when expanded or collapsed', async () => {
 test('disabled backtest models are de-emphasized and sorted last', async () => {
   const backtestSource = await readFile(new URL('./features/evaluation/EvaluationBacktest.vue', import.meta.url), 'utf8')
   const overviewSource = await readFile(new URL('./features/evaluation/EvaluationOverview.vue', import.meta.url), 'utf8')
-  const styleSource = await readFile(new URL('./style.css', import.meta.url), 'utf8')
+  const styleSource = [
+    await readFile(new URL('./style.css', import.meta.url), 'utf8'),
+    await readFile(new URL('./styles/features/evaluation.css', import.meta.url), 'utf8'),
+  ].join('\n')
 
   assert.match(backtestSource, /const disabled = row\.status === 'disabled' \|\| weight <= ACTIVE_MODEL_WEIGHT_EPSILON/)
   assert.match(backtestSource, /if \(a\.disabled !== b\.disabled\) \{\s+return a\.disabled \? 1 : -1/)
@@ -375,7 +387,10 @@ test('disabled backtest models are de-emphasized and sorted last', async () => {
 
 test('disabled fusion weight cards are dynamically de-emphasized', async () => {
   const overviewSource = await readFile(new URL('./features/evaluation/EvaluationOverview.vue', import.meta.url), 'utf8')
-  const styleSource = await readFile(new URL('./style.css', import.meta.url), 'utf8')
+  const styleSource = [
+    await readFile(new URL('./style.css', import.meta.url), 'utf8'),
+    await readFile(new URL('./styles/features/evaluation.css', import.meta.url), 'utf8'),
+  ].join('\n')
 
   assert.match(overviewSource, /const disabled = weight <= ACTIVE_MODEL_WEIGHT_EPSILON \|\| modelDetailByKey\.value\.get\(key\)\?\.status === 'disabled'/)
   assert.match(overviewSource, /statusLabel: disabled \? '未启用' : weightDiagnosticText\(\{ weight \}\)/)
@@ -390,7 +405,10 @@ test('disabled fusion weight cards are dynamically de-emphasized', async () => {
 
 test('rule model detail keeps only evidence and does not duplicate statistics charts', async () => {
   const appSource = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
-  const styleSource = await readFile(new URL('./style.css', import.meta.url), 'utf8')
+  const styleSource = [
+    await readFile(new URL('./style.css', import.meta.url), 'utf8'),
+    await readFile(new URL('./styles/features/evaluation.css', import.meta.url), 'utf8'),
+  ].join('\n')
   const detailSource = await readFile(new URL('./services/modelDetails.js', import.meta.url), 'utf8')
 
   assert.doesNotMatch(appSource, /function ruleSummaryMetrics\(model\)/)
@@ -432,7 +450,10 @@ test('evaluation page exposes evaluated sample counts and gates confidence label
 
 test('coverage band nodes keep colored fills in dark mode', async () => {
   const backtestSource = await readFile(new URL('./features/evaluation/EvaluationBacktest.vue', import.meta.url), 'utf8')
-  const styleSource = await readFile(new URL('./style.css', import.meta.url), 'utf8')
+  const styleSource = [
+    await readFile(new URL('./style.css', import.meta.url), 'utf8'),
+    await readFile(new URL('./styles/features/evaluation.css', import.meta.url), 'utf8'),
+  ].join('\n')
 
   assert.match(backtestSource, /class="coverage-band-node"/)
   assert.match(backtestSource, /:class="coverageNodeClass\(index\)"/)

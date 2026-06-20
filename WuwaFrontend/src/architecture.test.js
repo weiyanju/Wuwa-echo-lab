@@ -16,11 +16,12 @@ test('frontend high-attraction entry files do not grow beyond the refactor basel
   assert.ok(await lineCount('./features/workspace/EchoWorkbenchView.vue') <= 210, 'EchoWorkbenchView.vue must not grow beyond 210 lines')
   assert.ok(await lineCount('./features/workspace/useEchoWorkspace.js') <= 400, 'useEchoWorkspace.js must not grow beyond 400 lines')
   assert.ok(await lineCount('./features/recognition/useRecognitionReview.js') <= 145, 'useRecognitionReview.js must not grow beyond 145 lines')
-  assert.ok(await lineCount('./style.css') <= 5610, 'style.css must not grow beyond 5610 lines')
+  assert.ok(await lineCount('./style.css') <= 1210, 'style.css must not grow beyond 1210 lines')
   assert.ok(await lineCount('./styles/shell.css') <= 830, 'shell.css must not grow beyond 830 lines')
   assert.ok(await lineCount('./styles/features/history.css') <= 885, 'history.css must not grow beyond 885 lines')
   assert.ok(await lineCount('./styles/features/auth.css') <= 265, 'auth.css must not grow beyond 265 lines')
   assert.ok(await lineCount('./styles/features/workspace.css') <= 810, 'workspace.css must not grow beyond 810 lines')
+  assert.ok(await lineCount('./styles/features/evaluation.css') <= 4530, 'evaluation.css must not grow beyond 4530 lines')
 })
 
 test('global styles import shared tokens and base rules', async () => {
@@ -53,7 +54,7 @@ test('statistics feature owns its base and responsive styles', async () => {
   assert.match(statistics, /\.stats-analytics-panel \{/)
   assert.match(statistics, /\.substat-deviation-chart \{/)
   assert.match(statistics, /@media \(max-width: 860px\)/)
-  assert.doesNotMatch(entry, /\.stats-analytics-panel \{/)
+  assert.doesNotMatch(entry, /^\.stats-analytics-panel \{/m)
 })
 
 test('application shell owns navigation, account, theme, and hero styles', async () => {
@@ -117,4 +118,21 @@ test('workspace feature owns uid setup, workbench, matrix, dark, and responsive 
   assert.match(workspace, /@media \(max-width: 520px\)/)
   assert.doesNotMatch(entry, /\.uid-setup-shell \{/)
   assert.doesNotMatch(entry, /\.workspace-grid \{/)
+})
+
+test('evaluation feature owns overview, diagnostics, dark, and responsive styles', async () => {
+  const entry = await readFile(new URL('./style.css', import.meta.url), 'utf8')
+  const evaluation = await readFile(new URL('./styles/features/evaluation.css', import.meta.url), 'utf8')
+
+  assert.match(entry, /@import '\.\/styles\/features\/evaluation\.css';/)
+  assert.match(evaluation, /\.evaluation-panel \{/)
+  assert.match(evaluation, /\.evaluation-status-bar \{/)
+  assert.match(evaluation, /\.model-bars \{/)
+  assert.match(evaluation, /\.fusion-weight-grid \{/)
+  assert.match(evaluation, /\.coverage-band-chart \{/)
+  assert.match(evaluation, /\.app-shell\.theme-dark \.model-bars article/)
+  assert.match(evaluation, /@media \(max-width: 860px\)/)
+  assert.match(evaluation, /@media \(max-width: 520px\)/)
+  assert.doesNotMatch(entry, /^\.evaluation-panel \{/m)
+  assert.doesNotMatch(entry, /^\.model-bars \{/m)
 })
