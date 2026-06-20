@@ -7,9 +7,8 @@ from django.test import TestCase
 from django.utils import timezone
 from unittest.mock import patch
 
-from api.models import EchoRecord, SubstatRoll
-from api.services.evaluation import brier_score, empty_evaluation, log_loss, top_k_hit
-from api.services.evaluation import build_model_evaluation
+from analytics.services.evaluation import brier_score, build_model_evaluation, empty_evaluation, log_loss, top_k_hit
+from echoes.models import EchoRecord, SubstatRoll
 
 
 class EvaluationServiceTests(SimpleTestCase):
@@ -167,7 +166,10 @@ class ModelEvaluationBacktestTests(TestCase):
             weights["context"] = 1
             return weights, {}
 
-        with patch("api.services.evaluation._dynamic_weight_result_from_events", side_effect=fake_dynamic_weight_result):
+        with patch(
+            "analytics.services.evaluation._dynamic_weight_result_from_events",
+            side_effect=fake_dynamic_weight_result,
+        ):
             result = build_model_evaluation(self.user)
 
         self.assertEqual(result["status"], "ready")

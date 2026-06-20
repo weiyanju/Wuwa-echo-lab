@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
-from accounts.models import GameAccount
+from accounts.ownership import owned_game_account
 
 from .models import RecognitionSession, RecognitionSnapshot
 
@@ -47,7 +47,7 @@ def payload_dict(payload, key, default=None):
 def game_account_for_user(user, account_id):
     if not account_id:
         raise RecognitionPayloadError("game_account_id is required.")
-    return GameAccount.objects.get(id=account_id, user=user)
+    return owned_game_account(user, account_id)
 
 
 def session_for_user(user, session_id):

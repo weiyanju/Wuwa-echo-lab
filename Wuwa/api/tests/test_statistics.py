@@ -1,8 +1,8 @@
 from django.contrib.auth.models import User
 from django.test import TestCase
 
-from api.models import EchoRecord, SubstatRoll
-from api.services.statistics import build_user_statistics
+from analytics.services.statistics import build_user_statistics
+from echoes.models import EchoRecord, SubstatRoll
 
 
 class StatisticsServiceTests(TestCase):

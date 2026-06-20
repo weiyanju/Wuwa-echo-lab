@@ -235,7 +235,7 @@ Wuwa/
 默认 owner：
 
 - `accounts/`：认证、用户、`GameAccount`
-- `api/`：当前兼容 API 与核心模型
+- `api/`：共享路由、认证装饰器、JSON 请求解析和响应 helper；不拥有领域模型或业务 service
 - `echoes/`：声骸数据
 - `recognition/`：识别会话与识别快照
 - `analytics/`：统计、预测、评估
@@ -370,7 +370,7 @@ WuwaAssistant/
 默认映射：
 
 - 账号与 UID：`accounts/`
-- 声骸：`echoes/` 或当前 API 兼容层
+- 声骸：`echoes/`
 - 识别：`recognition/`
 - 统计预测：`analytics/`
 - 项目配置：`wuwa/`
@@ -437,7 +437,7 @@ WuwaAssistant/
 - `WuwaAssistant/WuwaAssistant/LoginWindow.xaml.cs`
 - `WuwaFrontend/src/App.vue`
 - `WuwaAssistant.Core/WuwaApiClient.cs`
-- 后端当前兼容性质较强的 `api/`
+- 后端共享入口 `api/`，防止领域模型或业务流程回流
 
 这些区域不是不能改，而是默认应带着更强警惕：
 

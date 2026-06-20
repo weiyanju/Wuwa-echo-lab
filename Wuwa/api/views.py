@@ -1,16 +1,15 @@
 from functools import wraps
 
-from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET
 
-from .responses import error_response
+from .responses import error_response, success_response
 
 
 @require_GET
 @ensure_csrf_cookie
 def health(request):
-    return JsonResponse({"status": "ok", "service": "wuwa-backend"})
+    return success_response({"status": "ok", "service": "wuwa-backend"})
 
 
 def api_login_required(view_func):

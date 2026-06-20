@@ -1,20 +1,22 @@
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import IntegrityError
-from django.http import JsonResponse
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
-from accounts.models import GameAccount
-from api.responses import error_response
+from accounts.ownership import game_account_for_user
+from api.responses import error_response, success_response
 from api.serializers import json_body
 from api.views import api_login_required
 
-from .models import EchoRecord, SubstatRoll
-from .services import create_substat_roll
-from .serializers import (
-    create_echo_from_payload,
-    serialize_echo,
-    serialize_roll,
-    update_echo_from_payload,
+from .serializers import serialize_echo, serialize_roll
+from .services import (
+    NoSubstatRollToUndo,
+    create_echo,
+    create_substat_roll,
+    delete_echo,
+    list_echoes,
+    owned_echo,
+    undo_last_substat,
+    update_echo,
 )
 
 ECHO_NOT_FOUND_MESSAGE = "声骸不存在。"
@@ -28,9 +30,7 @@ def game_account_for_request(request):
             game_account_id = json_body(request).get("game_account_id") or game_account_id
         except ValueError:
             pass
-    if game_account_id:
-        return GameAccount.objects.get(id=game_account_id, user=request.user)
-    return request.user.game_accounts.get(is_default=True)
+    return game_account_for_user(request.user, game_account_id)
 
 
 @api_login_required
@@ -40,83 +40,66 @@ def echo_list(request):
         try:
             game_account = game_account_for_request(request)
         except ObjectDoesNotExist:
-            return JsonResponse({"error": "Game account not found."}, status=404)
-        echoes = game_account.echo_records.prefetch_related("substat_rolls").all()
-        return JsonResponse({"results": [serialize_echo(echo) for echo in echoes]})
+            return error_response("Game account not found.", status=404)
+        echoes = list_echoes(game_account)
+        return success_response({"results": [serialize_echo(echo) for echo in echoes]})
 
     try:
-        echo = create_echo_from_payload(request.user, json_body(request))
+        echo = create_echo(request.user, json_body(request))
     except ObjectDoesNotExist:
-        return JsonResponse({"error": "Game account not found."}, status=404)
+        return error_response("Game account not found.", status=404)
     except (ValidationError, ValueError, TypeError, IntegrityError) as exc:
-        return JsonResponse({"error": str(exc)}, status=400)
-    return JsonResponse(serialize_echo(echo), status=201)
-
-
-def owned_echo_or_404(user, echo_id, *, prefetch_rolls=True):
-    echoes = user.echo_records
-    if prefetch_rolls:
-        echoes = echoes.prefetch_related("substat_rolls")
-    return echoes.get(id=echo_id)
+        return error_response(str(exc), status=400)
+    return success_response(serialize_echo(echo), status=201)
 
 
 @api_login_required
 @require_http_methods(["GET", "PATCH", "DELETE"])
 def echo_detail(request, echo_id):
     try:
-        echo = owned_echo_or_404(request.user, echo_id)
+        echo = owned_echo(request.user, echo_id)
     except ObjectDoesNotExist:
         return error_response(ECHO_NOT_FOUND_MESSAGE, status=404)
 
     if request.method == "DELETE":
-        deleted_echo_id = echo.id
-        echo.delete()
-        return JsonResponse({"deleted_echo_id": deleted_echo_id})
+        deleted_echo_id = delete_echo(echo)
+        return success_response({"deleted_echo_id": deleted_echo_id})
 
     if request.method == "PATCH":
         try:
-            echo = update_echo_from_payload(echo, json_body(request))
+            echo = update_echo(echo, json_body(request))
         except (ValidationError, ValueError, TypeError, IntegrityError) as exc:
-            return JsonResponse({"error": str(exc)}, status=400)
+            return error_response(str(exc), status=400)
 
-    return JsonResponse(serialize_echo(echo))
+    return success_response(serialize_echo(echo))
 
 
 @api_login_required
 @require_POST
 def substat_create(request, echo_id):
     try:
-        echo = owned_echo_or_404(request.user, echo_id, prefetch_rolls=False)
-        existing_roll_count = SubstatRoll.objects.filter(echo=echo).count()
-        roll = create_substat_roll(echo, json_body(request), existing_roll_count=existing_roll_count)
+        echo = owned_echo(request.user, echo_id, prefetch_rolls=False)
+        roll = create_substat_roll(echo, json_body(request))
     except ObjectDoesNotExist:
         return error_response(ECHO_NOT_FOUND_MESSAGE, status=404)
     except (ValidationError, ValueError, TypeError, IntegrityError) as exc:
-        return JsonResponse({"error": str(exc)}, status=400)
-    return JsonResponse(serialize_roll(roll), status=201)
+        return error_response(str(exc), status=400)
+    return success_response(serialize_roll(roll), status=201)
 
 
 @api_login_required
 @require_http_methods(["DELETE"])
 def substat_undo_last(request, echo_id):
     try:
-        echo = owned_echo_or_404(request.user, echo_id)
+        echo = owned_echo(request.user, echo_id)
     except ObjectDoesNotExist:
         return error_response(ECHO_NOT_FOUND_MESSAGE, status=404)
 
-    last_roll = echo.substat_rolls.order_by("-position", "-id").first()
-    if last_roll is None:
+    try:
+        result = undo_last_substat(echo)
+    except NoSubstatRollToUndo:
         return error_response(NO_ROLL_TO_UNDO_MESSAGE, status=400)
-
-    removed = serialize_roll(last_roll)
-    last_roll.delete()
-
-    remaining_rolls = SubstatRoll.objects.filter(echo=echo)
-    remaining_last_roll = remaining_rolls.order_by("-position", "-id").first()
-    echo.last_tuned_at = remaining_last_roll.tuned_at if remaining_last_roll else None
-    if echo.status != EchoRecord.Status.ARCHIVED:
-        echo.status = EchoRecord.Status.COMPLETED if remaining_rolls.count() >= 5 else EchoRecord.Status.IN_PROGRESS
-    echo.save(update_fields=["last_tuned_at", "status", "updated_at"])
-
-    echo = owned_echo_or_404(request.user, echo_id)
-    return JsonResponse({"removed": removed, "echo": serialize_echo(echo)})
+    return success_response({
+        "removed": serialize_roll(result.removed_roll),
+        "echo": serialize_echo(result.echo),
+    })

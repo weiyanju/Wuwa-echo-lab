@@ -100,7 +100,7 @@
 - `echoes/`：声骸数据和调谐记录。
 - `recognition/`：识别会话、识别快照、回滚。
 - `analytics/`：统计、预测、评估。
-- `api/`：兼容入口和共享路由，不作为无限扩张的业务垃圾桶。
+- `api/`：共享路由和 HTTP helper，不拥有领域模型或业务 service。
 
 公共逻辑：
 
@@ -407,13 +407,13 @@ Wuwa/
 - `echoes/`：声骸数据结构、声骸业务规则。
 - `recognition/`：识别会话、识别快照、回滚、识别写入。
 - `analytics/`：统计、预测、评估。
-- `api/`：当前兼容 API、共享入口或尚未完全迁移的接口。
+- `api/`：共享路由、认证装饰器、JSON 请求解析和响应 helper。
 - `wuwa/`：Django 项目配置。
 
 ### 6.1 Django 文件职责
 
 - `models.py`：数据库模型和模型级约束。
-- `serializers.py`：输入输出转换和字段校验。
+- `serializers.py`：输入输出转换和字段级校验，不负责事务或业务写流程。
 - `views.py`：请求入口、权限检查、调用 service。
 - `services.py` 或 `services/*`：业务流程。
 - `constants.py`：稳定常量，不放动态配置。
@@ -431,6 +431,10 @@ facade 的职责是保持稳定导入路径，不允许重新增长为业务实�
 ### 6.2 后端约束
 
 - view 层不能变成业务中心。
+- view 只负责请求解析、权限、调用 service 和返回响应。
+- 成功与错误 JSON 响应统一通过 `api.responses` 构造。
+- 用户与 `GameAccount` ownership 统一由 `accounts/ownership.py` 判定。
+- 领域事务、创建、更新、删除和回滚流程进入对应 app 的 service。
 - 跨用户、跨 `GameAccount` 的访问控制必须靠后端保证。
 - migration 必须跟随 schema 变化。
 - 后端不能默认接收完整截图做常规 OCR。

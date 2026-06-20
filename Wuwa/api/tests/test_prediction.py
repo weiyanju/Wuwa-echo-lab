@@ -3,8 +3,7 @@ from django.test import TestCase
 from django.utils import timezone
 from datetime import timedelta
 
-from api.models import EchoRecord, SubstatRoll
-from api.services.prediction import (
+from analytics.services.prediction import (
     _bayes_component_weights,
     _bayes_distribution_from_sequence,
     _bayes_exact_distribution_from_sequence,
@@ -15,6 +14,7 @@ from api.services.prediction import (
     _markov_distribution_from_sequence,
     predict_next_substat,
 )
+from echoes.models import EchoRecord, SubstatRoll
 
 
 class PredictionServiceTests(TestCase):

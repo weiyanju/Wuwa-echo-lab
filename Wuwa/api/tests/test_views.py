@@ -6,7 +6,9 @@ from django.test import Client, TestCase
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 
-from api.models import EchoRecord, GameAccount, RecognitionSession, RecognitionSnapshot, SubstatRoll
+from accounts.models import GameAccount
+from echoes.models import EchoRecord, SubstatRoll
+from recognition.models import RecognitionSession, RecognitionSnapshot
 
 
 class ApiViewTests(TestCase):

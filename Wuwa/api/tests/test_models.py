@@ -3,7 +3,9 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.test import TestCase
 
-from api.models import EchoRecord, GameAccount, RecognitionSession, RecognitionSnapshot, SubstatRoll
+from accounts.models import GameAccount
+from echoes.models import EchoRecord, SubstatRoll
+from recognition.models import RecognitionSession, RecognitionSnapshot
 
 
 class EchoRecordModelTests(TestCase):
