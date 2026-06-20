@@ -33,6 +33,8 @@ test('topbar exposes an accessible theme toggle that resets to system color sche
   const styleSource = [
     await readFile(new URL('./style.css', import.meta.url), 'utf8'),
     await readFile(new URL('./styles/features/evaluation.css', import.meta.url), 'utf8'),
+    await readFile(new URL('./styles/controls.css', import.meta.url), 'utf8'),
+    await readFile(new URL('./styles/features/statistics.css', import.meta.url), 'utf8'),
   ].join('\n')
   const shellStyleSource = await readFile(new URL('./styles/shell.css', import.meta.url), 'utf8')
   const historyStyleSource = await readFile(new URL('./styles/features/history.css', import.meta.url), 'utf8')
@@ -169,6 +171,7 @@ test('locked uid binding state shows a focused setup page without workbench chro
   const styleSource = [
     await readFile(new URL('./style.css', import.meta.url), 'utf8'),
     await readFile(new URL('./styles/features/evaluation.css', import.meta.url), 'utf8'),
+    await readFile(new URL('./styles/controls.css', import.meta.url), 'utf8'),
   ].join('\n')
   const workspaceStyleSource = await readFile(new URL('./styles/features/workspace.css', import.meta.url), 'utf8')
 
@@ -347,6 +350,7 @@ test('model detail rows animate when expanded or collapsed', async () => {
   const styleSource = [
     await readFile(new URL('./style.css', import.meta.url), 'utf8'),
     await readFile(new URL('./styles/features/evaluation.css', import.meta.url), 'utf8'),
+    await readFile(new URL('./styles/controls.css', import.meta.url), 'utf8'),
   ].join('\n')
 
   assert.match(backtestSource, /import chevronDownIcon from '\.\.\/\.\.\/assets\/icons\/chevron-down\.svg'/)
@@ -370,6 +374,7 @@ test('disabled backtest models are de-emphasized and sorted last', async () => {
   const styleSource = [
     await readFile(new URL('./style.css', import.meta.url), 'utf8'),
     await readFile(new URL('./styles/features/evaluation.css', import.meta.url), 'utf8'),
+    await readFile(new URL('./styles/controls.css', import.meta.url), 'utf8'),
   ].join('\n')
 
   assert.match(backtestSource, /const disabled = row\.status === 'disabled' \|\| weight <= ACTIVE_MODEL_WEIGHT_EPSILON/)
@@ -390,6 +395,7 @@ test('disabled fusion weight cards are dynamically de-emphasized', async () => {
   const styleSource = [
     await readFile(new URL('./style.css', import.meta.url), 'utf8'),
     await readFile(new URL('./styles/features/evaluation.css', import.meta.url), 'utf8'),
+    await readFile(new URL('./styles/controls.css', import.meta.url), 'utf8'),
   ].join('\n')
 
   assert.match(overviewSource, /const disabled = weight <= ACTIVE_MODEL_WEIGHT_EPSILON \|\| modelDetailByKey\.value\.get\(key\)\?\.status === 'disabled'/)
@@ -408,6 +414,7 @@ test('rule model detail keeps only evidence and does not duplicate statistics ch
   const styleSource = [
     await readFile(new URL('./style.css', import.meta.url), 'utf8'),
     await readFile(new URL('./styles/features/evaluation.css', import.meta.url), 'utf8'),
+    await readFile(new URL('./styles/controls.css', import.meta.url), 'utf8'),
   ].join('\n')
   const detailSource = await readFile(new URL('./services/modelDetails.js', import.meta.url), 'utf8')
 
@@ -453,6 +460,7 @@ test('coverage band nodes keep colored fills in dark mode', async () => {
   const styleSource = [
     await readFile(new URL('./style.css', import.meta.url), 'utf8'),
     await readFile(new URL('./styles/features/evaluation.css', import.meta.url), 'utf8'),
+    await readFile(new URL('./styles/controls.css', import.meta.url), 'utf8'),
   ].join('\n')
 
   assert.match(backtestSource, /class="coverage-band-node"/)

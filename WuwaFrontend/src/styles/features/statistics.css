@@ -390,3 +390,168 @@
     grid-template-columns: minmax(120px, 0.35fr) minmax(180px, 1fr) minmax(66px, auto);
   }
 }
+
+.app-shell.theme-dark .stats-chart-card {
+  border-color: rgba(83, 107, 124, 0.66);
+  background:
+    linear-gradient(180deg, rgba(25, 39, 50, 0.96), rgba(20, 32, 42, 0.94)),
+    #17232d;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.24);
+}
+
+.app-shell.theme-dark .stats-summary-bar span {
+  color: #a9bac7;
+}
+
+.app-shell.theme-dark .stats-summary-bar article {
+  border-color: rgba(63, 86, 102, 0.7);
+  background:
+    linear-gradient(180deg, rgba(30, 45, 57, 0.94), rgba(25, 39, 50, 0.92)),
+    #1d2a35;
+}
+
+.app-shell.theme-dark .substat-deviation-chart {
+  border-color: rgba(63, 86, 102, 0.64);
+  background: rgba(29, 42, 53, 0.78);
+}
+
+.app-shell.theme-dark .sample-stage-track,
+.app-shell.theme-dark .substat-deviation-track {
+  background: #253541;
+}
+
+.app-shell.theme-dark .stats-summary-bar strong {
+  color: #e7eef4;
+}
+
+.app-shell.theme-dark .stats-analytics-panel {
+  background:
+    linear-gradient(180deg, rgba(24, 38, 49, 0.96), rgba(18, 30, 40, 0.94)),
+    #17232d;
+}
+
+.app-shell.theme-dark .stats-diagnostic-head h2,
+.app-shell.theme-dark .stats-section-heading h3 {
+  color: #e7eef4;
+}
+
+.app-shell.theme-dark .stats-diagnostic-head p,
+.app-shell.theme-dark .stats-section-heading span {
+  color: #a9bac7;
+}
+
+.app-shell.theme-dark .stats-section-heading > span {
+  border-color: rgba(75, 98, 113, 0.7);
+  color: #b2c1cc;
+  background: rgba(29, 42, 53, 0.86);
+}
+
+.app-shell.theme-dark .stats-empty-state,
+.app-shell.theme-dark .stats-summary-bar article,
+.app-shell.theme-dark .stats-chart-card,
+.app-shell.theme-dark .substat-deviation-chart,
+.app-shell.theme-dark .sample-stage-card {
+  border-color: rgba(63, 86, 102, 0.72);
+  background:
+    linear-gradient(180deg, rgba(30, 45, 57, 0.94), rgba(25, 39, 50, 0.92)),
+    #1d2a35;
+  box-shadow: none;
+}
+
+.app-shell.theme-dark .stats-summary-bar article.primary {
+  border-color: rgba(55, 179, 127, 0.42);
+  background:
+    linear-gradient(180deg, rgba(37, 72, 55, 0.5), rgba(25, 39, 50, 0.92)),
+    #1d2a35;
+}
+
+.app-shell.theme-dark .stats-empty-state strong,
+.app-shell.theme-dark .stats-summary-bar strong,
+.app-shell.theme-dark .substat-deviation-name strong,
+.app-shell.theme-dark .sample-stage-axis article strong {
+  color: #e7eef4;
+}
+
+.app-shell.theme-dark .substat-deviation-row {
+  border-color: rgba(49, 68, 82, 0.72);
+}
+
+.app-shell.theme-dark .substat-deviation-name span {
+  color: #98aab7;
+}
+
+.app-shell.theme-dark .substat-deviation-row.cool .substat-deviation-value {
+  color: #98aab7;
+}
+
+.app-shell.theme-dark .deviation-axis-labels,
+.app-shell.theme-dark .deviation-axis-scale strong {
+  color: #98aab7;
+}
+
+.app-shell.theme-dark .deviation-axis-scale span:first-child,
+.app-shell.theme-dark .substat-deviation-row.warn .substat-deviation-value {
+  color: #5da8ff;
+}
+
+.app-shell.theme-dark .deviation-axis-scale span:last-child,
+.app-shell.theme-dark .substat-deviation-value {
+  color: #e18462;
+}
+
+.app-shell.theme-dark .substat-deviation-track {
+  background:
+    linear-gradient(90deg, rgba(93, 168, 255, 0.1), rgba(37, 53, 65, 0.82) 47%, rgba(37, 53, 65, 0.82) 53%, rgba(225, 132, 98, 0.11));
+}
+
+.app-shell.theme-dark .substat-deviation-track i {
+  background: rgba(169, 186, 199, 0.38);
+}
+
+.app-shell.theme-dark .substat-deviation-row:nth-child(even) {
+  background: rgba(15, 25, 33, 0.24);
+}
+
+.app-shell.theme-dark .substat-deviation-track,
+.app-shell.theme-dark .sample-stage-track {
+  background: #253541;
+}
+
+.app-shell.theme-dark .sample-stage-marker {
+  border-color: #17232d;
+}
+
+.app-shell.theme-dark .sample-stage-track b {
+  background: linear-gradient(90deg, #3478b8, #35ad7b);
+}
+
+.app-shell.theme-dark .sample-stage-marker {
+  background: #35ad7b;
+  box-shadow:
+    0 0 0 2px rgba(53, 173, 123, 0.22),
+    0 8px 18px rgba(53, 173, 123, 0.2);
+}
+
+.app-shell.theme-dark .sample-stage-axis article.active strong,
+.app-shell.theme-dark .sample-stage-axis article.current em {
+  color: #38b37f;
+}
+
+.app-shell.theme-dark .sample-stage-axis article.current em {
+  border-color: rgba(55, 179, 127, 0.28);
+  background: rgba(55, 179, 127, 0.1);
+}
+
+.app-shell.theme-dark .sample-stage-axis article.current strong {
+  color: #e7eef4;
+}
+
+.app-shell.theme-dark .deviation-axis-scale strong,
+.app-shell.theme-dark .deviation-axis-scale span,
+.app-shell.theme-dark .sample-stage-axis article span {
+  color: #a9bac7;
+}
+
+.app-shell.theme-dark .substat-deviation-track {
+  background: rgba(36, 53, 65, 0.92);
+}

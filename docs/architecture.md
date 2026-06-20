@@ -280,7 +280,11 @@ WuwaFrontend/src/
 - `features/history/`：浮动历史面板及其交互状态。
 - `features/auth/`：登录与注册表单视图。
 - `composables/`：跨 feature 的认证和 `GameAccount` 状态。
-- `styles/`：共享 token、基础规则和 feature 样式。
+- `styles/tokens.css`：全局设计 token。
+- `styles/base.css`：浏览器基础元素和应用根节点规则。
+- `styles/controls.css`：跨 feature 复用的主题、按钮、表单、卡片和标题语义。
+- `styles/shell.css`：应用导航、账号、Hero 和页面壳。
+- `styles/features/*.css`：由单个业务 feature 独占的样式。
 - `App.vue`：页面、主题及跨 feature 刷新编排。
 
 新增代码默认规则：

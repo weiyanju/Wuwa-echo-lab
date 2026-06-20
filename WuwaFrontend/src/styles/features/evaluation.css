@@ -4108,20 +4108,6 @@
   padding: 13px 18px 14px;
 }
 
-.evaluation-chart-strip .hit-chart {
-  min-height: 218px;
-}
-
-.evaluation-chart-strip .hit-bars,
-.evaluation-chart-strip .hit-bars div {
-  min-height: 190px;
-}
-
-.evaluation-chart-strip .hit-bars i {
-  height: 138px;
-  min-height: 0;
-}
-
 .coverage-band-chart {
   display: grid;
   gap: 14px;
@@ -4521,4 +4507,159 @@
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 8px 12px;
   }
+}
+
+.app-shell.theme-dark .context-overall-progress i {
+  background: #253541;
+  box-shadow: inset 0 0 0 1px rgba(74, 96, 111, 0.42);
+}
+
+.app-shell.theme-dark .context-overall-progress {
+  background:
+    linear-gradient(90deg, rgba(93, 168, 255, 0.12), transparent 48%),
+    rgba(15, 25, 33, 0.3);
+}
+
+.app-shell.theme-dark .context-overall-progress strong {
+  color: #e7eef4;
+}
+
+.app-shell.theme-dark .context-overall-progress span {
+  color: #a9bac7;
+}
+
+.weight-marker {
+  position: absolute;
+  top: 50%;
+  z-index: 3;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+}
+
+.legend-current-line {
+  width: 18px;
+  height: 5px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #1769d2, #2c9f70);
+}
+
+.legend-base-line {
+  width: 2px;
+  height: 12px;
+  border-radius: 999px;
+  background: #0b151a;
+}
+
+.legend-hit-triangle {
+  position: relative;
+  width: 0;
+  height: 0;
+  border-right: 5px solid transparent;
+  border-bottom: 8px solid #d99a1b;
+  border-left: 5px solid transparent;
+  filter: drop-shadow(0 1px 1px rgba(217, 154, 27, 0.2));
+}
+
+.legend-hit-triangle::before {
+  position: absolute;
+  top: -8px;
+  left: 0;
+  width: 1.5px;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(217, 154, 27, 0.72);
+  content: "";
+  transform: translateX(-50%);
+}
+
+@keyframes summary-copy-refresh {
+  0% {
+    opacity: 0.62;
+    transform: translateY(3px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes summary-link-flash {
+  0%,
+100% {
+    background-color: color-mix(in srgb, var(--summary-accent) 14%, #ffffff);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--summary-accent) 0%, transparent);
+  }
+
+  42% {
+    background-color: color-mix(in srgb, var(--summary-accent) 24%, #ffffff);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--summary-accent) 14%, transparent);
+  }
+}
+
+@keyframes summary-card-flash {
+  0%,
+100% {
+    box-shadow:
+      inset 0 0 0 1px rgba(231, 171, 42, 0.08),
+      0 0 0 0 rgba(245, 190, 70, 0),
+      0 10px 24px rgba(231, 171, 42, 0.06);
+  }
+
+  45% {
+    box-shadow:
+      inset 0 0 0 1px rgba(231, 171, 42, 0.2),
+      0 0 0 5px rgba(245, 190, 70, 0.18),
+      0 12px 28px rgba(231, 171, 42, 0.14);
+  }
+}
+
+.context-overall-progress {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  background:
+    linear-gradient(90deg, rgba(47, 131, 216, 0.075), rgba(255, 255, 255, 0) 44%),
+    rgba(248, 251, 253, 0.82);
+}
+
+.context-overall-progress div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.context-overall-progress span {
+  color: #7a8997;
+  font-size: 11px;
+  font-weight: 760;
+  line-height: 1;
+}
+
+.context-overall-progress strong {
+  color: #122029;
+  font-size: 19px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 760;
+  line-height: 1;
+}
+
+.context-overall-progress i {
+  display: block;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, rgba(232, 238, 243, 0.58), rgba(232, 238, 243, 0.94)),
+    #e8eef3;
+}
+
+.context-overall-progress b {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #7fa8ca, #2f83d8);
+  box-shadow: 0 0 0 1px rgba(47, 131, 216, 0.08);
 }

@@ -875,3 +875,28 @@
     padding-right: 112px;
   }
 }
+
+.compact-heading {
+  margin-bottom: 14px;
+}
+
+.compact-heading h2,
+.compact-heading p {
+  margin-bottom: 0;
+}
+
+.history-records {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.history-records .eyebrow {
+  margin-bottom: 0;
+}
+
+.history-records h2 {
+  margin-bottom: 8px;
+}

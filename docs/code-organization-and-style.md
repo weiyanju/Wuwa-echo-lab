@@ -462,7 +462,11 @@ WuwaFrontend/src/
 - `data/`：静态数据。
 - `features/`：按业务 owner 组织的页面级视图、展示映射和 feature composable。
 - `assets/`：图片、图标和视觉资源。
-- `styles/`：共享 token、基础规则和 feature 样式。
+- `styles/tokens.css`：共享设计 token。
+- `styles/base.css`：全局基础元素规则。
+- `styles/controls.css`：跨 feature 复用的按钮、表单、卡片、标题和主题状态。
+- `styles/shell.css`：应用壳、导航、账号和 Hero。
+- `styles/features/*.css`：单个 feature 独占的基础、深色和响应式规则。
 - `App.vue`：只保留全局页面、主题和跨 feature 编排。
 
 ### 7.1 Vue 新代码落点
@@ -473,6 +477,8 @@ WuwaFrontend/src/
 | 跨 feature 状态 | `src/composables/use*.js` |
 | feature 状态与工作流 | `src/features/<owner>/use*.js` |
 | 纯格式化 | `src/services/formatters.js` 或独立 formatter 文件 |
+| 共享 Web 控件样式 | `src/styles/controls.css` |
+| feature 专属样式 | `src/styles/features/<owner>.css` |
 | 静态鸣潮数据 | `src/data/` |
 | 可复用 UI | `src/components/` |
 | 页面级大模块 | `src/features/<owner>/`，不要回填到 `App.vue` |
