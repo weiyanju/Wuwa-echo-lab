@@ -411,7 +411,8 @@ WuwaAssistant/
 - 状态组合：`composables/`
 - 共享格式化：`shared/` 或现有服务模块
 - 业务常量：`data/`
-- UI：当前 `App.vue`，后续逐步拆入 `features/*`
+- 页面 UI：对应 `features/<owner>/`
+- 全局页面、主题与跨 feature 编排：`App.vue`
 
 ---
 

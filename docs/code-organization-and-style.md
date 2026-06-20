@@ -119,14 +119,12 @@ Vue 新功能必须优先保持层次清楚。
 - `src/composables/`：可复用状态和工作流。
 - `src/components/`：可复用 UI 组件。
 - `src/data/`：稳定静态业务数据。
+- `src/features/`：按业务 owner 组织页面、展示映射和 feature 工作流。
+- `src/styles/`：设计 token、基础规则、应用壳、共享控件和 feature 样式入口。
 - `src/assets/`：源码内引用的图片、图标、视觉资源。
 - `public/`：直接静态分发的大资源。
 
-后续大型页面或功能模块应逐步引入：
-
-- `src/features/`
-- `src/views/`
-- `src/shared/`
+只有出现稳定的跨 feature 纯逻辑时才新增 `src/shared/`，不为目录对称提前创建空层。
 
 规则：
 
