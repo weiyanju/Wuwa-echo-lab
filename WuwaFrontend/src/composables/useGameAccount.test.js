@@ -15,7 +15,10 @@ globalThis.fetch = async (url, options = {}) => {
   if (responses.length === 0) {
     throw new Error(`Unexpected fetch without a queued response: ${url}`)
   }
-  const response = await responses.shift()
+  const queuedResponse = responses.shift()
+  const response = await (typeof queuedResponse === 'function'
+    ? queuedResponse(url, options)
+    : queuedResponse)
   if (response instanceof Error) throw response
   return {
     ok: response?.ok ?? true,
@@ -179,34 +182,51 @@ test('switches only to a bound listed account and clears other defaults', async 
   assert.equal(calls.length, callCount)
 })
 
-test('keeps the newest switch when overlapping responses finish out of order', async () => {
-  const first = account(1, '123456789', { is_default: true })
-  const second = account(2, '223456789')
-  const third = account(3, '323456789')
-  queue({ results: [first, second, third] })
+test('serializes overlapping switches so the latest selection also wins on the server', async () => {
+  const serverAccounts = [
+    account(1, '123456789', { is_default: true }),
+    account(2, '223456789'),
+    account(3, '323456789'),
+  ]
+  queue({ results: serverAccounts.map((item) => ({ ...item })) })
   const state = useGameAccount()
   await state.loadGameAccounts()
 
-  const olderResponse = deferred()
-  const newerResponse = deferred()
-  queue(olderResponse.promise, newerResponse.promise)
+  const olderGate = deferred()
+  const newerGate = deferred()
+  function serverPatch(gate) {
+    return async (url) => {
+      await gate.promise
+      const id = Number(url.match(/game-accounts\/(\d+)\//)[1])
+      serverAccounts.forEach((item) => {
+        item.is_default = item.id === id
+      })
+      return { ...serverAccounts.find((item) => item.id === id) }
+    }
+  }
+  queue(serverPatch(olderGate), serverPatch(newerGate))
   const olderSwitch = state.switchGameAccount(2)
   const newerSwitch = state.switchGameAccount(3)
+  await new Promise((resolve) => setImmediate(resolve))
+  assert.equal(state.loading.value, true)
+  assert.equal(calls.length, 2)
+
+  olderGate.resolve()
+  await olderSwitch
+  await new Promise((resolve) => setImmediate(resolve))
+  assert.equal(calls.length, 3)
+  assert.equal(state.currentAccount.value.id, 2)
   assert.equal(state.loading.value, true)
 
-  newerResponse.resolve({ ...third, is_default: true })
+  newerGate.resolve()
   await newerSwitch
   assert.equal(state.currentAccount.value.id, 3)
-  assert.equal(state.loading.value, true)
-
-  olderResponse.resolve({ ...second, is_default: true })
-  await olderSwitch
-  assert.equal(state.currentAccount.value.id, 3)
   assert.deepEqual(state.accounts.value.map((item) => item.is_default), [false, false, true])
+  assert.equal(serverAccounts.find((item) => item.is_default).id, state.currentAccount.value.id)
   assert.equal(state.loading.value, false)
 })
 
-test('does not let an older load overwrite a newer account mutation', async () => {
+test('waits for an earlier load before sending a later account mutation', async () => {
   const first = account(1, '123456789', { is_default: true })
   const second = account(2, '223456789')
   queue({ results: [first, second] })
@@ -218,15 +238,41 @@ test('does not let an older load overwrite a newer account mutation', async () =
   queue(olderLoadResponse.promise, newerSwitchResponse.promise)
   const olderLoad = state.loadGameAccounts()
   const newerSwitch = state.switchGameAccount(2)
+  await new Promise((resolve) => setImmediate(resolve))
+  assert.equal(calls.length, 2)
+
+  olderLoadResponse.resolve({ results: [first, second] })
+  await olderLoad
+  await new Promise((resolve) => setImmediate(resolve))
+  assert.equal(calls.length, 3)
+  assert.equal(state.currentAccount.value.id, 1)
+  assert.equal(state.loading.value, true)
 
   newerSwitchResponse.resolve({ ...second, is_default: true })
   await newerSwitch
   assert.equal(state.currentAccount.value.id, 2)
-  assert.equal(state.loading.value, true)
+  assert.equal(state.loading.value, false)
+})
 
-  olderLoadResponse.resolve({ results: [first, second] })
-  await olderLoad
-  assert.equal(state.currentAccount.value.id, 2)
+test('continues queued account operations after an earlier request fails', async () => {
+  const first = account(1, '123456789', { is_default: true })
+  const second = account(2, '223456789')
+  const third = account(3, '323456789')
+  queue(
+    { results: [first, second, third] },
+    { ok: false, status: 500, body: { error: '切换失败' } },
+    { ...third, is_default: true },
+  )
+  const state = useGameAccount()
+  await state.loadGameAccounts()
+
+  const failedSwitch = state.switchGameAccount(2)
+  const successfulSwitch = state.switchGameAccount(3)
+
+  await assert.rejects(failedSwitch, /切换失败/)
+  await successfulSwitch
+  assert.equal(state.currentAccount.value.id, 3)
+  assert.equal(state.error.value, '')
   assert.equal(state.loading.value, false)
 })
 

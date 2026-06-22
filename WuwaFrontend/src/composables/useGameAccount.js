@@ -10,6 +10,7 @@ export function useGameAccount() {
   const pendingOperations = ref(0)
   const error = ref('')
   let operationGeneration = 0
+  let operationQueue = Promise.resolve()
 
   const boundAccounts = computed(() => accounts.value.filter((account) => !account.workspace_locked))
   const currentAccount = computed(() => (
@@ -43,31 +44,26 @@ export function useGameAccount() {
     return operationGeneration
   }
 
-  function isCurrentOperation(generation) {
-    return generation === operationGeneration
-  }
-
-  async function runAccountOperation(generation, operation) {
+  function enqueueAccountOperation(generation, operation) {
     pendingOperations.value += 1
-    try {
-      return await operation(() => isCurrentOperation(generation))
-    } catch (err) {
-      if (isCurrentOperation(generation)) {
-        error.value = err?.message || '游戏账号请求失败。'
-      }
-      throw err
-    } finally {
-      pendingOperations.value -= 1
-    }
+    const result = operationQueue.then(operation)
+    operationQueue = result.catch(() => undefined)
+    return result
+      .catch((err) => {
+        if (generation === operationGeneration) {
+          error.value = err?.message || '游戏账号请求失败。'
+        }
+        throw err
+      })
+      .finally(() => {
+        pendingOperations.value -= 1
+      })
   }
 
   async function loadGameAccounts() {
     const generation = beginOperation()
-    return runAccountOperation(generation, async (isCurrent) => {
+    return enqueueAccountOperation(generation, async () => {
       const data = await listGameAccounts()
-      if (!isCurrent()) {
-        return accounts.value
-      }
       accounts.value = data.results || []
 
       const selected = boundAccounts.value.find((account) => account.is_default)
@@ -80,9 +76,7 @@ export function useGameAccount() {
       if (firstBound) {
         selectedAccountId.value = firstBound.id
         const updated = await updateGameAccount(firstBound.id, { is_default: true })
-        if (isCurrent()) {
-          replaceAccount(updated)
-        }
+        replaceAccount(updated)
       } else {
         selectedAccountId.value = null
       }
@@ -97,50 +91,44 @@ export function useGameAccount() {
 
   async function bindInitialUid(uid) {
     const generation = beginOperation()
-    return runAccountOperation(generation, async (isCurrent) => {
+    return enqueueAccountOperation(generation, async () => {
       const emptyAccount = findEmptyAccount()
       if (!emptyAccount) {
         throw new Error('没有可用的空账号可绑定 UID。')
       }
       const updated = await updateGameAccount(emptyAccount.id, { uid, is_default: true })
-      return isCurrent() ? replaceAccount(updated) : updated
+      return replaceAccount(updated)
     })
   }
 
   async function addGameAccount(uid) {
     const generation = beginOperation()
-    if (!canAddAccount.value) {
-      const err = new Error('最多只能绑定 5 个游戏账号。')
-      error.value = err.message
-      throw err
-    }
-    if (findEmptyAccount()) {
-      return runAccountOperation(generation, async (isCurrent) => {
+    return enqueueAccountOperation(generation, async () => {
+      if (!canAddAccount.value) {
+        throw new Error('最多只能绑定 5 个游戏账号。')
+      }
+      if (findEmptyAccount()) {
         const emptyAccount = findEmptyAccount()
         const updated = await updateGameAccount(emptyAccount.id, { uid, is_default: true })
-        return isCurrent() ? replaceAccount(updated) : updated
-      })
-    }
-    return runAccountOperation(generation, async (isCurrent) => {
+        return replaceAccount(updated)
+      }
       const created = await createGameAccount({ uid, is_default: true })
-      return isCurrent() ? replaceAccount(created) : created
+      return replaceAccount(created)
     })
   }
 
   async function switchGameAccount(id) {
     const generation = beginOperation()
-    const target = boundAccounts.value.find((account) => account.id === id)
-    if (!target) {
-      const err = new Error('所选账号不存在或尚未绑定。')
-      error.value = err.message
-      throw err
-    }
-    if (currentAccount.value?.id === id) {
-      return currentAccount.value
-    }
-    return runAccountOperation(generation, async (isCurrent) => {
+    return enqueueAccountOperation(generation, async () => {
+      const target = boundAccounts.value.find((account) => account.id === id)
+      if (!target) {
+        throw new Error('所选账号不存在或尚未绑定。')
+      }
+      if (currentAccount.value?.id === id) {
+        return currentAccount.value
+      }
       const updated = await updateGameAccount(id, { is_default: true })
-      return isCurrent() ? replaceAccount(updated) : updated
+      return replaceAccount(updated)
     })
   }
 
