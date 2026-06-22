@@ -8,6 +8,7 @@ Improve the first-run UID binding experience and let one system account bind and
 
 - A user with no bound UID must bind one before using the workbench.
 - One system account can bind at most five game UIDs.
+- Every UID must contain exactly nine decimal digits.
 - The UI displays the UID itself. It does not expose or require a nickname.
 - A bound UID is immutable. Users add another `GameAccount` instead of editing an existing UID.
 - This iteration does not expose account deletion. In particular, an account with business data must never be directly deleted.
@@ -87,6 +88,7 @@ Existing lifecycle generation checks are extended so delayed responses from the 
 The backend enforces the business rules independently of the Web client:
 
 - `POST /game-accounts/` requires a non-empty UID; registration remains the only path that creates an empty account.
+- Every non-empty UID accepted by create or update must match `^\d{9}$`.
 - Account binding or creation is rejected when the user already owns five bound `GameAccount` rows.
 - The limit check and mutation lock the owning user row in one transaction so concurrent requests cannot exceed the limit.
 - A non-empty bound UID cannot be changed to a different UID or cleared through `PATCH`.
@@ -99,7 +101,8 @@ No business endpoint may infer the active account only from client-local state. 
 
 ## Validation And Errors
 
-- The Web input normalizes to a non-empty digit string. This iteration does not invent a fixed UID length because the current product contract has no authoritative region-independent length rule; the existing 32-character storage ceiling remains the backend bound.
+- The Web input removes non-digit characters while typing and accepts submission only when the normalized value matches `^\d{9}$`.
+- The backend independently applies the same exact nine-digit rule; client validation is only immediate feedback and cannot bypass the domain constraint.
 - Empty, malformed, duplicate, immutable-UID, ownership, and limit violations produce inline or top-level actionable errors.
 - Add and switch controls remain disabled while their request is active.
 - An account-list refresh reconciles the client with backend truth after ambiguous failures.
