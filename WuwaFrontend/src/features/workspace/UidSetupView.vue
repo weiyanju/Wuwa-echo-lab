@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import moonIcon from '../../assets/icons/moon.svg'
 import sunIcon from '../../assets/icons/sun.svg'
-import { normalizePlayerUid } from '../../services/playerUid'
+import { normalizePlayerUid, isValidPlayerUid } from '../../services/playerUid'
 
 const props = defineProps({
   boundUid: {
@@ -50,8 +50,8 @@ function submitUidBinding() {
   validationError.value = ''
   const uid = normalizePlayerUid(uidBinding.value)
   uidBinding.value = uid
-  if (!uid) {
-    validationError.value = '请填写游戏 UID。'
+  if (!isValidPlayerUid(uid)) {
+    validationError.value = '请输入 9 位数字 UID。'
     return
   }
   emit('bind', uid)
@@ -88,15 +88,18 @@ function submitUidBinding() {
     </header>
 
     <div class="uid-setup-content">
-      <p v-if="displayedError" class="error-text">{{ displayedError }}</p>
-
-      <section class="locked-workbench product-panel">
-        <div class="section-heading">
-          <h2>绑定鸣潮 UID</h2>
-          <p>用于保存声骸记录和统计数据。</p>
+      <section class="uid-setup-card">
+        <div class="uid-setup-media" aria-hidden="true">
+          <span class="uid-media-orbit"></span>
+          <span class="uid-media-core"></span>
+          <span class="uid-media-dot"></span>
         </div>
         <form class="uid-binding-form" @submit.prevent="submitUidBinding">
-          <label>
+          <div class="uid-binding-copy">
+            <h1>绑定游戏 UID</h1>
+            <p>绑定后即可进入工作台。</p>
+          </div>
+          <label class="uid-binding-field">
             UID
             <input
               v-model="uidBinding"
@@ -107,9 +110,11 @@ function submitUidBinding() {
               @input="handleUidBindingInput"
             />
           </label>
+          <p v-if="displayedError" class="error-text" role="alert">{{ displayedError }}</p>
           <button class="button-buy" type="submit" :disabled="disabled">
-            {{ saving ? '保存中' : '保存' }}
+            {{ saving ? '绑定中' : '绑定并进入' }}
           </button>
+          <p class="uid-binding-hint">可在游戏个人信息页查看 UID</p>
         </form>
       </section>
     </div>
