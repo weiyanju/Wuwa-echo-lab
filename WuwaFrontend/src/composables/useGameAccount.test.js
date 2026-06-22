@@ -12,7 +12,7 @@ const calls = []
 const responses = []
 globalThis.fetch = async (url, options = {}) => {
   calls.push({ url, options })
-  const response = responses.shift()
+  const response = await responses.shift()
   if (response instanceof Error) throw response
   return {
     ok: response?.ok ?? true,
@@ -28,6 +28,14 @@ const { useGameAccount } = await import('./useGameAccount.js')
 function queue(...bodies) {
   calls.length = 0
   responses.push(...bodies)
+}
+
+function deferred() {
+  let resolve
+  const promise = new Promise((resolvePromise) => {
+    resolve = resolvePromise
+  })
+  return { promise, resolve }
 }
 
 function account(id, uid, options = {}) {
@@ -63,6 +71,29 @@ test('locks the workspace when no bound account exists', async () => {
 
   assert.equal(state.currentAccount.value, null)
   assert.equal(state.workspaceLocked.value, true)
+})
+
+test('keeps loading true while a request is pending and resets it afterward', async () => {
+  const response = deferred()
+  queue(response.promise)
+  const state = useGameAccount()
+
+  const request = state.loadGameAccounts()
+  assert.equal(state.loading.value, true)
+
+  response.resolve({ results: [] })
+  await request
+  assert.equal(state.loading.value, false)
+})
+
+test('exposes a backend error and resets loading after rejection', async () => {
+  queue({ ok: false, status: 400, body: { error: 'UID 已绑定' } })
+  const state = useGameAccount()
+
+  await assert.rejects(state.loadGameAccounts(), /UID 已绑定/)
+
+  assert.equal(state.error.value, 'UID 已绑定')
+  assert.equal(state.loading.value, false)
 })
 
 test('initial binding reuses the preferred empty account and makes it current', async () => {
@@ -121,5 +152,18 @@ test('switches only to a bound listed account and clears other defaults', async 
   assert.deepEqual(state.accounts.value.map((item) => item.is_default), [false, true])
   const callCount = calls.length
   await assert.rejects(state.switchGameAccount(999), /bound game account/i)
+  assert.equal(calls.length, callCount)
+})
+
+test('returns the current account without fetching when switching to it', async () => {
+  const current = account(1, '123456789', { is_default: true })
+  queue({ results: [current] })
+  const state = useGameAccount()
+  await state.loadGameAccounts()
+  const callCount = calls.length
+
+  const result = await state.switchGameAccount(1)
+
+  assert.equal(result, state.currentAccount.value)
   assert.equal(calls.length, callCount)
 })
