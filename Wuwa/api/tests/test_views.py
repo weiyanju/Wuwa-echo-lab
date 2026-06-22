@@ -84,6 +84,104 @@ class ApiViewTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("error", response.json())
 
+    def test_game_account_create_rejects_eight_digit_uid(self):
+        self.client.login(username="tester", password="pw12345")
+
+        response = self.client.post(
+            reverse("game_account_list"),
+            data=json.dumps({"uid": "12345678"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_game_account_create_rejects_ten_digit_uid(self):
+        self.client.login(username="tester", password="pw12345")
+
+        response = self.client.post(
+            reverse("game_account_list"),
+            data=json.dumps({"uid": "1234567890"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_game_account_create_rejects_uid_containing_letters(self):
+        self.client.login(username="tester", password="pw12345")
+
+        response = self.client.post(
+            reverse("game_account_list"),
+            data=json.dumps({"uid": "12345678a"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_game_account_create_rejects_empty_uid(self):
+        self.client.login(username="tester", password="pw12345")
+
+        response = self.client.post(
+            reverse("game_account_list"),
+            data=json.dumps({"uid": ""}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_game_account_can_bind_initial_empty_account_and_make_it_default(self):
+        account = self.user.game_accounts.get()
+        account.uid = ""
+        account.is_default = False
+        account.save()
+        self.client.login(username="tester", password="pw12345")
+
+        response = self.client.patch(
+            reverse("game_account_detail", args=[account.id]),
+            data=json.dumps({"uid": "987654321", "is_default": True}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["uid"], "987654321")
+        self.assertTrue(response.json()["is_default"])
+
+    def test_game_account_create_rejects_sixth_bound_account(self):
+        for index in range(4):
+            GameAccount.objects.create(user=self.user, uid=f"{200000000 + index}")
+        self.client.login(username="tester", password="pw12345")
+
+        response = self.client.post(
+            reverse("game_account_list"),
+            data=json.dumps({"uid": "987654321"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_game_account_patch_rejects_changing_bound_uid(self):
+        account = self.user.game_accounts.get()
+        self.client.login(username="tester", password="pw12345")
+
+        response = self.client.patch(
+            reverse("game_account_detail", args=[account.id]),
+            data=json.dumps({"uid": "987654321"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_game_account_patch_rejects_clearing_bound_uid(self):
+        account = self.user.game_accounts.get()
+        self.client.login(username="tester", password="pw12345")
+
+        response = self.client.patch(
+            reverse("game_account_detail", args=[account.id]),
+            data=json.dumps({"uid": ""}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+
     def test_game_account_requires_ownership(self):
         other = User.objects.create_user(username="other-account", password="pw12345")
         other_account = other.game_accounts.get()

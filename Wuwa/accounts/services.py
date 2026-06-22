@@ -1,3 +1,5 @@
+import re
+
 from django.contrib.auth.models import User
 from django.db import transaction
 
@@ -6,8 +8,23 @@ from api.serializers import clean_string, parse_bool
 from .models import GameAccount
 
 
+MAX_BOUND_GAME_ACCOUNTS = 5
+GAME_UID_PATTERN = re.compile(r"^\d{9}$")
+
+
 class UsernameAlreadyExists(Exception):
     pass
+
+
+def _validate_game_uid(uid):
+    if not GAME_UID_PATTERN.fullmatch(uid):
+        raise ValueError("游戏 UID 必须恰好为 9 位数字。")
+
+
+def _ensure_game_account_capacity(owner):
+    bound_count = owner.game_accounts.exclude(uid="").count()
+    if bound_count >= MAX_BOUND_GAME_ACCOUNTS:
+        raise ValueError(f"每个用户最多只能绑定 {MAX_BOUND_GAME_ACCOUNTS} 个游戏 UID。")
 
 
 def register_user(username, password):
@@ -18,12 +35,17 @@ def register_user(username, password):
 
 @transaction.atomic
 def create_game_account(user, payload):
+    owner = User.objects.select_for_update().get(pk=user.pk)
+    uid = clean_string(payload, "uid")
+    _validate_game_uid(uid)
+    _ensure_game_account_capacity(owner)
+
     is_default = parse_bool(payload.get("is_default", False))
     if is_default:
-        user.game_accounts.update(is_default=False)
+        owner.game_accounts.update(is_default=False)
     account = GameAccount(
-        user=user,
-        uid=clean_string(payload, "uid"),
+        user=owner,
+        uid=uid,
         server=clean_string(payload, "server"),
         nickname=clean_string(payload, "nickname"),
         is_default=is_default,
@@ -35,8 +57,18 @@ def create_game_account(user, payload):
 
 @transaction.atomic
 def update_game_account(account, payload):
+    owner = User.objects.select_for_update().get(pk=account.user_id)
+    account = owner.game_accounts.get(pk=account.pk)
+
     if "uid" in payload:
-        account.uid = clean_string(payload, "uid")
+        uid = clean_string(payload, "uid")
+        if account.uid:
+            if uid != account.uid:
+                raise ValueError("已绑定的游戏 UID 不可更改或清空。")
+        else:
+            _validate_game_uid(uid)
+            _ensure_game_account_capacity(owner)
+            account.uid = uid
     if "server" in payload:
         account.server = clean_string(payload, "server")
     if "nickname" in payload:
@@ -44,7 +76,7 @@ def update_game_account(account, payload):
     if "is_default" in payload:
         account.is_default = parse_bool(payload["is_default"])
         if account.is_default:
-            account.user.game_accounts.exclude(id=account.id).update(is_default=False)
+            owner.game_accounts.exclude(id=account.id).update(is_default=False)
     account.full_clean()
     account.save()
     return account
