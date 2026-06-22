@@ -1,149 +1,149 @@
-# Multi-Game UID Onboarding And Switcher Design
+# 多游戏 UID 首次启用与切换设计
 
-## Goal
+## 目标
 
-Improve the first-run UID binding experience and let one system account bind and switch among up to five game UIDs without weakening `GameAccount` data isolation.
+改善首次 UID 绑定体验，并允许一个系统账号绑定和切换最多五个游戏 UID，同时保持 `GameAccount` 数据隔离不变。
 
-## Product Decisions
+## 产品决策
 
-- A user with no bound UID must bind one before using the workbench.
-- One system account can bind at most five game UIDs.
-- Every UID must contain exactly nine decimal digits.
-- The UI displays the UID itself. It does not expose or require a nickname.
-- A bound UID is immutable. Users add another `GameAccount` instead of editing an existing UID.
-- This iteration does not expose account deletion. In particular, an account with business data must never be directly deleted.
-- Switching the active UID also updates the backend default `GameAccount`, keeping Web and WPF selection aligned.
-- The first-run media area uses a static placeholder in this iteration and reserves a stable slot for a future animation.
+- 用户没有已绑定 UID 时，必须先绑定才能使用工作台。
+- 一个系统账号最多绑定五个游戏 UID。
+- UID 必须由恰好九位十进制数字组成。
+- 界面直接显示 UID，不展示也不要求昵称。
+- 已绑定 UID 不可修改；用户需要通过新增 `GameAccount` 绑定另一个 UID。
+- 本轮不提供账号删除功能，已有业务数据的账号尤其不能直接删除。
+- 切换当前 UID 时同步更新后端默认 `GameAccount`，保证 Web 与 WPF 使用相同默认选择。
+- 首次启用页左侧本轮使用静态占位图，并为后续动图保留稳定媒体槽。
 
-## Existing System
+## 现有系统
 
-The backend already models one user to many `GameAccount` rows, provides list/create/update endpoints, enforces per-user UID uniqueness, and supports one default account. Business APIs are already scoped by `game_account_id`.
+后端已经支持一个用户拥有多个 `GameAccount`，提供列表、创建和更新接口，保证同一用户 UID 唯一，并只允许一个默认账号。业务接口已经通过 `game_account_id` 隔离数据。
 
-The Web client currently narrows this model to the default account. It locks the whole workbench when that account has no UID, presents a sparse standalone binding view, and deliberately omits quick switching from the top-bar UID chip.
+Web 当前把该模型收窄为默认账号：默认账号没有 UID 时锁定整个工作台，展示内容较少的独立绑定页，并且顶栏 UID 胶囊明确不提供快捷切换。
 
-## First-Run Experience
+## 首次启用体验
 
-When no bound `GameAccount` exists, the application keeps its normal top bar but does not load workbench business data. Navigation remains visible as application orientation but is disabled until binding succeeds.
+没有任何已绑定 `GameAccount` 时，应用保留正常顶栏，但不加载工作台业务数据。导航用于帮助用户理解应用结构，在绑定完成前不可操作。
 
-The page body contains one focused two-column activation card:
+主体只展示一个聚焦的双栏启用卡片：
 
-- The left column is a media slot with a static abstract placeholder.
-- The right column contains `绑定游戏 UID`, one short sentence, the UID field, the primary bind action, and one short hint explaining where to find the UID.
-- The page does not explain multi-account limits, deletion rules, model behavior, or every product feature.
-- Desktop uses a two-column card. Narrow layouts stack the media slot above the form and reduce its height.
-- A future animation may replace the placeholder without changing the form or layout contract. It must be muted, lightweight, loop without distraction, provide a static fallback, and respect reduced-motion preferences.
+- 左栏是媒体槽，本轮展示静态抽象图形。
+- 右栏只包含“绑定游戏 UID”、一句简短说明、UID 输入框、主绑定按钮和一条 UID 查找提示。
+- 页面不集中解释多账号上限、删除规则、模型行为或所有产品能力。
+- 桌面端使用双栏卡片；窄屏改为上下排列并缩短媒体区域。
+- 后续动图可以直接替换占位内容，不改变表单和布局契约。动图必须静音、轻量、低干扰，提供静态降级，并尊重系统的减少动态效果设置。
 
-The first binding updates the empty default `GameAccount` created during registration. Success immediately loads the workbench for that account without another login.
+首次绑定复用注册时自动创建的空默认 `GameAccount`。成功后立即加载该账号的工作台，不要求重新登录。
 
-## UID Capsule And Menu
+## UID 胶囊与菜单
 
-After binding, the top-right capsule becomes a button and displays the current UID directly. It uses the existing line-icon system for the status indicator, chevron, and selected checkmark; text glyphs such as `v` and `✓` are not final assets.
+绑定后，右上角胶囊变成按钮并直接显示当前 UID。状态点、下拉箭头和选中勾号使用现有线性 SVG 图标体系，不使用文字 `v` 或 `✓` 作为正式素材。
 
-Opening the capsule shows a compact popover:
+展开胶囊后显示紧凑浮层：
 
-- Header: `游戏 UID` and the current count such as `3 / 5`.
-- Body: one row per bound UID.
-- Current row: a light selected background and one check icon. It does not repeat `当前 ✓`.
-- Other rows: selecting a row switches the active account.
-- Footer: `绑定新 UID`.
-- At five accounts, the add action is disabled and labelled `已达上限`.
+- 顶部显示“游戏 UID”和当前数量，例如 `3 / 5`。
+- 主体每行展示一个已绑定 UID。
+- 当前行使用浅色选中背景和一个勾选图标，不重复显示“当前 ✓”。
+- 点击其他行切换当前账号。
+- 底部提供“绑定新 UID”。
+- 已达到五个账号时，新增入口禁用并显示“已达上限”。
 
-The popover supports keyboard navigation, visible focus, `Escape` to close, and outside-click dismissal. Focus returns to the capsule when the menu closes.
+浮层支持键盘操作、可见焦点、按 `Escape` 关闭和点击外部关闭。关闭后焦点返回 UID 胶囊。
 
-## Adding Another UID
+## 新增 UID
 
-Selecting `绑定新 UID` replaces the popover list with a compact inline form. It does not navigate away and does not open a large modal.
+点击“绑定新 UID”后，浮层原地切换为紧凑表单，不跳转页面，也不打开大型模态框。
 
-The form contains a back action, a digits-only UID field, a bind action, inline validation, and the available-capacity context. On success, the new account becomes the backend default and the current Web account, the menu closes, and all scoped data reloads.
+表单包含返回操作、仅数字 UID 输入框、绑定按钮、行内校验和剩余容量提示。成功后，新账号成为后端默认账号和 Web 当前账号，菜单关闭，并重新加载所有账号范围数据。
 
-The client prevents duplicate submission, but the backend remains responsible for duplicate UID rejection and the five-bound-UID limit. If an owned empty account exists, the client binds that row before creating another one.
+客户端防止重复提交，但重复 UID 和最多五个已绑定 UID 的限制必须由后端负责。如果用户仍有一个空账号，客户端优先绑定该行，而不是创建另一行。
 
-## Selection Rules
+## 选择规则
 
-The frontend account composable exposes an explicit current account instead of assuming that the first/default row is always usable.
+前端账号 composable 暴露明确的当前账号，不再假设默认行一定可用。
 
-Selection order after loading accounts:
+账号列表加载后的选择顺序：
 
-1. Use the default account when it has a bound UID.
-2. Otherwise use the first bound account and persist it as default.
-3. If no bound account exists, enter the first-run binding state using the existing empty default account.
+1. 默认账号已绑定 UID 时使用默认账号。
+2. 默认账号为空但存在其他已绑定账号时，使用第一个已绑定账号并把它保存为默认账号。
+3. 没有任何已绑定账号时，使用现有空默认账号进入首次启用状态。
 
-Creating an additional UID sets the new account as default. Selecting another UID patches that account with `is_default=true` before reloading scoped data.
+新增 UID 后自动将新账号设为默认。切换 UID 时先对目标账号提交 `is_default=true`，再加载其数据。
 
-## Switching Data Safely
+## 安全切换数据范围
 
-Switching accounts is an application-wide scope change:
+切换账号属于整个应用的数据范围变化：
 
-1. Disable additional account actions and close the menu.
-2. Invalidate in-flight workspace and recognition operations.
-3. Clear state derived from the previous `GameAccount`.
-4. Persist the selected account as backend default.
-5. Load workspace, recognition, statistics, and evaluation data for the new account.
-6. Re-enable interaction after the active account and all visible state agree.
+1. 禁用其他账号操作并关闭菜单。
+2. 使进行中的工作台和识别请求失效。
+3. 清空上一 `GameAccount` 派生的页面状态。
+4. 将目标账号保存为后端默认账号。
+5. 加载新账号的工作台、识别、统计和评估数据。
+6. 当前账号与所有可见数据一致后恢复交互。
 
-Existing lifecycle generation checks are extended so delayed responses from the previous account cannot restore stale data. If scoped data loading fails after the default switch succeeds, the new UID remains selected and the UI shows a retryable error; old UID data must not reappear.
+扩展现有生命周期代次校验，保证旧账号的延迟响应不能恢复过期数据。如果默认账号切换成功但数据加载失败，界面继续保留新 UID 并显示可重试错误，绝不能重新展示旧 UID 数据。
 
-## Backend Rules
+## 后端规则
 
-The backend enforces the business rules independently of the Web client:
+后端独立于 Web 客户端执行全部业务约束：
 
-- `POST /game-accounts/` requires a non-empty UID; registration remains the only path that creates an empty account.
-- Every non-empty UID accepted by create or update must match `^\d{9}$`.
-- Account binding or creation is rejected when the user already owns five bound `GameAccount` rows.
-- The limit check and mutation lock the owning user row in one transaction so concurrent requests cannot exceed the limit.
-- A non-empty bound UID cannot be changed to a different UID or cleared through `PATCH`.
-- The initial empty account may be assigned its first UID.
-- Per-user UID uniqueness and ownership checks remain in force.
-- Only one account can remain default.
-- The existing `nickname` database and API field remains for compatibility, but this Web feature neither sends nor renders it.
+- `POST /game-accounts/` 必须携带非空 UID；只有注册流程可以创建空账号。
+- 创建或更新时，每个非空 UID 必须匹配 `^\d{9}$`。
+- 用户已有五个已绑定 `GameAccount` 时，拒绝继续绑定或创建。
+- 上限检查与写入在同一事务中锁定所属用户行，避免并发请求突破上限。
+- 已绑定的非空 UID 不能通过 `PATCH` 改为其他 UID 或清空。
+- 初始空账号允许首次写入 UID。
+- 继续执行同一用户 UID 唯一和资源 ownership 校验。
+- 始终只允许一个默认账号。
+- 现有 `nickname` 数据库和 API 字段为兼容而保留，但本 Web 功能不发送也不展示它。
 
-No business endpoint may infer the active account only from client-local state. Existing explicit `game_account_id` scoping remains unchanged.
+业务接口不能只依赖客户端本地状态推断当前账号，现有显式 `game_account_id` 范围契约保持不变。
 
-## Validation And Errors
+## 校验与错误
 
-- The Web input removes non-digit characters while typing and accepts submission only when the normalized value matches `^\d{9}$`.
-- The backend independently applies the same exact nine-digit rule; client validation is only immediate feedback and cannot bypass the domain constraint.
-- Empty, malformed, duplicate, immutable-UID, ownership, and limit violations produce inline or top-level actionable errors.
-- Add and switch controls remain disabled while their request is active.
-- An account-list refresh reconciles the client with backend truth after ambiguous failures.
-- Error handling never falls back to mixing data from another UID.
+- Web 输入过程中移除非数字字符，仅当规范化结果匹配 `^\d{9}$` 时允许提交。
+- 后端独立执行相同的严格九位校验，前端校验只负责即时反馈，不能代替领域约束。
+- 空值、格式错误、重复 UID、修改已绑定 UID、ownership 和上限错误必须给出可执行的提示。
+- 新增和切换请求进行时禁用对应操作。
+- 结果不明确的失败发生后重新加载账号列表，以后端事实校准客户端。
+- 错误恢复不得回退为混用另一个 UID 的数据。
 
-## Component Boundaries
+## 组件边界
 
-- `useGameAccount` owns account loading, usable-account selection, first binding, adding, switching, capacity, loading, and account errors.
-- A top-bar UID switcher component owns popover visibility, focus, list/add modes, and emits account commands.
-- The first-run UID view owns UID input normalization, local validation, responsive presentation, and the media slot.
-- `App.vue` remains the coordinator for authentication, application-wide scope reset, and cross-feature refresh.
-- Backend account limits and UID immutability stay in `accounts` domain services, not in API views.
+- `useGameAccount` 负责账号加载、可用账号选择、首次绑定、新增、切换、容量、加载状态和账号错误。
+- 顶栏 UID 切换组件负责浮层开关、焦点、列表/新增模式，并向上发出账号命令。
+- 首次 UID 视图负责输入规范化、本地校验、响应式展示和媒体槽。
+- `App.vue` 继续负责编排认证、应用级范围重置和跨 feature 刷新。
+- 后端账号上限和 UID 不可变规则位于 `accounts` 领域 service，不放入 API view。
 
-## Testing
+## 测试
 
-Backend tests cover:
+后端测试覆盖：
 
-- Initial empty default account binding.
-- Creating accounts two through five.
-- Rejecting a sixth account, including concurrent attempts where practical.
-- Rejecting duplicate UIDs.
-- Rejecting changes or clearing of a bound UID.
-- Switching the unique default account.
-- Ownership and cross-account data isolation.
+- 绑定初始空默认账号。
+- 创建第二至第五个账号。
+- 拒绝第六个账号，并尽可能覆盖并发尝试。
+- 拒绝重复 UID。
+- 拒绝修改或清空已绑定 UID。
+- 切换唯一默认账号。
+- ownership 与跨账号数据隔离。
 
-Frontend tests cover:
+前端测试覆盖：
 
-- Selecting a usable bound account when the nominal default is empty.
-- First-run lock only when no bound account exists.
-- First binding, additional binding, capacity state, and switching.
-- Resetting old account state and ignoring delayed old-account responses.
-- Popover list/add modes and keyboard dismissal.
-- No nickname presentation or payload dependency.
+- 默认账号为空时选择可用的已绑定账号。
+- 只有不存在任何已绑定账号时才进入首次启用状态。
+- 首次绑定、新增账号、容量状态和切换。
+- 清空旧账号状态并忽略旧账号延迟响应。
+- 浮层列表/新增模式与键盘关闭。
+- 不展示昵称，也不依赖昵称请求字段。
 
-Final verification includes the complete Django suite, complete frontend suite, production frontend build, and browser checks in light, dark, and 860-pixel layouts. Browser acceptance covers first-run binding, the UID menu, inline add form, five-account limit, and scoped workspace, recognition, statistics, and evaluation reloads.
+最终验证包括完整 Django 测试、完整前端测试、前端生产构建，以及浅色、深色和 860px 布局的浏览器检查。浏览器验收覆盖首次绑定、UID 菜单、行内新增表单、五账号上限，以及工作台、识别、统计和评估范围刷新。
 
-## Out Of Scope
+## 本轮不处理
 
-- Producing or licensing the final animated media asset.
-- Editing or renaming a bound UID.
-- Deleting a `GameAccount` or its business data.
-- Adding server/region selection.
-- Adding UID nicknames to the Web UI.
-- Changing echo, recognition, statistics, prediction, or evaluation contracts beyond selecting their existing `GameAccount` scope.
+- 制作或授权最终动图素材。
+- 编辑或重命名已绑定 UID。
+- 删除 `GameAccount` 或其业务数据。
+- 新增区服选择。
+- 在 Web UI 中增加 UID 昵称。
+- 除选择现有 `GameAccount` 范围外，修改声骸、识别、统计、预测或评估契约。
