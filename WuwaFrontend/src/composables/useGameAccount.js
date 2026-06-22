@@ -124,7 +124,7 @@ export function useGameAccount() {
       if (!target) {
         throw new Error('所选账号不存在或尚未绑定。')
       }
-      if (currentAccount.value?.id === id) {
+      if (currentAccount.value?.id === id && target.is_default) {
         return currentAccount.value
       }
       const updated = await updateGameAccount(id, { is_default: true })

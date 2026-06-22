@@ -90,6 +90,34 @@ test('keeps the fallback bound account selected when persisting its default fail
   assert.equal(state.error.value, '默认账号保存失败')
 })
 
+test('retries persisting the current fallback account when it is not yet default', async () => {
+  const serverAccounts = [
+    account(1, '', { is_default: true }),
+    account(2, '123456789'),
+  ]
+  queue(
+    { results: serverAccounts.map((item) => ({ ...item })) },
+    { ok: false, status: 500, body: { error: '默认账号保存失败' } },
+    async (url) => {
+      const id = Number(url.match(/game-accounts\/(\d+)\//)[1])
+      serverAccounts.forEach((item) => {
+        item.is_default = item.id === id
+      })
+      return { ...serverAccounts.find((item) => item.id === id) }
+    },
+  )
+  const state = useGameAccount()
+  await assert.rejects(state.loadGameAccounts(), /默认账号保存失败/)
+
+  const updated = await state.switchGameAccount(2)
+
+  assert.equal(calls.length, 3)
+  assert.equal(updated.is_default, true)
+  assert.equal(state.currentAccount.value.is_default, true)
+  assert.equal(state.error.value, '')
+  assert.equal(serverAccounts.find((item) => item.is_default).id, state.currentAccount.value.id)
+})
+
 test('locks the workspace when no bound account exists', async () => {
   queue({ results: [account(1, '', { is_default: true })] })
   const state = useGameAccount()
