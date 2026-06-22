@@ -78,13 +78,12 @@ function fusionWeightTooltip(row) {
     return `${row.label}：${row.statusTitle}`
   }
   const baseText = `基础 ${formatPercent(row.baseWeight)}`
-  const hitText = row.adjustment?.hit_rate == null ? 'Top1 回测暂无' : `Top1 回测 ${formatPercent(row.adjustment.hit_rate)}`
   const directionText = row.adjustment?.direction === 'up'
     ? '上调'
     : row.adjustment?.direction === 'down'
       ? '下调'
       : '持平'
-  return `${baseText} · ${hitText} · ${directionText}至 ${formatPercent(row.weight)}`
+  return `${baseText} · ${directionText}至 ${formatPercent(row.weight)}`
 }
 
 const evaluationSummaryParts = computed(() => {
@@ -187,7 +186,6 @@ function weightDiagnosticText(row) {
         <small>标记说明</small>
         <span title="当前权重：当前融合后用于最终概率的模型贡献"><i class="legend-current-line"></i>当前权重</span>
         <span title="基础权重：低样本阶段的默认初始权重"><i class="legend-base-line"></i>基础权重</span>
-        <span title="Top1 命中率：该模型单独预测第一候选时的回测命中率"><i class="legend-hit-triangle"></i>Top1 命中率</span>
       </div>
       <span class="fusion-live-pill">{{ prediction ? '实时' : '预览' }}</span>
     </div>
@@ -214,12 +212,6 @@ function weightDiagnosticText(row) {
           class="weight-marker base-marker"
           :style="{ left: percentPosition(row.baseWeight) }"
           :title="`基础 ${formatPercent(row.baseWeight)}`"
-        ></span>
-        <span
-          v-if="row.adjustment?.hit_rate != null"
-          class="weight-marker hit-marker"
-          :style="{ left: percentPosition(row.adjustment.hit_rate) }"
-          :title="`Top1 回测 ${formatPercent(row.adjustment.hit_rate)}`"
         ></span>
       </i>
     </article>
