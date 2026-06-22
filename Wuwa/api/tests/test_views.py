@@ -83,6 +83,7 @@ class ApiViewTests(TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertIn("error", response.json())
+        self.assertEqual(self.user.game_accounts.count(), 1)
 
     def test_game_account_create_rejects_eight_digit_uid(self):
         self.client.login(username="tester", password="pw12345")
@@ -94,6 +95,8 @@ class ApiViewTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 400)
+        self.assertIn("error", response.json())
+        self.assertEqual(self.user.game_accounts.count(), 1)
 
     def test_game_account_create_rejects_ten_digit_uid(self):
         self.client.login(username="tester", password="pw12345")
@@ -105,6 +108,34 @@ class ApiViewTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 400)
+        self.assertIn("error", response.json())
+        self.assertEqual(self.user.game_accounts.count(), 1)
+
+    def test_game_account_create_rejects_fullwidth_digit_uid(self):
+        self.client.login(username="tester", password="pw12345")
+
+        response = self.client.post(
+            reverse("game_account_list"),
+            data=json.dumps({"uid": "１２３４５６７８９"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("error", response.json())
+        self.assertEqual(self.user.game_accounts.count(), 1)
+
+    def test_game_account_create_rejects_arabic_indic_digit_uid(self):
+        self.client.login(username="tester", password="pw12345")
+
+        response = self.client.post(
+            reverse("game_account_list"),
+            data=json.dumps({"uid": "١٢٣٤٥٦٧٨٩"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("error", response.json())
+        self.assertEqual(self.user.game_accounts.count(), 1)
 
     def test_game_account_create_rejects_uid_containing_letters(self):
         self.client.login(username="tester", password="pw12345")
@@ -116,6 +147,8 @@ class ApiViewTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 400)
+        self.assertIn("error", response.json())
+        self.assertEqual(self.user.game_accounts.count(), 1)
 
     def test_game_account_create_rejects_empty_uid(self):
         self.client.login(username="tester", password="pw12345")
@@ -127,6 +160,8 @@ class ApiViewTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 400)
+        self.assertIn("error", response.json())
+        self.assertEqual(self.user.game_accounts.count(), 1)
 
     def test_game_account_can_bind_initial_empty_account_and_make_it_default(self):
         account = self.user.game_accounts.get()
@@ -157,6 +192,8 @@ class ApiViewTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 400)
+        self.assertIn("error", response.json())
+        self.assertEqual(self.user.game_accounts.exclude(uid="").count(), 5)
 
     def test_game_account_patch_rejects_changing_bound_uid(self):
         account = self.user.game_accounts.get()
@@ -169,6 +206,10 @@ class ApiViewTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 400)
+        self.assertIn("error", response.json())
+        account.refresh_from_db()
+        self.assertEqual(account.uid, "123456789")
+        self.assertTrue(account.is_default)
 
     def test_game_account_patch_rejects_clearing_bound_uid(self):
         account = self.user.game_accounts.get()
@@ -181,6 +222,10 @@ class ApiViewTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 400)
+        self.assertIn("error", response.json())
+        account.refresh_from_db()
+        self.assertEqual(account.uid, "123456789")
+        self.assertTrue(account.is_default)
 
     def test_game_account_requires_ownership(self):
         other = User.objects.create_user(username="other-account", password="pw12345")

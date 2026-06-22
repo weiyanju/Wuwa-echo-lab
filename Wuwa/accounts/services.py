@@ -9,7 +9,7 @@ from .models import GameAccount
 
 
 MAX_BOUND_GAME_ACCOUNTS = 5
-GAME_UID_PATTERN = re.compile(r"^\d{9}$")
+GAME_UID_PATTERN = re.compile(r"^[0-9]{9}$")
 
 
 class UsernameAlreadyExists(Exception):
