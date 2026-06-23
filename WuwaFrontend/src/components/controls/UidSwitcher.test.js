@@ -62,13 +62,13 @@ test('uid switcher lists accounts, emits selection, and marks only the current a
   assert.doesNotMatch(source, />当前<\/em>/)
 })
 
-test('uid switcher validates inline add input before emitting normalized uid', async () => {
+test('uid switcher validates inline add input before emitting the original nine digit uid', async () => {
   const source = await readComponent()
 
   assert.match(source, /const UID_ERROR_MESSAGE = '请输入 9 位数字 UID。'/)
-  assert.match(source, /function normalizeUid\(uid\) \{[\s\S]+return String\(uid \?\? ''\)\.replace\(\/\\D\/g, ''\)/)
+  assert.doesNotMatch(source, /replace\(\/\\D\/g/)
   assert.match(source, /function isValidUid\(uid\) \{[\s\S]+return \/\^\[0-9\]\{9\}\$\/\.test\(uid\)/)
-  assert.match(source, /function submitAddAccount\(\) \{[\s\S]+const uid = normalizeUid\(draftUid\.value\)[\s\S]+if \(!isValidUid\(uid\)\) \{[\s\S]+validationError\.value = UID_ERROR_MESSAGE[\s\S]+return[\s\S]+emit\('add', uid\)/)
+  assert.match(source, /function submitAddAccount\(\) \{[\s\S]+const uid = String\(draftUid\.value \?\? ''\)[\s\S]+if \(!isValidUid\(uid\)\) \{[\s\S]+validationError\.value = UID_ERROR_MESSAGE[\s\S]+return[\s\S]+emit\('add', uid\)/)
   assert.match(source, /v-model="draftUid"/)
   assert.doesNotMatch(source, /maxlength=/)
 })

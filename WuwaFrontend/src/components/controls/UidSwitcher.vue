@@ -50,10 +50,6 @@ function iconMask(source) {
   return { '--icon-url': `url("${source}")` }
 }
 
-function normalizeUid(uid) {
-  return String(uid ?? '').replace(/\D/g, '')
-}
-
 function isValidUid(uid) {
   return /^[0-9]{9}$/.test(uid)
 }
@@ -111,8 +107,7 @@ function submitAddAccount() {
   if (addDisabled.value) {
     return
   }
-  const uid = normalizeUid(draftUid.value)
-  draftUid.value = uid
+  const uid = String(draftUid.value ?? '')
   validationError.value = ''
   if (!isValidUid(uid)) {
     validationError.value = UID_ERROR_MESSAGE
