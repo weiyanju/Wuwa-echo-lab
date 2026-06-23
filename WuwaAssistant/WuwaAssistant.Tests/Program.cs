@@ -235,7 +235,7 @@ async Task GameAccountsLoadAsync()
                 new
                 {
                     id = 7,
-                    uid = "123456",
+                    uid = "123456789",
                     server = "",
                     nickname = "",
                     is_default = true,
@@ -253,7 +253,7 @@ async Task GameAccountsLoadAsync()
 
     AssertEqual(1, accounts.Count, "account count");
     AssertEqual(7, accounts[0].Id, "account id");
-    AssertEqual("123456", accounts[0].Uid, "account uid");
+    AssertEqual("123456789", accounts[0].Uid, "account uid");
     AssertEqual(false, accounts[0].WorkspaceLocked, "workspace lock");
 }
 
@@ -423,6 +423,8 @@ Task LoginWindowOwnsAuthOnlyAndAutoOpensAssistantAsync()
     AssertContains("account.IsDefault && !account.WorkspaceLocked", loginCode, "default ready account is preferred");
     AssertContains("account => !account.WorkspaceLocked", loginCode, "first ready account is fallback");
     AssertContains("account => account.IsDefault", loginCode, "locked default account is final fallback");
+    AssertContains("后端账号状态异常", loginCode, "empty account list reports backend account state error");
+    AssertDoesNotContain("CreateGameAccountAsync(\"\",", loginCode, "login window does not create empty startup accounts");
     AssertDoesNotContain("UpdateGameAccountAsync", loginCode, "login window no longer initializes UID");
     AssertContains("new MainWindow", loginCode, "login window opens assistant shell");
     return Task.CompletedTask;
@@ -471,6 +473,8 @@ Task MainShellHomeOwnsUidInitializationAsync()
     AssertContains("BindUidButton", xaml, "home owns uid initialization button");
     AssertContains("BindUidButton_Click", code, "uid initialization click handler");
     AssertContains("NormalizeInput(InitialUidBox.Text)", code, "uid input is normalized");
+    AssertContains("uid.Length != 9 || !uid.All(char.IsDigit)", code, "uid input requires nine digits");
+    AssertContains("游戏 UID 必须由 9 位数字组成。", code, "uid validation error message");
     AssertContains("UpdateGameAccountAsync(selectedAccount.Id, uid, isDefault: true)", code, "uid initialization persists to backend");
     AssertContains("RefreshAccountState", code, "account state refreshes after uid changes");
     AssertContains("UidSetupPanel.Visibility", code, "uid setup visibility follows lock state");

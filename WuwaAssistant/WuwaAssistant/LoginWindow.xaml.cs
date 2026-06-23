@@ -58,7 +58,7 @@ public partial class LoginWindow : Window
         var accounts = await client.GetGameAccountsAsync();
         if (accounts.Count == 0)
         {
-            return await client.CreateGameAccountAsync("", isDefault: true);
+            throw new InvalidOperationException("后端账号状态异常：登录成功但没有可用的游戏账号。");
         }
 
         return SelectStartupAccount(accounts);
