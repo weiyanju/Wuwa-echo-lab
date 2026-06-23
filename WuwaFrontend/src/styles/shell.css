@@ -374,19 +374,17 @@
 }
 
 .uid-chip-chevron {
-  width: 6px;
-  height: 6px;
+  width: 15px;
+  height: 15px;
   margin-left: 2px;
-  border-right: 1.6px solid currentColor;
-  border-bottom: 1.6px solid currentColor;
   color: #6f8293;
-  transform: translateY(-2px) rotate(45deg);
+  transform: rotate(0deg);
   transition: transform 160ms ease;
 }
 
 .uid-chip-button[aria-expanded="true"] .uid-chip-chevron {
   color: #1769d2;
-  transform: translateY(2px) rotate(225deg);
+  transform: rotate(180deg);
 }
 
 .uid-switcher-menu {
@@ -407,6 +405,20 @@
   box-shadow: 0 24px 58px rgba(39, 55, 71, 0.16);
 }
 
+.uid-switcher-menu-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #6f8293;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.uid-switcher-menu-top strong {
+  color: #2f4659;
+  font-size: 13px;
+}
+
 .uid-switcher-field,
 .uid-recent-list > span {
   color: #6f8293;
@@ -417,6 +429,12 @@
 .uid-switcher-field {
   display: grid;
   gap: 7px;
+}
+
+.uid-switcher-field label {
+  color: #6f8293;
+  font-size: 12px;
+  font-weight: 900;
 }
 
 .uid-switcher-field input {
@@ -438,6 +456,7 @@
 
 .uid-recent-list button {
   display: flex;
+  gap: 10px;
   min-height: 38px;
   align-items: center;
   justify-content: space-between;
@@ -481,6 +500,13 @@
   font-weight: 900;
 }
 
+.uid-account-check {
+  width: 16px;
+  height: 16px;
+  color: #1769d2;
+  flex: 0 0 auto;
+}
+
 .uid-recent-list button:not(.current) em {
   border-color: rgba(44, 159, 112, 0.24);
   color: #1d7c5b;
@@ -506,7 +532,24 @@
   box-shadow: 0 12px 24px rgba(23, 105, 210, 0.18);
 }
 
+.uid-switcher-add {
+  min-height: 42px;
+  border: 1px dashed rgba(23, 105, 210, 0.28);
+  border-radius: 12px;
+  color: #1769d2;
+  background: rgba(23, 105, 210, 0.06);
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.uid-switcher-add:hover:not(:disabled) {
+  border-color: rgba(23, 105, 210, 0.44);
+  background: rgba(23, 105, 210, 0.1);
+}
+
 .uid-switcher-submit:disabled,
+.uid-switcher-add:disabled,
 .uid-recent-list button:disabled,
 .uid-switcher-field input:disabled {
   cursor: wait;
@@ -516,6 +559,10 @@
 .uid-recent-list button.current:disabled {
   cursor: default;
   opacity: 1;
+}
+
+.uid-switcher-add:disabled {
+  cursor: not-allowed;
 }
 
 .uid-menu-enter-active,
