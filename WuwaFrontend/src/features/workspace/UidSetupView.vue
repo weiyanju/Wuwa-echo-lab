@@ -2,7 +2,8 @@
 import { computed, ref } from 'vue'
 import moonIcon from '../../assets/icons/moon.svg'
 import sunIcon from '../../assets/icons/sun.svg'
-import { normalizePlayerUid, isValidPlayerUid } from '../../services/playerUid'
+import { normalizePlayerUid } from '../../services/playerUid'
+import { validateUidBinding } from './uidSetup.js'
 
 const props = defineProps({
   boundUid: {
@@ -31,11 +32,12 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['bind', 'toggle-theme', 'sign-out'])
+const emit = defineEmits(['bind', 'clear-error', 'toggle-theme', 'sign-out'])
 const uidBinding = ref('')
 const validationError = ref('')
 const displayedError = computed(() => validationError.value || props.error)
 const disabled = computed(() => props.saving || props.loading)
+const inputDescription = computed(() => (displayedError.value ? 'uid-binding-error uid-binding-hint' : 'uid-binding-hint'))
 
 function iconMask(source) {
   return { '--icon-url': `url("${source}")` }
@@ -44,14 +46,15 @@ function iconMask(source) {
 function handleUidBindingInput() {
   uidBinding.value = normalizePlayerUid(uidBinding.value)
   validationError.value = ''
+  emit('clear-error')
 }
 
 function submitUidBinding() {
   validationError.value = ''
-  const uid = normalizePlayerUid(uidBinding.value)
+  const { uid, error } = validateUidBinding(uidBinding.value)
   uidBinding.value = uid
-  if (!isValidPlayerUid(uid)) {
-    validationError.value = '请输入 9 位数字 UID。'
+  if (error) {
+    validationError.value = error
     return
   }
   emit('bind', uid)
@@ -99,22 +102,26 @@ function submitUidBinding() {
             <h1>绑定游戏 UID</h1>
             <p>绑定后即可进入工作台。</p>
           </div>
-          <label class="uid-binding-field">
+          <label class="uid-binding-field" for="uid-binding-input">
             UID
             <input
+              id="uid-binding-input"
               v-model="uidBinding"
               inputmode="numeric"
               autocomplete="off"
               placeholder="输入你的 UID"
               :disabled="disabled"
+              :aria-invalid="Boolean(displayedError)"
+              aria-errormessage="uid-binding-error"
+              :aria-describedby="inputDescription"
               @input="handleUidBindingInput"
             />
           </label>
-          <p v-if="displayedError" class="error-text" role="alert">{{ displayedError }}</p>
+          <p v-if="displayedError" id="uid-binding-error" class="error-text" role="alert">{{ displayedError }}</p>
           <button class="button-buy" type="submit" :disabled="disabled">
             {{ saving ? '绑定中' : '绑定并进入' }}
           </button>
-          <p class="uid-binding-hint">可在游戏个人信息页查看 UID</p>
+          <p id="uid-binding-hint" class="uid-binding-hint">可在游戏个人信息页查看 UID</p>
         </form>
       </section>
     </div>

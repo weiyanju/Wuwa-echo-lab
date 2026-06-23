@@ -6,14 +6,27 @@ async function readView() {
   return readFile(new URL('./UidSetupView.vue', import.meta.url), 'utf8')
 }
 
-test('uid setup normalizes input without silently truncating it and validates nine digits', async () => {
+test('uid setup delegates normalized submission validation and returns before emitting invalid input', async () => {
   const source = await readView()
 
-  assert.match(source, /import \{ normalizePlayerUid, isValidPlayerUid \} from '\.\.\/\.\.\/services\/playerUid'/)
+  assert.match(source, /import \{ validateUidBinding \} from '\.\/uidSetup\.js'/)
   assert.match(source, /uidBinding\.value = normalizePlayerUid\(uidBinding\.value\)/)
-  assert.match(source, /if \(!isValidPlayerUid\(uid\)\) \{\s+validationError\.value = '请输入 9 位数字 UID。'/)
+  assert.match(source, /const \{ uid, error \} = validateUidBinding\(uidBinding\.value\)/)
+  assert.match(source, /if \(error\) \{\s+validationError\.value = error\s+return\s+\}\s+emit\('bind', uid\)/)
   assert.doesNotMatch(source, /maxlength=/)
-  assert.match(source, /emit\('bind', uid\)/)
+})
+
+test('uid input exposes stable accessible error and hint relationships', async () => {
+  const source = await readView()
+
+  assert.match(source, /<label class="uid-binding-field" for="uid-binding-input">/)
+  assert.match(source, /id="uid-binding-input"/)
+  assert.match(source, /:aria-invalid="Boolean\(displayedError\)"/)
+  assert.match(source, /aria-errormessage="uid-binding-error"/)
+  assert.match(source, /const inputDescription = computed\(\(\) => \(displayedError\.value \? 'uid-binding-error uid-binding-hint' : 'uid-binding-hint'\)\)/)
+  assert.match(source, /:aria-describedby="inputDescription"/)
+  assert.match(source, /id="uid-binding-error"[^>]*role="alert"/)
+  assert.match(source, /id="uid-binding-hint" class="uid-binding-hint"/)
 })
 
 test('uid setup presents the compact two-column first-run card', async () => {
@@ -33,7 +46,8 @@ test('uid setup presents the compact two-column first-run card', async () => {
 test('uid setup keeps shell commands and excludes rejected explanatory copy', async () => {
   const source = await readView()
 
-  assert.match(source, /const emit = defineEmits\(\['bind', 'toggle-theme', 'sign-out'\]\)/)
+  assert.match(source, /const emit = defineEmits\(\['bind', 'clear-error', 'toggle-theme', 'sign-out'\]\)/)
+  assert.match(source, /function handleUidBindingInput\(\) \{[\s\S]+emit\('clear-error'\)/)
   assert.match(source, /@click="emit\('toggle-theme'\)"/)
   assert.match(source, /@click="emit\('sign-out'\)"/)
   assert.match(source, /<section class="uid-setup-shell">/)

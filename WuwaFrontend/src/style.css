@@ -5,6 +5,7 @@
 @import './styles/features/statistics.css';
 @import './styles/features/history.css';
 @import './styles/features/auth.css';
+@import './styles/features/uid-setup.css';
 @import './styles/features/workspace.css';
 @import './styles/features/evaluation.css';
 @import './styles/controls.css';

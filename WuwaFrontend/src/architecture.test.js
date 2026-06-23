@@ -12,16 +12,17 @@ test('frontend high-attraction entry files do not grow beyond the refactor basel
   assert.ok(await lineCount('./features/auth/LoginView.vue') <= 85, 'LoginView.vue must not grow beyond 85 lines')
   assert.ok(await lineCount('./features/evaluation/EvaluationBacktest.vue') <= 705, 'EvaluationBacktest.vue must not grow beyond 705 lines')
   assert.ok(await lineCount('./features/history/FloatingHistoryPanel.vue') <= 650, 'FloatingHistoryPanel.vue must not grow beyond 650 lines')
-  assert.ok(await lineCount('./features/workspace/UidSetupView.vue') <= 125, 'UidSetupView.vue must not grow beyond 125 lines')
+  assert.ok(await lineCount('./features/workspace/UidSetupView.vue') <= 130, 'UidSetupView.vue must not grow beyond 130 lines')
   assert.ok(await lineCount('./features/workspace/EchoWorkbenchView.vue') <= 210, 'EchoWorkbenchView.vue must not grow beyond 210 lines')
   assert.ok(await lineCount('./features/workspace/useEchoWorkspace.js') <= 400, 'useEchoWorkspace.js must not grow beyond 400 lines')
   assert.ok(await lineCount('./features/recognition/useRecognitionReview.js') <= 145, 'useRecognitionReview.js must not grow beyond 145 lines')
-  assert.ok(await lineCount('./style.css') <= 12, 'style.css must remain an import-only entry')
+  assert.ok(await lineCount('./style.css') <= 13, 'style.css must remain an import-only entry')
   assert.ok(await lineCount('./styles/controls.css') <= 380, 'controls.css must not grow beyond 380 lines')
   assert.ok(await lineCount('./styles/shell.css') <= 830, 'shell.css must not grow beyond 830 lines')
   assert.ok(await lineCount('./styles/features/history.css') <= 910, 'history.css must not grow beyond 910 lines')
   assert.ok(await lineCount('./styles/features/auth.css') <= 300, 'auth.css must not grow beyond 300 lines')
-  assert.ok(await lineCount('./styles/features/workspace.css') <= 810, 'workspace.css must not grow beyond 810 lines')
+  assert.ok(await lineCount('./styles/features/uid-setup.css') <= 200, 'uid-setup.css must not grow beyond 200 lines')
+  assert.ok(await lineCount('./styles/features/workspace.css') <= 710, 'workspace.css must not grow beyond 710 lines')
   assert.ok(await lineCount('./styles/features/evaluation.css') <= 4690, 'evaluation.css must not grow beyond 4690 lines')
 })
 
@@ -105,19 +106,32 @@ test('auth feature owns login layout, information, dark, and responsive styles',
   assert.doesNotMatch(entry, /\.login-info-grid \{/)
 })
 
-test('workspace feature owns uid setup, workbench, matrix, dark, and responsive styles', async () => {
+test('uid setup owns its shell, card, dark theme, and responsive styles', async () => {
+  const entry = await readFile(new URL('./style.css', import.meta.url), 'utf8')
+  const workspace = await readFile(new URL('./styles/features/workspace.css', import.meta.url), 'utf8')
+
+  assert.match(entry, /@import '\.\/styles\/features\/uid-setup\.css';/)
+  const uidSetup = await readFile(new URL('./styles/features/uid-setup.css', import.meta.url), 'utf8')
+  assert.match(uidSetup, /\.uid-setup-shell \{/)
+  assert.match(uidSetup, /\.uid-binding-form \{/)
+  assert.match(uidSetup, /\.app-shell\.theme-dark \.uid-setup-media/)
+  assert.match(uidSetup, /@media \(max-width: 860px\)/)
+  assert.match(uidSetup, /@media \(max-width: 520px\)/)
+  assert.doesNotMatch(workspace, /\.uid-setup-shell \{|\.uid-binding-form \{|\.disabled-tabs button/)
+  assert.doesNotMatch(entry, /\.uid-setup-shell \{/)
+})
+
+test('workspace feature owns workbench, matrix, dark, and responsive styles', async () => {
   const entry = await readFile(new URL('./style.css', import.meta.url), 'utf8')
   const workspace = await readFile(new URL('./styles/features/workspace.css', import.meta.url), 'utf8')
 
   assert.match(entry, /@import '\.\/styles\/features\/workspace\.css';/)
-  assert.match(workspace, /\.uid-setup-shell \{/)
   assert.match(workspace, /\.workspace-grid \{/)
   assert.match(workspace, /\.sonata-grid \{/)
   assert.match(workspace, /\.substat-matrix \{/)
   assert.match(workspace, /\.app-shell\.theme-dark \.active-summary/)
   assert.match(workspace, /@media \(max-width: 860px\)/)
   assert.match(workspace, /@media \(max-width: 520px\)/)
-  assert.doesNotMatch(entry, /\.uid-setup-shell \{/)
   assert.doesNotMatch(entry, /\.workspace-grid \{/)
 })
 
@@ -151,7 +165,7 @@ test('shared controls own reusable themes, buttons, forms, cards, and headings',
   assert.match(controls, /\.section-heading \{/)
   assert.match(controls, /@media \(max-width: 520px\)/)
   assert.doesNotMatch(entry, /\{/)
-  assert.ok(await lineCount('./style.css') <= 12, 'style.css must remain an import-only entry')
+  assert.ok(await lineCount('./style.css') <= 13, 'style.css must remain an import-only entry')
 })
 
 test('features own their remaining styles and removed views leave no legacy css', async () => {

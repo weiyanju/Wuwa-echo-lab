@@ -207,6 +207,7 @@ onBeforeUnmount(() => {
       :is-dark-theme="isDarkTheme"
       :theme-toggle-label="themeToggleLabel"
       @bind="submitUidBinding"
+      @clear-error="error = ''"
       @toggle-theme="toggleTheme"
       @sign-out="signOut"
     />
