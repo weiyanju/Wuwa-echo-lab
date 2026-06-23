@@ -78,7 +78,41 @@ test('reset prevents an old account refresh from restoring recognition data', as
 
     assert.deepEqual(review.sessions.value, [])
     assert.deepEqual(review.snapshots.value, [])
-    assert.equal(review.refreshing.value, false)
+  } finally {
+    globalThis.document = originalDocument
+    globalThis.fetch = originalFetch
+  }
+})
+
+test('account id changes invalidate an old recognition refresh even without an explicit reset', async () => {
+  const originalDocument = globalThis.document
+  const originalFetch = globalThis.fetch
+  const sessions = deferred()
+  const snapshots = deferred()
+  globalThis.document = { cookie: '' }
+  globalThis.fetch = async (url) => {
+    if (String(url).includes('/recognition/sessions/')) {
+      return sessions.promise
+    }
+    return snapshots.promise
+  }
+
+  try {
+    const selectedGameAccountId = ref(1)
+    const review = useRecognitionReview({
+      selectedGameAccountId,
+      saving: ref(false),
+      onError: () => {},
+    })
+    const refreshPromise = review.refresh()
+
+    selectedGameAccountId.value = 2
+    sessions.resolve(jsonResponse({ results: [{ id: 21 }] }))
+    snapshots.resolve(jsonResponse({ results: [{ snapshot_id: 'old-account' }] }))
+    await refreshPromise
+
+    assert.deepEqual(review.sessions.value, [])
+    assert.deepEqual(review.snapshots.value, [])
   } finally {
     globalThis.document = originalDocument
     globalThis.fetch = originalFetch

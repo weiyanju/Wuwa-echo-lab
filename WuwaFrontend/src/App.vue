@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useAuth } from './composables/useAuth'
 import { useGameAccount } from './composables/useGameAccount'
 import { confidenceText } from './services/formatters'
+import UidSwitcher from './components/controls/UidSwitcher.vue'
 import LoginView from './features/auth/LoginView.vue'
 import EvaluationBacktest from './features/evaluation/EvaluationBacktest.vue'
 import EvaluationOverview from './features/evaluation/EvaluationOverview.vue'
@@ -25,8 +26,8 @@ const loading = ref(true)
 const themeMode = ref(readInitialTheme())
 const isDarkTheme = computed(() => themeMode.value === 'dark')
 const themeToggleLabel = computed(() => (isDarkTheme.value ? '切换到日间模式' : '切换到夜间模式'))
-const selectedGameAccountId = computed(() => gameAccount.defaultAccount.value?.id || null)
-const boundPlayerUid = computed(() => gameAccount.defaultAccount.value?.uid || '')
+const selectedGameAccountId = computed(() => gameAccount.currentAccount.value?.id || null)
+const boundPlayerUid = computed(() => gameAccount.currentAccount.value?.uid || '')
 const {
   activeEcho,
   activeEchoId,
@@ -141,18 +142,29 @@ function resetWorkspaceState() {
   resetRecognition()
 }
 
-async function submitUidBinding(uid) {
+async function submitUidBinding(uid) { await changeGameAccount(() => gameAccount.bindInitialUid(uid)) }
+
+async function changeGameAccount(change) {
   error.value = ''
   saving.value = true
+  resetWorkspaceState()
   try {
-    resetWorkspaceState()
-    await gameAccount.bindDefaultUid(uid)
+    await change()
     await refreshAll()
   } catch (err) {
     error.value = err.message
+    await gameAccount.loadGameAccounts().catch(() => {})
+    resetWorkspaceState()
   } finally {
     saving.value = false
   }
+}
+
+async function addGameAccount(uid) { await changeGameAccount(() => gameAccount.addGameAccount(uid)) }
+
+async function selectGameAccount(accountOrId) {
+  const id = typeof accountOrId === 'object' ? accountOrId?.id : accountOrId
+  await changeGameAccount(() => gameAccount.switchGameAccount(id))
 }
 
 async function signOut() {
@@ -220,20 +232,9 @@ onBeforeUnmount(() => {
           <button :class="{ active: page === 'stats' }" @click="page = 'stats'">统计</button>
           <button :class="{ active: page === 'evaluation' }" @click="page = 'evaluation'">评估</button>
         </nav>
-        <div class="account-actions uid-switcher">
-          <div class="uid-chip">
-            <i class="uid-status-dot" aria-hidden="true"></i>
-            <span class="uid-chip-label">UID</span>
-            <span class="uid-chip-value">{{ boundPlayerUid || '未绑定' }}</span>
-          </div>
-          <button
-            class="theme-toggle-button"
-            type="button"
-            :aria-pressed="isDarkTheme"
-            :aria-label="themeToggleLabel"
-            :title="themeToggleLabel"
-            @click="toggleTheme"
-          >
+        <div class="account-actions">
+          <UidSwitcher :accounts="gameAccount.boundAccounts.value" :current-account="gameAccount.currentAccount.value" :can-add-account="gameAccount.canAddAccount.value" :busy="saving || gameAccount.loading.value" :error="error" @select="selectGameAccount" @add="addGameAccount" />
+          <button class="theme-toggle-button" type="button" :aria-pressed="isDarkTheme" :aria-label="themeToggleLabel" :title="themeToggleLabel" @click="toggleTheme">
             <span class="ui-line-icon theme-toggle-icon" :style="iconMask(isDarkTheme ? sunIcon : moonIcon)" aria-hidden="true"></span>
           </button>
           <button class="button-ghost" @click="signOut">退出</button>
@@ -291,24 +292,12 @@ onBeforeUnmount(() => {
 
       </div>
 
-      <StatisticsView
-        v-if="!gameAccount.workspaceLocked.value && page === 'stats'"
-        :stats="stats"
-      />
+      <StatisticsView v-if="!gameAccount.workspaceLocked.value && page === 'stats'" :stats="stats" />
 
       <section v-if="!gameAccount.workspaceLocked.value && page === 'evaluation'" class="product-panel full-panel evaluation-panel">
-        <EvaluationOverview
-          :evaluation="evaluation"
-          :model-details="modelDetailCards"
-          :prediction="prediction"
-          :stats="stats"
-        />
+        <EvaluationOverview :evaluation="evaluation" :model-details="modelDetailCards" :prediction="prediction" :stats="stats" />
 
-        <EvaluationBacktest
-          :evaluation="evaluation"
-          :model-details="modelDetailCards"
-          :prediction="prediction"
-        />
+        <EvaluationBacktest :evaluation="evaluation" :model-details="modelDetailCards" :prediction="prediction" />
       </section>
     </section>
   </main>

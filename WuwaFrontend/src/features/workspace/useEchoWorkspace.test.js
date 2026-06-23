@@ -111,6 +111,52 @@ test('reset prevents an old account refresh from restoring workspace data', asyn
   }
 })
 
+test('account id changes invalidate an old workspace refresh even without an explicit reset', async () => {
+  const originalDocument = globalThis.document
+  const originalFetch = globalThis.fetch
+  const oldEchoList = deferred()
+  globalThis.document = { cookie: '' }
+  globalThis.fetch = async (url) => {
+    const path = String(url)
+    if (path.includes('/echoes/?game_account_id=1')) return oldEchoList.promise
+    if (path.includes('/prediction/')) return jsonResponse({ candidates: [] })
+    if (path.includes('/stats/') || path.includes('/model-evaluation/')) return jsonResponse({})
+    throw new Error(`Unexpected request: ${path}`)
+  }
+
+  try {
+    const selectedGameAccountId = ref(1)
+    const workspace = useEchoWorkspace({
+      selectedGameAccountId,
+      boundPlayerUid: ref('111111111'),
+      workspaceLocked: ref(false),
+      onError: () => {},
+    })
+    const refreshPromise = workspace.refresh()
+
+    selectedGameAccountId.value = 2
+    oldEchoList.resolve(jsonResponse({
+      results: [{
+        id: 91,
+        status: 'in_progress',
+        substats: [],
+        set_name: 'old-account',
+        cost: 1,
+        main_stat: 'atk_percent',
+        is_continuous_tuning: false,
+      }],
+    }))
+    await refreshPromise
+
+    assert.deepEqual(workspace.echoes.value, [])
+    assert.equal(workspace.activeEchoId.value, null)
+    assert.equal(workspace.stats.value, null)
+  } finally {
+    globalThis.document = originalDocument
+    globalThis.fetch = originalFetch
+  }
+})
+
 test('reset prevents an in-flight background refresh from restoring insights', async () => {
   const originalDocument = globalThis.document
   const originalFetch = globalThis.fetch
