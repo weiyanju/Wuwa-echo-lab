@@ -93,7 +93,9 @@ test('topbar renders the shared uid switcher for game account selection', async 
   assert.match(uidSetupSource, /import \{ validateUidBinding \} from '\.\/uidSetup\.js'/)
   assert.match(appSource, /import UidSwitcher from '\.\/components\/controls\/UidSwitcher\.vue'/)
   assert.match(appSource, /const boundPlayerUid = computed\(\(\) => gameAccount\.currentAccount\.value\?\.uid \|\| ''\)/)
-  assert.match(appSource, /<UidSwitcher[\s\S]+:accounts="gameAccount\.boundAccounts\.value"[\s\S]+:current-account="gameAccount\.currentAccount\.value"[\s\S]+:can-add-account="gameAccount\.canAddAccount\.value"[\s\S]+:busy="saving \|\| gameAccount\.loading\.value"[\s\S]+:error="error"[\s\S]+@select="selectGameAccount"[\s\S]+@add="addGameAccount"/)
+  assert.match(appSource, /const accountChanging = ref\(false\)/)
+  assert.match(appSource, /const appBusy = computed\(\(\) => saving\.value \|\| accountChanging\.value\)/)
+  assert.match(appSource, /<UidSwitcher[\s\S]+:accounts="gameAccount\.boundAccounts\.value"[\s\S]+:current-account="gameAccount\.currentAccount\.value"[\s\S]+:can-add-account="gameAccount\.canAddAccount\.value"[\s\S]+:busy="appBusy \|\| gameAccount\.loading\.value"[\s\S]+:error="error"[\s\S]+@select="selectGameAccount"[\s\S]+@add="addGameAccount"/)
   assert.doesNotMatch(appSource, /class="uid-chip-value">\{\{ boundPlayerUid \|\|/)
   assert.doesNotMatch(appSource, /uidQuickSwitchRows/)
   assert.doesNotMatch(appSource, /switchPlayerUid/)
@@ -166,7 +168,7 @@ test('milestone 3 uses account login and locks workbench until default game uid 
 test('app account changes reset workspace before mutation and refresh only after success', async () => {
   const appSource = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
 
-  assert.match(appSource, /async function changeGameAccount\(change\) \{[\s\S]+error\.value = ''[\s\S]+saving\.value = true[\s\S]+resetWorkspaceState\(\)[\s\S]+try \{[\s\S]+await change\(\)[\s\S]+await refreshAll\(\)[\s\S]+catch \(err\) \{[\s\S]+error\.value = err\.message[\s\S]+await gameAccount\.loadGameAccounts\(\)\.catch\(\(\) => \{\}\)[\s\S]+resetWorkspaceState\(\)[\s\S]+finally \{[\s\S]+saving\.value = false[\s\S]+\}/)
+  assert.match(appSource, /async function changeGameAccount\(change\) \{[\s\S]+error\.value = ''[\s\S]+accountChanging\.value = true[\s\S]+resetWorkspaceState\(\)[\s\S]+let accountChanged = false[\s\S]+try \{[\s\S]+await change\(\)[\s\S]+accountChanged = true[\s\S]+await refreshAll\(\)[\s\S]+catch \(err\) \{[\s\S]+error\.value = err\.message[\s\S]+await gameAccount\.loadGameAccounts\(\)\.catch\(\(\) => \{\}\)[\s\S]+if \(accountChanged\) \{[\s\S]+gameAccount\.selectedAccountId\.value = null[\s\S]+\}[\s\S]+resetWorkspaceState\(\)[\s\S]+finally \{[\s\S]+accountChanging\.value = false[\s\S]+\}/)
   assert.match(appSource, /async function submitUidBinding\(uid\) \{[\s\S]+await changeGameAccount\(\(\) => gameAccount\.bindInitialUid\(uid\)\)/)
   assert.match(appSource, /async function addGameAccount\(uid\) \{[\s\S]+await changeGameAccount\(\(\) => gameAccount\.addGameAccount\(uid\)\)/)
   assert.match(appSource, /async function selectGameAccount\(accountOrId\) \{[\s\S]+const id = typeof accountOrId === 'object' \? accountOrId\?\.id : accountOrId[\s\S]+await changeGameAccount\(\(\) => gameAccount\.switchGameAccount\(id\)\)/)

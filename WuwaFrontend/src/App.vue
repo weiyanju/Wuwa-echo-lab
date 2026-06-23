@@ -23,6 +23,7 @@ const user = auth.user
 const page = ref('workspace')
 const error = ref('')
 const loading = ref(true)
+const accountChanging = ref(false)
 const themeMode = ref(readInitialTheme())
 const isDarkTheme = computed(() => themeMode.value === 'dark')
 const themeToggleLabel = computed(() => (isDarkTheme.value ? '切换到日间模式' : '切换到夜间模式'))
@@ -58,6 +59,7 @@ const {
     error.value = message
   },
 })
+const appBusy = computed(() => saving.value || accountChanging.value)
 const {
   dispose: disposeRecognition,
   latestSession: latestRecognitionSession,
@@ -72,7 +74,7 @@ const {
   reviewRows: recognitionReviewRows,
 } = useRecognitionReview({
   selectedGameAccountId,
-  saving,
+  saving: appBusy,
   onError: (message) => {
     error.value = message
   },
@@ -146,17 +148,22 @@ async function submitUidBinding(uid) { await changeGameAccount(() => gameAccount
 
 async function changeGameAccount(change) {
   error.value = ''
-  saving.value = true
+  accountChanging.value = true
   resetWorkspaceState()
+  let accountChanged = false
   try {
     await change()
+    accountChanged = true
     await refreshAll()
   } catch (err) {
     error.value = err.message
     await gameAccount.loadGameAccounts().catch(() => {})
+    if (accountChanged) {
+      gameAccount.selectedAccountId.value = null
+    }
     resetWorkspaceState()
   } finally {
-    saving.value = false
+    accountChanging.value = false
   }
 }
 
@@ -213,7 +220,7 @@ onBeforeUnmount(() => {
     <UidSetupView
       v-else-if="gameAccount.workspaceLocked.value"
       :bound-uid="boundPlayerUid"
-      :saving="saving"
+      :saving="accountChanging"
       :loading="gameAccount.loading.value"
       :error="error"
       :is-dark-theme="isDarkTheme"
@@ -233,7 +240,7 @@ onBeforeUnmount(() => {
           <button :class="{ active: page === 'evaluation' }" @click="page = 'evaluation'">评估</button>
         </nav>
         <div class="account-actions">
-          <UidSwitcher :accounts="gameAccount.boundAccounts.value" :current-account="gameAccount.currentAccount.value" :can-add-account="gameAccount.canAddAccount.value" :busy="saving || gameAccount.loading.value" :error="error" @select="selectGameAccount" @add="addGameAccount" />
+          <UidSwitcher :accounts="gameAccount.boundAccounts.value" :current-account="gameAccount.currentAccount.value" :can-add-account="gameAccount.canAddAccount.value" :busy="appBusy || gameAccount.loading.value" :error="error" @select="selectGameAccount" @add="addGameAccount" />
           <button class="theme-toggle-button" type="button" :aria-pressed="isDarkTheme" :aria-label="themeToggleLabel" :title="themeToggleLabel" @click="toggleTheme">
             <span class="ui-line-icon theme-toggle-icon" :style="iconMask(isDarkTheme ? sunIcon : moonIcon)" aria-hidden="true"></span>
           </button>
