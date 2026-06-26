@@ -36,6 +36,7 @@
 - `150be0a` WPF UID 校验改为 ASCII 数字。
 - `eb3e3a3` WPF UID 输入不再折叠全角数字。
 - `e7fdf6d` 后端同一用户下游戏 UID 唯一性改为按 `user + uid`，并忽略隐藏的 server/nickname 写入。
+- `fc18a1e` 后端响应隐藏历史 server/nickname，并在迁移中检查重复 UID、清理遗留 metadata。
 
 ## 自动化验证
 
@@ -68,4 +69,4 @@
 - 本地 PostgreSQL 开发密码记录在已忽略文件 `docs/local-development.private.md`，不进入版本库。
 - WPF 对 UID 只做 `Trim()`，不会再通过 FormKC 把全角数字折叠为 ASCII；这与后端 `[0-9]{9}` 契约保持一致。
 - 前端 `UidSwitcher` 的新增输入不清洗非数字，必须原始输入完整匹配 9 位 ASCII 数字。
-- 后端仍保留 `server` / `nickname` 字段以兼容旧响应结构，但 API 不再写入这两个隐藏字段；同一用户下同一 UID 不能通过不同 server 重复绑定。
+- 后端仍保留 `server` / `nickname` 字段以兼容旧响应结构，但 API 不再写入或回显这两个隐藏字段；同一用户下同一 UID 不能通过不同 server 重复绑定。迁移会在添加新唯一约束前检查历史重复 UID，并清理遗留 metadata。
