@@ -1,6 +1,5 @@
 using System.IO;
 using System.Net.Http;
-using System.Text;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
@@ -59,7 +58,7 @@ public partial class MainWindow : Window
                 throw new InvalidOperationException("请先登录系统账号。");
             }
 
-            var uid = NormalizeInput(InitialUidBox.Text);
+            var uid = InitialUidBox.Text.Trim();
             if (string.IsNullOrWhiteSpace(uid))
             {
                 throw new InvalidOperationException("请输入游戏 UID。");
@@ -264,8 +263,4 @@ public partial class MainWindow : Window
         return new WuwaApiClient(new HttpClient(handler), new AssistantSettings("http://127.0.0.1:8000"), session);
     }
 
-    private static string NormalizeInput(string value)
-    {
-        return value.Normalize(NormalizationForm.FormKC).Trim();
-    }
 }
