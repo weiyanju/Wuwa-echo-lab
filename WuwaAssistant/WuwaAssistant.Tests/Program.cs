@@ -473,7 +473,8 @@ Task MainShellHomeOwnsUidInitializationAsync()
     AssertContains("BindUidButton", xaml, "home owns uid initialization button");
     AssertContains("BindUidButton_Click", code, "uid initialization click handler");
     AssertContains("NormalizeInput(InitialUidBox.Text)", code, "uid input is normalized");
-    AssertContains("uid.Length != 9 || !uid.All(char.IsDigit)", code, "uid input requires nine digits");
+    AssertContains("uid.Length != 9 || !uid.All(static character => character is >= '0' and <= '9')", code, "uid input requires nine ascii digits");
+    AssertDoesNotContain("uid.All(char.IsDigit)", code, "uid input must not accept unicode digits");
     AssertContains("游戏 UID 必须由 9 位数字组成。", code, "uid validation error message");
     AssertContains("UpdateGameAccountAsync(selectedAccount.Id, uid, isDefault: true)", code, "uid initialization persists to backend");
     AssertContains("RefreshAccountState", code, "account state refreshes after uid changes");

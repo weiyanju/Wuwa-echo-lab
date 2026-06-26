@@ -65,7 +65,7 @@ public partial class MainWindow : Window
                 throw new InvalidOperationException("请输入游戏 UID。");
             }
 
-            if (uid.Length != 9 || !uid.All(char.IsDigit))
+            if (uid.Length != 9 || !uid.All(static character => character is >= '0' and <= '9'))
             {
                 throw new InvalidOperationException("游戏 UID 必须由 9 位数字组成。");
             }
