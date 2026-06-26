@@ -2,6 +2,29 @@ from django.db import migrations, models
 import django.db.models
 
 
+def validate_no_duplicate_bound_uids(apps, schema_editor):
+    game_account = apps.get_model("accounts", "GameAccount")
+    duplicate = (
+        game_account.objects
+        .exclude(uid="")
+        .values("user_id", "uid")
+        .annotate(count=models.Count("id"))
+        .filter(count__gt=1)
+        .first()
+    )
+    if duplicate:
+        raise RuntimeError(
+            "Cannot migrate GameAccount UID uniqueness: duplicate bound UID "
+            f"{duplicate['uid']} exists for user {duplicate['user_id']}. "
+            "Merge or remove duplicate game accounts before applying this migration."
+        )
+
+
+def clear_legacy_game_account_metadata(apps, schema_editor):
+    game_account = apps.get_model("accounts", "GameAccount")
+    game_account.objects.exclude(server="", nickname="").update(server="", nickname="")
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -9,6 +32,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunPython(validate_no_duplicate_bound_uids, migrations.RunPython.noop),
         migrations.RemoveConstraint(
             model_name="gameaccount",
             name="unique_bound_game_account_per_user",
@@ -29,4 +53,5 @@ class Migration(migrations.Migration):
                 name="unique_bound_game_account_per_user",
             ),
         ),
+        migrations.RunPython(clear_legacy_game_account_metadata, migrations.RunPython.noop),
     ]

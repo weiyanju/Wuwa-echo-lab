@@ -15,7 +15,7 @@ class ApiViewTests(TestCase):
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create_user(username="tester", password="pw12345")
-        self.user.game_accounts.update(uid="123456789")
+        self.user.game_accounts.update(uid="123456789", server="legacy-server", nickname="legacy-name")
 
     def test_register_login_and_me(self):
         response = self.client.post(
@@ -49,6 +49,8 @@ class ApiViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json()["results"]), 1)
         self.assertEqual(response.json()["results"][0]["uid"], "123456789")
+        self.assertEqual(response.json()["results"][0]["server"], "")
+        self.assertEqual(response.json()["results"][0]["nickname"], "")
 
         response = self.client.post(
             reverse("game_account_list"),
