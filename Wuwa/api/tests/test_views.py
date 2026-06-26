@@ -59,6 +59,8 @@ class ApiViewTests(TestCase):
         self.assertEqual(response.status_code, 201)
         created = response.json()
         self.assertEqual(created["uid"], "987654321")
+        self.assertEqual(created["nickname"], "")
+        self.assertEqual(created["server"], "")
         self.assertFalse(created["is_default"])
 
         response = self.client.patch(
@@ -69,7 +71,7 @@ class ApiViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.json()["is_default"])
-        self.assertEqual(response.json()["nickname"], "main alt")
+        self.assertEqual(response.json()["nickname"], "")
         self.assertEqual(self.user.game_accounts.filter(is_default=True).get().id, created["id"])
 
     def test_game_account_rejects_duplicate_uid_for_same_user(self):
@@ -83,6 +85,15 @@ class ApiViewTests(TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertIn("error", response.json())
+        self.assertEqual(self.user.game_accounts.count(), 1)
+
+        response = self.client.post(
+            reverse("game_account_list"),
+            data=json.dumps({"uid": "123456789", "server": "alternate"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
         self.assertEqual(self.user.game_accounts.count(), 1)
 
     def test_game_account_create_rejects_eight_digit_uid(self):

@@ -46,8 +46,6 @@ def create_game_account(user, payload):
     account = GameAccount(
         user=owner,
         uid=uid,
-        server=clean_string(payload, "server"),
-        nickname=clean_string(payload, "nickname"),
         is_default=is_default,
     )
     account.full_clean()
@@ -69,10 +67,6 @@ def update_game_account(account, payload):
             _validate_game_uid(uid)
             _ensure_game_account_capacity(owner)
             account.uid = uid
-    if "server" in payload:
-        account.server = clean_string(payload, "server")
-    if "nickname" in payload:
-        account.nickname = clean_string(payload, "nickname")
     if "is_default" in payload:
         account.is_default = parse_bool(payload["is_default"])
         if account.is_default:

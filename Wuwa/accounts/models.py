@@ -20,7 +20,7 @@ class GameAccount(models.Model):
         ordering = ["-is_default", "-updated_at", "-id"]
         constraints = [
             models.UniqueConstraint(
-                fields=["user", "uid", "server"],
+                fields=["user", "uid"],
                 condition=~Q(uid=""),
                 name="unique_bound_game_account_per_user",
             ),
@@ -32,7 +32,7 @@ class GameAccount(models.Model):
         ]
         indexes = [
             models.Index(fields=["user", "is_default"]),
-            models.Index(fields=["user", "uid", "server"]),
+            models.Index(fields=["user", "uid"], name="api_gameacc_user_id_uid_idx"),
         ]
 
     @property
@@ -56,4 +56,3 @@ class GameAccount(models.Model):
 def create_default_game_account(sender, instance, created, **kwargs):
     if created:
         GameAccount.objects.get_or_create(user=instance, is_default=True, defaults={"uid": ""})
-
