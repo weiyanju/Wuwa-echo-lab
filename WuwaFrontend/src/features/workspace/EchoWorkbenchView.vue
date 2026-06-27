@@ -3,7 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { mainStatLabels, mainStatsByCost, substatLabels } from '../../data/substats'
 import { sonataEffects } from '../../data/sonataEffects'
 import { displayEchoNumericId } from '../../services/echoId'
-import { formatPercent, formatSignedPercent } from '../../services/formatters'
+import { formatPercent, formatSubstatTierValue } from '../../services/formatters'
 
 const props = defineProps({
   config: {
@@ -153,7 +153,7 @@ watch(
       <div v-if="activeEcho" class="roll-strip" :class="{ empty: !activeEcho.substats.length }">
         <span v-for="roll in activeEcho.substats" :key="roll.id">
           <strong>{{ roll.position }}.</strong>
-          {{ substatLabels[roll.substat_type] }} {{ roll.tier_value }}%
+          {{ substatLabels[roll.substat_type] }} {{ formatSubstatTierValue(roll.substat_type, roll.tier_value) }}
         </span>
         <button class="undo-roll-button" type="button" :disabled="saving || !activeEcho.substats.length" title="撤回上一次录入的副词条" @click="emit('undo')">
           撤回
@@ -181,10 +181,11 @@ watch(
         v-memo="[row.recorded?.id, row.recorded?.tier_value, row.candidate?.p_final, row.candidate?.baseline_deviation, row.topPredicted, pendingTierKey]"
       >
         <div class="substat-meta">
-          <strong>{{ row.label }}</strong>
-          <span v-if="row.recorded">已录入：{{ row.recorded.tier_value }}</span>
-          <span v-else-if="row.candidate">预测 {{ formatPercent(row.candidate.p_final) }}</span>
-          <small v-if="row.candidate">较基线 {{ formatSignedPercent(row.candidate.baseline_deviation) }}</small>
+          <div class="substat-title-line">
+            <strong>{{ row.label }}</strong>
+            <span v-if="row.topPredicted && !row.recorded" class="top-predicted-pill">预测最高</span>
+          </div>
+          <span v-if="row.recorded">已录入：{{ formatSubstatTierValue(row.substat_type, row.recorded.tier_value) }}</span>
         </div>
         <div class="tier-grid">
           <button
@@ -194,7 +195,7 @@ watch(
             :disabled="Boolean(row.recorded) || isTierPending(row, tier)"
             @click="emit('select-tier', { row, tier })"
           >
-            <strong>{{ tier.value }}</strong>
+            <strong>{{ formatSubstatTierValue(row.substat_type, tier.value) }}</strong>
             <span>{{ formatPercent(tier.probability) }}</span>
           </button>
         </div>

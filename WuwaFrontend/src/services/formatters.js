@@ -9,6 +9,14 @@ export function formatSignedPercent(value, digits = 2) {
   return `${sign}${formatPercent(numericValue, digits)}`
 }
 
+const flatSubstatTypes = new Set(['flat_atk', 'flat_hp', 'flat_def'])
+
+export function formatSubstatTierValue(substatType, value) {
+  const numericValue = Number.isFinite(value) ? value : 0
+  const text = String(numericValue)
+  return flatSubstatTypes.has(substatType) ? text : `${text}%`
+}
+
 export function sampleStageText(stage) {
   return stage?.label || '暂无样本阶段'
 }

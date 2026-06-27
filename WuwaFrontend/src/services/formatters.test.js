@@ -4,7 +4,7 @@ import test from 'node:test'
 
 import { mainStatsByCost, substatLabels, substatOrder, tierTables } from '../data/substats.js'
 import { sonataEffects, sonataEffectsSource } from '../data/sonataEffects.js'
-import { confidenceText, formatPercent, formatSignedPercent, modelWeightLabel, sampleStageText, statusText } from './formatters.js'
+import { confidenceText, formatPercent, formatSignedPercent, formatSubstatTierValue, modelWeightLabel, sampleStageText, statusText } from './formatters.js'
 
 test('formats probabilities as readable percentages', () => {
   assert.equal(formatPercent(0.1234), '12.34%')
@@ -16,6 +16,15 @@ test('formats signed baseline deviations', () => {
   assert.equal(formatSignedPercent(0.0123), '+1.23%')
   assert.equal(formatSignedPercent(-0.004), '-0.40%')
   assert.equal(formatSignedPercent(0), '+0.00%')
+})
+
+test('formats substat tier values by stat unit type', () => {
+  assert.equal(formatSubstatTierValue('crit_rate', 6.3), '6.3%')
+  assert.equal(formatSubstatTierValue('skill_damage', 6.4), '6.4%')
+  assert.equal(formatSubstatTierValue('energy_regen', 6.8), '6.8%')
+  assert.equal(formatSubstatTierValue('flat_atk', 30), '30')
+  assert.equal(formatSubstatTierValue('flat_hp', 320), '320')
+  assert.equal(formatSubstatTierValue('flat_def', 40), '40')
 })
 
 test('maps model status and confidence to Chinese labels', () => {

@@ -13,6 +13,32 @@ test('echo workbench owns setup and active echo presentation', async () => {
   assert.match(source, /class="gallery-panel"/)
 })
 
+test('echo workbench keeps substat rows focused on entry by default', async () => {
+  const source = await readFile(new URL('./EchoWorkbenchView.vue', import.meta.url), 'utf8')
+
+  assert.match(source, /formatSubstatTierValue/)
+  assert.match(source, /{{ formatSubstatTierValue\(roll\.substat_type, roll\.tier_value\) }}/)
+  assert.match(source, /{{ formatSubstatTierValue\(row\.substat_type, row\.recorded\.tier_value\) }}/)
+  assert.match(source, /{{ formatSubstatTierValue\(row\.substat_type, tier\.value\) }}/)
+  assert.doesNotMatch(source, /formatPercent\(row\.candidate\.p_final\)/)
+  assert.doesNotMatch(source, /formatSignedPercent\(row\.candidate\.baseline_deviation\)/)
+  assert.doesNotMatch(source, /<small v-if="row\.candidate">/)
+})
+
+test('workspace styles keep long substat titles and recorded rows stable', async () => {
+  const source = await readFile(new URL('./EchoWorkbenchView.vue', import.meta.url), 'utf8')
+  const style = await readFile(new URL('../../styles/features/workspace.css', import.meta.url), 'utf8')
+
+  assert.match(source, /class="substat-title-line"/)
+  assert.match(source, /class="top-predicted-pill"/)
+  assert.match(style, /\.substat-title-line \{[\s\S]+grid-template-columns: minmax\(0, 1fr\) auto;/)
+  assert.match(style, /\.top-predicted-pill \{[\s\S]+white-space: nowrap;/)
+  assert.match(style, /\.substat-row \{[\s\S]+min-height: 70px;/)
+  assert.match(style, /\.substat-meta \{[\s\S]+min-height: 46px;/)
+  assert.match(style, /\.substat-row\.top-predicted-row \{[\s\S]+box-shadow: inset 4px 0 0 var\(--success\);/)
+  assert.match(style, /\.substat-row\.recorded \{[\s\S]+box-shadow: inset 4px 0 0 transparent;/)
+})
+
 test('echo workbench emits commands without owning persistence', async () => {
   const source = await readFile(new URL('./EchoWorkbenchView.vue', import.meta.url), 'utf8')
 
