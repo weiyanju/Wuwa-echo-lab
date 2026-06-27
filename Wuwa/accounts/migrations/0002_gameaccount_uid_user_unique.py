@@ -10,6 +10,7 @@ def validate_no_duplicate_bound_uids(apps, schema_editor):
         .values("user_id", "uid")
         .annotate(count=models.Count("id"))
         .filter(count__gt=1)
+        .order_by("user_id", "uid")
         .first()
     )
     if duplicate:
