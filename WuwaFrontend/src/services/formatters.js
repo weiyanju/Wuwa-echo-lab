@@ -11,10 +11,17 @@ export function formatSignedPercent(value, digits = 2) {
 
 const flatSubstatTypes = new Set(['flat_atk', 'flat_hp', 'flat_def'])
 
-export function formatSubstatTierValue(substatType, value) {
+export function formatSubstatTierNumber(substatType, value) {
   const numericValue = Number.isFinite(value) ? value : 0
-  const text = String(numericValue)
-  return flatSubstatTypes.has(substatType) ? text : `${text}%`
+  return String(numericValue)
+}
+
+export function formatSubstatTierUnit(substatType) {
+  return flatSubstatTypes.has(substatType) ? '' : '%'
+}
+
+export function formatSubstatTierValue(substatType, value) {
+  return `${formatSubstatTierNumber(substatType, value)}${formatSubstatTierUnit(substatType)}`
 }
 
 export function sampleStageText(stage) {

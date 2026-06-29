@@ -293,7 +293,6 @@ onBeforeUnmount(() => {
         <FloatingHistoryPanel
           :echoes="echoes"
           :active-echo-id="activeEchoId"
-          :is-dark-theme="isDarkTheme"
           @select="selectEcho"
         />
 

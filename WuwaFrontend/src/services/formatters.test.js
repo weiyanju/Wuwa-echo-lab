@@ -4,7 +4,17 @@ import test from 'node:test'
 
 import { mainStatsByCost, substatLabels, substatOrder, tierTables } from '../data/substats.js'
 import { sonataEffects, sonataEffectsSource } from '../data/sonataEffects.js'
-import { confidenceText, formatPercent, formatSignedPercent, formatSubstatTierValue, modelWeightLabel, sampleStageText, statusText } from './formatters.js'
+import {
+  confidenceText,
+  formatPercent,
+  formatSignedPercent,
+  formatSubstatTierNumber,
+  formatSubstatTierUnit,
+  formatSubstatTierValue,
+  modelWeightLabel,
+  sampleStageText,
+  statusText,
+} from './formatters.js'
 
 test('formats probabilities as readable percentages', () => {
   assert.equal(formatPercent(0.1234), '12.34%')
@@ -25,6 +35,13 @@ test('formats substat tier values by stat unit type', () => {
   assert.equal(formatSubstatTierValue('flat_atk', 30), '30')
   assert.equal(formatSubstatTierValue('flat_hp', 320), '320')
   assert.equal(formatSubstatTierValue('flat_def', 40), '40')
+})
+
+test('separates substat tier number and unit for visual hierarchy', () => {
+  assert.equal(formatSubstatTierNumber('crit_rate', 6.3), '6.3')
+  assert.equal(formatSubstatTierUnit('crit_rate'), '%')
+  assert.equal(formatSubstatTierNumber('flat_atk', 30), '30')
+  assert.equal(formatSubstatTierUnit('flat_atk'), '')
 })
 
 test('maps model status and confidence to Chinese labels', () => {

@@ -1,9 +1,10 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import topPredictedIcon from '../../assets/icons/trending-up.svg'
 import { mainStatLabels, mainStatsByCost, substatLabels } from '../../data/substats'
 import { sonataEffects } from '../../data/sonataEffects'
 import { displayEchoNumericId } from '../../services/echoId'
-import { formatPercent, formatSubstatTierValue } from '../../services/formatters'
+import { formatPercent, formatSubstatTierNumber, formatSubstatTierUnit, formatSubstatTierValue } from '../../services/formatters'
 
 const props = defineProps({
   config: {
@@ -52,13 +53,11 @@ async function syncSetupPanelHeight() {
   setupPanelHeight.value = Math.ceil(galleryPanelRef.value.getBoundingClientRect().height)
 }
 
-function tierButtonKey(row, tier) {
-  return `${row.substat_type}:${tier.value}`
-}
+function tierButtonKey(row, tier) { return `${row.substat_type}:${tier.value}` }
 
-function isTierPending(row, tier) {
-  return props.pendingTierKey === tierButtonKey(row, tier)
-}
+function isTierPending(row, tier) { return props.pendingTierKey === tierButtonKey(row, tier) }
+
+function iconMask(source) { return { '--icon-url': `url("${source}")` } }
 
 onMounted(() => {
   syncSetupPanelHeight()
@@ -183,7 +182,7 @@ watch(
         <div class="substat-meta">
           <div class="substat-title-line">
             <strong>{{ row.label }}</strong>
-            <span v-if="row.topPredicted && !row.recorded" class="top-predicted-pill">预测最高</span>
+            <span v-if="row.topPredicted && !row.recorded" class="top-predicted-indicator" aria-label="预测概率提升" title="预测概率提升" role="img"><span class="ui-line-icon top-predicted-icon" :style="iconMask(topPredictedIcon)" aria-hidden="true"></span></span>
           </div>
           <span v-if="row.recorded">已录入：{{ formatSubstatTierValue(row.substat_type, row.recorded.tier_value) }}</span>
         </div>
@@ -195,8 +194,10 @@ watch(
             :disabled="Boolean(row.recorded) || isTierPending(row, tier)"
             @click="emit('select-tier', { row, tier })"
           >
-            <strong>{{ formatSubstatTierValue(row.substat_type, tier.value) }}</strong>
-            <span>{{ formatPercent(tier.probability) }}</span>
+            <strong class="tier-value">
+              {{ formatSubstatTierNumber(row.substat_type, tier.value) }}<span v-if="formatSubstatTierUnit(row.substat_type)" class="tier-unit">{{ formatSubstatTierUnit(row.substat_type) }}</span>
+            </strong>
+            <span class="tier-probability">{{ formatPercent(tier.probability, 1) }}</span>
           </button>
         </div>
       </article>

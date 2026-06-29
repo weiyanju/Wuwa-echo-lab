@@ -573,19 +573,18 @@
 }
 
 .floating-history-panel.minimized:hover .history-action-icon.terminal-expand-icon {
-  --terminal-scale: 1.08;
+  --terminal-scale: 1.04;
   filter:
-    drop-shadow(0 18px 24px rgba(18, 29, 43, 0.32))
-    drop-shadow(0 6px 8px rgba(0, 100, 224, 0.16))
-    drop-shadow(0 -2px 5px rgba(255, 255, 255, 0.58));
+    drop-shadow(0 15px 20px rgba(18, 29, 43, 0.3))
+    drop-shadow(0 5px 7px rgba(18, 29, 43, 0.2))
+    drop-shadow(0 -2px 5px rgba(255, 255, 255, 0.56));
 }
 
 .floating-history-panel.minimized:active .history-action-icon.terminal-expand-icon {
-  --terminal-scale: 0.99;
+  --terminal-scale: 0.98;
   filter:
-    drop-shadow(0 9px 13px rgba(18, 29, 43, 0.24))
-    drop-shadow(0 3px 4px rgba(18, 29, 43, 0.16))
-    drop-shadow(0 -1px 3px rgba(255, 255, 255, 0.45));
+    drop-shadow(0 9px 12px rgba(18, 29, 43, 0.24))
+    drop-shadow(0 3px 4px rgba(18, 29, 43, 0.18));
 }
 
 .floating-history-actions button:hover .history-action-icon {

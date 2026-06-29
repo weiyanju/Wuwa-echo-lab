@@ -109,15 +109,29 @@ test('topbar renders the shared uid switcher for game account selection', async 
 test('floating history controls use the shared line icon system', async () => {
   const historySource = await readFile(new URL('./features/history/FloatingHistoryPanel.vue', import.meta.url), 'utf8')
   const readmeSource = await readFile(new URL('./assets/icons/README.md', import.meta.url), 'utf8')
+  const iconSources = await Promise.all([
+    readFile(new URL('./assets/icons/pin.svg', import.meta.url), 'utf8'),
+    readFile(new URL('./assets/icons/layout-list.svg', import.meta.url), 'utf8'),
+    readFile(new URL('./assets/icons/panel-left.svg', import.meta.url), 'utf8'),
+    readFile(new URL('./assets/icons/trending-up.svg', import.meta.url), 'utf8'),
+    readFile(new URL('./assets/icons/sun.svg', import.meta.url), 'utf8'),
+    readFile(new URL('./assets/icons/moon.svg', import.meta.url), 'utf8'),
+    readFile(new URL('./assets/icons/chevron-down.svg', import.meta.url), 'utf8'),
+  ])
 
   assert.match(historySource, /import historyPinnedIcon from '\.\.\/\.\.\/assets\/icons\/pin\.svg'/)
-  assert.match(historySource, /import historyShowcaseIcon from '\.\.\/\.\.\/assets\/icons\/layout-list-lucide\.svg'/)
+  assert.match(historySource, /import historyShowcaseIcon from '\.\.\/\.\.\/assets\/icons\/layout-list\.svg'/)
   assert.match(historySource, /import historyMinimizeIcon from '\.\.\/\.\.\/assets\/icons\/panel-left\.svg'/)
   assert.match(historySource, /class="ui-line-icon history-action-icon"/)
   assert.match(historySource, /iconMask\(historyPinnedIcon\)/)
   assert.match(historySource, /iconMask\(historyShowcaseIcon\)/)
   assert.match(historySource, /iconMask\(historyMinimizeIcon\)/)
-  assert.match(readmeSource, /Lucide Icons/)
+  assert.match(readmeSource, /Iconoir/)
+  for (const iconSource of iconSources) {
+    assert.match(iconSource, /stroke-width="1\.5"/)
+    assert.match(iconSource, /stroke-linecap="round"/)
+    assert.match(iconSource, /stroke-linejoin="round"/)
+  }
 })
 
 test('workspace hero owns a visible history count after the history panel extraction', async () => {

@@ -2,7 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import historyMinimizeIcon from '../../assets/icons/panel-left.svg'
 import historyPinnedIcon from '../../assets/icons/pin.svg'
-import historyShowcaseIcon from '../../assets/icons/layout-list-lucide.svg'
+import historyShowcaseIcon from '../../assets/icons/layout-list.svg'
 import historyTerminalDarkIcon from '../../assets/icons/pangu-terminal-dark.png'
 import historyTerminalIcon from '../../assets/icons/rovers-terminal-expand.png'
 import { mainStatLabels, substatLabels } from '../../data/substats'
@@ -185,7 +185,10 @@ function clampNumber(value, min = 0, max = 1) {
 
 function angleToVector(angle) {
   const radians = (angle * Math.PI) / 180
-  return { x: Math.sin(radians), y: -Math.cos(radians) }
+  return {
+    x: Math.sin(radians),
+    y: -Math.cos(radians),
+  }
 }
 
 function vectorToAngle(vector) {
@@ -539,6 +542,10 @@ onMounted(() => {
   window.addEventListener('resize', constrainSavedFloatingHistoryPosition)
 })
 
+watch(() => props.isDarkTheme, () => {
+  syncTerminalIconRotation()
+})
+
 onBeforeUnmount(() => {
   clearTimeout(historyPanelAnimationTimer)
   historyPanelAnimationTimer = null
@@ -547,14 +554,6 @@ onBeforeUnmount(() => {
   endFloatingHistoryDrag()
   window.removeEventListener('resize', constrainSavedFloatingHistoryPosition)
 })
-
-watch(
-  () => props.isDarkTheme,
-  async () => {
-    await nextTick()
-    syncTerminalIconRotation()
-  },
-)
 </script>
 
 <template>
@@ -580,7 +579,15 @@ watch(
         <span class="ui-line-icon history-action-icon" :style="iconMask(historyShowcaseIcon)" aria-hidden="true"></span>
       </button>
       <button type="button" :aria-label="isHistoryMinimized ? '展开历史声骸' : '缩小历史声骸'" :title="isHistoryMinimized ? '展开' : '缩小'" @click.stop="toggleFloatingHistorySize">
-        <img v-if="isHistoryMinimized" class="history-action-icon terminal-expand-icon" :style="terminalExpandIconStyle" :src="minimizedHistoryTerminalIcon" alt="" aria-hidden="true" draggable="false" />
+        <img
+          v-if="isHistoryMinimized"
+          class="history-action-icon terminal-expand-icon"
+          :style="terminalExpandIconStyle"
+          :src="minimizedHistoryTerminalIcon"
+          alt=""
+          aria-hidden="true"
+          draggable="false"
+        >
         <span v-else class="ui-line-icon history-action-icon" :style="iconMask(historyMinimizeIcon)" aria-hidden="true"></span>
       </button>
       <p class="floating-history-count">{{ filteredHistoryEchoes.length }} / {{ sortedEchoes.length }} 个记录</p>
