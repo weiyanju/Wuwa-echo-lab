@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, ref } from 'vue'
 
 import chevronDownIcon from '../../assets/icons/chevron-down.svg'
+import helpCircleIcon from '../../assets/icons/help-circle.svg'
 import {
   evaluationMetricDefinitions,
   modelBacktestNotes,
@@ -459,8 +460,8 @@ onBeforeUnmount(() => {
       </div>
       <div class="model-bars-head">
         <span>模型</span>
-        <span>命中率<i title="单个子模型独立预测第一候选时的 Top1 回测命中率，不是整体融合模型命中率。">?</i></span>
-        <span>Loss<i title="单个子模型独立回测的损失值，越低表示概率排序和真实结果越接近。">?</i></span>
+        <span>命中率<span class="ui-line-icon evaluation-help-icon" :style="iconMask(helpCircleIcon)" title="单个子模型独立预测第一候选时的 Top1 回测命中率，不是整体融合模型命中率。" aria-label="命中率说明" role="img"></span></span>
+        <span>Loss<span class="ui-line-icon evaluation-help-icon" :style="iconMask(helpCircleIcon)" title="单个子模型独立回测的损失值，越低表示概率排序和真实结果越接近。" aria-label="Loss 说明" role="img"></span></span>
         <span></span>
       </div>
       <div class="model-bars">
@@ -671,7 +672,7 @@ onBeforeUnmount(() => {
                     <section class="model-side-block">
                       <span class="model-side-title">
                         关键参数
-                        <i title="该子模型当前用于判断的核心参数，帮助解释模型内部依据；不是最终融合概率。">?</i>
+                        <span class="ui-line-icon evaluation-help-icon" :style="iconMask(helpCircleIcon)" title="该子模型当前用于判断的核心参数，帮助解释模型内部依据；不是最终融合概率。" aria-label="关键参数说明" role="img"></span>
                       </span>
                       <div class="model-metric-grid">
                         <div v-for="metric in model.metrics" :key="metric.label">

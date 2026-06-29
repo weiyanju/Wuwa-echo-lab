@@ -307,9 +307,8 @@
 
 .app-shell.theme-dark .markov-axis-chart i,
 .app-shell.theme-dark .markov-axis-chart .markov-axis-legend i,
-.app-shell.theme-dark .model-side-title i {
-  border-color: rgba(93, 168, 255, 0.4);
-  background: #17232d;
+.app-shell.theme-dark .model-side-title .evaluation-help-icon {
+  color: #a9bac7;
 }
 
 .app-shell.theme-dark .rule-deviation-axis {
@@ -357,10 +356,8 @@
   color: #7f93a3;
 }
 
-.app-shell.theme-dark .model-bars-head i {
-  border-color: rgba(93, 168, 255, 0.32);
+.app-shell.theme-dark .model-bars-head .evaluation-help-icon {
   color: #a9bac7;
-  background: rgba(24, 39, 50, 0.86);
 }
 
 .app-shell.theme-dark .model-row-detail {
@@ -2727,21 +2724,12 @@
   letter-spacing: 0;
 }
 
-.model-side-title i {
-  display: inline-flex;
-  width: 13px;
-  height: 13px;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #d8e2ea;
-  border-radius: 999px;
+.model-side-title .evaluation-help-icon {
+  width: 14px;
+  height: 14px;
   color: #78909f;
-  background: #ffffff;
-  font-size: 9px;
-  font-style: normal;
-  font-weight: 800;
-  line-height: 1;
   cursor: help;
+  pointer-events: auto;
 }
 
 .model-side-status {
@@ -3191,22 +3179,15 @@
   display: none;
 }
 
-.model-bars-head i {
-  display: inline-flex;
-  width: 13px;
-  height: 13px;
-  align-items: center;
-  justify-content: center;
+.model-bars-head .evaluation-help-icon {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
   margin-left: 4px;
-  border: 1px solid #d8e2ea;
-  border-radius: 999px;
   color: #78909f;
-  background: #ffffff;
-  font-size: 9px;
-  font-style: normal;
-  font-weight: 800;
-  line-height: 1;
+  vertical-align: -2px;
   cursor: help;
+  pointer-events: auto;
 }
 
 .model-bars article {

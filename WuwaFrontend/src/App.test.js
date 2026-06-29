@@ -117,6 +117,7 @@ test('floating history controls use the shared line icon system', async () => {
     readFile(new URL('./assets/icons/sun.svg', import.meta.url), 'utf8'),
     readFile(new URL('./assets/icons/moon.svg', import.meta.url), 'utf8'),
     readFile(new URL('./assets/icons/chevron-down.svg', import.meta.url), 'utf8'),
+    readFile(new URL('./assets/icons/help-circle.svg', import.meta.url), 'utf8'),
   ])
 
   assert.match(historySource, /import historyPinnedIcon from '\.\.\/\.\.\/assets\/icons\/pin\.svg'/)
@@ -127,6 +128,7 @@ test('floating history controls use the shared line icon system', async () => {
   assert.match(historySource, /iconMask\(historyShowcaseIcon\)/)
   assert.match(historySource, /iconMask\(historyMinimizeIcon\)/)
   assert.match(readmeSource, /Iconoir/)
+  assert.match(readmeSource, /官方库/)
   for (const iconSource of iconSources) {
     assert.match(iconSource, /stroke-width="1\.5"/)
     assert.match(iconSource, /stroke-linecap="round"/)
@@ -389,6 +391,20 @@ test('model detail rows animate when expanded or collapsed', async () => {
   assert.match(styleSource, /opacity 220ms ease/)
   assert.match(styleSource, /transform: translateY\(-6px\)/)
   assert.match(styleSource, /\.model-bars article\.expanded \.model-expand-chevron \{\s+transform: rotate\(180deg\);/)
+})
+
+test('evaluation help markers use the shared Iconoir help icon', async () => {
+  const backtestSource = await readFile(new URL('./features/evaluation/EvaluationBacktest.vue', import.meta.url), 'utf8')
+  const styleSource = await readFile(new URL('./styles/features/evaluation.css', import.meta.url), 'utf8')
+  const helpIconSource = await readFile(new URL('./assets/icons/help-circle.svg', import.meta.url), 'utf8')
+
+  assert.match(backtestSource, /import helpCircleIcon from '\.\.\/\.\.\/assets\/icons\/help-circle\.svg'/)
+  assert.match(backtestSource, /class="ui-line-icon evaluation-help-icon"/)
+  assert.match(backtestSource, /iconMask\(helpCircleIcon\)/)
+  assert.doesNotMatch(backtestSource, /<i title="[^"]+">\?<\/i>/)
+  assert.match(styleSource, /\.model-bars-head \.evaluation-help-icon \{/)
+  assert.match(styleSource, /\.model-side-title \.evaluation-help-icon \{/)
+  assert.match(helpIconSource, /M12 22C17\.5228 22 22 17\.5228 22 12/)
 })
 
 test('disabled backtest models are de-emphasized and sorted last', async () => {
