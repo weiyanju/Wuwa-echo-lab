@@ -45,12 +45,16 @@ test('echo workbench keeps tier values calm and probabilities secondary', async 
 test('workspace styles keep long substat titles and recorded rows stable', async () => {
   const source = await readFile(new URL('./EchoWorkbenchView.vue', import.meta.url), 'utf8')
   const style = await readFile(new URL('../../styles/features/workspace.css', import.meta.url), 'utf8')
+  const topPredictedIcon = await readFile(new URL('../../assets/icons/trending-up.svg', import.meta.url), 'utf8')
 
   assert.match(source, /class="substat-title-line"/)
   assert.match(source, /import topPredictedIcon from '\.\.\/\.\.\/assets\/icons\/trending-up\.svg'/)
   assert.match(source, /class="top-predicted-indicator"/)
   assert.match(source, /aria-label="预测概率提升"/)
   assert.match(source, /class="ui-line-icon top-predicted-icon"/)
+  assert.match(topPredictedIcon, /<circle cx="8" cy="16" r="1\.35"/)
+  assert.match(topPredictedIcon, /<path d="M9\.5 14\.5 15 9l3 3"/)
+  assert.doesNotMatch(topPredictedIcon, /a2 2 0 0 0/)
   assert.doesNotMatch(source, />预测最高<\/span>/)
   assert.match(style, /\.substat-title-line \{[\s\S]+grid-template-columns: minmax\(0, 1fr\) auto;/)
   assert.match(style, /\.top-predicted-indicator \{[\s\S]+width: 24px; height: 24px;/)

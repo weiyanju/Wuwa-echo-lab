@@ -8,6 +8,7 @@
 
 - 恢复历史面板最小化态使用 `rovers-terminal-expand.png` / `pangu-terminal-dark.png` 葫芦图标，并继续跟随深浅主题与悬浮位置旋转。
 - 将趋势提升、太阳、月亮、展开箭头等通用 SVG 调整为 1.5px、圆端点、圆连接的 Iconoir 取向。
+- 根据工作台视觉复核，将“预测概率提升”图标从折线统计图形调整为“小圆点 + 上箭头”，弱化图表感，强化推荐提升语义。
 - 补充测试，约束通用线性图标的基础描边规则，并约束历史面板最小化态继续使用葫芦图标。
 - 保持本次修改只影响前端展示资源和样式，不改 API、数据库或后端响应格式。
 
@@ -18,6 +19,7 @@
 - `WuwaFrontend/src/assets/icons/`
 - `WuwaFrontend/src/App.test.js`
 - `WuwaFrontend/src/features/history/FloatingHistoryPanel.test.js`
+- `WuwaFrontend/src/features/workspace/EchoWorkbenchView.test.js`
 - `WuwaFrontend/src/assets/icons/README.md`
 
 ## API、数据库与数据边界变化
@@ -33,6 +35,7 @@
 - `cd WuwaFrontend; & '..\.tools\node\npm.cmd' test`：129 项通过。
 - `cd WuwaFrontend; & '..\.tools\node\npm.cmd' run build`：通过。
 - `git diff --check`：通过，仅出现 Git 在 Windows 下的 LF/CRLF 提示。
+- 追加图标微调后，先运行 `cd WuwaFrontend; & '..\.tools\node\npm.cmd' test -- src/features/workspace/EchoWorkbenchView.test.js`，确认新增断言由红转绿。
 
 ## 与原计划的偏差
 
