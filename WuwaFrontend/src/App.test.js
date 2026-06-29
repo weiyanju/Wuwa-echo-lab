@@ -113,7 +113,7 @@ test('floating history controls use the shared line icon system', async () => {
     readFile(new URL('./assets/icons/pin.svg', import.meta.url), 'utf8'),
     readFile(new URL('./assets/icons/layout-list.svg', import.meta.url), 'utf8'),
     readFile(new URL('./assets/icons/panel-left.svg', import.meta.url), 'utf8'),
-    readFile(new URL('./assets/icons/trending-up.svg', import.meta.url), 'utf8'),
+    readFile(new URL('./assets/icons/fast-arrow-up.svg', import.meta.url), 'utf8'),
     readFile(new URL('./assets/icons/sun.svg', import.meta.url), 'utf8'),
     readFile(new URL('./assets/icons/moon.svg', import.meta.url), 'utf8'),
     readFile(new URL('./assets/icons/chevron-down.svg', import.meta.url), 'utf8'),

@@ -1,6 +1,6 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import topPredictedIcon from '../../assets/icons/trending-up.svg'
+import topPredictedIcon from '../../assets/icons/fast-arrow-up.svg'
 import { mainStatLabels, mainStatsByCost, substatLabels } from '../../data/substats'
 import { sonataEffects } from '../../data/sonataEffects'
 import { displayEchoNumericId } from '../../services/echoId'
