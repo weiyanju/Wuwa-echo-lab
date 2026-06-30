@@ -26,7 +26,7 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
     sonata: sonataEffects.at(-1).name,
     cost: 1,
     main_stat: 'atk_percent',
-    is_continuous_tuning: false,
+    is_continuous_tuning: true,
   })
   let insightsRefreshTimer = null
   let activeRefreshTimer = null
@@ -67,7 +67,7 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
     echoForm.value.sonata = echo.set_name
     echoForm.value.cost = echo.cost
     echoForm.value.main_stat = echo.main_stat
-    echoForm.value.is_continuous_tuning = echo.is_continuous_tuning
+    echoForm.value.is_continuous_tuning = true
   }
 
   function reset() {
@@ -227,7 +227,7 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
       sonata: config.sonata,
       cost: config.cost,
       main_stat: config.main_stat,
-      is_continuous_tuning: config.is_continuous_tuning ?? true,
+      is_continuous_tuning: true,
     }
     try {
       const echo = await createEcho({
@@ -237,7 +237,7 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
         main_stat: echoForm.value.main_stat,
         source: '',
         tuning_batch_id: '',
-        is_continuous_tuning: echoForm.value.is_continuous_tuning,
+        is_continuous_tuning: true,
       }, accountId)
       if (generation !== lifecycleGeneration || accountId !== selectedGameAccountId.value) return null
       echoes.value = [echo, ...echoes.value]
@@ -282,7 +282,7 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
           cost: nextConfig.cost,
           set_name: nextConfig.sonata,
           main_stat: nextConfig.main_stat,
-          is_continuous_tuning: nextConfig.is_continuous_tuning,
+          is_continuous_tuning: true,
         })
         replaceEcho(updated)
         await refreshActive()

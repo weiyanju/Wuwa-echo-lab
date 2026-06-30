@@ -13,6 +13,16 @@ test('echo workbench owns setup and active echo presentation', async () => {
   assert.match(source, /class="gallery-panel"/)
 })
 
+test('echo setup defaults to continuous tuning without exposing a mode switch', async () => {
+  const source = await readFile(new URL('./EchoWorkbenchView.vue', import.meta.url), 'utf8')
+  const workflowSource = await readFile(new URL('./useEchoWorkspace.js', import.meta.url), 'utf8')
+
+  assert.doesNotMatch(source, /同一批连续调谐/)
+  assert.doesNotMatch(source, /type="checkbox"/)
+  assert.doesNotMatch(source, /is_continuous_tuning: \$event\.target\.checked/)
+  assert.match(workflowSource, /is_continuous_tuning: true/)
+})
+
 test('echo workbench keeps substat rows focused on entry by default', async () => {
   const source = await readFile(new URL('./EchoWorkbenchView.vue', import.meta.url), 'utf8')
 

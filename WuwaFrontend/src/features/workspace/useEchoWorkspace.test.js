@@ -62,6 +62,49 @@ test('echo workspace clears stale errors before user commands', async () => {
   assert.match(source, /async function undoActiveSubstat\(\) \{[\s\S]+?onError\(''\)/)
 })
 
+test('echo workspace creates new echoes as continuous tuning by default', async () => {
+  const originalDocument = globalThis.document
+  const originalFetch = globalThis.fetch
+  let createdPayload = null
+  globalThis.document = { cookie: 'csrftoken=test' }
+  globalThis.fetch = async (url, options = {}) => {
+    const path = String(url)
+    if (path.endsWith('/echoes/') && options.method === 'POST') {
+      createdPayload = JSON.parse(options.body)
+      return jsonResponse({
+        id: 71,
+        status: 'draft',
+        substats: [],
+        set_name: createdPayload.set_name,
+        cost: createdPayload.cost,
+        main_stat: createdPayload.main_stat,
+        is_continuous_tuning: createdPayload.is_continuous_tuning,
+      })
+    }
+    if (path.includes('/echoes/?game_account_id=1')) return jsonResponse({ results: [] })
+    if (path.includes('/prediction/')) return jsonResponse({ candidates: [] })
+    if (path.includes('/stats/') || path.includes('/model-evaluation/')) return jsonResponse({})
+    throw new Error(`Unexpected request: ${path}`)
+  }
+
+  try {
+    const workspace = useEchoWorkspace({
+      selectedGameAccountId: ref(1),
+      boundPlayerUid: ref('123456789'),
+      workspaceLocked: ref(false),
+      onError: () => {},
+    })
+
+    await workspace.applyEchoConfig({ cost: 1 })
+
+    assert.equal(createdPayload.is_continuous_tuning, true)
+    assert.equal(workspace.echoForm.value.is_continuous_tuning, true)
+  } finally {
+    globalThis.document = originalDocument
+    globalThis.fetch = originalFetch
+  }
+})
+
 test('reset prevents an old account refresh from restoring workspace data', async () => {
   const originalDocument = globalThis.document
   const originalFetch = globalThis.fetch

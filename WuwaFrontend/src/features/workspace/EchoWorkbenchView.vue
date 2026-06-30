@@ -101,14 +101,6 @@ function iconMask(source) { return { '--icon-url': `url("${source}")` } }
           </div>
         </fieldset>
 
-        <label class="checkbox-row">
-          <input
-            :checked="config.is_continuous_tuning"
-            type="checkbox"
-            @change="emit('config-change', { is_continuous_tuning: $event.target.checked })"
-          />
-          同一批连续调谐
-        </label>
       </form>
     </aside>
   </div>
