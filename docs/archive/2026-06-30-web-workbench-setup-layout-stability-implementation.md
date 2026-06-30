@@ -69,3 +69,19 @@
 - 已执行 `cd WuwaFrontend; & '..\.tools\node\npm.cmd' test -- src/features/workspace/EchoWorkbenchView.test.js`，通过。
 - 已执行 `cd WuwaFrontend; & '..\.tools\node\npm.cmd' test`，131 条前端测试通过。
 - 已执行 `cd WuwaFrontend; & '..\.tools\node\npm.cmd' run build`，生产构建通过。
+- 已执行 `cd WuwaFrontend; & '..\.tools\node\npm.cmd' test`，131 条前端测试通过。
+- 已执行 `cd WuwaFrontend; & '..\.tools\node\npm.cmd' run build`，生产构建通过。
+
+## 2026-06-30 补充修复：收起方向过渡
+
+用户继续反馈 1C 切换到 3C/4C 已经丝滑，但 3C/4C 切回 1C 时收起方向像没有动画。复查后确认根因是上一版在锁定外层壳高度后，用外层 `scrollHeight` 读取目标高度；当旧高度大于新内容高度时，外层 `scrollHeight` 仍会被旧显式高度撑住，导致逻辑误判“目标高度未变化”，于是直接清空高度，收起动画被跳过。
+
+本轮补充实现：
+
+- 主词条候选区的目标高度改为测量内部 `TransitionGroup` 的真实内容高度，不再用外层壳的 `scrollHeight` 判断收起目标。
+- 更新 `EchoWorkbenchView.test.js`，约束收起方向必须测内部内容高度，并禁止回退到外层 `row.scrollHeight`。
+- 不改 API、数据库、后端契约，也不新增长期 UI 规则。
+
+补充验证：
+
+- 已执行 `cd WuwaFrontend; & '..\.tools\node\npm.cmd' test -- src/features/workspace/EchoWorkbenchView.test.js`，通过。

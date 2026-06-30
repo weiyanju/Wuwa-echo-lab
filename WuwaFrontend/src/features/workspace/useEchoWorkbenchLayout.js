@@ -32,6 +32,11 @@ export function useEchoWorkbenchLayout(props, legalMainStats) {
     }
   }
 
+  function measureMainStatRowContentHeight() {
+    const content = mainStatRowRef.value.firstElementChild
+    return Math.ceil((content || mainStatRowRef.value).getBoundingClientRect().height)
+  }
+
   async function animateMainStatRowChange() {
     const row = mainStatRowRef.value
     const animationId = ++mainStatRowAnimationId
@@ -45,7 +50,7 @@ export function useEchoWorkbenchLayout(props, legalMainStats) {
     await nextTick()
     if (animationId !== mainStatRowAnimationId) return
 
-    const targetHeight = Math.ceil(row.scrollHeight)
+    const targetHeight = measureMainStatRowContentHeight()
     if (targetHeight === startHeight) {
       mainStatRowHeight.value = null
       return
