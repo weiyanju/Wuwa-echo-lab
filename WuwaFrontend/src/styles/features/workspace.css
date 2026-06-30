@@ -200,11 +200,12 @@
 
 .cost-row button { flex-basis: 72px; }
 
-.main-stat-row { align-content: start; }
-
+.main-stat-row-shell { overflow: hidden; transition: height 160ms ease-out; }
+.main-stat-row { align-content: start; position: relative; }
+.main-stat-option-move,
 .main-stat-option-enter-active,
 .main-stat-option-leave-active { transition: opacity 140ms ease-out, transform 140ms ease-out; }
-
+.main-stat-option-leave-active { position: absolute; }
 .main-stat-option-enter-from,
 .main-stat-option-leave-to { opacity: 0; transform: translateY(-4px); }
 

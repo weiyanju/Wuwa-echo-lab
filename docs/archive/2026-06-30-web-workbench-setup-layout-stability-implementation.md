@@ -14,6 +14,7 @@
 ## 修改模块与文件
 
 - `WuwaFrontend/src/features/workspace/EchoWorkbenchView.vue`
+- `WuwaFrontend/src/features/workspace/useEchoWorkbenchLayout.js`
 - `WuwaFrontend/src/styles/features/workspace.css`
 - `WuwaFrontend/src/features/workspace/EchoWorkbenchView.test.js`
 - `docs/web-workbench-ui-guidelines.md`
@@ -49,3 +50,22 @@
 ## 下一阶段入口
 
 在前后端服务启动后，用实际页面检查 1C、3C、4C 切换时的主词条候选区过渡是否足够轻、不拖慢录入节奏。
+
+## 2026-06-30 补充修复：主词条切换过渡
+
+用户反馈上一版过渡仍存在问题：1C 切换到 3C 不够丝滑，3C 切换到 4C 会跳一下。复查后确认原因是上一版只对 `TransitionGroup` 内部按钮做淡入和轻微位移，没有让父级候选区高度参与过渡；当候选数量从两行变为三行时，容器高度会立即变化。同高度重排时也缺少按钮移动过渡，因此 3C 到 4C 仍会出现视觉跳动。
+
+本轮补充实现：
+
+- 在 `EchoWorkbenchView.vue` 为主词条候选区增加 `main-stat-row-shell` 高度过渡壳层，切换前锁定当前真实高度，DOM 更新后过渡到新真实高度，过渡结束后恢复自适应高度。
+- 将工作台布局测量与过渡逻辑收敛到 `useEchoWorkbenchLayout.js`，避免高吸引力入口文件继续膨胀。
+- 为主词条按钮补充 `main-stat-option-move` 过渡，让 3C 到 4C 这类按钮重排也能平滑移动。
+- 保留 1C 紧凑布局，不使用固定大高度或额外空白占位。
+- 更新 `EchoWorkbenchView.test.js`，约束主词条区必须具备真实高度过渡、按钮移动过渡，并继续禁止固定 `148px` 大高度方案。
+- 更新 `docs/web-workbench-ui-guidelines.md`，将长期规则明确为“真实内容高度过渡 + 按钮移动过渡”。
+
+补充验证：
+
+- 已执行 `cd WuwaFrontend; & '..\.tools\node\npm.cmd' test -- src/features/workspace/EchoWorkbenchView.test.js`，通过。
+- 已执行 `cd WuwaFrontend; & '..\.tools\node\npm.cmd' test`，131 条前端测试通过。
+- 已执行 `cd WuwaFrontend; & '..\.tools\node\npm.cmd' run build`，生产构建通过。

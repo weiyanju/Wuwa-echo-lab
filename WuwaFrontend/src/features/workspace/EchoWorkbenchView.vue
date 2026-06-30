@@ -1,10 +1,11 @@
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed } from 'vue'
 import topPredictedIcon from '../../assets/icons/fast-arrow-up.svg'
 import { mainStatLabels, mainStatsByCost, substatLabels } from '../../data/substats'
 import { sonataEffects } from '../../data/sonataEffects'
 import { displayEchoNumericId } from '../../services/echoId'
 import { formatPercent, formatSubstatTierNumber, formatSubstatTierUnit, formatSubstatTierValue } from '../../services/formatters'
+import { useEchoWorkbenchLayout } from './useEchoWorkbenchLayout'
 
 const props = defineProps({
   config: {
@@ -30,49 +31,22 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['config-change', 'undo', 'discard', 'next', 'select-tier'])
-const createPanelRef = ref(null)
-const galleryPanelRef = ref(null)
-const setupPanelHeight = ref(null)
-const setupPanelStyle = computed(() => (setupPanelHeight.value ? { height: `${setupPanelHeight.value}px` } : {}))
 const legalMainStats = computed(() => mainStatsByCost[props.config.cost] || [])
 const progressPercent = computed(() => Math.min(((props.activeEcho?.substats.length || 0) / 5) * 100, 100))
-
-function waitForFrame() {
-  return new Promise((resolve) => {
-    requestAnimationFrame(() => resolve())
-  })
-}
-
-async function syncSetupPanelHeight() {
-  await nextTick()
-  await waitForFrame()
-  if (!createPanelRef.value || !galleryPanelRef.value || window.matchMedia('(max-width: 860px)').matches) {
-    setupPanelHeight.value = null
-    return
-  }
-  setupPanelHeight.value = Math.ceil(galleryPanelRef.value.getBoundingClientRect().height)
-}
+const {
+  createPanelRef,
+  galleryPanelRef,
+  mainStatRowRef,
+  setupPanelStyle,
+  mainStatRowStyle,
+  clearMainStatRowHeight,
+} = useEchoWorkbenchLayout(props, legalMainStats)
 
 function tierButtonKey(row, tier) { return `${row.substat_type}:${tier.value}` }
 
 function isTierPending(row, tier) { return props.pendingTierKey === tierButtonKey(row, tier) }
 
 function iconMask(source) { return { '--icon-url': `url("${source}")` } }
-
-onMounted(() => {
-  syncSetupPanelHeight()
-  window.addEventListener('resize', syncSetupPanelHeight)
-})
-
-onBeforeUnmount(() => {
-  window.removeEventListener('resize', syncSetupPanelHeight)
-})
-
-watch(
-  () => `${props.activeEcho?.id || ''}:${props.activeEcho?.substats.length || 0}:${props.config.cost}:${props.config.main_stat}:${props.config.sonata}`,
-  syncSetupPanelHeight,
-  { flush: 'post' },
-)
 </script>
 
 <template>
@@ -112,17 +86,19 @@ watch(
 
         <fieldset>
           <legend>主词条</legend>
-          <TransitionGroup name="main-stat-option" tag="div" class="option-row main-stat-row">
-            <button
-              v-for="mainStat in legalMainStats"
-              :key="mainStat"
-              type="button"
-              :class="{ active: config.main_stat === mainStat }"
-              @click="emit('config-change', { main_stat: mainStat })"
-            >
-              {{ mainStatLabels[mainStat] }}
-            </button>
-          </TransitionGroup>
+          <div ref="mainStatRowRef" class="main-stat-row-shell" :style="mainStatRowStyle" @transitionend="clearMainStatRowHeight">
+            <TransitionGroup name="main-stat-option" tag="div" class="option-row main-stat-row">
+              <button
+                v-for="mainStat in legalMainStats"
+                :key="mainStat"
+                type="button"
+                :class="{ active: config.main_stat === mainStat }"
+                @click="emit('config-change', { main_stat: mainStat })"
+              >
+                {{ mainStatLabels[mainStat] }}
+              </button>
+            </TransitionGroup>
+          </div>
         </fieldset>
 
         <label class="checkbox-row">

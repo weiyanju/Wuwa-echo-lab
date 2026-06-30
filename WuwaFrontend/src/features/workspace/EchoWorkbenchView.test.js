@@ -67,12 +67,21 @@ test('workspace styles keep long substat titles and recorded rows stable', async
 
 test('echo setup keeps main stat changes compact and softly animated', async () => {
   const source = await readFile(new URL('./EchoWorkbenchView.vue', import.meta.url), 'utf8')
+  const layoutSource = await readFile(new URL('./useEchoWorkbenchLayout.js', import.meta.url), 'utf8')
   const style = await readFile(new URL('../../styles/features/workspace.css', import.meta.url), 'utf8')
 
+  assert.match(source, /import \{ useEchoWorkbenchLayout \} from '\.\/useEchoWorkbenchLayout'/)
+  assert.match(layoutSource, /const mainStatRowRef = ref\(null\)/)
+  assert.match(layoutSource, /const mainStatRowStyle = computed/)
+  assert.match(layoutSource, /function clearMainStatRowHeight/)
+  assert.match(layoutSource, /async function animateMainStatRowChange/)
+  assert.match(layoutSource, /legalMainStats\.value\.join\('\|'\)/)
+  assert.match(source, /<div\s+ref="mainStatRowRef"\s+class="main-stat-row-shell"\s+:style="mainStatRowStyle"\s+@transitionend="clearMainStatRowHeight"\s*>/)
   assert.match(source, /<TransitionGroup name="main-stat-option" tag="div" class="option-row main-stat-row">/)
+  assert.match(style, /\.main-stat-row-shell \{[\s\S]+transition: height 160ms ease-out;/)
   assert.match(style, /\.main-stat-row \{[\s\S]+align-content: start;/)
   assert.doesNotMatch(style, /\.main-stat-row \{[\s\S]+min-height: 148px;/)
-  assert.match(style, /\.main-stat-option-enter-active,\s+\.main-stat-option-leave-active \{[\s\S]+transition: opacity 140ms ease-out, transform 140ms ease-out;/)
+  assert.match(style, /\.main-stat-option-move,\s+\.main-stat-option-enter-active,\s+\.main-stat-option-leave-active \{[\s\S]+transition: opacity 140ms ease-out, transform 140ms ease-out;/)
   assert.match(style, /\.main-stat-option-enter-from,\s+\.main-stat-option-leave-to \{[\s\S]+opacity: 0;/)
 })
 
@@ -86,7 +95,7 @@ test('echo workbench emits commands without owning persistence', async () => {
 })
 
 test('echo workbench owns setup panel height synchronization', async () => {
-  const source = await readFile(new URL('./EchoWorkbenchView.vue', import.meta.url), 'utf8')
+  const source = await readFile(new URL('./useEchoWorkbenchLayout.js', import.meta.url), 'utf8')
 
   assert.match(source, /const createPanelRef = ref\(null\)/)
   assert.match(source, /const galleryPanelRef = ref\(null\)/)
