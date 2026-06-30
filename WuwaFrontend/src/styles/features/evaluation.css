@@ -3486,7 +3486,17 @@
     border-color 220ms ease;
 }
 
-.model-row-detail-enter-from,
+.model-row-detail-enter-from {
+  max-height: 0;
+  margin-top: 0;
+  border-top-color: transparent;
+  border-bottom-color: transparent;
+  padding-top: 0;
+  padding-bottom: 0;
+  opacity: 0;
+  transform: translateY(6px);
+}
+
 .model-row-detail-leave-to {
   max-height: 0;
   margin-top: 0;
@@ -3495,7 +3505,7 @@
   padding-top: 0;
   padding-bottom: 0;
   opacity: 0;
-  transform: translateY(-6px);
+  transform: translateY(0);
 }
 
 .model-row-detail-enter-to,
