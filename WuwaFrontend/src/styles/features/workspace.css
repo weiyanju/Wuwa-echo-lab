@@ -205,13 +205,11 @@
   background: var(--canvas);
 }
 
-.cost-row button {
-  flex-basis: 72px;
-}
+.cost-row button { flex-basis: 72px; }
 
-.option-row .active {
-  border: 2px solid #0143b5;
-}
+.main-stat-row { min-height: 148px; align-content: start; }
+
+.option-row .active { border: 2px solid #0143b5; }
 
 .sonata-grid {
   display: grid;

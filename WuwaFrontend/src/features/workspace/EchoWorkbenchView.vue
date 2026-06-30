@@ -112,7 +112,7 @@ watch(
 
         <fieldset>
           <legend>主词条</legend>
-          <div class="option-row">
+          <div class="option-row main-stat-row">
             <button
               v-for="mainStat in legalMainStats"
               :key="mainStat"
