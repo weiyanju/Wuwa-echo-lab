@@ -112,7 +112,7 @@ watch(
 
         <fieldset>
           <legend>主词条</legend>
-          <div class="option-row main-stat-row">
+          <TransitionGroup name="main-stat-option" tag="div" class="option-row main-stat-row">
             <button
               v-for="mainStat in legalMainStats"
               :key="mainStat"
@@ -122,7 +122,7 @@ watch(
             >
               {{ mainStatLabels[mainStat] }}
             </button>
-          </div>
+          </TransitionGroup>
         </fieldset>
 
         <label class="checkbox-row">

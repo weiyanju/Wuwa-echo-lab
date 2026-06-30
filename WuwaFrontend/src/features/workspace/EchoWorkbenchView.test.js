@@ -65,13 +65,15 @@ test('workspace styles keep long substat titles and recorded rows stable', async
   assert.match(style, /\.substat-row\.recorded \{[\s\S]+box-shadow: inset 4px 0 0 transparent;/)
 })
 
-test('echo setup keeps main stat area height stable across costs', async () => {
+test('echo setup keeps main stat changes compact and softly animated', async () => {
   const source = await readFile(new URL('./EchoWorkbenchView.vue', import.meta.url), 'utf8')
   const style = await readFile(new URL('../../styles/features/workspace.css', import.meta.url), 'utf8')
 
-  assert.match(source, /class="option-row main-stat-row"/)
-  assert.match(style, /\.main-stat-row \{[\s\S]+min-height: 148px;/)
+  assert.match(source, /<TransitionGroup name="main-stat-option" tag="div" class="option-row main-stat-row">/)
   assert.match(style, /\.main-stat-row \{[\s\S]+align-content: start;/)
+  assert.doesNotMatch(style, /\.main-stat-row \{[\s\S]+min-height: 148px;/)
+  assert.match(style, /\.main-stat-option-enter-active,\s+\.main-stat-option-leave-active \{[\s\S]+transition: opacity 140ms ease-out, transform 140ms ease-out;/)
+  assert.match(style, /\.main-stat-option-enter-from,\s+\.main-stat-option-leave-to \{[\s\S]+opacity: 0;/)
 })
 
 test('echo workbench emits commands without owning persistence', async () => {
