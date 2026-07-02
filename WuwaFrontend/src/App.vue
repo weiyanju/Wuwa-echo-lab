@@ -210,7 +210,7 @@ onBeforeUnmount(() => {
   <main class="app-shell" :class="{ 'theme-dark': isDarkTheme }">
     <section v-if="loading" class="auth-shell">
       <div class="auth-copy">
-        <span class="brand-mark">Wuwa Echo Lab</span>
+        <span class="brand-mark">Wuwa Echo Terminal</span>
         <h1>正在连接声骸研究台</h1>
       </div>
     </section>
@@ -231,9 +231,9 @@ onBeforeUnmount(() => {
       @sign-out="signOut"
     />
 
-    <section v-else class="dashboard">
+    <section v-else class="dashboard vscode-workbench-shell">
       <header class="topbar">
-        <a class="wordmark" href="#" @click.prevent="page = 'workspace'">Wuwa Echo Lab</a>
+        <a class="wordmark" href="#" @click.prevent="page = 'workspace'">鸣潮声骸终端</a>
         <nav class="pill-tabs" aria-label="页面">
           <button :class="{ active: page === 'workspace' }" @click="page = 'workspace'">工作台</button>
           <button :class="{ active: page === 'stats' }" @click="page = 'stats'">统计</button>
@@ -248,13 +248,13 @@ onBeforeUnmount(() => {
         </div>
       </header>
 
-      <section class="hero-band compact">
-        <div>
-          <span class="brand-mark">Echo research</span>
-          <h1>鸣潮声骸实验室</h1>
+      <section class="vscode-workbench-overview" aria-label="工作台状态概览">
+        <div class="workbench-overview-copy">
+          <span class="brand-mark">Wuwa Echo Terminal</span>
+          <h1>{{ page === 'workspace' ? '声骸工作台' : page === 'stats' ? '统计分析' : '模型评估' }}</h1>
           <p>记录调谐样本，实时校准副词条概率与模型证据。</p>
         </div>
-        <div class="hero-stats">
+        <div class="hero-stats workbench-metrics">
           <div><strong>{{ visibleEchoCount }}</strong><span>历史声骸</span></div>
           <div><strong>{{ stats?.total_rolls || 0 }}</strong><span>总样本</span></div>
           <div><strong>{{ prediction ? confidenceText(prediction.confidence) : '低' }}</strong><span>置信度</span></div>
@@ -293,6 +293,7 @@ onBeforeUnmount(() => {
         <FloatingHistoryPanel
           :echoes="echoes"
           :active-echo-id="activeEchoId"
+          :is-dark-theme="isDarkTheme"
           @select="selectEcho"
         />
 

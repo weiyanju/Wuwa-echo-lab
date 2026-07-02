@@ -10,7 +10,23 @@ test('echo workbench owns setup and active echo presentation', async () => {
   assert.match(source, /const legalMainStats = computed\(\(\) => mainStatsByCost\[props\.config\.cost\] \|\| \[\]\)/)
   assert.match(source, /const progressPercent = computed\(\(\) => Math\.min\(\(\(props\.activeEcho\?\.substats\.length \|\| 0\) \/ 5\) \* 100, 100\)\)/)
   assert.match(source, /class="product-panel create-panel"/)
-  assert.match(source, /class="gallery-panel"/)
+  assert.match(source, /class="gallery-panel workbench-editor-panel"/)
+})
+
+test('echo workbench uses homepage-aligned product regions without changing commands', async () => {
+  const source = await readFile(new URL('./EchoWorkbenchView.vue', import.meta.url), 'utf8')
+  const style = await readFile(new URL('../../styles/features/workspace.css', import.meta.url), 'utf8')
+
+  assert.match(source, /class="workspace-sidebar workbench-setup-pane"/)
+  assert.match(source, /class="gallery-panel workbench-editor-panel"/)
+  assert.match(source, /class="active-command-row roll-strip"/)
+  assert.match(source, /class="substat-matrix workbench-entry-grid"/)
+  assert.match(source, /class="tier-grid workbench-tier-grid"/)
+  assert.match(style, /\.workbench-editor-panel \{/)
+  assert.match(style, /\.workbench-entry-grid \{/)
+  assert.match(style, /\.workbench-tier-grid \{/)
+  assert.match(style, /\.workspace-grid \{[\s\S]+grid-template-columns: minmax\(260px, 320px\) minmax\(0, 1fr\);/)
+  assert.match(style, /\.gallery-panel \{[\s\S]+border-radius: 12px;/)
 })
 
 test('echo setup defaults to continuous tuning without exposing a mode switch', async () => {

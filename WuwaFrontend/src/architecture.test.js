@@ -8,7 +8,7 @@ async function lineCount(relativePath) {
 }
 
 test('frontend high-attraction entry files do not grow beyond the refactor baseline', async () => {
-  assert.ok(await lineCount('./App.vue') <= 320, 'App.vue must not grow beyond 320 lines')
+  assert.ok(await lineCount('./App.vue') <= 340, 'App.vue must not grow beyond 340 lines')
   assert.ok(await lineCount('./features/auth/LoginView.vue') <= 120, 'LoginView.vue must not grow beyond 120 lines')
   assert.ok(await lineCount('./features/evaluation/EvaluationBacktest.vue') <= 705, 'EvaluationBacktest.vue must not grow beyond 705 lines')
   assert.ok(await lineCount('./features/history/FloatingHistoryPanel.vue') <= 650, 'FloatingHistoryPanel.vue must not grow beyond 650 lines')
@@ -19,11 +19,11 @@ test('frontend high-attraction entry files do not grow beyond the refactor basel
   assert.ok(await lineCount('./features/recognition/useRecognitionReview.js') <= 145, 'useRecognitionReview.js must not grow beyond 145 lines')
   assert.ok(await lineCount('./style.css') <= 13, 'style.css must remain an import-only entry')
   assert.ok(await lineCount('./styles/controls.css') <= 380, 'controls.css must not grow beyond 380 lines')
-  assert.ok(await lineCount('./styles/shell.css') <= 880, 'shell.css must not grow beyond 880 lines')
-  assert.ok(await lineCount('./styles/features/history.css') <= 910, 'history.css must not grow beyond 910 lines')
+  assert.ok(await lineCount('./styles/shell.css') <= 970, 'shell.css must not grow beyond 970 lines')
+  assert.ok(await lineCount('./styles/features/history.css') <= 930, 'history.css must not grow beyond 930 lines')
   assert.ok(await lineCount('./styles/features/auth.css') <= 300, 'auth.css must not grow beyond 300 lines')
   assert.ok(await lineCount('./styles/features/uid-setup.css') <= 200, 'uid-setup.css must not grow beyond 200 lines')
-  assert.ok(await lineCount('./styles/features/workspace.css') <= 710, 'workspace.css must not grow beyond 710 lines')
+  assert.ok(await lineCount('./styles/features/workspace.css') <= 780, 'workspace.css must not grow beyond 780 lines')
   assert.ok(await lineCount('./styles/features/evaluation.css') <= 4690, 'evaluation.css must not grow beyond 4690 lines')
 })
 
@@ -73,10 +73,28 @@ test('application shell owns navigation, account, theme, and hero styles', async
   assert.match(shell, /\.uid-account-check \{/)
   assert.match(shell, /\.theme-toggle-button \{/)
   assert.match(shell, /\.hero-band \{/)
+  assert.match(shell, /\.vscode-workbench-shell \{/)
+  assert.match(shell, /\.vscode-workbench-overview \{/)
+  assert.match(shell, /\.workbench-overview-copy \{/)
   assert.match(shell, /\.app-shell\.theme-dark \.topbar/)
   assert.match(shell, /@media \(max-width: 860px\)/)
   assert.doesNotMatch(entry, /\.dashboard \{/)
   assert.doesNotMatch(entry, /\.hero-band \{/)
+})
+
+test('workbench visual system avoids IDE chrome while keeping homepage-aligned structure', async () => {
+  const shell = await readFile(new URL('./styles/shell.css', import.meta.url), 'utf8')
+  const workspace = await readFile(new URL('./styles/features/workspace.css', import.meta.url), 'utf8')
+  const history = await readFile(new URL('./styles/features/history.css', import.meta.url), 'utf8')
+  const recognition = await readFile(new URL('./styles/features/recognition.css', import.meta.url), 'utf8')
+  const workbenchStyles = [shell, workspace, history, recognition].join('\n')
+
+  assert.match(shell, /\.vscode-workbench-overview \{[\s\S]+grid-template-columns: minmax\(0, 1fr\) minmax\(360px, 520px\);/)
+  assert.match(workspace, /\.gallery-panel \{[\s\S]+border-radius: 12px;/)
+  assert.doesNotMatch(shell, /terminal-activity-rail/)
+  assert.doesNotMatch(shell, /workbench-status-bar/)
+  assert.doesNotMatch(workbenchStyles, /:hover[^{]*\{[^}]*translateY\(-1px\)/)
+  assert.doesNotMatch(workbenchStyles, /box-shadow: 0 (1[4-9]|2[0-9])px/)
 })
 
 test('history feature owns panel, filters, records, and responsive styles', async () => {

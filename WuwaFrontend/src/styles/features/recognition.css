@@ -3,8 +3,9 @@
   grid-template-columns: minmax(280px, 0.42fr) minmax(420px, 1fr);
   align-items: center;
   gap: 18px;
-  margin-bottom: 24px;
-  padding: 16px 18px;
+  margin: 0 10px;
+  padding: 10px 12px;
+  border-radius: 2px;
 }
 
 .recognition-panel-head {
@@ -23,8 +24,8 @@
 }
 
 .recognition-live-dot {
-  width: 11px;
-  height: 11px;
+  width: 8px;
+  height: 8px;
   flex: 0 0 auto;
   border-radius: 999px;
   background: #2c9f70;
@@ -64,7 +65,7 @@
   align-items: center;
   justify-content: center;
   padding: 0;
-  box-shadow: 0 8px 18px rgba(39, 55, 71, 0.05);
+  box-shadow: none;
 }
 
 .recognition-refresh-button .ui-line-icon {
@@ -109,7 +110,7 @@
   display: grid;
   grid-template-columns: minmax(220px, 1fr) minmax(260px, 360px);
   align-items: center;
-  gap: 18px;
+  gap: 12px;
   min-width: 0;
   border-left: 1px solid rgba(216, 226, 234, 0.86);
   padding-left: 20px;
@@ -117,11 +118,9 @@
 
 .recognition-state-copy {
   min-width: 0;
-  border-radius: 14px;
+  border-radius: 2px;
   padding: 10px 12px;
-  background:
-    linear-gradient(90deg, rgba(23, 105, 210, 0.08), transparent 86%),
-    rgba(247, 250, 253, 0.76);
+  background: rgba(247, 250, 253, 0.92);
 }
 
 .recognition-state-copy strong {
@@ -148,7 +147,7 @@
 .recognition-metric-grid article {
   min-width: 0;
   border: 1px solid rgba(216, 226, 234, 0.86);
-  border-radius: 13px;
+  border-radius: 2px;
   padding: 8px 10px;
   background: rgba(255, 255, 255, 0.78);
 }
@@ -183,7 +182,7 @@
   gap: 14px;
   min-height: 42px;
   border: 1px solid #e4ebf2;
-  border-radius: 14px;
+  border-radius: 2px;
   padding: 9px 10px 9px 13px;
   background: rgba(255, 255, 255, 0.72);
 }
@@ -309,8 +308,11 @@
 }
 
 @media (max-width: 860px) {
-  .recognition-panel {
+  .product-panel.recognition-panel {
     grid-template-columns: 1fr;
+    width: calc(100% - 20px);
+    max-width: calc(100% - 20px);
+    box-sizing: border-box;
   }
 
   .recognition-summary-strip {
