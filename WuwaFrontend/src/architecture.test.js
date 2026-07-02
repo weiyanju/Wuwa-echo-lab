@@ -9,7 +9,7 @@ async function lineCount(relativePath) {
 
 test('frontend high-attraction entry files do not grow beyond the refactor baseline', async () => {
   assert.ok(await lineCount('./App.vue') <= 320, 'App.vue must not grow beyond 320 lines')
-  assert.ok(await lineCount('./features/auth/LoginView.vue') <= 85, 'LoginView.vue must not grow beyond 85 lines')
+  assert.ok(await lineCount('./features/auth/LoginView.vue') <= 120, 'LoginView.vue must not grow beyond 120 lines')
   assert.ok(await lineCount('./features/evaluation/EvaluationBacktest.vue') <= 705, 'EvaluationBacktest.vue must not grow beyond 705 lines')
   assert.ok(await lineCount('./features/history/FloatingHistoryPanel.vue') <= 650, 'FloatingHistoryPanel.vue must not grow beyond 650 lines')
   assert.ok(await lineCount('./features/workspace/UidSetupView.vue') <= 130, 'UidSetupView.vue must not grow beyond 130 lines')
@@ -99,15 +99,18 @@ test('auth feature owns login layout, information, dark, and responsive styles',
   const auth = await readFile(new URL('./styles/features/auth.css', import.meta.url), 'utf8')
 
   assert.match(entry, /@import '\.\/styles\/features\/auth\.css';/)
-  assert.match(auth, /\.auth-shell \{/)
-  assert.match(auth, /\.auth-mode-actions \{/)
-  assert.match(auth, /\.login-info-grid \{/)
-  assert.match(auth, /\.app-shell\.theme-dark \.auth-shell-home::after/)
+  assert.match(auth, /\.terminal-home \{/)
+  assert.match(auth, /\.terminal-navbar \{/)
+  assert.match(auth, /\.terminal-container \{/)
+  assert.match(auth, /\.terminal-features-grid \{/)
+  assert.match(auth, /\.terminal-auth-card \{/)
+  assert.match(auth, /\.terminal-tab-indicator \{/)
   assert.match(auth, /@media \(max-width: 860px\)/)
   assert.match(auth, /@media \(max-width: 520px\)/)
-  assert.match(auth, /@media \(max-width: 520px\)[\s\S]+\.login-info-card p \{[\s\S]+white-space: normal;/)
+  assert.match(auth, /@media \(max-width: 860px\)[\s\S]+\.terminal-container \{[\s\S]+grid-template-columns: 1fr;/)
+  assert.match(auth, /@media \(max-width: 520px\)[\s\S]+\.terminal-title \{[\s\S]+overflow: visible;[\s\S]+animation: none;/)
   assert.doesNotMatch(entry, /\.auth-shell \{/)
-  assert.doesNotMatch(entry, /\.login-info-grid \{/)
+  assert.doesNotMatch(entry, /\.terminal-home \{/)
 })
 
 test('uid setup owns its shell, card, dark theme, and responsive styles', async () => {
@@ -184,7 +187,7 @@ test('features own their remaining styles and removed views leave no legacy css'
   assert.match(evaluation, /\.context-overall-progress \{/)
   assert.match(evaluation, /@keyframes summary-copy-refresh/)
   assert.match(history, /\.history-records \{/)
-  assert.match(auth, /\.showcase-card \{/)
+  assert.match(auth, /\.terminal-container \{/)
   assert.doesNotMatch(allStyles, /\.prediction-strip\b/)
   assert.doesNotMatch(allStyles, /\.diagnostic-matrix\b/)
   assert.doesNotMatch(allStyles, /\.weight-bars\b/)

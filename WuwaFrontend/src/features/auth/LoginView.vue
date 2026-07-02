@@ -10,14 +10,32 @@ const props = defineProps({
 
 const emit = defineEmits(['submit'])
 
+const terminalFeatures = [
+  { title: '历史调谐记录', path: 'M4 21v-7m0-4V3m8 18v-9m0-4V3m8 18v-5m0-4V3M1 14h6m2-6h6m2 8h6' },
+  { title: '本地截图识别', path: 'M6 3H3v3m15-3h3v3M6 21H3v-3m15 3h3v-3M3 12h18' },
+  { title: '多账号独立管理', path: 'M4 6a8 3 0 1016 0A8 3 0 104 6zm0 0v12a8 3 0 1016 0V6' },
+  { title: '副词条预测面板', path: 'M3 21h18M3 21V3m4 12l4-4 4 4 5-9' },
+]
+const authTabs = [
+  { mode: 'login', label: '终端登录' },
+  { mode: 'register', label: '创建档案' },
+]
 const authForm = ref({
   username: localStorage.getItem('wuwa-login-username') || '',
   password: '',
   mode: 'login',
 })
+const confirmPassword = ref('')
 const saveLogin = ref(localStorage.getItem('wuwa-save-login') === 'true')
 const validationError = ref('')
 const displayedError = computed(() => validationError.value || props.error)
+const isRegister = computed(() => authForm.value.mode === 'register')
+const authModeIndex = computed(() => (isRegister.value ? 1 : 0))
+
+function selectAuthMode(mode) {
+  authForm.value.mode = mode
+  validationError.value = ''
+}
 
 function submitAuth() {
   validationError.value = ''
@@ -25,6 +43,10 @@ function submitAuth() {
   const password = authForm.value.password
   if (!username || !password) {
     validationError.value = '请填写用户名和密码。'
+    return
+  }
+  if (isRegister.value && password !== confirmPassword.value) {
+    validationError.value = '两次输入的访问密钥不一致。'
     return
   }
   emit('submit', {
@@ -37,45 +59,55 @@ function submitAuth() {
 </script>
 
 <template>
-  <section class="auth-shell auth-shell-home">
-    <div class="auth-hero">
-      <div class="auth-copy">
-        <span class="brand-mark">Wuwa Echo Lab</span>
-        <h1>鸣潮声骸实验室</h1>
+  <section class="terminal-home">
+    <nav class="terminal-navbar">
+      <div class="terminal-brand">
+        <span class="terminal-brand-icon"></span>
+        Wuwa Echo Terminal <span>| 鸣潮声骸终端</span>
       </div>
-      <div class="showcase-card login-info-card" aria-label="工具说明">
-        <div>
-          <span class="eyebrow">Echo tracker</span>
-          <h2>声骸记录</h2>
-          <p>记录套装、COST、主词条、副词条类型与数值档位，持续沉淀样本。</p>
-        </div>
-        <div class="login-info-grid">
-          <div><strong>点击录入</strong><span>套装和档位都用按钮选择，减少手输。</span></div>
-          <div><strong>概率排名</strong><span>输出候选副词条概率、基线偏离和依据。</span></div>
-          <div><strong>谨慎判断</strong><span>套装、顺序、时间等变量只在样本足够时参与判断。</span></div>
-        </div>
-      </div>
-    </div>
+      <div class="terminal-system-status"><span></span>SYSTEM.ONLINE</div>
+    </nav>
 
-    <form class="auth-form product-panel" @submit.prevent="submitAuth">
-      <label>
-        用户名
-        <input v-model="authForm.username" autocomplete="username" />
-      </label>
-      <label>
-        密码
-        <input v-model="authForm.password" type="password" autocomplete="current-password" />
-      </label>
-      <label class="checkbox-row save-login-row">
-        <input v-model="saveLogin" type="checkbox" />
-        记住用户名
-      </label>
-      <p v-if="displayedError" class="error-text">{{ displayedError }}</p>
-      <div class="auth-mode-actions">
-        <button :class="{ active: authForm.mode === 'login' }" type="button" @click="authForm.mode = 'login'">登录</button>
-        <button :class="{ active: authForm.mode === 'register' }" type="button" @click="authForm.mode = 'register'">注册</button>
+    <main class="terminal-main-wrapper">
+      <div class="terminal-container">
+        <div class="terminal-hero-content">
+          <span class="terminal-subtitle">ECHO ANALYSIS PROTOCOL</span>
+          <div class="terminal-title-wrapper"><h1 class="terminal-title">欢迎回家，漂泊者</h1></div>
+          <div class="terminal-features-grid">
+            <div v-for="feature in terminalFeatures" :key="feature.title" class="terminal-feature-item">
+              <div class="terminal-feature-icon"><svg viewBox="0 0 24 24"><path :d="feature.path" /></svg></div>
+              <div class="terminal-feature-text"><h4>{{ feature.title }}</h4></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="terminal-auth-wrapper">
+          <div class="terminal-auth-card">
+            <div class="terminal-auth-tabs">
+              <button v-for="tab in authTabs" :key="tab.mode" class="terminal-tab-btn" :class="{ active: authForm.mode === tab.mode }" type="button" @click="selectAuthMode(tab.mode)">{{ tab.label }}</button>
+              <div class="terminal-tab-indicator" :style="{ transform: `translateX(${authModeIndex * 100}%)` }"></div>
+            </div>
+
+            <form class="terminal-form-view" @submit.prevent="submitAuth">
+              <label class="terminal-input-group">
+                {{ isRegister ? '新建操作员账号' : '操作员账号' }}
+                <input v-model="authForm.username" class="terminal-standard-input" autocomplete="username" placeholder="请输入账号" />
+              </label>
+              <label class="terminal-input-group">
+                {{ isRegister ? '设置访问密钥' : '访问密钥' }}
+                <input v-model="authForm.password" class="terminal-standard-input" type="password" :autocomplete="isRegister ? 'new-password' : 'current-password'" placeholder="••••••••" />
+              </label>
+              <label v-if="isRegister" class="terminal-input-group">
+                确认访问密钥
+                <input v-model="confirmPassword" class="terminal-standard-input" type="password" autocomplete="new-password" placeholder="再次输入密钥" />
+              </label>
+              <label v-else class="terminal-form-options"><input v-model="saveLogin" type="checkbox" /> 保持连接状态</label>
+              <p v-if="displayedError" class="error-text">{{ displayedError }}</p>
+              <button class="terminal-primary-btn" type="submit">{{ isRegister ? 'INIT_REGISTER()' : 'EXECUTE_LOGIN()' }}</button>
+            </form>
+          </div>
+        </div>
       </div>
-      <button class="button-buy" type="submit">{{ authForm.mode === 'register' ? '创建账号并进入' : '进入研究台' }}</button>
-    </form>
+    </main>
   </section>
 </template>
