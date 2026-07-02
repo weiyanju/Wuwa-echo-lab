@@ -5,7 +5,7 @@
   background:
     linear-gradient(180deg, rgba(25, 39, 50, 0.96), rgba(20, 32, 42, 0.94)),
     #17232d;
-  box-shadow: none;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.24);
 }
 
 .app-shell.theme-dark .active-summary strong,
@@ -178,7 +178,7 @@
   font-size: 14px;
   font-weight: 700;
   letter-spacing: 0;
-  transition: background-color 100ms ease-out, border-color 100ms ease-out, color 100ms ease-out;
+  transition: background-color 180ms ease-out, border-color 180ms ease-out, color 180ms ease-out, transform 180ms ease-out;
 }
 
 .option-row button:hover,
@@ -186,7 +186,7 @@
   border-color: var(--ink-deep);
 }
 
-.gallery-panel { border: 1px solid var(--hairline-soft); border-radius: 12px; background: var(--canvas); }
+.gallery-panel { border: 1px solid var(--hairline-soft); border-radius: 24px; background: var(--canvas); }
 
 .echo-form { display: grid; gap: 16px; }
 
@@ -262,17 +262,18 @@
   gap: 10px;
   min-height: 48px;
   border: 1px solid rgba(10, 19, 23, 0.12);
-  border-radius: 8px;
+  border-radius: 16px;
   padding: 10px 12px;
   color: var(--ink);
   background: var(--canvas);
   text-align: left;
-  transition: border-color 100ms ease-out, background-color 100ms ease-out;
+  transition: border-color 160ms ease-out, background-color 160ms ease-out, transform 160ms ease-out;
 }
 
 .sonata-grid button:hover {
   border-color: var(--ink-deep);
   background: #fbfcfd;
+  transform: translateY(-1px);
 }
 
 .sonata-grid button.active {
@@ -315,7 +316,7 @@
 }
 
 .progress-card {
-  border-radius: 8px;
+  border-radius: 16px;
   padding: 16px;
   background: var(--canvas);
 }
@@ -334,11 +335,10 @@
 
 .workspace-grid {
   display: grid;
-  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
-  gap: 16px;
+  grid-template-columns: minmax(292px, 352px) minmax(0, 1fr);
+  gap: 24px;
   align-items: start;
   min-height: 0;
-  padding: 0 10px;
 }
 
 .workspace-sidebar {
@@ -379,26 +379,14 @@
 }
 
 .gallery-panel {
-  padding: 20px;
-}
-
-.workbench-setup-pane {
-  gap: 10px;
-}
-
-.workbench-editor-panel {
-  min-width: 0;
-  background: #ffffff;
+  padding: 28px;
 }
 
 .active-summary {
   align-items: start;
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) minmax(240px, 0.85fr) minmax(188px, 188px);
-  gap: 10px;
-  margin-bottom: 10px;
-  border-bottom: 1px solid var(--hairline-soft);
-  padding-bottom: 10px;
+  grid-template-columns: minmax(240px, 1fr) minmax(220px, 0.9fr) minmax(220px, 220px);
+  margin-bottom: 14px;
 }
 
 .active-identity {
@@ -411,7 +399,7 @@
 .active-section-title {
   margin: 0;
   color: var(--ink-deep);
-  font-size: 18px;
+  font-size: 24px;
   font-weight: 500;
   line-height: 1.25;
   letter-spacing: 0;
@@ -421,7 +409,7 @@
   max-width: 620px;
   margin: 0;
   color: var(--ink-deep);
-  font-size: 24px;
+  font-size: 32px;
   font-variant-numeric: tabular-nums;
   font-weight: 500;
   line-height: 1.08;
@@ -467,7 +455,7 @@
   gap: 8px;
   padding: 4px;
   border: 1px solid var(--hairline-soft);
-  border-radius: 8px;
+  border-radius: 18px;
   background: #fbfcfd;
 }
 
@@ -532,13 +520,14 @@
   font-size: 13px;
   font-weight: 700;
   line-height: 1.2;
-  transition: background-color 100ms ease-out, border-color 100ms ease-out, box-shadow 100ms ease-out;
+  transition: background-color 160ms ease-out, border-color 160ms ease-out, box-shadow 160ms ease-out, transform 160ms ease-out;
 }
 
 .undo-roll-button:hover:not(:disabled) {
   border-color: #e4a500;
   background: #ffe7a3;
-  box-shadow: none;
+  box-shadow: 0 8px 18px rgba(247, 185, 40, 0.22);
+  transform: translateY(-1px);
 }
 
 .undo-roll-button:disabled {
@@ -550,20 +539,16 @@
   gap: 8px;
 }
 
-.workbench-entry-grid {
-  align-content: start;
-}
-
 .substat-row {
   display: grid;
-  grid-template-columns: minmax(188px, 240px) minmax(0, 1fr);
+  grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
   align-items: center;
   gap: 12px;
   min-height: 70px;
   contain: layout paint;
   border: 1px solid var(--hairline-soft);
-  border-radius: 8px;
-  padding: 9px 10px;
+  border-radius: 16px;
+  padding: 12px;
   box-shadow: inset 4px 0 0 transparent;
   background: var(--canvas);
   transition: background-color 160ms ease-out, border-color 160ms ease-out;
@@ -622,10 +607,6 @@
   gap: 6px;
 }
 
-.workbench-tier-grid {
-  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
-}
-
 .tier-grid button {
   display: grid;
   align-content: center; gap: 1px;
@@ -633,7 +614,7 @@
   border: 1px solid rgba(10, 19, 23, 0.12);
   border-radius: 10px;
   background: var(--canvas);
-  transition: border-color 100ms ease-out, background-color 100ms ease-out;
+  transition: border-color 160ms ease-out, background-color 160ms ease-out, transform 160ms ease-out;
 }
 
 .tier-value {
@@ -654,7 +635,7 @@
 }
 
 .tier-grid button:active:not(:disabled) {
-  border: 2px solid #0143b5;
+  border: 2px solid #0143b5; transform: scale(0.985);
 }
 
 .tier-grid button:disabled {
@@ -663,16 +644,13 @@
 
 @media (max-width: 1180px) {
   .workspace-grid {
-    grid-template-columns: minmax(248px, 300px) minmax(0, 1fr);
+    grid-template-columns: minmax(290px, 360px) minmax(0, 1fr);
   }
 }
 
 @media (max-width: 860px) {
   .workspace-grid {
     grid-template-columns: 1fr;
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
   }
 
   .workspace-sidebar {
@@ -715,7 +693,7 @@
 
 @media (max-width: 520px) {
   .gallery-panel {
-    border-radius: 12px;
+    border-radius: 24px;
     padding: 20px;
   }
 

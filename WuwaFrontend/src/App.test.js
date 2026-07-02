@@ -136,21 +136,14 @@ test('floating history controls use the shared line icon system', async () => {
   }
 })
 
-test('workbench shell follows the VS Code homepage-style navigation and overview', async () => {
+test('workspace hero owns a visible history count after the history panel extraction', async () => {
   const appSource = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
   const workspaceSource = await readFile(new URL('./features/workspace/useEchoWorkspace.js', import.meta.url), 'utf8')
 
   assert.match(workspaceSource, /import \{ buildNextEchoConfig, isReusableDraft, sortVisibleEchoHistory \} from '\.\.\/\.\.\/services\/echoWorkflow\.js'/)
   assert.match(workspaceSource, /const visibleEchoCount = computed\(\(\) => sortVisibleEchoHistory\(echoes\.value\)\.length\)/)
-  assert.match(appSource, /<section v-else class="dashboard vscode-workbench-shell">/)
-  assert.match(appSource, /class="vscode-workbench-overview"/)
-  assert.match(appSource, /class="workbench-overview-copy"/)
-  assert.match(appSource, /<strong>\{\{ visibleEchoCount \}\}<\/strong>/)
-  assert.match(appSource, /:is-dark-theme="isDarkTheme"/)
-  assert.doesNotMatch(appSource, /terminal-activity-rail/)
-  assert.doesNotMatch(appSource, /workbench-status-bar/)
+  assert.match(appSource, /<div><strong>\{\{ visibleEchoCount \}\}<\/strong><span>历史声骸<\/span><\/div>/)
   assert.doesNotMatch(appSource, /\{\{ sortedEchoes\.length \}\}/)
-  assert.doesNotMatch(appSource, /<section class="hero-band compact">/)
 })
 
 test('milestone 3 uses account login and locks workbench until default game uid is bound', async () => {
@@ -221,7 +214,7 @@ test('locked uid binding state shows a focused setup page without workbench chro
   assert.match(appSource, /<label class="uid-binding-field" for="uid-binding-input">\s+UID\s+<input/)
   assert.match(appSource, /placeholder="输入你的 UID"/)
   assert.match(appSource, /\{\{ saving \? '绑定中' : '绑定并进入' \}\}/)
-  assert.match(appSource, /<section v-else class="dashboard vscode-workbench-shell">/)
+  assert.match(appSource, /<section v-else class="dashboard">/)
   assert.doesNotMatch(appSource, /<section v-if="gameAccount\.workspaceLocked\.value" class="locked-workbench product-panel">/)
   assert.match(uidSetupStyleSource, /\.uid-setup-topbar \{[\s\S]+width: 100%;/)
   assert.match(uidSetupStyleSource, /\.uid-setup-topbar \{[\s\S]+margin: 0 auto;/)

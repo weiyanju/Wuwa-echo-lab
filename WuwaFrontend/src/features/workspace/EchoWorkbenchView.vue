@@ -50,7 +50,7 @@ function iconMask(source) { return { '--icon-url': `url("${source}")` } }
 </script>
 
 <template>
-  <div class="workspace-sidebar workbench-setup-pane">
+  <div class="workspace-sidebar">
     <aside ref="createPanelRef" class="product-panel create-panel" :style="setupPanelStyle">
       <div class="section-heading">
         <span class="eyebrow">Echo setup</span>
@@ -105,7 +105,7 @@ function iconMask(source) { return { '--icon-url': `url("${source}")` } }
     </aside>
   </div>
 
-  <section ref="galleryPanelRef" class="gallery-panel workbench-editor-panel">
+  <section ref="galleryPanelRef" class="gallery-panel">
     <div class="active-summary">
       <div class="active-identity">
         <span class="eyebrow">Active echo</span>
@@ -117,7 +117,7 @@ function iconMask(source) { return { '--icon-url': `url("${source}")` } }
           <span>{{ mainStatLabels[activeEcho.main_stat] || activeEcho.main_stat }}</span>
         </div>
       </div>
-      <div v-if="activeEcho" class="active-command-row roll-strip" :class="{ empty: !activeEcho.substats.length }">
+      <div v-if="activeEcho" class="roll-strip" :class="{ empty: !activeEcho.substats.length }">
         <span v-for="roll in activeEcho.substats" :key="roll.id">
           <strong>{{ roll.position }}.</strong>
           {{ substatLabels[roll.substat_type] }} {{ formatSubstatTierValue(roll.substat_type, roll.tier_value) }}
@@ -139,7 +139,7 @@ function iconMask(source) { return { '--icon-url': `url("${source}")` } }
       </div>
     </div>
 
-    <div v-if="activeEcho" class="substat-matrix workbench-entry-grid">
+    <div v-if="activeEcho" class="substat-matrix">
       <article
         v-for="row in matrixRows"
         :key="row.substat_type"
@@ -154,7 +154,7 @@ function iconMask(source) { return { '--icon-url': `url("${source}")` } }
           </div>
           <span v-if="row.recorded">已录入：{{ formatSubstatTierValue(row.substat_type, row.recorded.tier_value) }}</span>
         </div>
-        <div class="tier-grid workbench-tier-grid">
+        <div class="tier-grid">
           <button
             v-for="tier in row.tier_table"
             :key="`${row.substat_type}-${tier.value}`"
