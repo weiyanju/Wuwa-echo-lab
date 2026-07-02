@@ -1,5 +1,7 @@
 # Web 工作台 UI 规范
 
+> 前端 UI 重构优先级：Web 工作台的视觉系统、布局架构、组件状态、快捷键与交互细节，以 [`web-ui-design-system-v2.md`](./web-ui-design-system-v2.md) 为最高优先级。本文档继续保留 Web 工作台的数据范围、账号/UID、页面职责和业务状态规则。
+
 ## 1. 文档定位
 
 本文定义 `Wuwa` Vue Web 工作台的长期 UI 规范。
