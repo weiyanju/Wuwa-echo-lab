@@ -171,7 +171,7 @@ function weightDiagnosticText(row) {
         {{ stats ? sampleStageText(stats.sample_stage).split('：')[0] : '等待样本' }}
       </span>
       <span class="evaluation-status-chip">
-        <small>Top 3</small>
+        <small>前三命中</small>
         {{ evaluationMetricText(evaluationMetrics[3]) }}
       </span>
     </div>

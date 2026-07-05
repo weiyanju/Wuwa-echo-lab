@@ -31,19 +31,19 @@ export const evaluationMetricDefinitions = [
   },
   {
     key: 'top_1_hit_rate',
-    label: 'Top 1 命中率',
+    label: '首选命中率',
     target: '越高越好',
     description: '概率第一名是否命中真实词条',
   },
   {
     key: 'top_3_hit_rate',
-    label: 'Top 3 命中率',
+    label: '前三命中率',
     target: '越高越好',
     description: '前三名候选是否覆盖真实词条',
   },
   {
     key: 'top_5_hit_rate',
-    label: 'Top 5 命中率',
+    label: '前五命中率',
     target: '越高越好',
     description: '前五名候选是否覆盖真实词条',
   },

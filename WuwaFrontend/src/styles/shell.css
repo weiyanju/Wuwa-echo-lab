@@ -144,14 +144,14 @@
 }
 
 .app-shell.theme-dark .topbar {
-  background:
-    linear-gradient(180deg, rgba(24, 38, 49, 0.96), rgba(18, 30, 40, 0.94)),
-    #17232d;
+  border-color: rgba(83, 107, 124, 0.48);
+  background: rgba(18, 30, 40, 0.82);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
 }
 
 .app-shell.theme-dark .topbar .pill-tabs {
-  border-color: rgba(82, 106, 122, 0.7);
-  background: rgba(13, 23, 31, 0.72);
+  border-color: transparent;
+  background: transparent;
 }
 
 .app-shell.theme-dark .topbar .pill-tabs button {
@@ -251,7 +251,7 @@
 
 .dashboard {
   display: grid;
-  gap: 24px;
+  gap: 20px;
   width: min(1360px, calc(100% - 64px));
   margin: 0 auto;
   padding-bottom: 64px;
@@ -261,13 +261,12 @@
   position: sticky;
   top: 12px;
   z-index: 10;
-  min-height: 64px;
-  border: 1px solid rgba(206, 219, 231, 0.92);
-  border-radius: 100px;
-  padding: 8px 10px 8px 18px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(247, 250, 253, 0.9));
-  box-shadow: 0 14px 40px rgba(39, 55, 71, 0.08);
+  min-height: 58px;
+  border: 1px solid rgba(216, 226, 234, 0.88);
+  border-radius: 20px;
+  padding: 7px 10px 7px 16px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 10px 32px rgba(39, 55, 71, 0.06);
   backdrop-filter: saturate(180%) blur(18px);
 }
 
@@ -276,9 +275,9 @@
   align-items: center;
   gap: 10px;
   color: var(--ink-deep);
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 800;
-  letter-spacing: -0.2px;
+  letter-spacing: 0;
   text-decoration: none;
 }
 
@@ -629,9 +628,9 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 32px;
+  gap: 28px;
   overflow: hidden;
-  padding: 34px 40px;
+  padding: 28px 34px;
   color: var(--ink-deep);
   background:
     radial-gradient(circle at 8% 18%, rgba(0, 100, 224, 0.1), transparent 34%),
@@ -667,7 +666,7 @@
 
 .hero-band h1 {
   margin-top: 14px;
-  font-family: "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Noto Sans SC", system-ui, sans-serif;
+  font-family: var(--font-ui);
   font-size: clamp(42px, 4vw, 56px);
   font-weight: 800;
   line-height: 1.02;
@@ -684,43 +683,45 @@
 }
 
 .hero-band.compact {
-  min-height: 96px;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 20px;
-  padding: 20px 28px;
+  min-height: 66px; grid-template-columns: minmax(0, 1fr) auto; gap: 14px;
+  border-radius: 18px; padding: 14px 18px; box-shadow: none;
+  background: radial-gradient(circle at 4% 45%, rgba(23, 105, 210, 0.13), transparent 26%), linear-gradient(90deg, rgba(239, 246, 255, 0.72), rgba(255, 255, 255, 0.92)), #ffffff;
 }
 
-.hero-band.compact .brand-mark {
+.hero-band.compact::after {
   display: none;
 }
 
 .hero-band.compact h1 {
+  position: relative; display: inline-flex; align-items: baseline; gap: 10px;
   margin-top: 0;
-  font-size: clamp(26px, 2.6vw, 34px);
-  line-height: 1.08;
+  font-family: var(--font-ui);
+  font-size: 2rem;
+  font-weight: 700; line-height: 1.08; letter-spacing: 0;
 }
 
-.hero-band.compact p {
-  margin-top: 6px;
-  font-size: 14px;
+.hero-band.compact h1::after {
+  width: 54px; height: 3px; border-radius: 999px; background: linear-gradient(90deg, #1769d2, rgba(23, 105, 210, 0)); content: "";
 }
 
 .hero-band.compact .hero-stats {
-  gap: 8px;
+  display: flex;
+  gap: 0;
 }
 
 .hero-band.compact .hero-stats div {
-  min-width: 104px;
-  border-radius: 18px;
-  padding: 13px 16px;
+  min-width: 88px; border: 0; border-left: 1px solid rgba(216, 226, 234, 0.86);
+  border-radius: 0; padding: 4px 18px; background: transparent; box-shadow: none;
 }
 
 .hero-band.compact .hero-stats strong {
-  font-size: 26px;
+  font-family: var(--font-data);
+  font-size: 23px;
+  font-variant-numeric: tabular-nums;
 }
 
 .hero-band.compact .hero-stats span {
-  margin-top: 5px;
+  margin-top: 4px;
   font-size: 12px;
 }
 
@@ -735,8 +736,15 @@
 
 .hero-stats strong {
   color: #071116;
+  font-family: var(--font-data);
   font-size: 34px;
+  font-variant-numeric: tabular-nums;
   line-height: 1;
+}
+
+.hero-band.compact .hero-stats .hero-confidence-value,
+.hero-stats .hero-confidence-value {
+  font-family: var(--font-ui);
 }
 
 .hero-stats span {
@@ -748,16 +756,16 @@
 }
 
 .topbar .pill-tabs {
-  padding: 4px;
-  border: 1px solid rgba(206, 219, 231, 0.8);
+  padding: 3px;
+  border: 1px solid transparent;
   border-radius: 999px;
-  background: rgba(241, 244, 247, 0.72);
+  background: transparent;
 }
 
 .topbar .pill-tabs button {
-  min-height: 40px;
+  min-height: 36px;
   border: 0;
-  padding: 9px 20px;
+  padding: 7px 18px;
   background: transparent;
   color: #334554;
 }

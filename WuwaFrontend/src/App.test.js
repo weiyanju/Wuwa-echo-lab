@@ -39,7 +39,10 @@ test('topbar exposes an accessible theme toggle that resets to system color sche
   const shellStyleSource = await readFile(new URL('./styles/shell.css', import.meta.url), 'utf8')
   const historyStyleSource = await readFile(new URL('./styles/features/history.css', import.meta.url), 'utf8')
   const authStyleSource = await readFile(new URL('./styles/features/auth.css', import.meta.url), 'utf8')
-  const workspaceStyleSource = await readFile(new URL('./styles/features/workspace.css', import.meta.url), 'utf8')
+  const workspaceStyleSource = [
+    await readFile(new URL('./styles/features/workspace.css', import.meta.url), 'utf8'),
+    await readFile(new URL('./styles/features/workspace-active.css', import.meta.url), 'utf8'),
+  ].join('\n')
 
   assert.match(appSource, /const themeMode = ref\(readInitialTheme\(\)\)/)
   assert.match(appSource, /const isDarkTheme = computed\(\(\) => themeMode\.value === 'dark'\)/)
@@ -61,7 +64,8 @@ test('topbar exposes an accessible theme toggle that resets to system color sche
   assert.match(shellStyleSource, /\.theme-dark \.theme-toggle-icon \{/)
   assert.match(historyStyleSource, /\.app-shell\.theme-dark \.history-filter-chip \{/)
   assert.match(historyStyleSource, /\.app-shell\.theme-dark \.echo-roll-list span \{/)
-  assert.match(workspaceStyleSource, /\.app-shell\.theme-dark \.active-config-chips span \{/)
+  assert.match(workspaceStyleSource, /\.app-shell\.theme-dark \.active-echo-stage,/)
+  assert.match(workspaceStyleSource, /\.app-shell\.theme-dark \.active-record-panel \{/)
   assert.match(workspaceStyleSource, /\.app-shell\.theme-dark \.active-summary \{/)
   assert.match(workspaceStyleSource, /\.app-shell\.theme-dark \.tier-grid button \{/)
   assert.match(shellStyleSource, /\.app-shell\.theme-dark \.topbar \.pill-tabs \{/)
@@ -251,6 +255,7 @@ test('milestone 6 shows recognition summary, review list, and revert action', as
   assert.match(workflowSource, /revertRecognitionSnapshot/)
   assert.match(appSource, /import RecognitionReviewPanel from '\.\/features\/recognition\/RecognitionReviewPanel\.vue'/)
   assert.match(appSource, /import \{ useRecognitionReview \} from '\.\/features\/recognition\/useRecognitionReview'/)
+  assert.ok(appSource.indexOf('<RecognitionReviewPanel') > appSource.indexOf('class="workspace-grid"'))
   assert.match(workflowSource, /const refreshing = ref\(false\)/)
   assert.match(workflowSource, /const refreshStatus = ref\(''\)/)
   assert.match(workflowSource, /let refreshFeedbackTimer = null/)

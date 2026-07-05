@@ -1,10 +1,10 @@
 <script setup>
 import { computed } from 'vue'
 import topPredictedIcon from '../../assets/icons/fast-arrow-up.svg'
-import { mainStatLabels, mainStatsByCost, substatLabels } from '../../data/substats'
+import { mainStatLabels, mainStatsByCost } from '../../data/substats'
 import { sonataEffects } from '../../data/sonataEffects'
-import { displayEchoNumericId } from '../../services/echoId'
 import { formatPercent, formatSubstatTierNumber, formatSubstatTierUnit, formatSubstatTierValue } from '../../services/formatters'
+import ActiveEchoCapturePanel from './ActiveEchoCapturePanel.vue'
 import { useEchoWorkbenchLayout } from './useEchoWorkbenchLayout'
 
 const props = defineProps({
@@ -30,13 +30,16 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['config-change', 'undo', 'discard', 'next', 'select-tier'])
+const emit = defineEmits(['config-change', 'undo', 'discard', 'next', 'select-tier', 'preview-change'])
+const costOptions = Object.freeze([1, 3, 4])
+const selectedSonataEffect = computed(() => sonataEffects.find((effect) => effect.name === props.config.sonata) || null)
+const availableCosts = computed(() => selectedSonataEffect.value?.availableCosts || costOptions)
 const legalMainStats = computed(() => mainStatsByCost[props.config.cost] || [])
-const progressPercent = computed(() => Math.min(((props.activeEcho?.substats.length || 0) / 5) * 100, 100))
 const {
   createPanelRef,
   galleryPanelRef,
   mainStatRowRef,
+  sonataGridRef,
   setupPanelStyle,
   mainStatRowStyle,
   clearMainStatRowHeight,
@@ -46,6 +49,10 @@ function tierButtonKey(row, tier) { return `${row.substat_type}:${tier.value}` }
 
 function isTierPending(row, tier) { return props.pendingTierKey === tierButtonKey(row, tier) }
 
+function isCostAvailable(cost) { return availableCosts.value.includes(cost) }
+
+function selectCost(cost) { if (isCostAvailable(cost)) emit('config-change', { cost }) }
+
 function iconMask(source) { return { '--icon-url': `url("${source}")` } }
 </script>
 
@@ -53,20 +60,21 @@ function iconMask(source) { return { '--icon-url': `url("${source}")` } }
   <div class="workspace-sidebar">
     <aside ref="createPanelRef" class="product-panel create-panel" :style="setupPanelStyle">
       <div class="section-heading">
-        <span class="eyebrow">Echo setup</span>
+        <span class="eyebrow">ECHO SETUP</span>
         <h2>初始化声骸</h2>
-        <p>选择套装、COST 和主词条，开始录入当前声骸。</p>
+        <p>选择套装、COST、主词条后开始记录。</p>
       </div>
 
       <form class="echo-form" @submit.prevent>
         <fieldset>
           <legend>套装</legend>
-          <div class="sonata-grid">
+          <div ref="sonataGridRef" class="sonata-grid">
             <button
               v-for="effect in sonataEffects"
               :key="effect.id"
               type="button"
               :class="{ active: config.sonata === effect.name }"
+              :aria-current="config.sonata === effect.name ? 'true' : null"
               @click="emit('config-change', { sonata: effect.name })"
             >
               <img :src="effect.icon" :alt="effect.name" />
@@ -78,7 +86,14 @@ function iconMask(source) { return { '--icon-url': `url("${source}")` } }
         <fieldset>
           <legend>COST</legend>
           <div class="option-row cost-row">
-            <button v-for="cost in [1, 3, 4]" :key="cost" type="button" :class="{ active: config.cost === cost }" @click="emit('config-change', { cost })">
+            <button
+              v-for="cost in costOptions"
+              :key="cost"
+              type="button"
+              :disabled="!isCostAvailable(cost)"
+              :class="{ active: config.cost === cost }"
+              @click="selectCost(cost)"
+            >
               {{ cost }}C
             </button>
           </div>
@@ -106,38 +121,15 @@ function iconMask(source) { return { '--icon-url': `url("${source}")` } }
   </div>
 
   <section ref="galleryPanelRef" class="gallery-panel">
-    <div class="active-summary">
-      <div class="active-identity">
-        <span class="eyebrow">Active echo</span>
-        <h3 class="active-section-title">当前声骸</h3>
-        <p class="active-echo-id">{{ activeEcho ? displayEchoNumericId(activeEcho) : '选择或新增声骸' }}</p>
-        <div v-if="activeEcho" class="active-config-chips" aria-label="当前声骸配置">
-          <span>{{ activeEcho.cost }}C</span>
-          <span>{{ activeEcho.set_name }}</span>
-          <span>{{ mainStatLabels[activeEcho.main_stat] || activeEcho.main_stat }}</span>
-        </div>
-      </div>
-      <div v-if="activeEcho" class="roll-strip" :class="{ empty: !activeEcho.substats.length }">
-        <span v-for="roll in activeEcho.substats" :key="roll.id">
-          <strong>{{ roll.position }}.</strong>
-          {{ substatLabels[roll.substat_type] }} {{ formatSubstatTierValue(roll.substat_type, roll.tier_value) }}
-        </span>
-        <button class="undo-roll-button" type="button" :disabled="saving || !activeEcho.substats.length" title="撤回上一次录入的副词条" @click="emit('undo')">
-          撤回
-        </button>
-      </div>
-      <div class="active-control-panel">
-        <div class="progress-card">
-          <strong>{{ activeEcho?.substats.length || 0 }}/5</strong>
-          <span>已录入</span>
-          <div class="progress-track"><i :style="{ width: `${progressPercent}%` }"></i></div>
-        </div>
-        <div v-if="activeEcho" class="active-actions" aria-label="当前声骸操作">
-          <button class="button-danger" type="button" :disabled="saving" @click="emit('discard')">弃置</button>
-          <button class="button-next" type="button" :disabled="saving" @click="emit('next')">下一个</button>
-        </div>
-      </div>
-    </div>
+    <ActiveEchoCapturePanel
+      :config="config"
+      :active-echo="activeEcho"
+      :saving="saving"
+      @undo="emit('undo')"
+      @discard="emit('discard')"
+      @next="emit('next')"
+      @preview-change="emit('preview-change', $event)"
+    />
 
     <div v-if="activeEcho" class="substat-matrix">
       <article

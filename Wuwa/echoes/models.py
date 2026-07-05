@@ -21,6 +21,9 @@ class EchoRecord(models.Model):
     game_account = models.ForeignKey("accounts.GameAccount", on_delete=models.CASCADE, related_name="echo_records")
     echo_uid = models.CharField(max_length=80)
     display_name = models.CharField(max_length=120, blank=True)
+    echo_asset_id = models.CharField(max_length=80, blank=True)
+    echo_name = models.CharField(max_length=120, blank=True)
+    echo_image = models.CharField(max_length=260, blank=True)
     cost = models.PositiveSmallIntegerField()
     set_name = models.CharField(max_length=120)
     main_stat = models.CharField(max_length=80)
@@ -89,7 +92,7 @@ class EchoRecord(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return self.display_name or self.echo_uid
+        return self.echo_name or self.display_name or self.echo_uid
 
 
 class SubstatRoll(models.Model):

@@ -276,6 +276,9 @@ class ApiViewTests(TestCase):
                 {
                     "echo_uid": "e-1",
                     "display_name": "测试声骸",
+                    "echo_asset_id": "60001839",
+                    "echo_name": "重工铁蹄",
+                    "echo_image": "/echo-images/images/31_剪心辑梦之影/cost3_60001839_重工铁蹄.png",
                     "cost": 1,
                     "set_name": "啸谷长风",
                     "main_stat": "atk_percent",
@@ -285,6 +288,9 @@ class ApiViewTests(TestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()["echo_asset_id"], "60001839")
+        self.assertEqual(response.json()["echo_name"], "重工铁蹄")
+        self.assertEqual(response.json()["echo_image"], "/echo-images/images/31_剪心辑梦之影/cost3_60001839_重工铁蹄.png")
         echo_id = response.json()["id"]
 
         response = self.client.post(
@@ -458,6 +464,9 @@ class ApiViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["results"][0]["substats"][0]["substat_type"], "crit_rate")
         self.assertIn("created_at", response.json()["results"][0])
+        self.assertIn("echo_name", response.json()["results"][0])
+        self.assertIn("echo_asset_id", response.json()["results"][0])
+        self.assertIn("echo_image", response.json()["results"][0])
 
     def test_patch_owned_echo_updates_allowed_fields(self):
         self.client.login(username="tester", password="pw12345")
@@ -476,6 +485,9 @@ class ApiViewTests(TestCase):
             data=json.dumps(
                 {
                     "display_name": "New name",
+                    "echo_asset_id": "60001839",
+                    "echo_name": "重工铁蹄",
+                    "echo_image": "/echo-images/images/31_剪心辑梦之影/cost3_60001839_重工铁蹄.png",
                     "set_name": "New set",
                     "source": "New source",
                     "is_continuous_tuning": True,
@@ -487,12 +499,18 @@ class ApiViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         body = response.json()
         self.assertEqual(body["display_name"], "New name")
+        self.assertEqual(body["echo_asset_id"], "60001839")
+        self.assertEqual(body["echo_name"], "重工铁蹄")
+        self.assertEqual(body["echo_image"], "/echo-images/images/31_剪心辑梦之影/cost3_60001839_重工铁蹄.png")
         self.assertEqual(body["set_name"], "New set")
         self.assertEqual(body["source"], "New source")
         self.assertIs(body["is_continuous_tuning"], True)
 
         echo.refresh_from_db()
         self.assertEqual(echo.display_name, "New name")
+        self.assertEqual(echo.echo_asset_id, "60001839")
+        self.assertEqual(echo.echo_name, "重工铁蹄")
+        self.assertEqual(echo.echo_image, "/echo-images/images/31_剪心辑梦之影/cost3_60001839_重工铁蹄.png")
         self.assertEqual(echo.set_name, "New set")
         self.assertEqual(echo.source, "New source")
         self.assertIs(echo.is_continuous_tuning, True)
@@ -825,6 +843,7 @@ class RecognitionApiViewTests(TestCase):
         echo = EchoRecord.objects.get(id=body["created_echo_id"])
         roll = SubstatRoll.objects.get(echo=echo)
         self.assertEqual(snapshot.created_echo_id, echo.id)
+        self.assertEqual(echo.echo_name, "Sample Echo")
         self.assertEqual(roll.recognition_snapshot_id, snapshot.id)
         self.assertEqual(roll.substat_type, "crit_rate")
         self.assertEqual(roll.tier_value, 6.3)

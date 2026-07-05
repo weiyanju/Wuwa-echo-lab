@@ -13,6 +13,23 @@ import { buildNextEchoConfig, isReusableDraft, sortVisibleEchoHistory } from '..
 import { buildModelDetailCards } from '../../services/modelDetails.js'
 import { mainStatsByCost, substatLabels, substatOrder, tierTables } from '../../data/substats.js'
 import { sonataEffects } from '../../data/sonataEffects.js'
+import { createEchoAssetIdentity } from './echoAssetIdentity.js'
+import { appendRollToEchoList, buildOptimisticRollDraft, removeOptimisticRollFromEchoList, replaceOptimisticRollInEchoList } from './echoWorkspaceMutations.js'
+
+const defaultCostOptions = Object.freeze([1, 3, 4])
+
+function getAvailableCostsForSonata(sonata) { return sonataEffects.find((effect) => effect.name === sonata)?.availableCosts || defaultCostOptions }
+
+function normalizeEchoConfig(config) {
+  const availableCosts = getAvailableCostsForSonata(config.sonata)
+  const cost = availableCosts.includes(config.cost) ? config.cost : availableCosts[0]
+  const legalMainStats = mainStatsByCost[cost] || []
+  return { ...config, cost, main_stat: legalMainStats.includes(config.main_stat) ? config.main_stat : legalMainStats[0] }
+}
+
+function createDefaultEchoForm() {
+  return normalizeEchoConfig({ sonata: sonataEffects.at(-1).name, cost: 1, main_stat: 'atk_percent', is_continuous_tuning: true })
+}
 
 export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, workspaceLocked, onError }) {
   const saving = ref(false)
@@ -22,12 +39,7 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
   const prediction = ref(null)
   const stats = ref(null)
   const evaluation = ref(null)
-  const echoForm = ref({
-    sonata: sonataEffects.at(-1).name,
-    cost: 1,
-    main_stat: 'atk_percent',
-    is_continuous_tuning: true,
-  })
+  const echoForm = ref(createDefaultEchoForm())
   let insightsRefreshTimer = null
   let activeRefreshTimer = null
   let activePredictionRefreshToken = 0
@@ -85,6 +97,8 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
     prediction.value = null
     stats.value = null
     evaluation.value = null
+    echoForm.value = createDefaultEchoForm()
+    echoAssetIdentity.resetEchoAsset()
   }
 
   async function refreshActive() {
@@ -143,44 +157,33 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
     echoes.value = echoes.value.map((echo) => (echo.id === nextEcho.id ? nextEcho : echo))
   }
 
+  async function selectEchoAsset(asset) {
+    await echoAssetIdentity.selectEchoAsset(asset)
+  }
+
+  const echoAssetIdentity = createEchoAssetIdentity({
+    activeEcho,
+    activeEchoId,
+    selectedGameAccountId,
+    lifecycleGeneration: () => lifecycleGeneration,
+    replaceEcho,
+    reportError,
+  })
+
   function appendRollToEcho(echoId, roll) {
-    echoes.value = echoes.value.map((echo) => {
-      if (echo.id !== echoId) return echo
-      const nextRolls = [...echo.substats.filter((item) => item.id !== roll.id), roll]
-        .sort((left, right) => left.position - right.position || left.id - right.id)
-      return { ...echo, substats: nextRolls, status: nextRolls.length >= 5 ? 'completed' : 'in_progress', last_tuned_at: roll.tuned_at }
-    })
+    echoes.value = appendRollToEchoList(echoes.value, echoId, roll)
   }
 
   function replaceOptimisticRollInEcho(echoId, optimisticRollId, roll) {
-    echoes.value = echoes.value.map((echo) => {
-      if (echo.id !== echoId) return echo
-      const nextRolls = echo.substats
-        .map((item) => (item.id === optimisticRollId ? roll : item))
-        .sort((left, right) => left.position - right.position || left.id - right.id)
-      return { ...echo, substats: nextRolls, status: nextRolls.length >= 5 ? 'completed' : 'in_progress', last_tuned_at: roll.tuned_at }
-    })
+    echoes.value = replaceOptimisticRollInEchoList(echoes.value, echoId, optimisticRollId, roll)
   }
 
   function removeOptimisticRollFromEcho(echoId, optimisticRollId) {
-    echoes.value = echoes.value.map((echo) => {
-      if (echo.id !== echoId) return echo
-      const nextRolls = echo.substats.filter((item) => item.id !== optimisticRollId)
-      return { ...echo, substats: nextRolls, status: nextRolls.length >= 5 ? 'completed' : 'in_progress', last_tuned_at: nextRolls.at(-1)?.tuned_at || null }
-    })
+    echoes.value = removeOptimisticRollFromEchoList(echoes.value, echoId, optimisticRollId)
   }
 
   function buildOptimisticRoll(row, tier) {
-    return {
-      id: -Date.now(),
-      position: (activeEcho.value?.substats.length || 0) + 1,
-      substat_type: row.substat_type,
-      tier_value: tier.value,
-      enhance_phase: '',
-      tuning_order: null,
-      tuned_at: new Date().toISOString(),
-      optimistic: true,
-    }
+    return buildOptimisticRollDraft(activeEcho.value, row, tier)
   }
 
   function refreshInsightsInBackground() {
@@ -223,10 +226,12 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
     }
     const generation = lifecycleGeneration
     const previousForm = { ...echoForm.value }
+    const nextConfig = normalizeEchoConfig(config)
+    const assetPayload = echoAssetIdentity.selectedEchoAssetFieldsForConfig(nextConfig)
     echoForm.value = {
-      sonata: config.sonata,
-      cost: config.cost,
-      main_stat: config.main_stat,
+      sonata: nextConfig.sonata,
+      cost: nextConfig.cost,
+      main_stat: nextConfig.main_stat,
       is_continuous_tuning: true,
     }
     try {
@@ -238,6 +243,7 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
         source: '',
         tuning_batch_id: '',
         is_continuous_tuning: true,
+        ...assetPayload,
       }, accountId)
       if (generation !== lifecycleGeneration || accountId !== selectedGameAccountId.value) return null
       echoes.value = [echo, ...echoes.value]
@@ -266,10 +272,7 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
 
   async function applyEchoConfig(partialConfig) {
     onError('')
-    const nextConfig = { ...echoForm.value, ...partialConfig }
-    if (!mainStatsByCost[nextConfig.cost]?.includes(nextConfig.main_stat)) {
-      nextConfig.main_stat = mainStatsByCost[nextConfig.cost][0]
-    }
+    const nextConfig = normalizeEchoConfig({ ...echoForm.value, ...partialConfig })
     echoForm.value = nextConfig
     if (!activeEcho.value) {
       await createEchoWithConfig(nextConfig)
@@ -283,6 +286,7 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
           set_name: nextConfig.sonata,
           main_stat: nextConfig.main_stat,
           is_continuous_tuning: true,
+          ...echoAssetIdentity.selectedEchoAssetFieldsForConfig(nextConfig),
         })
         replaceEcho(updated)
         await refreshActive()
@@ -383,6 +387,7 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
     reset,
     saving,
     selectEcho,
+    selectEchoAsset,
     stats,
     undoActiveSubstat,
     visibleEchoCount,

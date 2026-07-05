@@ -1,17 +1,17 @@
 .product-panel.recognition-panel {
   display: grid;
-  grid-template-columns: minmax(280px, 0.42fr) minmax(420px, 1fr);
+  grid-template-columns: minmax(240px, auto) minmax(0, 1fr);
   align-items: center;
-  gap: 18px;
-  margin-bottom: 24px;
-  padding: 16px 18px;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 10px 12px;
 }
 
 .recognition-panel-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  justify-content: flex-start;
+  gap: 12px;
   min-width: 0;
 }
 
@@ -23,8 +23,8 @@
 }
 
 .recognition-live-dot {
-  width: 11px;
-  height: 11px;
+  width: 9px;
+  height: 9px;
   flex: 0 0 auto;
   border-radius: 999px;
   background: #2c9f70;
@@ -35,7 +35,8 @@
 
 .recognition-panel h2 {
   margin: 3px 0 0;
-  font-size: 18px;
+  font-size: 16px;
+  font-weight: 650;
   line-height: 1.16;
 }
 
@@ -51,14 +52,14 @@
   border-radius: 999px;
   background: #fff;
   color: var(--ink);
-  font-weight: 800;
+  font-weight: 700;
   cursor: pointer;
 }
 
 .recognition-refresh-button {
-  width: 36px;
-  height: 36px;
-  min-height: 36px;
+  width: 34px;
+  height: 34px;
+  min-height: 34px;
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
@@ -106,57 +107,52 @@
 }
 
 .recognition-summary-strip {
-  display: grid;
-  grid-template-columns: minmax(220px, 1fr) minmax(260px, 360px);
+  display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 16px;
   min-width: 0;
   border-left: 1px solid rgba(216, 226, 234, 0.86);
-  padding-left: 20px;
+  padding-left: 16px;
 }
 
 .recognition-state-copy {
+  flex: 1 1 auto;
   min-width: 0;
-  border-radius: 14px;
-  padding: 10px 12px;
-  background:
-    linear-gradient(90deg, rgba(23, 105, 210, 0.08), transparent 86%),
-    rgba(247, 250, 253, 0.76);
+  padding: 0;
+  background: transparent;
 }
 
 .recognition-state-copy strong {
   display: block;
   color: var(--ink);
   font-size: 14px;
+  font-weight: 650;
   line-height: 1.2;
-}
-
-.recognition-state-copy span {
-  display: block;
-  margin-top: 4px;
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 700;
 }
 
 .recognition-metric-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  gap: 0;
+  flex: 0 0 min(360px, 42%);
 }
 
 .recognition-metric-grid article {
   min-width: 0;
-  border: 1px solid rgba(216, 226, 234, 0.86);
-  border-radius: 13px;
-  padding: 8px 10px;
-  background: rgba(255, 255, 255, 0.78);
+  border: 0;
+  border-left: 1px solid rgba(216, 226, 234, 0.86);
+  border-radius: 0;
+  padding: 3px 11px;
+  background: transparent;
 }
 
 .recognition-metric-grid strong {
   display: block;
   color: var(--ink);
-  font-size: 18px;
+  font-family: var(--font-data);
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
   line-height: 1;
 }
 
@@ -165,7 +161,7 @@
   margin-top: 6px;
   color: var(--muted);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 650;
 }
 
 .recognition-review-list {
@@ -202,7 +198,7 @@
 .recognition-empty-row {
   color: var(--muted);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 650;
 }
 
 .recognition-review-row button {
@@ -237,14 +233,12 @@
 }
 
 .app-shell.theme-dark .recognition-state-copy {
-  background:
-    linear-gradient(90deg, rgba(93, 168, 255, 0.12), transparent 88%),
-    rgba(20, 32, 42, 0.68);
+  background: transparent;
 }
 
 .app-shell.theme-dark .recognition-metric-grid article {
   border-color: rgba(63, 86, 102, 0.7);
-  background: rgba(20, 32, 42, 0.6);
+  background: transparent;
 }
 
 .app-shell.theme-dark .recognition-state-copy strong,
@@ -253,7 +247,6 @@
   color: #e7eef4;
 }
 
-.app-shell.theme-dark .recognition-state-copy span,
 .app-shell.theme-dark .recognition-metric-grid span,
 .app-shell.theme-dark .recognition-review-row span,
 .app-shell.theme-dark .recognition-empty-row {

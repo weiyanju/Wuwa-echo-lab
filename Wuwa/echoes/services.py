@@ -40,6 +40,9 @@ def create_echo(user, payload):
         game_account=game_account,
         echo_uid=echo_uid,
         display_name=clean_string(payload, "display_name"),
+        echo_asset_id=clean_string(payload, "echo_asset_id"),
+        echo_name=clean_string(payload, "echo_name"),
+        echo_image=clean_string(payload, "echo_image"),
         cost=int(payload.get("cost")),
         set_name=clean_string(payload, "set_name"),
         main_stat=clean_string(payload, "main_stat"),
@@ -54,7 +57,18 @@ def create_echo(user, payload):
 
 
 def update_echo(echo, payload):
-    for field in ("echo_uid", "display_name", "set_name", "main_stat", "source", "tuning_batch_id", "status"):
+    for field in (
+        "echo_uid",
+        "display_name",
+        "echo_asset_id",
+        "echo_name",
+        "echo_image",
+        "set_name",
+        "main_stat",
+        "source",
+        "tuning_batch_id",
+        "status",
+    ):
         if field in payload:
             setattr(echo, field, clean_string(payload, field))
     if "cost" in payload:

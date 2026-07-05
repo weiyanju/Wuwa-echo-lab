@@ -20,13 +20,13 @@ test('evaluation overview owns fusion status and summary presentation', async ()
   assert.match(appSource, /<EvaluationOverview[\s\S]+:model-details="modelDetailCards"/)
 })
 
-test('fusion weight overview excludes Top1 markers while backtest keeps hit-rate evaluation', async () => {
+test('fusion weight overview excludes first-choice markers while backtest keeps hit-rate evaluation', async () => {
   const overviewSource = await readFile(new URL('./EvaluationOverview.vue', import.meta.url), 'utf8')
   const backtestSource = await readFile(new URL('./EvaluationBacktest.vue', import.meta.url), 'utf8')
   const evaluationStyles = await readFile(new URL('../../styles/features/evaluation.css', import.meta.url), 'utf8')
 
-  assert.doesNotMatch(overviewSource, /legend-hit-triangle|hit-marker|Top1 回测|Top1 命中率/)
+  assert.doesNotMatch(overviewSource, /legend-hit-triangle|hit-marker|首选回测|首选命中率/)
   assert.doesNotMatch(evaluationStyles, /\.legend-hit-triangle|\.hit-marker/)
-  assert.match(backtestSource, /aria-label="Top1 到 Top5 预测范围命中率"/)
+  assert.match(backtestSource, /aria-label="首选到前五预测范围命中率"/)
   assert.match(backtestSource, /model\.adjustment\?\.hit_rate/)
 })

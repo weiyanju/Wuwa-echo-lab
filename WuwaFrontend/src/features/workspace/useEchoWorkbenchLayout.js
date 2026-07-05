@@ -10,6 +10,7 @@ export function useEchoWorkbenchLayout(props, legalMainStats) {
   const createPanelRef = ref(null)
   const galleryPanelRef = ref(null)
   const mainStatRowRef = ref(null)
+  const sonataGridRef = ref(null)
   const setupPanelHeight = ref(null)
   const mainStatRowHeight = ref(null)
   const setupPanelStyle = computed(() => (setupPanelHeight.value ? { height: `${setupPanelHeight.value}px` } : {}))
@@ -24,6 +25,19 @@ export function useEchoWorkbenchLayout(props, legalMainStats) {
       return
     }
     setupPanelHeight.value = Math.ceil(galleryPanelRef.value.getBoundingClientRect().height)
+  }
+
+  async function focusActiveSonata() {
+    await nextTick()
+    await waitForFrame()
+    const grid = sonataGridRef.value
+    const activeButton = grid?.querySelector('button.active')
+    if (!grid || !activeButton) return
+
+    const gridRect = grid.getBoundingClientRect()
+    const activeRect = activeButton.getBoundingClientRect()
+    const targetScroll = grid.scrollTop + activeRect.top - gridRect.top - ((grid.clientHeight - activeButton.offsetHeight) / 2)
+    grid.scrollTop = Math.max(0, targetScroll)
   }
 
   function clearMainStatRowHeight(event) {
@@ -64,6 +78,7 @@ export function useEchoWorkbenchLayout(props, legalMainStats) {
 
   onMounted(() => {
     syncSetupPanelHeight()
+    focusActiveSonata()
     window.addEventListener('resize', syncSetupPanelHeight)
   })
 
@@ -78,6 +93,12 @@ export function useEchoWorkbenchLayout(props, legalMainStats) {
   )
 
   watch(
+    () => props.config.sonata,
+    focusActiveSonata,
+    { flush: 'post' },
+  )
+
+  watch(
     () => legalMainStats.value.join('|'),
     animateMainStatRowChange,
     { flush: 'pre' },
@@ -87,6 +108,7 @@ export function useEchoWorkbenchLayout(props, legalMainStats) {
     createPanelRef,
     galleryPanelRef,
     mainStatRowRef,
+    sonataGridRef,
     setupPanelStyle,
     mainStatRowStyle,
     clearMainStatRowHeight,

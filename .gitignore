@@ -18,6 +18,7 @@ obj/
 .env
 backups/
 docs/local-development.private.md
+tmp/
 
 # Logs and local IDE files
 *.log

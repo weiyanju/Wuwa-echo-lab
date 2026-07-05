@@ -6,7 +6,7 @@ import historyShowcaseIcon from '../../assets/icons/layout-list.svg'
 import historyTerminalDarkIcon from '../../assets/icons/pangu-terminal-dark.png'
 import historyTerminalIcon from '../../assets/icons/rovers-terminal-expand.png'
 import { mainStatLabels, substatLabels } from '../../data/substats'
-import { displayEchoNumericId } from '../../services/echoId'
+import { displayEchoName } from '../../services/echoDisplay'
 import { sortVisibleEchoHistory, statusBadge } from '../../services/echoWorkflow'
 
 const props = defineProps({
@@ -622,7 +622,7 @@ onBeforeUnmount(() => {
       >
         <div class="echo-item-head">
           <strong>
-            {{ displayEchoNumericId(echo) }}
+            {{ displayEchoName(echo) }}
             <em
               v-if="statusBadge(echo, activeEchoId)"
               :class="{

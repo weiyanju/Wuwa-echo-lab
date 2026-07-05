@@ -29,3 +29,26 @@ test('floating history emits selection and cleans up document listeners', async 
   assert.match(source, /document\.removeEventListener\('pointerup', endFloatingHistoryDrag\)/)
   assert.match(source, /document\.removeEventListener\('pointercancel', endFloatingHistoryDrag\)/)
 })
+
+test('floating history presents echo names instead of internal ids', async () => {
+  const source = await readFile(new URL('./FloatingHistoryPanel.vue', import.meta.url), 'utf8')
+
+  assert.match(source, /import \{ displayEchoName \} from '\.\.\/\.\.\/services\/echoDisplay'/)
+  assert.match(source, /\{\{ displayEchoName\(echo\) \}\}/)
+  assert.doesNotMatch(source, /displayEchoNumericId/)
+})
+
+test('floating history presents echo config as the pre-pill inline metadata row', async () => {
+  const source = await readFile(new URL('./FloatingHistoryPanel.vue', import.meta.url), 'utf8')
+  const style = await readFile(new URL('../../styles/features/history.css', import.meta.url), 'utf8')
+
+  assert.match(source, /\{\{ echo\.cost \}\}C · \{\{ echo\.set_name \}\} · \{\{ mainStatLabels\[echo\.main_stat\] \|\| echo\.main_stat \}\} · \{\{ echo\.substats\.length \}\}\/5/)
+  assert.doesNotMatch(source, /class="echo-name"/)
+  assert.doesNotMatch(source, /class="echo-meta-line"/)
+  assert.doesNotMatch(source, /class="echo-progress"/)
+  assert.doesNotMatch(source, /class="echo-meta-pills"/)
+  assert.doesNotMatch(source, /class="echo-meta-pill/)
+  assert.match(style, /\.echo-item-head > span \{[\s\S]+font-size: 12px;/)
+  assert.doesNotMatch(style, /\.echo-meta-line/)
+  assert.doesNotMatch(style, /\.echo-progress/)
+})

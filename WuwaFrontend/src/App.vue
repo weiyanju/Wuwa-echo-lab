@@ -48,6 +48,7 @@ const {
   reset: resetWorkspace,
   saving,
   selectEcho,
+  selectEchoAsset,
   stats,
   undoActiveSubstat,
   visibleEchoCount,
@@ -233,7 +234,7 @@ onBeforeUnmount(() => {
 
     <section v-else class="dashboard">
       <header class="topbar">
-        <a class="wordmark" href="#" @click.prevent="page = 'workspace'">鸣潮声骸终端</a>
+        <a class="wordmark" href="#" @click.prevent="page = 'workspace'">Wuwa Echo Terminal</a>
         <nav class="pill-tabs" aria-label="页面">
           <button :class="{ active: page === 'workspace' }" @click="page = 'workspace'">工作台</button>
           <button :class="{ active: page === 'stats' }" @click="page = 'stats'">统计</button>
@@ -250,18 +251,39 @@ onBeforeUnmount(() => {
 
       <section class="hero-band compact">
         <div>
-          <span class="brand-mark">Wuwa Echo Terminal</span>
-          <h1>鸣潮声骸终端</h1>
-          <p>记录调谐样本，实时校准副词条概率与模型证据。</p>
+          <h1>你好，漂泊者</h1>
         </div>
         <div class="hero-stats">
           <div><strong>{{ visibleEchoCount }}</strong><span>历史声骸</span></div>
           <div><strong>{{ stats?.total_rolls || 0 }}</strong><span>总样本</span></div>
-          <div><strong>{{ prediction ? confidenceText(prediction.confidence) : '低' }}</strong><span>置信度</span></div>
+          <div><strong class="hero-confidence-value">{{ prediction ? confidenceText(prediction.confidence) : '低' }}</strong><span>置信度</span></div>
         </div>
       </section>
 
       <p v-if="error" class="error-text">{{ error }}</p>
+
+      <div v-if="page === 'workspace'" class="workspace-grid">
+        <EchoWorkbenchView
+          :config="echoForm"
+          :active-echo="activeEcho"
+          :matrix-rows="matrixRows"
+          :saving="saving"
+          :pending-tier-key="pendingTierKey"
+          @config-change="applyEchoConfig"
+          @undo="undoActiveSubstat"
+          @discard="discardActiveEcho"
+          @next="createNextEchoFromActive"
+          @preview-change="selectEchoAsset"
+          @select-tier="clickTier($event.row, $event.tier)"
+        />
+
+        <FloatingHistoryPanel
+          :echoes="echoes"
+          :active-echo-id="activeEchoId"
+          @select="selectEcho"
+        />
+
+      </div>
 
       <RecognitionReviewPanel
         v-if="page === 'workspace'"
@@ -275,28 +297,6 @@ onBeforeUnmount(() => {
         @refresh="refreshRecognition"
         @revert="revertSnapshot"
       />
-
-      <div v-if="page === 'workspace'" class="workspace-grid">
-        <EchoWorkbenchView
-          :config="echoForm"
-          :active-echo="activeEcho"
-          :matrix-rows="matrixRows"
-          :saving="saving"
-          :pending-tier-key="pendingTierKey"
-          @config-change="applyEchoConfig"
-          @undo="undoActiveSubstat"
-          @discard="discardActiveEcho"
-          @next="createNextEchoFromActive"
-          @select-tier="clickTier($event.row, $event.tier)"
-        />
-
-        <FloatingHistoryPanel
-          :echoes="echoes"
-          :active-echo-id="activeEchoId"
-          @select="selectEcho"
-        />
-
-      </div>
 
       <StatisticsView v-if="!gameAccount.workspaceLocked.value && page === 'stats'" :stats="stats" />
 

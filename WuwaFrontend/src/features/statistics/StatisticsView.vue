@@ -48,6 +48,13 @@ const statsSummaryItems = computed(() => {
     },
   ]
 })
+
+function valueParts(value) {
+  return String(value)
+    .split(/([+-]?\d+(?:\.\d+)?%?)/g)
+    .filter(Boolean)
+    .map((text) => ({ text, numeric: /^[+-]?\d/.test(text) }))
+}
 </script>
 
 <template>
@@ -63,7 +70,9 @@ const statsSummaryItems = computed(() => {
     <div v-if="stats" class="stats-summary-bar">
       <article v-for="item in statsSummaryItems" :key="item.label" :class="item.tone" :title="item.title">
         <span>{{ item.label }}</span>
-        <strong>{{ item.value }}</strong>
+        <strong>
+          <span v-for="(part, index) in valueParts(item.value)" :key="`${item.label}-${index}`" :class="{ 'stats-number': part.numeric }">{{ part.text }}</span>
+        </strong>
       </article>
     </div>
     <div v-else class="stats-empty-state">
@@ -95,7 +104,7 @@ const statsSummaryItems = computed(() => {
         >
           <div class="substat-deviation-name">
             <strong>{{ row.label }}</strong>
-            <span>{{ row.count }} 次 · {{ formatPercent(row.observed_rate) }}</span>
+            <span><span class="stats-number">{{ row.count }}</span> 次 · <span class="stats-number">{{ formatPercent(row.observed_rate) }}</span></span>
           </div>
           <div class="substat-deviation-track">
             <i aria-hidden="true"></i>
@@ -110,7 +119,7 @@ const statsSummaryItems = computed(() => {
       <section class="stats-chart-card sample-stage-card">
         <div class="stats-section-heading compact">
           <h3>样本阶段</h3>
-          <span>{{ stats.total_rolls }} / 50000+</span>
+          <span><span class="stats-number">{{ stats.total_rolls }}</span> / <span class="stats-number">50000+</span></span>
         </div>
         <div class="sample-stage-axis" role="img" aria-label="当前样本阶段">
           <div class="sample-stage-track" aria-hidden="true">
@@ -118,8 +127,10 @@ const statsSummaryItems = computed(() => {
             <i class="sample-stage-marker" :style="{ left: formatPercent(sampleStageProgress) }"></i>
           </div>
           <article v-for="stage in sampleStageAxisRows" :key="stage.label" :class="{ active: stage.active, current: stage.current }">
-            <strong>{{ stage.label }}</strong>
-            <span>{{ stage.caption }}<em v-if="stage.current">当前</em></span>
+            <strong>
+              <span v-for="(part, index) in valueParts(stage.label)" :key="`${stage.label}-${index}`" :class="{ 'stats-number': part.numeric }">{{ part.text }}</span>
+            </strong>
+            <span><span v-for="(part, index) in valueParts(stage.caption)" :key="`${stage.caption}-${index}`" :class="{ 'stats-number': part.numeric }">{{ part.text }}</span><em v-if="stage.current">当前</em></span>
           </article>
         </div>
       </section>

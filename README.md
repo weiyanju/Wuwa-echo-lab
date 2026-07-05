@@ -10,6 +10,7 @@ Separated frontend/backend development environment:
 长期项目规范：
 
 - [产品原则与范围](docs/product-principles-and-scope.md)
+- [开发者入门手册](docs/developer-onboarding.md)
 - [架构规范](docs/architecture.md)
 - [工程质量规范](docs/engineering-quality.md)
 - [代码组织与风格规范](docs/code-organization-and-style.md)

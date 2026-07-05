@@ -114,17 +114,17 @@ function coverageGainText(metrics) {
   if (!first || !last || first.value == null || last.value == null) {
     return '回测样本不足'
   }
-  return `Top5 相比 Top1 命中率提升 ${formatSignedPercent(last.value - first.value)}，`
+  return `前五相对首选命中率提升 ${formatSignedPercent(last.value - first.value)}，`
 }
 
 function coverageMetricLabel(metric) {
-  if (metric.label.includes('Top 1')) {
-    return 'Top 1 · 首选预测'
+  if (metric.key === 'top_1_hit_rate') {
+    return '首选 · 第一候选'
   }
-  if (metric.label.includes('Top 3')) {
-    return 'Top 3 · 推荐参考'
+  if (metric.key === 'top_3_hit_rate') {
+    return '前三 · 推荐参考'
   }
-  return 'Top 5 · 补充检查'
+  return '前五 · 补充检查'
 }
 
 function calibrationSummaryText() {
@@ -422,8 +422,8 @@ onBeforeUnmount(() => {
       <div
         class="coverage-band-chart"
         role="img"
-        aria-label="Top1 到 Top5 预测范围命中率"
-        title="Top1 表示首选预测；Top3 表示推荐参考；Top5 表示补充检查。"
+        aria-label="首选到前五预测范围命中率"
+        title="首选表示第一候选；前三表示推荐参考；前五表示补充检查。"
       >
         <div class="coverage-band-track" aria-hidden="true">
           <span class="coverage-band-fill"></span>
@@ -448,7 +448,7 @@ onBeforeUnmount(() => {
         </div>
         <div class="coverage-gain-note">
           <strong>{{ coverageGainText(hitRateMetrics) }}</strong>
-          <span>{{ evaluationReady ? 'Top3 适合作为推荐参考，Top5 适合做补充检查。' : '积累更多副词条记录后自动计算。' }}</span>
+        <span>{{ evaluationReady ? '前三适合作为推荐参考，前五适合做补充检查。' : '积累更多副词条记录后自动计算。' }}</span>
         </div>
       </div>
     </section>
@@ -460,7 +460,7 @@ onBeforeUnmount(() => {
       </div>
       <div class="model-bars-head">
         <span>模型</span>
-        <span>命中率<span class="ui-line-icon evaluation-help-icon" :style="iconMask(helpCircleIcon)" title="单个子模型独立预测第一候选时的 Top1 回测命中率，不是整体融合模型命中率。" aria-label="命中率说明" role="img"></span></span>
+        <span>命中率<span class="ui-line-icon evaluation-help-icon" :style="iconMask(helpCircleIcon)" title="单个子模型独立预测第一候选时的首选回测命中率，不是整体融合模型命中率。" aria-label="命中率说明" role="img"></span></span>
         <span>Loss<span class="ui-line-icon evaluation-help-icon" :style="iconMask(helpCircleIcon)" title="单个子模型独立回测的损失值，越低表示概率排序和真实结果越接近。" aria-label="Loss 说明" role="img"></span></span>
         <span></span>
       </div>

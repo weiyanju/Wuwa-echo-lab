@@ -24,6 +24,7 @@ test('frontend high-attraction entry files do not grow beyond the refactor basel
   assert.ok(await lineCount('./styles/features/auth.css') <= 300, 'auth.css must not grow beyond 300 lines')
   assert.ok(await lineCount('./styles/features/uid-setup.css') <= 200, 'uid-setup.css must not grow beyond 200 lines')
   assert.ok(await lineCount('./styles/features/workspace.css') <= 710, 'workspace.css must not grow beyond 710 lines')
+  assert.ok(await lineCount('./styles/features/workspace-active.css') <= 390, 'workspace-active.css must not grow beyond 390 lines')
   assert.ok(await lineCount('./styles/features/evaluation.css') <= 4690, 'evaluation.css must not grow beyond 4690 lines')
 })
 
@@ -131,12 +132,14 @@ test('uid setup owns its shell, card, dark theme, and responsive styles', async 
 test('workspace feature owns workbench, matrix, dark, and responsive styles', async () => {
   const entry = await readFile(new URL('./style.css', import.meta.url), 'utf8')
   const workspace = await readFile(new URL('./styles/features/workspace.css', import.meta.url), 'utf8')
+  const workspaceActive = await readFile(new URL('./styles/features/workspace-active.css', import.meta.url), 'utf8')
 
   assert.match(entry, /@import '\.\/styles\/features\/workspace\.css';/)
+  assert.match(entry, /@import '\.\/styles\/features\/workspace-active\.css';/)
   assert.match(workspace, /\.workspace-grid \{/)
   assert.match(workspace, /\.sonata-grid \{/)
   assert.match(workspace, /\.substat-matrix \{/)
-  assert.match(workspace, /\.app-shell\.theme-dark \.active-summary/)
+  assert.match(workspaceActive, /\.active-summary \{/)
   assert.match(workspace, /@media \(max-width: 860px\)/)
   assert.match(workspace, /@media \(max-width: 520px\)/)
   assert.doesNotMatch(entry, /\.workspace-grid \{/)

@@ -46,7 +46,7 @@ function iconMask(source) {
       <div class="recognition-title-lockup">
         <span class="recognition-live-dot" aria-hidden="true"></span>
         <div>
-          <span class="eyebrow">Local recognition</span>
+          <span class="eyebrow">本地识别</span>
           <h2>本地自动识别</h2>
         </div>
       </div>
@@ -67,7 +67,6 @@ function iconMask(source) {
     <div class="recognition-summary-strip" aria-label="识别会话摘要">
       <div class="recognition-state-copy">
         <strong>{{ reviewRows.length ? `${reviewRows.length} 条记录待查看` : '暂无待处理记录' }}</strong>
-        <span>{{ latestSession ? '本地助手的识别结果会同步到当前 UID。' : '启动本地助手后，这里会显示最新识别结果。' }}</span>
       </div>
       <div class="recognition-metric-grid">
         <article v-for="metric in metrics" :key="metric.key">
