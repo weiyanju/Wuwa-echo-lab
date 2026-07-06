@@ -1,8 +1,6 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
-import arrowRightIcon from '../../assets/icons/arrow-right.svg'
-import trashIcon from '../../assets/icons/trash.svg'
-import undoActionIcon from '../../assets/icons/undo-action.svg'
+import tuningStatusIcon from '../../assets/icons/sliders-tune.svg'
 import { sonataEchoesBySetName } from '../../data/sonataEchoes'
 import { sonataEffects } from '../../data/sonataEffects'
 import { mainStatLabels, substatLabels } from '../../data/substats'
@@ -48,6 +46,11 @@ const activeRecordPills = computed(() => [
 const rollSlots = computed(() => Array.from({ length: 5 }, (_, index) => (
   activeEchoSubstats.value[index] || { id: `pending-${index + 1}`, position: index + 1, pending: true }
 )))
+const activeActionStatusLabel = computed(() => {
+  if (activeEchoSubstats.value.length >= 5) return '已完成'
+  if (!activeEchoSubstats.value.length) return '未调谐'
+  return '调谐中'
+})
 
 function iconMask(source) { return { '--icon-url': `url("${source}")` } }
 
@@ -101,7 +104,6 @@ watch([() => previewSonataEffect.value?.name, previewCost, () => props.activeEch
         />
       </div>
       <div v-else class="active-echo-stage-empty">选择声骸套装</div>
-      <div v-if="activePreviewEcho" class="active-echo-stage-vignette" aria-hidden="true"></div>
       <button v-if="activePreviewEcho" class="active-echo-nav previous" type="button" :disabled="activeEchoesForCost.length <= 1" aria-label="上一只声骸" @click="movePreviewEcho(-1)">‹</button>
       <button v-if="activePreviewEcho" class="active-echo-nav next" type="button" :disabled="activeEchoesForCost.length <= 1" aria-label="下一只声骸" @click="movePreviewEcho(1)">›</button>
       <div v-if="activeEchoesForCost.length > 1" class="active-echo-stage-dots" aria-label="声骸轮播位置">
@@ -117,43 +119,46 @@ watch([() => previewSonataEffect.value?.name, previewCost, () => props.activeEch
     </section>
 
     <section class="active-record-panel" aria-label="当前声骸副词条记录">
-      <div class="active-record-head">
-        <div class="active-record-title-row">
-          <strong class="active-echo-name-title">{{ activeEchoDisplayName }}</strong>
-          <span class="active-record-meta-pills">
-            <em v-for="pill in activeRecordPills" :key="pill" class="active-record-pill">{{ pill }}</em>
+      <div class="active-record-main">
+        <div class="active-record-head">
+          <div class="active-record-title-row">
+            <strong class="active-echo-name-title">{{ activeEchoDisplayName }}</strong>
+            <span class="active-record-meta-pills">
+              <em v-for="pill in activeRecordPills" :key="pill" class="active-record-pill">{{ pill }}</em>
+            </span>
+          </div>
+          <strong class="active-record-count-badge"><span>{{ activeEchoSubstats.length }}</span><small>/5</small></strong>
+          <div class="active-progress-segments" aria-label="声骸副词条录入进度">
+            <i v-for="(filled, index) in progressSegments" :key="index" :class="{ filled }"></i>
+          </div>
+        </div>
+
+        <div class="roll-strip" :class="{ empty: !activeEchoSubstats.length }">
+          <span v-for="roll in rollSlots" :key="roll.id" class="roll-slot" :class="{ pending: roll.pending }">
+            <strong class="roll-position">{{ roll.position }}.</strong>
+            <template v-if="!roll.pending">
+              <em class="roll-name">{{ substatLabels[roll.substat_type] }}</em>
+              <b class="roll-value">{{ formatSubstatTierValue(roll.substat_type, roll.tier_value) }}</b>
+            </template>
+            <em v-else class="roll-name">待调谐</em>
           </span>
         </div>
-        <strong class="active-record-count-badge"><span>{{ activeEchoSubstats.length }}</span><small>/5</small></strong>
-        <div class="active-progress-segments" aria-label="声骸副词条录入进度">
-          <i v-for="(filled, index) in progressSegments" :key="index" :class="{ filled }"></i>
+      </div>
+      <aside v-if="activeEcho" class="active-actions record-actions active-action-bar active-action-rail" aria-label="声骸操作">
+        <div class="active-action-anchor" aria-label="当前声骸调谐状态">
+          <span class="ui-line-icon active-action-anchor-icon" :style="iconMask(tuningStatusIcon)" aria-hidden="true"></span>
+          <small>{{ activeActionStatusLabel }}</small>
         </div>
-      </div>
-
-      <div class="roll-strip" :class="{ empty: !activeEchoSubstats.length }">
-        <span v-for="roll in rollSlots" :key="roll.id" class="roll-slot" :class="{ pending: roll.pending }">
-          <strong class="roll-position">{{ roll.position }}.</strong>
-          <template v-if="!roll.pending">
-            <em class="roll-name">{{ substatLabels[roll.substat_type] }}</em>
-            <b class="roll-value">{{ formatSubstatTierValue(roll.substat_type, roll.tier_value) }}</b>
-          </template>
-          <em v-else class="roll-name">待调谐</em>
-        </span>
-      </div>
-      <div v-if="activeEcho" class="active-actions record-actions active-action-bar" aria-label="声骸操作">
         <button class="active-action-button undo-action" type="button" :disabled="saving || !activeEchoSubstats.length" aria-label="撤回上一次录入的副词条" title="撤回上一次录入的副词条" @click="emit('undo')">
-          <span class="ui-line-icon active-action-icon" :style="iconMask(undoActionIcon)" aria-hidden="true"></span>
-          <span>撤销上条</span>
+          <span>撤销</span>
         </button>
-        <button class="active-action-button discard-action" type="button" :disabled="saving" @click="emit('discard')">
-          <span class="ui-line-icon active-action-icon" :style="iconMask(trashIcon)" aria-hidden="true"></span>
-          <span>弃置声骸</span>
+        <button class="active-action-button discard-action" type="button" :disabled="saving" aria-label="弃置当前声骸" @click="emit('discard')">
+          <span>弃置</span>
         </button>
-        <button class="active-action-button next-action" type="button" :disabled="saving" @click="emit('next')">
-          <span>下一个声骸</span>
-          <span class="ui-line-icon active-action-icon" :style="iconMask(arrowRightIcon)" aria-hidden="true"></span>
+        <button class="active-action-button next-action" type="button" :disabled="saving" aria-label="进入下一个声骸" @click="emit('next')">
+          <span>下一个</span>
         </button>
-      </div>
+      </aside>
     </section>
   </div>
 </template>

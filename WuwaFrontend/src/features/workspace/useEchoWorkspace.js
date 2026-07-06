@@ -28,7 +28,7 @@ function normalizeEchoConfig(config) {
 }
 
 function createDefaultEchoForm() {
-  return normalizeEchoConfig({ sonata: sonataEffects.at(-1).name, cost: 1, main_stat: 'atk_percent', is_continuous_tuning: true })
+  return normalizeEchoConfig({ sonata: sonataEffects[0].name, cost: 1, main_stat: 'atk_percent', is_continuous_tuning: true })
 }
 
 export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, workspaceLocked, onError }) {

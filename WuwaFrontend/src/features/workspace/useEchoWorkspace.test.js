@@ -107,6 +107,50 @@ test('echo workspace creates new echoes as continuous tuning by default', async 
     globalThis.fetch = originalFetch
   }
 })
+test('echo workspace defaults new empty accounts to the latest sonata effect', async () => {
+  const originalDocument = globalThis.document
+  const originalFetch = globalThis.fetch
+  let createdPayload = null
+  globalThis.document = { cookie: 'csrftoken=test' }
+  globalThis.fetch = async (url, options = {}) => {
+    const path = String(url)
+    if (path.includes('/echoes/?game_account_id=1')) return jsonResponse({ results: [] })
+    if (path.endsWith('/echoes/') && options.method === 'POST') {
+      createdPayload = JSON.parse(options.body)
+      return jsonResponse({
+        id: 71,
+        status: 'draft',
+        substats: [],
+        set_name: createdPayload.set_name,
+        cost: createdPayload.cost,
+        main_stat: createdPayload.main_stat,
+        is_continuous_tuning: createdPayload.is_continuous_tuning,
+      })
+    }
+    if (path.includes('/prediction/')) return jsonResponse({ candidates: [] })
+    if (path.includes('/stats/') || path.includes('/model-evaluation/')) return jsonResponse({})
+    throw new Error(`Unexpected request: ${path}`)
+  }
+
+  try {
+    const workspace = useEchoWorkspace({
+      selectedGameAccountId: ref(1),
+      boundPlayerUid: ref('123456789'),
+      workspaceLocked: ref(false),
+      onError: () => {},
+    })
+
+    assert.equal(workspace.echoForm.value.sonata, sonataEffects[0].name)
+
+    await workspace.refresh()
+
+    assert.equal(createdPayload.set_name, sonataEffects[0].name)
+    assert.notEqual(createdPayload.set_name, sonataEffects.at(-1).name)
+  } finally {
+    globalThis.document = originalDocument
+    globalThis.fetch = originalFetch
+  }
+})
 
 test('echo workspace stores the selected preview echo identity on new records', async () => {
   const originalDocument = globalThis.document
@@ -332,10 +376,10 @@ test('reset clears account-scoped echo config before creating an empty account d
     workspace.reset()
     await workspace.refresh()
 
-    assert.equal(createdPayload.set_name, sonataEffects.at(-1).name)
+    assert.equal(createdPayload.set_name, sonataEffects[0].name)
     assert.notEqual(createdPayload.set_name, oldAccountSonata)
-    assert.equal(createdPayload.cost, 1)
-    assert.equal(createdPayload.main_stat, 'atk_percent')
+    assert.equal(createdPayload.cost, sonataEffects[0].availableCosts[0])
+    assert.ok(mainStatsByCost[createdPayload.cost].includes(createdPayload.main_stat))
   } finally {
     globalThis.document = originalDocument
     globalThis.fetch = originalFetch

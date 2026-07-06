@@ -86,11 +86,6 @@
     #101b23;
 }
 
-.app-shell.theme-dark .active-echo-stage-vignette {
-  background:
-    linear-gradient(90deg, rgba(16, 27, 35, 0.9), transparent 18%, transparent 82%, rgba(16, 27, 35, 0.9)),
-    linear-gradient(180deg, rgba(16, 27, 35, 0.76), transparent 32%, transparent 68%, rgba(6, 12, 18, 0.76));
-}
 
 .app-shell.theme-dark .active-echo-set-badge,
 .app-shell.theme-dark .active-echo-nav,
@@ -146,6 +141,9 @@
 .app-shell.theme-dark .roll-strip span strong {
   color: #e7eef4;
 }
+
+.app-shell.theme-dark .active-action-anchor { color: #8fa2b2; }
+.app-shell.theme-dark .active-action-anchor-icon { border-color: rgba(93, 168, 255, 0.22); color: #a9d1ff; background: rgba(47, 98, 143, 0.18); }
 
 .app-shell.theme-dark .undo-action {
   border-color: rgba(93, 168, 255, 0.24);
