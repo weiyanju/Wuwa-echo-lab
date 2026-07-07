@@ -35,6 +35,16 @@ const costOptions = Object.freeze([1, 3, 4])
 const selectedSonataEffect = computed(() => sonataEffects.find((effect) => effect.name === props.config.sonata) || null)
 const availableCosts = computed(() => selectedSonataEffect.value?.availableCosts || costOptions)
 const legalMainStats = computed(() => mainStatsByCost[props.config.cost] || [])
+const predictionRankings = computed(() => props.matrixRows
+  .filter((row) => row.candidate && !row.recorded && Number.isFinite(row.candidate?.p_final))
+  .sort((left, right) => right.candidate.p_final - left.candidate.p_final)
+  .slice(0, 3)
+  .map((row, index) => ({
+    rank: index + 1,
+    label: row.candidate.label || row.label,
+    probability: row.candidate.p_final,
+    substat_type: row.substat_type,
+  })))
 const {
   createPanelRef,
   galleryPanelRef,
@@ -124,6 +134,7 @@ function iconMask(source) { return { '--icon-url': `url("${source}")` } }
     <ActiveEchoCapturePanel
       :config="config"
       :active-echo="activeEcho"
+      :prediction-rankings="predictionRankings"
       :saving="saving"
       @undo="emit('undo')"
       @discard="emit('discard')"

@@ -1,10 +1,9 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
-import tuningStatusIcon from '../../assets/icons/sliders-tune.svg'
 import { sonataEchoesBySetName } from '../../data/sonataEchoes'
 import { sonataEffects } from '../../data/sonataEffects'
 import { mainStatLabels, substatLabels } from '../../data/substats'
-import { formatSubstatTierValue } from '../../services/formatters'
+import { formatPercent, formatSubstatTierValue } from '../../services/formatters'
 
 const props = defineProps({
   config: {
@@ -14,6 +13,10 @@ const props = defineProps({
   activeEcho: {
     type: Object,
     default: null,
+  },
+  predictionRankings: {
+    type: Array,
+    default: () => [],
   },
   saving: {
     type: Boolean,
@@ -38,6 +41,11 @@ const activePreviewEcho = computed(() => {
   return activeEchoesForCost.value[activePreviewIndex.value % activeEchoesForCost.value.length]
 })
 const activeEchoDisplayName = computed(() => activePreviewEcho.value?.name || props.activeEcho?.echo_name || '未选择声骸')
+const activeTitleCharacterCount = computed(() => Array.from(activeEchoDisplayName.value).length)
+const activeRecordTitleClass = computed(() => ({
+  'active-title-compact': activeTitleCharacterCount.value >= 7,
+  'active-title-stacked': activeTitleCharacterCount.value >= 11,
+}))
 const activeRecordPills = computed(() => [
   props.activeEcho?.set_name || props.config.sonata,
   `COST ${previewCost.value}`,
@@ -46,13 +54,10 @@ const activeRecordPills = computed(() => [
 const rollSlots = computed(() => Array.from({ length: 5 }, (_, index) => (
   activeEchoSubstats.value[index] || { id: `pending-${index + 1}`, position: index + 1, pending: true }
 )))
-const activeActionStatusLabel = computed(() => {
-  if (activeEchoSubstats.value.length >= 5) return '已完成'
-  if (!activeEchoSubstats.value.length) return '未调谐'
-  return '调谐中'
-})
-
-function iconMask(source) { return { '--icon-url': `url("${source}")` } }
+const activePredictionRankings = computed(() => props.predictionRankings
+  .slice(0, 3)
+  .filter((prediction) => prediction?.label && Number.isFinite(prediction.probability))
+  .map((prediction, index) => ({ ...prediction, rank: prediction.rank || index + 1 })))
 
 function movePreviewEcho(direction) {
   const total = activeEchoesForCost.value.length
@@ -121,7 +126,7 @@ watch([() => previewSonataEffect.value?.name, previewCost, () => props.activeEch
     <section class="active-record-panel" aria-label="当前声骸副词条记录">
       <div class="active-record-main">
         <div class="active-record-head">
-          <div class="active-record-title-row">
+          <div class="active-record-title-row" :class="activeRecordTitleClass">
             <strong class="active-echo-name-title">{{ activeEchoDisplayName }}</strong>
             <span class="active-record-meta-pills">
               <em v-for="pill in activeRecordPills" :key="pill" class="active-record-pill">{{ pill }}</em>
@@ -145,9 +150,21 @@ watch([() => previewSonataEffect.value?.name, previewCost, () => props.activeEch
         </div>
       </div>
       <aside v-if="activeEcho" class="active-actions record-actions active-action-bar active-action-rail" aria-label="声骸操作">
-        <div class="active-action-anchor" aria-label="当前声骸调谐状态">
-          <span class="ui-line-icon active-action-anchor-icon" :style="iconMask(tuningStatusIcon)" aria-hidden="true"></span>
-          <small>{{ activeActionStatusLabel }}</small>
+        <div class="active-prediction-card" aria-label="下一个副词条预测">
+          <span class="active-prediction-heading">下条预测</span>
+          <div v-if="activePredictionRankings.length" class="active-prediction-table">
+            <span
+              v-for="prediction in activePredictionRankings"
+              :key="prediction.substat_type || prediction.label"
+              class="active-prediction-line"
+              :class="`rank-${prediction.rank}`"
+            >
+              <b class="active-prediction-rank">{{ prediction.rank }}</b>
+              <em class="active-prediction-label">{{ prediction.label }}</em>
+              <strong class="active-prediction-probability">{{ formatPercent(prediction.probability, 1) }}</strong>
+            </span>
+          </div>
+          <span v-else class="active-prediction-empty">等待预测</span>
         </div>
         <button class="active-action-button undo-action" type="button" :disabled="saving || !activeEchoSubstats.length" aria-label="撤回上一次录入的副词条" title="撤回上一次录入的副词条" @click="emit('undo')">
           <span>撤销</span>
