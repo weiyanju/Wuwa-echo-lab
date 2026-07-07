@@ -448,6 +448,24 @@ class ApiViewTests(TestCase):
 
         self.assertEqual(response.status_code, 404)
 
+    def test_prediction_fast_mode_omits_model_diagnostics(self):
+        self.client.force_login(self.user)
+        echo = EchoRecord.objects.create(
+            user=self.user,
+            echo_uid="fast-prediction",
+            cost=1,
+            set_name="Set",
+            main_stat="atk_percent",
+        )
+        SubstatRoll.objects.create(echo=echo, position=1, substat_type="crit_rate", tier_value=6.3)
+
+        response = self.client.get(f"{reverse('echo_prediction', args=[echo.id])}?mode=fast")
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertIn("candidates", body)
+        self.assertIsNone(body["model_diagnostics"])
+
     def test_echo_list_returns_history_with_existing_rolls(self):
         self.client.login(username="tester", password="pw12345")
         echo = EchoRecord.objects.create(

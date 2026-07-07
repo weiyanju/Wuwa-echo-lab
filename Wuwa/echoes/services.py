@@ -57,6 +57,7 @@ def create_echo(user, payload):
 
 
 def update_echo(echo, payload):
+    changed_fields = set()
     for field in (
         "echo_uid",
         "display_name",
@@ -70,13 +71,22 @@ def update_echo(echo, payload):
         "status",
     ):
         if field in payload:
-            setattr(echo, field, clean_string(payload, field))
+            value = clean_string(payload, field)
+            if getattr(echo, field) != value:
+                setattr(echo, field, value)
+                changed_fields.add(field)
     if "cost" in payload:
-        echo.cost = int(payload["cost"])
+        cost = int(payload["cost"])
+        if echo.cost != cost:
+            echo.cost = cost
+            changed_fields.add("cost")
     if "is_continuous_tuning" in payload:
-        echo.is_continuous_tuning = parse_bool(payload["is_continuous_tuning"])
-    echo.full_clean()
-    echo.save()
+        is_continuous_tuning = parse_bool(payload["is_continuous_tuning"])
+        if echo.is_continuous_tuning != is_continuous_tuning:
+            echo.is_continuous_tuning = is_continuous_tuning
+            changed_fields.add("is_continuous_tuning")
+    if changed_fields:
+        echo.save(update_fields=[*sorted(changed_fields), "updated_at"])
     return echo
 
 

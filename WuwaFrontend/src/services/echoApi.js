@@ -9,8 +9,8 @@ export function createEcho(payload, gameAccountId = null) {
   return request('/echoes/', { method: 'POST', body: JSON.stringify(body) })
 }
 
-export function updateEcho(echoId, payload) {
-  return request(`/echoes/${echoId}/`, { method: 'PATCH', body: JSON.stringify(payload) })
+export function updateEcho(echoId, payload, options = {}) {
+  return request(`/echoes/${echoId}/`, { ...options, method: 'PATCH', body: JSON.stringify(payload) })
 }
 
 export function addSubstat(echoId, payload) {
@@ -20,4 +20,3 @@ export function addSubstat(echoId, payload) {
 export function undoLastSubstat(echoId) {
   return request(`/echoes/${echoId}/substats/latest/`, { method: 'DELETE' })
 }
-

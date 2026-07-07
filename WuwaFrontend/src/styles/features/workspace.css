@@ -142,14 +142,12 @@
   color: #e7eef4;
 }
 
-.app-shell.theme-dark .active-prediction-heading,
 .app-shell.theme-dark .active-prediction-empty { color: #98aab7; }
-.app-shell.theme-dark .active-prediction-line { border-color: rgba(82, 106, 122, 0.38); }
-.app-shell.theme-dark .active-prediction-rank { color: #b5c8bb; background: rgba(66, 89, 105, 0.7); }
-.app-shell.theme-dark .active-prediction-line.rank-1 { color: #8ce0b4; background: rgba(55, 179, 127, 0.14); }
-.app-shell.theme-dark .active-prediction-line.rank-1 .active-prediction-rank { color: #081710; background: #67d294; }
-.app-shell.theme-dark .active-prediction-line.rank-2,
-.app-shell.theme-dark .active-prediction-line.rank-3 { color: #b5c8bb; }
+.app-shell.theme-dark .active-prediction-card { border-color: rgba(82, 106, 122, 0.34); background: #14212b; }
+.app-shell.theme-dark .active-prediction-suggestion { border-color: rgba(55, 179, 127, 0.2); color: #bfe8d1; background: rgba(55, 179, 127, 0.14); }
+.app-shell.theme-dark .active-prediction-subheading { color: #8fa0ad; }
+.app-shell.theme-dark .active-prediction-suggestion-heading { color: #9ed9b8; }
+.app-shell.theme-dark .active-prediction-alternative { color: #b5c8bb; }
 
 .app-shell.theme-dark .undo-action {
   border-color: rgba(93, 168, 255, 0.24);

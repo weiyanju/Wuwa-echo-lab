@@ -18,7 +18,9 @@ function Assert-Contains {
 Assert-Contains $script 'if not defined DB_USER set "DB_USER=PostgreSQL"'
 Assert-Contains $script 'if not defined DB_PASSWORD set "DB_PASSWORD=root"'
 Assert-Contains $script 'if not defined START_POSTGRES_SERVICE set "START_POSTGRES_SERVICE=1"'
-Assert-Contains $script 'if not defined POSTGRES_BIN set "POSTGRES_BIN=%ROOT%.tools\postgresql-18.4-1-windows-x64-binaries\pgsql\bin"'
+Assert-Contains $script 'set "ROOT_DIR=%ROOT:~0,-1%"'
+Assert-Contains $script 'set "FIND_POSTGRES_BIN_SCRIPT=%SCRIPTS_DIR%\find-postgres-bin.ps1"'
+Assert-Contains $script 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%FIND_POSTGRES_BIN_SCRIPT%" -Root "%ROOT_DIR%"'
 Assert-Contains $script 'if not defined PGDATA set "PGDATA=%ROOT%.tools\pgdata"'
 Assert-Contains $script 'set "PG_CTL=%POSTGRES_BIN%\pg_ctl.exe"'
 Assert-Contains $script 'set "ENSURE_POSTGRES_SCRIPT=%SCRIPTS_DIR%\ensure-postgres-dev-db.ps1"'
@@ -36,4 +38,17 @@ if ($script -match 'sqlite') {
 $ensureScript = Join-Path $root 'scripts\ensure-postgres-dev-db.ps1'
 if (-not (Test-Path -LiteralPath $ensureScript)) {
     throw 'Expected scripts\ensure-postgres-dev-db.ps1 to exist.'
+}
+
+$findPostgresScript = Join-Path $root 'scripts\find-postgres-bin.ps1'
+if (-not (Test-Path -LiteralPath $findPostgresScript)) {
+    throw 'Expected scripts\find-postgres-bin.ps1 to exist.'
+}
+
+$findPostgresContent = Get-Content -LiteralPath $findPostgresScript -Raw
+Assert-Contains $findPostgresContent "GetEnvironmentVariable('ProgramFiles'"
+Assert-Contains $findPostgresContent 'Get-Command psql.exe'
+
+if ($script -match 'postgresql-18\.4-1-windows-x64-binaries') {
+    throw 'start-dev.bat must not default to a hard-coded PostgreSQL 18.4 directory.'
 }

@@ -18,7 +18,8 @@ def echo_prediction(request, echo_id):
         echo = owned_echo(request.user, echo_id)
     except ObjectDoesNotExist:
         return error_response("声骸不存在。", status=404)
-    return success_response(predict_next_substat(echo))
+    include_diagnostics = request.GET.get("mode") != "fast"
+    return success_response(predict_next_substat(echo, include_diagnostics=include_diagnostics))
 
 
 @api_login_required

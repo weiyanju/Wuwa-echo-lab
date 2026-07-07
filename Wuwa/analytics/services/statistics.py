@@ -1,6 +1,5 @@
-from collections import Counter, defaultdict
-
 from echoes.constants import SAMPLE_STAGES, SUBSTAT_LABELS, SUBSTAT_TYPES
+from .roll_summary import build_roll_summary
 
 
 def _sample_stage(total_rolls):
@@ -17,13 +16,9 @@ def _context_status(total_rolls):
 
 
 def build_user_statistics(owner):
-    rolls = []
-    for echo in owner.echo_records.prefetch_related("substat_rolls"):
-        for roll in echo.substat_rolls.all():
-            rolls.append((echo, roll))
-
-    total_rolls = len(rolls)
-    counts = Counter(roll.substat_type for _, roll in rolls)
+    summary = build_roll_summary(owner)
+    total_rolls = summary.total_rolls
+    counts = summary.counts
     baseline = 1 / len(SUBSTAT_TYPES)
 
     substat_frequency = {}
@@ -38,10 +33,6 @@ def build_user_statistics(owner):
             "deviation": observed - baseline if total_rolls else 0,
         }
 
-    set_counts = defaultdict(int)
-    for echo, roll in rolls:
-        set_counts[echo.set_name] += 1
-
     context_status = _context_status(total_rolls)
     return {
         "total_rolls": total_rolls,
@@ -51,7 +42,7 @@ def build_user_statistics(owner):
             "set_name": {
                 "status": context_status,
                 "sample_size": total_rolls,
-                "groups": dict(set_counts),
+                "groups": dict(summary.set_counts),
                 "message": "套装变量后台持续监控；证据不足时不参与预测。",
             },
             "cost": {"status": context_status, "sample_size": total_rolls},

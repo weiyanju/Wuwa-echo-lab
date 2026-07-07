@@ -87,7 +87,7 @@ export function useEchoWorkbenchLayout(props, legalMainStats) {
   })
 
   watch(
-    () => `${props.activeEcho?.id || ''}:${props.activeEcho?.substats.length || 0}:${props.config.cost}:${props.config.main_stat}:${props.config.sonata}`,
+    () => `${props.activeEcho?.id || ''}:${props.config.cost}:${props.config.main_stat}:${props.config.sonata}`,
     syncSetupPanelHeight,
     { flush: 'post' },
   )

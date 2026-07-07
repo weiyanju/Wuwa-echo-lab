@@ -1,35 +1,12 @@
 import { computed, ref } from 'vue'
-import {
-  addSubstat,
-  createEcho,
-  getModelEvaluation,
-  getPrediction,
-  getStats,
-  listEchoes,
-  undoLastSubstat,
-  updateEcho,
-} from '../../services/api.js'
+import { addSubstat, createEcho, getModelEvaluation, getStats, listEchoes, undoLastSubstat, updateEcho } from '../../services/api.js'
 import { buildNextEchoConfig, isReusableDraft, sortVisibleEchoHistory } from '../../services/echoWorkflow.js'
 import { buildModelDetailCards } from '../../services/modelDetails.js'
-import { mainStatsByCost, substatLabels, substatOrder, tierTables } from '../../data/substats.js'
-import { sonataEffects } from '../../data/sonataEffects.js'
+import { substatLabels, substatOrder, tierTables } from '../../data/substats.js'
 import { createEchoAssetIdentity } from './echoAssetIdentity.js'
+import { createActivePredictionRefreshController } from './echoPredictionRefresh.js'
+import { createDefaultEchoForm, createEchoPayload, createPreparedNextEchoController, normalizeEchoConfig } from './echoWorkspaceDrafts.js'
 import { appendRollToEchoList, buildOptimisticRollDraft, removeOptimisticRollFromEchoList, replaceOptimisticRollInEchoList } from './echoWorkspaceMutations.js'
-
-const defaultCostOptions = Object.freeze([1, 3, 4])
-
-function getAvailableCostsForSonata(sonata) { return sonataEffects.find((effect) => effect.name === sonata)?.availableCosts || defaultCostOptions }
-
-function normalizeEchoConfig(config) {
-  const availableCosts = getAvailableCostsForSonata(config.sonata)
-  const cost = availableCosts.includes(config.cost) ? config.cost : availableCosts[0]
-  const legalMainStats = mainStatsByCost[cost] || []
-  return { ...config, cost, main_stat: legalMainStats.includes(config.main_stat) ? config.main_stat : legalMainStats[0] }
-}
-
-function createDefaultEchoForm() {
-  return normalizeEchoConfig({ sonata: sonataEffects[0].name, cost: 1, main_stat: 'atk_percent', is_continuous_tuning: true })
-}
 
 export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, workspaceLocked, onError }) {
   const saving = ref(false)
@@ -40,9 +17,6 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
   const stats = ref(null)
   const evaluation = ref(null)
   const echoForm = ref(createDefaultEchoForm())
-  let insightsRefreshTimer = null
-  let activeRefreshTimer = null
-  let activePredictionRefreshToken = 0
   let lifecycleGeneration = 0
   let refreshRequestId = 0
 
@@ -68,8 +42,22 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
     labels: substatLabels,
   }))
 
-  function reportError(err) {
-    onError(err?.message || String(err))
+  function reportError(err) { onError(err?.message || String(err)) }
+
+  const activePredictionRefresh = createActivePredictionRefreshController({
+    activeEchoId,
+    selectedGameAccountId,
+    lifecycleGeneration: () => lifecycleGeneration,
+    setPrediction: (nextPrediction) => { prediction.value = nextPrediction },
+    reportError,
+  })
+
+  function cancelActivePredictionRefresh() { activePredictionRefresh.cancel() }
+
+  function insertEcho(echo) {
+    echoes.value = echoes.value.some((item) => item.id === echo.id)
+      ? echoes.value.map((item) => (item.id === echo.id ? echo : item))
+      : [echo, ...echoes.value]
   }
 
   function syncFormFromEcho(echo) {
@@ -82,14 +70,18 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
     echoForm.value.is_continuous_tuning = true
   }
 
+  function activateEcho(echo) {
+    cancelActivePredictionRefresh()
+    activeEchoId.value = echo.id
+    syncFormFromEcho(echo)
+    prediction.value = null
+  }
+
   function reset() {
     lifecycleGeneration += 1
     refreshRequestId += 1
-    activePredictionRefreshToken += 1
-    clearTimeout(insightsRefreshTimer)
-    insightsRefreshTimer = null
-    clearTimeout(activeRefreshTimer)
-    activeRefreshTimer = null
+    cancelActivePredictionRefresh()
+    nextDraft.clear()
     saving.value = false
     pendingTierKey.value = ''
     echoes.value = []
@@ -99,19 +91,6 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
     evaluation.value = null
     echoForm.value = createDefaultEchoForm()
     echoAssetIdentity.resetEchoAsset()
-  }
-
-  async function refreshActive() {
-    if (!activeEchoId.value) {
-      prediction.value = null
-      return
-    }
-    const echoId = activeEchoId.value
-    const token = ++activePredictionRefreshToken
-    const nextPrediction = await getPrediction(echoId)
-    if (token === activePredictionRefreshToken && activeEchoId.value === echoId) {
-      prediction.value = nextPrediction
-    }
   }
 
   async function refresh() {
@@ -143,7 +122,7 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
       activeEchoId.value = echoes.value[0]?.id || null
     }
     syncFormFromEcho(activeEcho.value)
-    await refreshActive()
+    refreshActiveInBackground()
     if (!isCurrent()) return
     const nextStats = await getStats(accountId)
     if (!isCurrent()) return
@@ -158,6 +137,7 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
   }
 
   async function selectEchoAsset(asset) {
+    nextDraft.clear()
     await echoAssetIdentity.selectEchoAsset(asset)
   }
 
@@ -168,6 +148,16 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
     lifecycleGeneration: () => lifecycleGeneration,
     replaceEcho,
     reportError,
+  })
+
+  const nextDraft = createPreparedNextEchoController({
+    activeEcho,
+    activeEchoId,
+    selectedGameAccountId,
+    workspaceLocked,
+    lifecycleGeneration: () => lifecycleGeneration,
+    buildPayload: (config) => createEchoPayload(config, echoAssetIdentity),
+    insertEcho,
   })
 
   function appendRollToEcho(echoId, roll) {
@@ -186,37 +176,18 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
     return buildOptimisticRollDraft(activeEcho.value, row, tier)
   }
 
-  function refreshInsightsInBackground() {
-    const accountId = selectedGameAccountId.value
-    if (!accountId) return
-    const generation = lifecycleGeneration
-    const isCurrent = () => generation === lifecycleGeneration && accountId === selectedGameAccountId.value
-    clearTimeout(insightsRefreshTimer)
-    insightsRefreshTimer = setTimeout(() => {
-      Promise.all([getStats(accountId), getModelEvaluation(accountId)])
-        .then(([nextStats, nextEvaluation]) => {
-          if (!isCurrent()) return
-          stats.value = nextStats
-          evaluation.value = nextEvaluation
-        })
-        .catch((err) => {
-          if (isCurrent()) reportError(err)
-        })
-    }, 1000)
+  async function activatePreparedNextEcho(config, sourceEchoId) {
+    const preparedEcho = await nextDraft.consume(config, sourceEchoId)
+    if (!preparedEcho) return null
+    activateEcho(preparedEcho)
+    return preparedEcho
   }
 
   function refreshActiveInBackground() {
-    const accountId = selectedGameAccountId.value
-    const generation = lifecycleGeneration
-    clearTimeout(activeRefreshTimer)
-    activeRefreshTimer = setTimeout(() => refreshActive().catch((err) => {
-      if (generation === lifecycleGeneration && accountId === selectedGameAccountId.value) reportError(err)
-    }), 300)
+    activePredictionRefresh.refreshInBackground()
   }
 
-  function tierButtonKey(row, tier) {
-    return `${row.substat_type}:${tier.value}`
-  }
+  function tierButtonKey(row, tier) { return `${row.substat_type}:${tier.value}` }
 
   async function createEchoWithConfig(config = echoForm.value) {
     const accountId = selectedGameAccountId.value
@@ -227,7 +198,6 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
     const generation = lifecycleGeneration
     const previousForm = { ...echoForm.value }
     const nextConfig = normalizeEchoConfig(config)
-    const assetPayload = echoAssetIdentity.selectedEchoAssetFieldsForConfig(nextConfig)
     echoForm.value = {
       sonata: nextConfig.sonata,
       cost: nextConfig.cost,
@@ -235,19 +205,10 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
       is_continuous_tuning: true,
     }
     try {
-      const echo = await createEcho({
-        display_name: '',
-        cost: echoForm.value.cost,
-        set_name: echoForm.value.sonata,
-        main_stat: echoForm.value.main_stat,
-        source: '',
-        tuning_batch_id: '',
-        is_continuous_tuning: true,
-        ...assetPayload,
-      }, accountId)
+      const echo = await createEcho(createEchoPayload(nextConfig, echoAssetIdentity), accountId)
       if (generation !== lifecycleGeneration || accountId !== selectedGameAccountId.value) return null
-      echoes.value = [echo, ...echoes.value]
-      activeEchoId.value = echo.id
+      insertEcho(echo)
+      activateEcho(echo)
       return echo
     } catch (err) {
       if (generation !== lifecycleGeneration || accountId !== selectedGameAccountId.value) return null
@@ -259,19 +220,27 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
 
   async function ensureActiveEcho() {
     if (activeEcho.value && activeEcho.value.status !== 'archived' && activeEcho.value.substats.length < 5) return activeEcho.value
+    if (activeEcho.value) {
+      const preparedEcho = await activatePreparedNextEcho(buildNextEchoConfig(activeEcho.value), activeEcho.value.id)
+      if (preparedEcho) return preparedEcho
+    }
     const echo = await createEchoWithConfig()
-    if (echo) await refresh()
     return echo
   }
 
   async function createNextEchoFromActive() {
     if (!activeEcho.value) return
-    const echo = await createEchoWithConfig(buildNextEchoConfig(activeEcho.value))
-    if (echo) await refresh()
+    onError('')
+    const sourceEcho = activeEcho.value
+    const nextConfig = buildNextEchoConfig(sourceEcho)
+    const preparedEcho = await activatePreparedNextEcho(nextConfig, sourceEcho.id)
+    const echo = preparedEcho || await createEchoWithConfig(nextConfig)
+    if (echo) refreshActiveInBackground()
   }
 
   async function applyEchoConfig(partialConfig) {
     onError('')
+    nextDraft.clear()
     const nextConfig = normalizeEchoConfig({ ...echoForm.value, ...partialConfig })
     echoForm.value = nextConfig
     if (!activeEcho.value) {
@@ -289,7 +258,7 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
           ...echoAssetIdentity.selectedEchoAssetFieldsForConfig(nextConfig),
         })
         replaceEcho(updated)
-        await refreshActive()
+        refreshActiveInBackground()
       } catch (err) {
         reportError(err)
       }
@@ -302,6 +271,7 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
   async function discardActiveEcho() {
     if (!activeEcho.value || saving.value) return
     onError('')
+    nextDraft.clear()
     saving.value = true
     const discardedEchoId = activeEcho.value.id
     const nextConfig = buildNextEchoConfig(activeEcho.value)
@@ -310,7 +280,7 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
       await refresh()
       await createEchoWithConfig(nextConfig)
       await refresh()
-      await refreshActive()
+      refreshActiveInBackground()
     } catch (err) {
       reportError(err)
     } finally {
@@ -319,14 +289,17 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
   }
 
   async function selectEcho(echoId) {
+    nextDraft.clear()
+    cancelActivePredictionRefresh()
     activeEchoId.value = echoId
     syncFormFromEcho(activeEcho.value)
-    await refreshActive()
+    refreshActiveInBackground()
   }
 
   async function clickTier(row, tier) {
     if (row.recorded || pendingTierKey.value) return
     onError('')
+    cancelActivePredictionRefresh()
     pendingTierKey.value = tierButtonKey(row, tier)
     let optimisticRoll = null
     let optimisticEchoId = null
@@ -338,8 +311,8 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
       appendRollToEcho(echo.id, optimisticRoll)
       const roll = await addSubstat(echo.id, { substat_type: row.substat_type, tier_value: tier.value })
       replaceOptimisticRollInEcho(echo.id, optimisticRoll.id, roll)
+      nextDraft.prepare()
       refreshActiveInBackground()
-      refreshInsightsInBackground()
     } catch (err) {
       if (optimisticEchoId && optimisticRoll) removeOptimisticRollFromEcho(optimisticEchoId, optimisticRoll.id)
       reportError(err)
@@ -351,12 +324,12 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
   async function undoActiveSubstat() {
     if (!activeEcho.value || !activeEcho.value.substats.length || saving.value) return
     onError('')
+    nextDraft.clear()
     saving.value = true
     try {
       const result = await undoLastSubstat(activeEcho.value.id)
       replaceEcho(result.echo)
-      await refreshActive()
-      refreshInsightsInBackground()
+      refreshActiveInBackground()
     } catch (err) {
       reportError(err)
     } finally {
@@ -364,9 +337,7 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
     }
   }
 
-  function dispose() {
-    reset()
-  }
+  function dispose() { reset() }
 
   return {
     activeEcho,

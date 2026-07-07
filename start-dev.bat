@@ -28,11 +28,13 @@ rem   set NO_PAUSE=1
 cd /d "%~dp0"
 
 set "ROOT=%~dp0"
+set "ROOT_DIR=%ROOT:~0,-1%"
 set "BACKEND_DIR=%ROOT%Wuwa"
 set "FRONTEND_DIR=%ROOT%WuwaFrontend"
 set "SCRIPTS_DIR=%ROOT%scripts"
 set "CHECK_PORTS_SCRIPT=%SCRIPTS_DIR%\check-service-ports.ps1"
 set "ENSURE_POSTGRES_SCRIPT=%SCRIPTS_DIR%\ensure-postgres-dev-db.ps1"
+set "FIND_POSTGRES_BIN_SCRIPT=%SCRIPTS_DIR%\find-postgres-bin.ps1"
 set "PYTHON=%BACKEND_DIR%\.venv\Scripts\python.exe"
 set "NODE_DIR=%ROOT%.tools\node"
 set "NPM=%NODE_DIR%\npm.cmd"
@@ -66,13 +68,22 @@ if not defined SKIP_MIGRATE set "SKIP_MIGRATE=0"
 if not defined ALLOW_OCCUPIED_PORTS set "ALLOW_OCCUPIED_PORTS=0"
 if not defined START_POSTGRES_SERVICE set "START_POSTGRES_SERVICE=1"
 if not defined ENSURE_POSTGRES_DB set "ENSURE_POSTGRES_DB=1"
-if not defined POSTGRES_BIN set "POSTGRES_BIN=%ROOT%.tools\postgresql-18.4-1-windows-x64-binaries\pgsql\bin"
 if not defined PGDATA set "PGDATA=%ROOT%.tools\pgdata"
 if not defined PGLOG set "PGLOG=%ROOT%.tools\pg.log"
 
-set "PG_CTL=%POSTGRES_BIN%\pg_ctl.exe"
-set "INITDB=%POSTGRES_BIN%\initdb.exe"
-set "PSQL=%POSTGRES_BIN%\psql.exe"
+if not defined POSTGRES_BIN (
+    for /f "usebackq delims=" %%P in (`powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%FIND_POSTGRES_BIN_SCRIPT%" -Root "%ROOT_DIR%"`) do set "POSTGRES_BIN=%%P"
+)
+
+if defined POSTGRES_BIN (
+    set "PG_CTL=%POSTGRES_BIN%\pg_ctl.exe"
+    set "INITDB=%POSTGRES_BIN%\initdb.exe"
+    set "PSQL=%POSTGRES_BIN%\psql.exe"
+) else (
+    set "PG_CTL="
+    set "INITDB="
+    set "PSQL="
+)
 
 set "CHECK_ONLY=0"
 if /I "%~1"=="--check" set "CHECK_ONLY=1"
@@ -120,6 +131,11 @@ if not exist "%ENSURE_POSTGRES_SCRIPT%" (
     goto fail
 )
 
+if not exist "%FIND_POSTGRES_BIN_SCRIPT%" (
+    echo ERROR: PostgreSQL bin finder was not found at "%FIND_POSTGRES_BIN_SCRIPT%".
+    goto fail
+)
+
 if not exist "%NODE_DIR%\node.exe" (
     echo ERROR: Bundled node.exe was not found at "%NODE_DIR%\node.exe".
     goto fail
@@ -133,7 +149,7 @@ if not exist "%NPM%" (
 if not exist "%NPM_CACHE%" mkdir "%NPM_CACHE%"
 
 if "%DB_USE_SSH_TUNNEL%"=="0" if "%DB_HOST%"=="127.0.0.1" (
-    if exist "%POSTGRES_BIN%" (
+    if defined POSTGRES_BIN (
         if not exist "%PG_CTL%" (
             echo ERROR: pg_ctl.exe was not found at "%PG_CTL%".
             goto fail
@@ -165,11 +181,20 @@ if "%DB_USE_SSH_TUNNEL%"=="1" (
     )
 )
 
+set "CAN_USE_BUNDLED_POSTGRES=0"
+if defined PG_CTL if exist "%PG_CTL%" set "CAN_USE_BUNDLED_POSTGRES=1"
+
 if "%CHECK_ONLY%"=="1" (
     echo Node version:
     "%NODE_DIR%\node.exe" --version
     echo npm version:
     call "%NPM%" --version
+    if defined POSTGRES_BIN (
+        echo PostgreSQL bin:
+        echo %POSTGRES_BIN%
+    ) else (
+        echo PostgreSQL bin: not found. Set POSTGRES_BIN or ENSURE_POSTGRES_DB=0 before full startup.
+    )
     echo.
     echo Check complete. No services were started.
     goto end
@@ -189,7 +214,7 @@ if "%DB_USE_SSH_TUNNEL%"=="1" (
 if "%DB_USE_SSH_TUNNEL%"=="0" if "%START_POSTGRES_SERVICE%"=="1" if "%DB_HOST%"=="127.0.0.1" (
     powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$hostName='%DB_HOST%'; $port=%DB_PORT%; try { $client=[Net.Sockets.TcpClient]::new(); $connect=$client.BeginConnect($hostName,$port,$null,$null); if ($connect.AsyncWaitHandle.WaitOne(750) -and $client.Connected) { $client.Close(); exit 0 }; $client.Close(); exit 1 } catch { exit 1 }"
     if errorlevel 1 (
-        if exist "%PG_CTL%" (
+        if "%CAN_USE_BUNDLED_POSTGRES%"=="1" (
             if not exist "%PGDATA%\PG_VERSION" (
                 echo Initializing bundled PostgreSQL...
                 call "%INITDB%" -D "%PGDATA%" -U "%DB_ADMIN_USER%" --auth=trust --encoding=UTF8
@@ -221,6 +246,18 @@ if errorlevel 1 (
 )
 
 if "%ENSURE_POSTGRES_DB%"=="1" (
+    if not defined PSQL (
+        echo ERROR: psql.exe was not found automatically.
+        echo Install PostgreSQL client tools, set POSTGRES_BIN, or set ENSURE_POSTGRES_DB=0.
+        goto fail
+    )
+
+    if not exist "%PSQL%" (
+        echo ERROR: psql.exe was not found at "%PSQL%".
+        echo Set POSTGRES_BIN to your PostgreSQL bin directory, or set ENSURE_POSTGRES_DB=0.
+        goto fail
+    )
+
     echo Ensuring PostgreSQL role and database...
     powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%ENSURE_POSTGRES_SCRIPT%" -PsqlPath "%PSQL%" -HostName "%DB_HOST%" -Port %DB_PORT% -AdminUser "%DB_ADMIN_USER%" -User "%DB_USER%" -Password "%DB_PASSWORD%" -Database "%DB_NAME%"
     if errorlevel 1 goto fail

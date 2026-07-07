@@ -57,6 +57,8 @@ const {
 
 function tierButtonKey(row, tier) { return `${row.substat_type}:${tier.value}` }
 
+function rowPendingTierKey(row) { return props.pendingTierKey.startsWith(`${row.substat_type}:`) ? props.pendingTierKey : '' }
+
 function isTierPending(row, tier) { return props.pendingTierKey === tierButtonKey(row, tier) }
 
 function isCostAvailable(cost) { return availableCosts.value.includes(cost) }
@@ -148,7 +150,7 @@ function iconMask(source) { return { '--icon-url': `url("${source}")` } }
         :key="row.substat_type"
         class="substat-row"
         :class="{ recorded: row.recorded, 'top-predicted-row': row.topPredicted && !row.recorded }"
-        v-memo="[row.recorded?.id, row.recorded?.tier_value, row.candidate?.p_final, row.candidate?.baseline_deviation, row.topPredicted, pendingTierKey]"
+        v-memo="[row.recorded?.id, row.recorded?.tier_value, row.candidate?.p_final, row.candidate?.baseline_deviation, row.topPredicted, rowPendingTierKey(row)]"
       >
         <div class="substat-meta">
           <div class="substat-title-line">
