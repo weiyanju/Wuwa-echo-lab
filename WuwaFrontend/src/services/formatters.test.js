@@ -82,6 +82,31 @@ test('contains 13 independent substat types with clickable tier tables', () => {
   }
 })
 
+test('stores reference sheet tier probabilities for the workbench matrix', () => {
+  assert.deepEqual(tierTables.crit_rate, [
+    { value: 6.3, probability: 0.2333 },
+    { value: 6.9, probability: 0.2333 },
+    { value: 7.5, probability: 0.2333 },
+    { value: 8.1, probability: 0.0800 },
+    { value: 8.7, probability: 0.0800 },
+    { value: 9.3, probability: 0.0800 },
+    { value: 9.9, probability: 0.0300 },
+    { value: 10.5, probability: 0.0300 },
+  ])
+  assert.deepEqual(tierTables.flat_atk, [
+    { value: 30, probability: 0.0680 },
+    { value: 40, probability: 0.5243 },
+    { value: 50, probability: 0.3786 },
+    { value: 60, probability: 0.0291 },
+  ])
+  assert.deepEqual(tierTables.flat_def, [
+    { value: 40, probability: 0.1456 },
+    { value: 50, probability: 0.4466 },
+    { value: 60, probability: 0.3204 },
+    { value: 70, probability: 0.0874 },
+  ])
+})
+
 test('allows hp percent as a 3 cost main stat', () => {
   assert.ok(mainStatsByCost[3].includes('hp_percent'))
 })
@@ -90,8 +115,8 @@ test('preserves manual rounded probability sums instead of forcing one', () => {
   const flatHpTotal = tierTables.flat_hp.reduce((sum, tier) => sum + tier.probability, 0)
   const energyTotal = tierTables.energy_regen.reduce((sum, tier) => sum + tier.probability, 0)
 
-  assert.equal(Math.round(flatHpTotal * 1000) / 1000, 1.002)
-  assert.equal(Math.round(energyTotal * 1000) / 1000, 1.001)
+  assert.equal(Math.round(flatHpTotal * 1000) / 1000, 1.000)
+  assert.equal(Math.round(energyTotal * 1000) / 1000, 1.000)
 })
 
 test('stores current visible sonata effects with local icons', () => {

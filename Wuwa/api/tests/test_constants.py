@@ -36,8 +36,9 @@ class ConstantsTests(SimpleTestCase):
         for key in shared_keys[1:]:
             self.assertEqual(constants.TIER_TABLES[key], first)
 
-        self.assertEqual(first[0], {"value": 6.4, "probability": 0.066})
-        self.assertEqual(first[-1], {"value": 11.6, "probability": 0.031})
+        self.assertEqual(first[0], {"value": 6.4, "probability": 0.0680})
+        self.assertEqual(first[5], {"value": 10.2, "probability": 0.1456})
+        self.assertEqual(first[-1], {"value": 11.6, "probability": 0.0291})
 
     def test_each_tier_table_probability_sums_to_one(self):
         for substat_type, table in constants.TIER_TABLES.items():
@@ -47,11 +48,48 @@ class ConstantsTests(SimpleTestCase):
     def test_manual_rounded_probability_tiers_are_preserved(self):
         self.assertEqual(
             constants.TIER_TABLES["flat_hp"][-1],
-            {"value": 580, "probability": 0.036},
+            {"value": 580, "probability": 0.0291},
         )
         self.assertEqual(
             constants.TIER_TABLES["energy_regen"][-1],
-            {"value": 12.4, "probability": 0.027},
+            {"value": 12.4, "probability": 0.0291},
+        )
+
+    def test_tier_tables_match_reference_probability_sheet(self):
+        self.assertEqual(
+            constants.TIER_TABLES["crit_rate"],
+            (
+                {"value": 6.3, "probability": 0.2333},
+                {"value": 6.9, "probability": 0.2333},
+                {"value": 7.5, "probability": 0.2333},
+                {"value": 8.1, "probability": 0.0800},
+                {"value": 8.7, "probability": 0.0800},
+                {"value": 9.3, "probability": 0.0800},
+                {"value": 9.9, "probability": 0.0300},
+                {"value": 10.5, "probability": 0.0300},
+            ),
+        )
+        self.assertEqual(
+            constants.TIER_TABLES["crit_damage"][6],
+            {"value": 19.8, "probability": 0.0300},
+        )
+        self.assertEqual(
+            constants.TIER_TABLES["flat_atk"],
+            (
+                {"value": 30, "probability": 0.0680},
+                {"value": 40, "probability": 0.5243},
+                {"value": 50, "probability": 0.3786},
+                {"value": 60, "probability": 0.0291},
+            ),
+        )
+        self.assertEqual(
+            constants.TIER_TABLES["flat_def"],
+            (
+                {"value": 40, "probability": 0.1456},
+                {"value": 50, "probability": 0.4466},
+                {"value": 60, "probability": 0.3204},
+                {"value": 70, "probability": 0.0874},
+            ),
         )
 
     def test_tier_tables_and_rows_are_immutable(self):

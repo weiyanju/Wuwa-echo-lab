@@ -2,7 +2,7 @@
 setlocal EnableExtensions
 
 rem Wuwa local development launcher.
-rem Starts Django backend and Vite frontend against a local PostgreSQL database by default.
+rem Starts Django backend and Vite frontend against a local PostgreSQL database.
 rem
 rem Usage:
 rem   start-dev.bat
@@ -17,7 +17,13 @@ rem   set DB_PASSWORD=your-password
 rem   set DB_HOST=127.0.0.1
 rem   set DB_PORT=5432
 rem   set DB_USE_SSH_TUNNEL=1
+rem   set POSTGRES_BIN=D:\path\to\pgsql\bin
+rem   set PGDATA=D:\path\to\pgdata
+rem   set POSTGRES_SERVICE_NAME=postgresql-x64-16
+rem   set START_POSTGRES_SERVICE=0
+rem   set ENSURE_POSTGRES_DB=0
 rem   set ALLOW_OCCUPIED_PORTS=1
+rem   set NO_PAUSE=1
 
 cd /d "%~dp0"
 
@@ -26,6 +32,7 @@ set "BACKEND_DIR=%ROOT%Wuwa"
 set "FRONTEND_DIR=%ROOT%WuwaFrontend"
 set "SCRIPTS_DIR=%ROOT%scripts"
 set "CHECK_PORTS_SCRIPT=%SCRIPTS_DIR%\check-service-ports.ps1"
+set "ENSURE_POSTGRES_SCRIPT=%SCRIPTS_DIR%\ensure-postgres-dev-db.ps1"
 set "PYTHON=%BACKEND_DIR%\.venv\Scripts\python.exe"
 set "NODE_DIR=%ROOT%.tools\node"
 set "NPM=%NODE_DIR%\npm.cmd"
@@ -36,8 +43,9 @@ if not defined SSH_USER set "SSH_USER=admin"
 if not defined SSH_HOST set "SSH_HOST=47.98.96.128"
 if not defined DB_USE_SSH_TUNNEL set "DB_USE_SSH_TUNNEL=0"
 if not defined DB_NAME set "DB_NAME=wuwa_dev"
-if not defined DB_USER set "DB_USER=postgres"
+if not defined DB_USER set "DB_USER=PostgreSQL"
 if not defined DB_PASSWORD set "DB_PASSWORD=root"
+if not defined DB_ADMIN_USER set "DB_ADMIN_USER=postgres"
 if not defined DB_HOST set "DB_HOST=127.0.0.1"
 if not defined DB_PORT (
     if "%DB_USE_SSH_TUNNEL%"=="1" (
@@ -56,6 +64,15 @@ if not defined FRONTEND_PORT set "FRONTEND_PORT=5173"
 if not defined SKIP_INSTALL set "SKIP_INSTALL=0"
 if not defined SKIP_MIGRATE set "SKIP_MIGRATE=0"
 if not defined ALLOW_OCCUPIED_PORTS set "ALLOW_OCCUPIED_PORTS=0"
+if not defined START_POSTGRES_SERVICE set "START_POSTGRES_SERVICE=1"
+if not defined ENSURE_POSTGRES_DB set "ENSURE_POSTGRES_DB=1"
+if not defined POSTGRES_BIN set "POSTGRES_BIN=%ROOT%.tools\postgresql-18.4-1-windows-x64-binaries\pgsql\bin"
+if not defined PGDATA set "PGDATA=%ROOT%.tools\pgdata"
+if not defined PGLOG set "PGLOG=%ROOT%.tools\pg.log"
+
+set "PG_CTL=%POSTGRES_BIN%\pg_ctl.exe"
+set "INITDB=%POSTGRES_BIN%\initdb.exe"
+set "PSQL=%POSTGRES_BIN%\psql.exe"
 
 set "CHECK_ONLY=0"
 if /I "%~1"=="--check" set "CHECK_ONLY=1"
@@ -98,6 +115,11 @@ if not exist "%CHECK_PORTS_SCRIPT%" (
     goto fail
 )
 
+if not exist "%ENSURE_POSTGRES_SCRIPT%" (
+    echo ERROR: PostgreSQL database helper was not found at "%ENSURE_POSTGRES_SCRIPT%".
+    goto fail
+)
+
 if not exist "%NODE_DIR%\node.exe" (
     echo ERROR: Bundled node.exe was not found at "%NODE_DIR%\node.exe".
     goto fail
@@ -109,6 +131,25 @@ if not exist "%NPM%" (
 )
 
 if not exist "%NPM_CACHE%" mkdir "%NPM_CACHE%"
+
+if "%DB_USE_SSH_TUNNEL%"=="0" if "%DB_HOST%"=="127.0.0.1" (
+    if exist "%POSTGRES_BIN%" (
+        if not exist "%PG_CTL%" (
+            echo ERROR: pg_ctl.exe was not found at "%PG_CTL%".
+            goto fail
+        )
+
+        if not exist "%INITDB%" (
+            echo ERROR: initdb.exe was not found at "%INITDB%".
+            goto fail
+        )
+
+        if not exist "%PSQL%" (
+            echo ERROR: psql.exe was not found at "%PSQL%".
+            goto fail
+        )
+    )
+)
 
 if "%DB_USE_SSH_TUNNEL%"=="1" (
     if not exist "%KEY_PATH%" (
@@ -145,12 +186,44 @@ if "%DB_USE_SSH_TUNNEL%"=="1" (
     start "Wuwa DB Tunnel" powershell.exe -NoExit -NoProfile -ExecutionPolicy Bypass -Command "$KeyPath='%KEY_PATH%'; $LocalPort=%DB_PORT%; $RemoteHost='%DB_REMOTE_HOST%'; $RemotePort=%DB_REMOTE_PORT%; $SshUser='%SSH_USER%'; $SshHost='%SSH_HOST%'; $RetryDelaySeconds=5; Write-Host ('PostgreSQL tunnel: 127.0.0.1:' + $LocalPort + ' -> ' + $RemoteHost + ':' + $RemotePort + ' via ' + $SshUser + '@' + $SshHost) -ForegroundColor Cyan; Write-Host 'Keep this window open. Press Ctrl+C to stop.' -ForegroundColor Yellow; while ($true) { ssh -i $KeyPath -L ($LocalPort.ToString() + ':' + $RemoteHost + ':' + $RemotePort) -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ExitOnForwardFailure=yes ($SshUser + '@' + $SshHost); Write-Host ''; Write-Host ('Tunnel disconnected. Reconnecting in ' + $RetryDelaySeconds + ' seconds...') -ForegroundColor Yellow; Start-Sleep -Seconds $RetryDelaySeconds }"
 )
 
+if "%DB_USE_SSH_TUNNEL%"=="0" if "%START_POSTGRES_SERVICE%"=="1" if "%DB_HOST%"=="127.0.0.1" (
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$hostName='%DB_HOST%'; $port=%DB_PORT%; try { $client=[Net.Sockets.TcpClient]::new(); $connect=$client.BeginConnect($hostName,$port,$null,$null); if ($connect.AsyncWaitHandle.WaitOne(750) -and $client.Connected) { $client.Close(); exit 0 }; $client.Close(); exit 1 } catch { exit 1 }"
+    if errorlevel 1 (
+        if exist "%PG_CTL%" (
+            if not exist "%PGDATA%\PG_VERSION" (
+                echo Initializing bundled PostgreSQL...
+                call "%INITDB%" -D "%PGDATA%" -U "%DB_ADMIN_USER%" --auth=trust --encoding=UTF8
+                if errorlevel 1 goto fail
+            )
+
+            echo Starting bundled PostgreSQL...
+            call "%PG_CTL%" -D "%PGDATA%" -l "%PGLOG%" -o "-h %DB_HOST% -p %DB_PORT%" start
+            if errorlevel 1 goto fail
+        ) else (
+            echo Checking local PostgreSQL service...
+            powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$hostName='%DB_HOST%'; $port=%DB_PORT%; $serviceName='%POSTGRES_SERVICE_NAME%'; $canConnect = { try { $client=[Net.Sockets.TcpClient]::new(); $connect=$client.BeginConnect($hostName,$port,$null,$null); if ($connect.AsyncWaitHandle.WaitOne(750) -and $client.Connected) { $client.Close(); return $true }; $client.Close(); return $false } catch { return $false } }; if (& $canConnect) { exit 0 }; if ([string]::IsNullOrWhiteSpace($serviceName)) { $service = Get-Service | Where-Object { $_.Name -match 'postgres|pgsql' -or $_.DisplayName -match 'Postgre|Postgres|pgsql' } | Select-Object -First 1 } else { $service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue }; if (-not $service) { exit 2 }; if ($service.Status -ne 'Running') { Start-Service -Name $service.Name }; $deadline=(Get-Date).AddSeconds(20); do { if (& $canConnect) { exit 0 }; Start-Sleep -Seconds 1 } while ((Get-Date) -lt $deadline); exit 1"
+            if errorlevel 2 (
+                echo No local PostgreSQL Windows service was found to start automatically.
+            ) else (
+                if errorlevel 1 echo Local PostgreSQL service was found but did not open %DB_HOST%:%DB_PORT% in time.
+            )
+        )
+    )
+)
+
 echo Waiting for PostgreSQL on %DB_HOST%:%DB_PORT%...
 powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$hostName='%DB_HOST%'; $port=%DB_PORT%; $deadline=(Get-Date).AddSeconds(45); do { try { $client=[Net.Sockets.TcpClient]::new(); $connect=$client.BeginConnect($hostName,$port,$null,$null); if ($connect.AsyncWaitHandle.WaitOne(1000) -and $client.Connected) { $client.Close(); exit 0 }; $client.Close() } catch {}; Start-Sleep -Seconds 1 } while ((Get-Date) -lt $deadline); exit 1"
 if errorlevel 1 (
     echo ERROR: PostgreSQL did not become ready in 45 seconds.
     echo Check DB_HOST, DB_PORT, and your local PostgreSQL service.
+    echo Current database user is "%DB_USER%"; update DB_USER before running if your local role name differs.
     goto fail
+)
+
+if "%ENSURE_POSTGRES_DB%"=="1" (
+    echo Ensuring PostgreSQL role and database...
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%ENSURE_POSTGRES_SCRIPT%" -PsqlPath "%PSQL%" -HostName "%DB_HOST%" -Port %DB_PORT% -AdminUser "%DB_ADMIN_USER%" -User "%DB_USER%" -Password "%DB_PASSWORD%" -Database "%DB_NAME%"
+    if errorlevel 1 goto fail
 )
 
 if "%SKIP_INSTALL%"=="1" (
@@ -212,7 +285,7 @@ echo Startup failed.
 echo Review the error above, then run:
 echo   start-dev.bat --check
 echo.
-pause
+if not "%NO_PAUSE%"=="1" pause
 exit /b 1
 
 :end
