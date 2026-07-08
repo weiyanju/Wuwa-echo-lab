@@ -7,6 +7,7 @@ import { createEchoAssetIdentity } from './echoAssetIdentity.js'
 import { createActivePredictionRefreshController } from './echoPredictionRefresh.js'
 import { createDefaultEchoForm, createEchoPayload, createPreparedNextEchoController, normalizeEchoConfig } from './echoWorkspaceDrafts.js'
 import { appendRollToEchoList, buildOptimisticRollDraft, removeOptimisticRollFromEchoList, replaceOptimisticRollInEchoList } from './echoWorkspaceMutations.js'
+import { adjustWorkspaceStatsForSubstat } from './echoWorkspaceStats.js'
 
 export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, workspaceLocked, onError }) {
   const saving = ref(false)
@@ -15,6 +16,8 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
   const activeEchoId = ref(null)
   const prediction = ref(null)
   const stats = ref(null)
+  const sessionEchoDelta = ref(0)
+  const sessionSampleDelta = ref(0)
   const evaluation = ref(null)
   const echoForm = ref(createDefaultEchoForm())
   let lifecycleGeneration = 0
@@ -88,6 +91,8 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
     activeEchoId.value = null
     prediction.value = null
     stats.value = null
+    sessionEchoDelta.value = 0
+    sessionSampleDelta.value = 0
     evaluation.value = null
     echoForm.value = createDefaultEchoForm()
     echoAssetIdentity.resetEchoAsset()
@@ -99,6 +104,8 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
       reset()
       return
     }
+    sessionEchoDelta.value = 0
+    sessionSampleDelta.value = 0
     const generation = lifecycleGeneration
     const requestId = ++refreshRequestId
     const isCurrent = () => (
@@ -170,6 +177,18 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
 
   function removeOptimisticRollFromEcho(echoId, optimisticRollId) {
     echoes.value = removeOptimisticRollFromEchoList(echoes.value, echoId, optimisticRollId)
+  }
+
+  function adjustLoadedStatsForSubstat(substatType, delta) {
+    stats.value = adjustWorkspaceStatsForSubstat(stats.value, substatType, delta)
+  }
+
+  function visibleEchoHistoryCount() { return sortVisibleEchoHistory(echoes.value).length }
+
+  function adjustSessionEchoDelta(previousVisibleEchoCount) { sessionEchoDelta.value = Math.max(sessionEchoDelta.value + visibleEchoHistoryCount() - previousVisibleEchoCount, 0) }
+
+  function adjustSessionSampleDelta(delta) {
+    sessionSampleDelta.value = Math.max(sessionSampleDelta.value + delta, 0)
   }
 
   function buildOptimisticRoll(row, tier) {
@@ -306,11 +325,15 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
     try {
       const echo = await ensureActiveEcho()
       if (!echo) return
+      const visibleEchoCountBeforeEntry = visibleEchoHistoryCount()
       optimisticEchoId = echo.id
       optimisticRoll = buildOptimisticRoll(row, tier)
       appendRollToEcho(echo.id, optimisticRoll)
       const roll = await addSubstat(echo.id, { substat_type: row.substat_type, tier_value: tier.value })
       replaceOptimisticRollInEcho(echo.id, optimisticRoll.id, roll)
+      adjustLoadedStatsForSubstat(roll.substat_type || row.substat_type, 1)
+      adjustSessionEchoDelta(visibleEchoCountBeforeEntry)
+      adjustSessionSampleDelta(1)
       nextDraft.prepare()
       refreshActiveInBackground()
     } catch (err) {
@@ -326,9 +349,14 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
     onError('')
     nextDraft.clear()
     saving.value = true
+    const removedRoll = activeEcho.value.substats.at(-1) || null
+    const visibleEchoCountBeforeUndo = visibleEchoHistoryCount()
     try {
       const result = await undoLastSubstat(activeEcho.value.id)
       replaceEcho(result.echo)
+      adjustLoadedStatsForSubstat(removedRoll?.substat_type, -1)
+      adjustSessionEchoDelta(visibleEchoCountBeforeUndo)
+      adjustSessionSampleDelta(-1)
       refreshActiveInBackground()
     } catch (err) {
       reportError(err)
@@ -359,6 +387,8 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
     saving,
     selectEcho,
     selectEchoAsset,
+    sessionEchoDelta,
+    sessionSampleDelta,
     stats,
     undoActiveSubstat,
     visibleEchoCount,

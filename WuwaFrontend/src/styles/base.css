@@ -8,6 +8,17 @@ body {
   background: var(--canvas);
 }
 
+.data-number,
+.metric-value,
+.rank-value,
+.score-value,
+.percent-value {
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  letter-spacing: 0;
+}
+
 button,
 input {
   font: inherit;

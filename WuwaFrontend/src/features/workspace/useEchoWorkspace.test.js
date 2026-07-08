@@ -1050,6 +1050,309 @@ test('tier entry keeps prediction refresh out of the immediate save path', async
   }
 })
 
+test('tier entry increments loaded stats total locally without refreshing analytics', async () => {
+  const originalDocument = globalThis.document
+  const originalFetch = globalThis.fetch
+  const requestOrder = []
+  globalThis.document = { cookie: 'csrftoken=test' }
+  globalThis.fetch = async (url, options = {}) => {
+    const path = String(url)
+    if (path.includes('/echoes/?game_account_id=1')) {
+      return jsonResponse({
+        results: [{
+          id: 293,
+          status: 'in_progress',
+          substats: [{ id: 2931, position: 1, substat_type: 'crit_rate', tier_value: 6.3 }],
+          set_name: sonataEffects[0].name,
+          cost: 1,
+          main_stat: 'atk_percent',
+          is_continuous_tuning: true,
+        }],
+      })
+    }
+    if (path.includes('/prediction/')) return jsonResponse({ candidates: [] })
+    if (path.includes('/stats/')) {
+      requestOrder.push('stats')
+      return jsonResponse({
+        total_rolls: 84,
+        sample_stage: { min: 0, max: 500, key: 'recording', label: '0-500 条：规则基线主导' },
+        substat_frequency: {
+          crit_damage: { label: '暴击伤害', count: 4, observed_rate: 4 / 84, baseline_rate: 1 / 13, deviation: 4 / 84 - 1 / 13 },
+        },
+        context_factors: {
+          set_name: { status: 'insufficient_data', sample_size: 84, groups: {} },
+        },
+      })
+    }
+    if (path.includes('/model-evaluation/')) {
+      requestOrder.push('model-evaluation')
+      return jsonResponse({})
+    }
+    if (path.includes('/substats/') && options.method === 'POST') {
+      requestOrder.push('substat-save')
+      return jsonResponse({ id: 2932, position: 2, substat_type: 'crit_damage', tier_value: 12.6 })
+    }
+    throw new Error(`Unexpected request: ${path}`)
+  }
+
+  const workspace = useEchoWorkspace({
+    selectedGameAccountId: ref(1),
+    boundPlayerUid: ref('123456789'),
+    workspaceLocked: ref(false),
+    onError: () => {},
+  })
+
+  try {
+    await workspace.refresh()
+    assert.equal(workspace.stats.value.total_rolls, 84)
+    assert.equal(workspace.sessionEchoDelta.value, 0)
+    assert.equal(workspace.sessionSampleDelta.value, 0)
+    requestOrder.length = 0
+
+    await workspace.clickTier(
+      { recorded: null, substat_type: 'crit_damage' },
+      { value: 12.6 },
+    )
+
+    assert.equal(workspace.stats.value.total_rolls, 85)
+    assert.equal(workspace.sessionEchoDelta.value, 0)
+    assert.equal(workspace.sessionSampleDelta.value, 1)
+    assert.equal(workspace.stats.value.substat_frequency.crit_damage.count, 5)
+    assert.equal(workspace.stats.value.context_factors.set_name.sample_size, 85)
+    assert.deepEqual(requestOrder, ['substat-save'])
+  } finally {
+    workspace.dispose()
+    globalThis.document = originalDocument
+    globalThis.fetch = originalFetch
+  }
+})
+
+test('undo decrements loaded stats total locally after the backend removes a roll', async () => {
+  const originalDocument = globalThis.document
+  const originalFetch = globalThis.fetch
+  const requestOrder = []
+  globalThis.document = { cookie: 'csrftoken=test' }
+  globalThis.fetch = async (url, options = {}) => {
+    const path = String(url)
+    if (path.includes('/echoes/?game_account_id=1')) {
+      return jsonResponse({
+        results: [{
+          id: 294,
+          status: 'in_progress',
+          substats: [
+            { id: 2941, position: 1, substat_type: 'crit_rate', tier_value: 6.3 },
+            { id: 2942, position: 2, substat_type: 'crit_damage', tier_value: 12.6 },
+          ],
+          set_name: sonataEffects[0].name,
+          cost: 1,
+          main_stat: 'atk_percent',
+          is_continuous_tuning: true,
+        }],
+      })
+    }
+    if (path.includes('/prediction/')) return jsonResponse({ candidates: [] })
+    if (path.includes('/stats/')) {
+      requestOrder.push('stats')
+      return jsonResponse({
+        total_rolls: 85,
+        sample_stage: { min: 0, max: 500, key: 'recording', label: '0-500 条：规则基线主导' },
+        substat_frequency: {
+          crit_damage: { label: '暴击伤害', count: 5, observed_rate: 5 / 85, baseline_rate: 1 / 13, deviation: 5 / 85 - 1 / 13 },
+        },
+        context_factors: {
+          set_name: { status: 'insufficient_data', sample_size: 85, groups: {} },
+        },
+      })
+    }
+    if (path.includes('/model-evaluation/')) {
+      requestOrder.push('model-evaluation')
+      return jsonResponse({})
+    }
+    if (path.includes('/substats/latest/') && options.method === 'DELETE') {
+      requestOrder.push('substat-undo')
+      return jsonResponse({
+        echo: {
+          id: 294,
+          status: 'in_progress',
+          substats: [{ id: 2941, position: 1, substat_type: 'crit_rate', tier_value: 6.3 }],
+          set_name: sonataEffects[0].name,
+          cost: 1,
+          main_stat: 'atk_percent',
+          is_continuous_tuning: true,
+        },
+      })
+    }
+    throw new Error(`Unexpected request: ${path}`)
+  }
+
+  const workspace = useEchoWorkspace({
+    selectedGameAccountId: ref(1),
+    boundPlayerUid: ref('123456789'),
+    workspaceLocked: ref(false),
+    onError: () => {},
+  })
+
+  try {
+    await workspace.refresh()
+    assert.equal(workspace.stats.value.total_rolls, 85)
+    assert.equal(workspace.sessionEchoDelta.value, 0)
+    assert.equal(workspace.sessionSampleDelta.value, 0)
+    requestOrder.length = 0
+
+    await workspace.undoActiveSubstat()
+
+    assert.equal(workspace.stats.value.total_rolls, 84)
+    assert.equal(workspace.sessionEchoDelta.value, 0)
+    assert.equal(workspace.sessionSampleDelta.value, 0)
+    assert.equal(workspace.stats.value.substat_frequency.crit_damage.count, 4)
+    assert.equal(workspace.stats.value.context_factors.set_name.sample_size, 84)
+    assert.deepEqual(requestOrder, ['substat-undo'])
+  } finally {
+    workspace.dispose()
+    globalThis.document = originalDocument
+    globalThis.fetch = originalFetch
+  }
+})
+
+test('undo rolls back the session sample delta for an entry recorded in this session', async () => {
+  const originalDocument = globalThis.document
+  const originalFetch = globalThis.fetch
+  globalThis.document = { cookie: 'csrftoken=test' }
+  globalThis.fetch = async (url, options = {}) => {
+    const path = String(url)
+    if (path.includes('/echoes/?game_account_id=1')) {
+      return jsonResponse({
+        results: [{
+          id: 295,
+          status: 'in_progress',
+          substats: [{ id: 2951, position: 1, substat_type: 'crit_rate', tier_value: 6.3 }],
+          set_name: sonataEffects[0].name,
+          cost: 1,
+          main_stat: 'atk_percent',
+          is_continuous_tuning: true,
+        }],
+      })
+    }
+    if (path.includes('/prediction/')) return jsonResponse({ candidates: [] })
+    if (path.includes('/stats/')) return jsonResponse({ total_rolls: 84 })
+    if (path.includes('/model-evaluation/')) return jsonResponse({})
+    if (path.includes('/substats/') && options.method === 'POST') {
+      return jsonResponse({ id: 2952, position: 2, substat_type: 'crit_damage', tier_value: 12.6 })
+    }
+    if (path.includes('/substats/latest/') && options.method === 'DELETE') {
+      return jsonResponse({
+        echo: {
+          id: 295,
+          status: 'in_progress',
+          substats: [{ id: 2951, position: 1, substat_type: 'crit_rate', tier_value: 6.3 }],
+          set_name: sonataEffects[0].name,
+          cost: 1,
+          main_stat: 'atk_percent',
+          is_continuous_tuning: true,
+        },
+      })
+    }
+    throw new Error(`Unexpected request: ${path}`)
+  }
+
+  const workspace = useEchoWorkspace({
+    selectedGameAccountId: ref(1),
+    boundPlayerUid: ref('123456789'),
+    workspaceLocked: ref(false),
+    onError: () => {},
+  })
+
+  try {
+    await workspace.refresh()
+    await workspace.clickTier(
+      { recorded: null, substat_type: 'crit_damage' },
+      { value: 12.6 },
+    )
+    assert.equal(workspace.sessionSampleDelta.value, 1)
+
+    await workspace.undoActiveSubstat()
+
+    assert.equal(workspace.sessionSampleDelta.value, 0)
+  } finally {
+    workspace.dispose()
+    globalThis.document = originalDocument
+    globalThis.fetch = originalFetch
+  }
+})
+
+test('first tier entry on an empty echo increments the session echo delta', async () => {
+  const originalDocument = globalThis.document
+  const originalFetch = globalThis.fetch
+  globalThis.document = { cookie: 'csrftoken=test' }
+  globalThis.fetch = async (url, options = {}) => {
+    const path = String(url)
+    if (path.includes('/echoes/?game_account_id=1')) {
+      return jsonResponse({
+        results: [{
+          id: 296,
+          status: 'draft',
+          substats: [],
+          set_name: sonataEffects[0].name,
+          cost: 1,
+          main_stat: 'atk_percent',
+          is_continuous_tuning: true,
+        }],
+      })
+    }
+    if (path.includes('/prediction/')) return jsonResponse({ candidates: [] })
+    if (path.includes('/stats/')) return jsonResponse({ total_rolls: 84 })
+    if (path.includes('/model-evaluation/')) return jsonResponse({})
+    if (path.includes('/substats/') && options.method === 'POST') {
+      return jsonResponse({ id: 2961, position: 1, substat_type: 'crit_damage', tier_value: 12.6 })
+    }
+    if (path.includes('/substats/latest/') && options.method === 'DELETE') {
+      return jsonResponse({
+        echo: {
+          id: 296,
+          status: 'draft',
+          substats: [],
+          set_name: sonataEffects[0].name,
+          cost: 1,
+          main_stat: 'atk_percent',
+          is_continuous_tuning: true,
+        },
+      })
+    }
+    throw new Error(`Unexpected request: ${path}`)
+  }
+
+  const workspace = useEchoWorkspace({
+    selectedGameAccountId: ref(1),
+    boundPlayerUid: ref('123456789'),
+    workspaceLocked: ref(false),
+    onError: () => {},
+  })
+
+  try {
+    await workspace.refresh()
+    assert.equal(workspace.visibleEchoCount.value, 0)
+
+    await workspace.clickTier(
+      { recorded: null, substat_type: 'crit_damage' },
+      { value: 12.6 },
+    )
+
+    assert.equal(workspace.visibleEchoCount.value, 1)
+    assert.equal(workspace.sessionEchoDelta.value, 1)
+    assert.equal(workspace.sessionSampleDelta.value, 1)
+
+    await workspace.undoActiveSubstat()
+
+    assert.equal(workspace.visibleEchoCount.value, 0)
+    assert.equal(workspace.sessionEchoDelta.value, 0)
+    assert.equal(workspace.sessionSampleDelta.value, 0)
+  } finally {
+    workspace.dispose()
+    globalThis.document = originalDocument
+    globalThis.fetch = originalFetch
+  }
+})
+
 test('tier entry refreshes next prediction without starting stats or model evaluation', async () => {
   const originalDocument = globalThis.document
   const originalFetch = globalThis.fetch

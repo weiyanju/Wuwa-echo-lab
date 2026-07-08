@@ -139,6 +139,8 @@
   box-shadow: none;
 }
 
+.app-shell.theme-dark .metric-delta-badge { border-color: rgba(55, 179, 127, 0.34); color: #8be0bd; background: rgba(32, 64, 55, 0.72); }
+
 .app-shell.theme-dark .theme-toggle-icon {
   color: #f3c95b;
 }
@@ -710,20 +712,13 @@
 }
 
 .hero-band.compact .hero-stats div {
-  min-width: 88px; border: 0; border-left: 1px solid rgba(216, 226, 234, 0.86);
-  border-radius: 0; padding: 4px 18px; background: transparent; box-shadow: none;
+  min-width: 96px; border: 0; border-left: 1px solid rgba(216, 226, 234, 0.86);
+  border-radius: 0; padding: 10px 20px 5px; background: transparent; box-shadow: none;
 }
 
-.hero-band.compact .hero-stats strong {
-  font-family: var(--font-data);
-  font-size: 23px;
-  font-variant-numeric: tabular-nums;
-}
+.hero-band.compact .hero-stats strong { font-family: var(--font-data); font-size: 23px; font-variant-numeric: tabular-nums; }
 
-.hero-band.compact .hero-stats span {
-  margin-top: 4px;
-  font-size: 12px;
-}
+.hero-band.compact .hero-stats span { margin-top: 4px; font-size: 12px; }
 
 .hero-stats div {
   min-width: 126px;
@@ -734,13 +729,19 @@
   box-shadow: 0 12px 30px rgba(39, 55, 71, 0.06);
 }
 
-.hero-stats strong {
-  color: #071116;
-  font-family: var(--font-data);
-  font-size: 34px;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-}
+.hero-stats strong { color: #071116; font-family: var(--font-data); font-size: 34px; font-variant-numeric: tabular-nums; line-height: 1; }
+
+.hero-stat { position: relative; display: grid; justify-items: center; align-content: center; text-align: center; }
+
+.hero-stat strong { width: 100%; text-align: center; }
+
+.metric-delta-badge { position: absolute; top: -10px; right: 8px; min-width: 27px; padding: 2px 7px; border: 1px solid rgba(44, 159, 112, 0.26); border-radius: 999px; color: #157653; background: rgba(231, 248, 240, 0.92); font-family: var(--font-data); font-size: 11px; font-style: normal; font-weight: 700; line-height: 1.2; text-align: center; font-variant-numeric: tabular-nums; box-shadow: 0 6px 16px rgba(44, 159, 112, 0.12); }
+
+.metric-delta-enter-active { transition: opacity 140ms ease-out, transform 140ms ease-out; }
+
+.metric-delta-enter-from { opacity: 0; transform: translateY(4px); }
+
+@media (prefers-reduced-motion: reduce) { .metric-delta-enter-active { transition: opacity 120ms ease-out; } .metric-delta-enter-from { transform: none; } }
 
 .hero-band.compact .hero-stats .hero-confidence-value,
 .hero-stats .hero-confidence-value {

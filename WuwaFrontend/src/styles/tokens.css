@@ -1,3 +1,30 @@
+@font-face {
+  font-family: "Wuwa CJK";
+  src: url("@fontsource/noto-sans-sc/files/noto-sans-sc-chinese-simplified-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+2E80-2EFF, U+3000-303F, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FF00-FFEF;
+}
+
+@font-face {
+  font-family: "Wuwa CJK";
+  src: url("@fontsource/noto-sans-sc/files/noto-sans-sc-chinese-simplified-500-normal.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+2E80-2EFF, U+3000-303F, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FF00-FFEF;
+}
+
+@font-face {
+  font-family: "Wuwa CJK";
+  src: url("@fontsource/noto-sans-sc/files/noto-sans-sc-chinese-simplified-700-normal.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+2E80-2EFF, U+3000-303F, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FF00-FFEF;
+}
+
 :root {
   --primary: #0064e0;
   --primary-deep: #0457cb;
@@ -16,9 +43,31 @@
   --warning: #f7b928;
   --success: #31a24c;
   --shadow-rail: rgba(20, 22, 26, 0.22) 0 1px 4px 0;
-  --font-ui: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
-  --font-data: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
-  --font-mono: Menlo, Monaco, Consolas, "Courier New", monospace;
+  --font-cjk: "Wuwa CJK", "Microsoft YaHei UI", system-ui, sans-serif;
+  --font-ui: var(--font-cjk);
+  --font-title: var(--font-cjk);
+  --font-data: var(--font-cjk);
+  --font-mono: ui-monospace, Consolas, "Courier New", monospace;
+  --text-page-title: 1.75rem;
+  --text-section-title: 1.3125rem;
+  --text-card-title: 1rem;
+  --text-metric-xl: 2.625rem;
+  --text-metric-lg: 1.875rem;
+  --text-metric-md: 1.125rem;
+  --text-body: 0.9375rem;
+  --text-caption: 0.8125rem;
+  --text-mini: 0.75rem;
+  --weight-title: 700;
+  --weight-section-title: 680;
+  --weight-card-title: 650;
+  --weight-label: 650;
+  --weight-data: 720;
+  --weight-metric-lg: 760;
+  --weight-metric-xl: 800;
+  --leading-metric: 0.98;
+  --leading-title: 1.12;
+  --leading-ui: 1.25;
+  --leading-body: 1.45;
   font-family: var(--font-ui);
   color: var(--ink-deep);
   background: var(--canvas);
