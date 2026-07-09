@@ -108,13 +108,13 @@ $env:DB_HOST = "127.0.0.1"
 $env:DB_PORT = "5432"
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe manage.py migrate
-.\.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8000
+.\.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8001
 ```
 
 后端健康检查：
 
 ```text
-http://127.0.0.1:8000/api/health/
+http://127.0.0.1:8001/api/health/
 ```
 
 当前 Django 配置会从环境变量读取数据库连接。没有设置 `DB_PASSWORD` 时，本地 PostgreSQL 如果要求密码，测试或启动会失败。
@@ -137,7 +137,7 @@ $env:npm_config_cache = "$PWD\..\.tools\npm-cache"
 http://127.0.0.1:5173/
 ```
 
-Vite 会把 `/api` 请求代理到 `http://127.0.0.1:8000`，所以前端开发时直接调用 `/api/...`。
+Vite 会把 `/api` 请求代理到 `http://127.0.0.1:8001`，所以前端开发时直接调用 `/api/...`。
 
 ### WuwaAssistant
 
@@ -182,6 +182,6 @@ dotnet run --project WuwaAssistant\WuwaAssistant.Tests\WuwaAssistant.Tests.cspro
 ### 常见问题
 
 - `fe_sendauth: no password supplied`: 设置 `DB_PASSWORD`，或调整本地 PostgreSQL 认证方式。
-- 前端无法访问 API：确认 Django 后端运行在 `http://127.0.0.1:8000`。
-- `5173` 或 `8000` 端口被占用：关闭旧服务，或设置 `FRONTEND_PORT` / `BACKEND_PORT` 后再运行 `start-dev.bat`。
+- 前端无法访问 API：确认 Django 后端运行在 `http://127.0.0.1:8001`，或确认 `VITE_BACKEND_TARGET` 指向了你设置的 `BACKEND_PORT`。
+- `5173` 或 `8001` 端口被占用：关闭旧服务，或设置 `FRONTEND_PORT` / `BACKEND_PORT` 后再运行 `start-dev.bat`。
 - npm 下载慢或缓存异常：确认 `npm_config_cache` 指向仓库内 `.tools/npm-cache`。

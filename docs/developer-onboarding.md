@@ -101,13 +101,13 @@ git diff --stat
 cd Wuwa
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe manage.py migrate
-.\.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8000
+.\.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8001
 ```
 
 健康检查：
 
 ```text
-http://127.0.0.1:8000/api/health/
+http://127.0.0.1:8001/api/health/
 ```
 
 前端：
@@ -126,7 +126,7 @@ $env:npm_config_cache = "$PWD\..\.tools\npm-cache"
 http://127.0.0.1:5173/
 ```
 
-Vite 会把 `/api` 代理到 `http://127.0.0.1:8000`，前端开发时直接调用 `/api/...`。
+Vite 会把 `/api` 代理到 `http://127.0.0.1:8001`，前端开发时直接调用 `/api/...`。
 
 ## 代码落点规则
 

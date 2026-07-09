@@ -17,6 +17,7 @@ rem   set DB_PASSWORD=your-password
 rem   set DB_HOST=127.0.0.1
 rem   set DB_PORT=5432
 rem   set DB_USE_SSH_TUNNEL=1
+rem   set BACKEND_PORT=8001
 rem   set POSTGRES_BIN=D:\path\to\pgsql\bin
 rem   set PGDATA=D:\path\to\pgdata
 rem   set POSTGRES_SERVICE_NAME=postgresql-x64-16
@@ -60,7 +61,7 @@ if not defined DB_CONN_MAX_AGE set "DB_CONN_MAX_AGE=60"
 if not defined DB_REMOTE_HOST set "DB_REMOTE_HOST=127.0.0.1"
 if not defined DB_REMOTE_PORT set "DB_REMOTE_PORT=5432"
 if not defined BACKEND_HOST set "BACKEND_HOST=127.0.0.1"
-if not defined BACKEND_PORT set "BACKEND_PORT=8000"
+if not defined BACKEND_PORT set "BACKEND_PORT=8001"
 if not defined FRONTEND_HOST set "FRONTEND_HOST=127.0.0.1"
 if not defined FRONTEND_PORT set "FRONTEND_PORT=5173"
 if not defined SKIP_INSTALL set "SKIP_INSTALL=0"
@@ -302,7 +303,7 @@ echo Starting backend window...
 start "Wuwa Backend" powershell.exe -NoExit -NoProfile -ExecutionPolicy Bypass -Command "Set-Location '%BACKEND_DIR%'; $env:DB_NAME='%DB_NAME%'; $env:DB_USER='%DB_USER%'; $env:DB_PASSWORD='%DB_PASSWORD%'; $env:DB_HOST='%DB_HOST%'; $env:DB_PORT='%DB_PORT%'; $env:DB_CONN_MAX_AGE='%DB_CONN_MAX_AGE%'; & '%PYTHON%' manage.py runserver %BACKEND_HOST%:%BACKEND_PORT% --noreload"
 
 echo Starting frontend window...
-start "Wuwa Frontend" powershell.exe -NoExit -NoProfile -ExecutionPolicy Bypass -Command "Set-Location '%FRONTEND_DIR%'; $env:PATH='%NODE_DIR%;' + $env:PATH; $env:npm_config_cache='%NPM_CACHE%'; & '%NPM%' run dev -- --host %FRONTEND_HOST% --port %FRONTEND_PORT%"
+start "Wuwa Frontend" powershell.exe -NoExit -NoProfile -ExecutionPolicy Bypass -Command "Set-Location '%FRONTEND_DIR%'; $env:PATH='%NODE_DIR%;' + $env:PATH; $env:npm_config_cache='%NPM_CACHE%'; $env:VITE_BACKEND_TARGET='http://%BACKEND_HOST%:%BACKEND_PORT%'; & '%NPM%' run dev -- --host %FRONTEND_HOST% --port %FRONTEND_PORT%"
 
 echo.
 echo Startup complete.

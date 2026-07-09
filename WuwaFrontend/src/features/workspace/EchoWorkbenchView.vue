@@ -137,7 +137,7 @@ function iconMask(source) { return { '--icon-url': `url("${source}")` } }
       :config="config"
       :active-echo="activeEcho"
       :prediction-rankings="predictionRankings"
-      :saving="saving"
+      :saving="saving || Boolean(pendingTierKey)"
       @undo="emit('undo')"
       @discard="emit('discard')"
       @next="emit('next')"

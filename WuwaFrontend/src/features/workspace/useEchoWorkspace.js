@@ -5,6 +5,7 @@ import { buildModelDetailCards } from '../../services/modelDetails.js'
 import { substatLabels, substatOrder, tierTables } from '../../data/substats.js'
 import { createEchoAssetIdentity } from './echoAssetIdentity.js'
 import { createActivePredictionRefreshController } from './echoPredictionRefresh.js'
+import { createEchoSessionDeltaController } from './echoSessionDeltas.js'
 import { createDefaultEchoForm, createEchoPayload, createPreparedNextEchoController, normalizeEchoConfig } from './echoWorkspaceDrafts.js'
 import { appendRollToEchoList, buildOptimisticRollDraft, removeOptimisticRollFromEchoList, replaceOptimisticRollInEchoList } from './echoWorkspaceMutations.js'
 import { adjustWorkspaceStatsForSubstat } from './echoWorkspaceStats.js'
@@ -16,12 +17,11 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
   const activeEchoId = ref(null)
   const prediction = ref(null)
   const stats = ref(null)
-  const sessionEchoDelta = ref(0)
-  const sessionSampleDelta = ref(0)
   const evaluation = ref(null)
   const echoForm = ref(createDefaultEchoForm())
-  let lifecycleGeneration = 0
-  let refreshRequestId = 0
+  let lifecycleGeneration = 0, refreshRequestId = 0
+  const sessionDeltas = createEchoSessionDeltaController()
+  const { sessionEchoDelta, sessionSampleDelta, visibleSessionEchoDelta, visibleSessionSampleDelta } = sessionDeltas
 
   const activeEcho = computed(() => echoes.value.find((echo) => echo.id === activeEchoId.value) || null)
   const visibleEchoCount = computed(() => sortVisibleEchoHistory(echoes.value).length)
@@ -91,8 +91,7 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
     activeEchoId.value = null
     prediction.value = null
     stats.value = null
-    sessionEchoDelta.value = 0
-    sessionSampleDelta.value = 0
+    sessionDeltas.reset()
     evaluation.value = null
     echoForm.value = createDefaultEchoForm()
     echoAssetIdentity.resetEchoAsset()
@@ -104,8 +103,7 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
       reset()
       return
     }
-    sessionEchoDelta.value = 0
-    sessionSampleDelta.value = 0
+    sessionDeltas.reset()
     const generation = lifecycleGeneration
     const requestId = ++refreshRequestId
     const isCurrent = () => (
@@ -179,21 +177,13 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
     echoes.value = removeOptimisticRollFromEchoList(echoes.value, echoId, optimisticRollId)
   }
 
-  function adjustLoadedStatsForSubstat(substatType, delta) {
-    stats.value = adjustWorkspaceStatsForSubstat(stats.value, substatType, delta)
-  }
+  function adjustLoadedStatsForSubstat(substatType, delta) { stats.value = adjustWorkspaceStatsForSubstat(stats.value, substatType, delta) }
 
-  function visibleEchoHistoryCount() { return sortVisibleEchoHistory(echoes.value).length }
+  function recordSessionEchoHistory(echo) { sessionDeltas.recordEchoHistory(echo) }
 
-  function adjustSessionEchoDelta(previousVisibleEchoCount) { sessionEchoDelta.value = Math.max(sessionEchoDelta.value + visibleEchoHistoryCount() - previousVisibleEchoCount, 0) }
+  function adjustSessionSampleDelta(delta) { sessionDeltas.adjustSampleDelta(delta) }
 
-  function adjustSessionSampleDelta(delta) {
-    sessionSampleDelta.value = Math.max(sessionSampleDelta.value + delta, 0)
-  }
-
-  function buildOptimisticRoll(row, tier) {
-    return buildOptimisticRollDraft(activeEcho.value, row, tier)
-  }
+  function buildOptimisticRoll(row, tier) { return buildOptimisticRollDraft(activeEcho.value, row, tier) }
 
   async function activatePreparedNextEcho(config, sourceEchoId) {
     const preparedEcho = await nextDraft.consume(config, sourceEchoId)
@@ -202,13 +192,11 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
     return preparedEcho
   }
 
-  function refreshActiveInBackground() {
-    activePredictionRefresh.refreshInBackground()
-  }
+  function refreshActiveInBackground() { activePredictionRefresh.refreshInBackground() }
 
   function tierButtonKey(row, tier) { return `${row.substat_type}:${tier.value}` }
 
-  async function createEchoWithConfig(config = echoForm.value) {
+  async function createEchoWithConfig(config = echoForm.value, { showEchoCreatedDelta = false } = {}) {
     const accountId = selectedGameAccountId.value
     if (workspaceLocked.value || !accountId) {
       onError('请先填写你的游戏 UID。')
@@ -226,8 +214,10 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
     try {
       const echo = await createEcho(createEchoPayload(nextConfig, echoAssetIdentity), accountId)
       if (generation !== lifecycleGeneration || accountId !== selectedGameAccountId.value) return null
+      const isNewEcho = !echoes.value.some((item) => item.id === echo.id)
       insertEcho(echo)
       activateEcho(echo)
+      if (showEchoCreatedDelta && isNewEcho) recordSessionEchoHistory(echo)
       return echo
     } catch (err) {
       if (generation !== lifecycleGeneration || accountId !== selectedGameAccountId.value) return null
@@ -248,13 +238,18 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
   }
 
   async function createNextEchoFromActive() {
-    if (!activeEcho.value) return
+    if (!activeEcho.value || saving.value || pendingTierKey.value) return
     onError('')
-    const sourceEcho = activeEcho.value
-    const nextConfig = buildNextEchoConfig(sourceEcho)
-    const preparedEcho = await activatePreparedNextEcho(nextConfig, sourceEcho.id)
-    const echo = preparedEcho || await createEchoWithConfig(nextConfig)
-    if (echo) refreshActiveInBackground()
+    saving.value = true
+    try {
+      const sourceEcho = activeEcho.value
+      const nextConfig = buildNextEchoConfig(sourceEcho)
+      const preparedEcho = await activatePreparedNextEcho(nextConfig, sourceEcho.id)
+      const echo = preparedEcho || await createEchoWithConfig(nextConfig, { showEchoCreatedDelta: true })
+      if (echo) {
+        refreshActiveInBackground()
+      }
+    } finally { saving.value = false }
   }
 
   async function applyEchoConfig(partialConfig) {
@@ -295,11 +290,10 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
     const discardedEchoId = activeEcho.value.id
     const nextConfig = buildNextEchoConfig(activeEcho.value)
     try {
-      await updateEcho(discardedEchoId, { status: 'archived' })
-      await refresh()
-      await createEchoWithConfig(nextConfig)
-      await refresh()
-      refreshActiveInBackground()
+      const archivedEcho = await updateEcho(discardedEchoId, { status: 'archived' })
+      replaceEcho(archivedEcho)
+      const nextEcho = await createEchoWithConfig(nextConfig, { showEchoCreatedDelta: true })
+      if (nextEcho) refreshActiveInBackground()
     } catch (err) {
       reportError(err)
     } finally {
@@ -316,7 +310,7 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
   }
 
   async function clickTier(row, tier) {
-    if (row.recorded || pendingTierKey.value) return
+    if (saving.value || row.recorded || pendingTierKey.value) return
     onError('')
     cancelActivePredictionRefresh()
     pendingTierKey.value = tierButtonKey(row, tier)
@@ -325,14 +319,12 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
     try {
       const echo = await ensureActiveEcho()
       if (!echo) return
-      const visibleEchoCountBeforeEntry = visibleEchoHistoryCount()
       optimisticEchoId = echo.id
       optimisticRoll = buildOptimisticRoll(row, tier)
       appendRollToEcho(echo.id, optimisticRoll)
       const roll = await addSubstat(echo.id, { substat_type: row.substat_type, tier_value: tier.value })
       replaceOptimisticRollInEcho(echo.id, optimisticRoll.id, roll)
       adjustLoadedStatsForSubstat(roll.substat_type || row.substat_type, 1)
-      adjustSessionEchoDelta(visibleEchoCountBeforeEntry)
       adjustSessionSampleDelta(1)
       nextDraft.prepare()
       refreshActiveInBackground()
@@ -345,17 +337,15 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
   }
 
   async function undoActiveSubstat() {
-    if (!activeEcho.value || !activeEcho.value.substats.length || saving.value) return
+    if (!activeEcho.value || !activeEcho.value.substats.length || saving.value || pendingTierKey.value) return
     onError('')
     nextDraft.clear()
     saving.value = true
     const removedRoll = activeEcho.value.substats.at(-1) || null
-    const visibleEchoCountBeforeUndo = visibleEchoHistoryCount()
     try {
       const result = await undoLastSubstat(activeEcho.value.id)
       replaceEcho(result.echo)
       adjustLoadedStatsForSubstat(removedRoll?.substat_type, -1)
-      adjustSessionEchoDelta(visibleEchoCountBeforeUndo)
       adjustSessionSampleDelta(-1)
       refreshActiveInBackground()
     } catch (err) {
@@ -392,5 +382,7 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
     stats,
     undoActiveSubstat,
     visibleEchoCount,
+    visibleSessionEchoDelta,
+    visibleSessionSampleDelta,
   }
 }

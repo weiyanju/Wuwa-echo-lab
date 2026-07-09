@@ -283,6 +283,125 @@ test('next echo creation activates a new draft without blocking on full workspac
   }
 })
 
+test('next echo creation ignores repeated clicks while creation is pending', async () => {
+  const originalDocument = globalThis.document
+  const originalFetch = globalThis.fetch
+  const createResponse = deferred()
+  const baseEcho = {
+    id: 73,
+    status: 'completed',
+    substats: Array.from({ length: 5 }, (_, index) => ({
+      id: 730 + index,
+      position: index + 1,
+      substat_type: ['crit_rate', 'crit_damage', 'atk_percent', 'flat_atk', 'flat_hp'][index],
+      tier_value: index + 1,
+    })),
+    set_name: sonataEffects[0].name,
+    cost: 1,
+    main_stat: 'atk_percent',
+    is_continuous_tuning: true,
+  }
+  let createRequests = 0
+  globalThis.document = { cookie: 'csrftoken=test' }
+  globalThis.fetch = async (url, options = {}) => {
+    const path = String(url)
+    if (path.includes('/echoes/?game_account_id=1')) return jsonResponse({ results: [baseEcho] })
+    if (path.endsWith('/echoes/') && options.method === 'POST') {
+      createRequests += 1
+      if (createRequests === 1) return createResponse.promise
+      return jsonResponse({ id: 75, status: 'draft', substats: [], set_name: baseEcho.set_name, cost: 1, main_stat: 'atk_percent', is_continuous_tuning: true })
+    }
+    if (path.includes('/prediction/')) return jsonResponse({ candidates: [] })
+    if (path.includes('/stats/') || path.includes('/model-evaluation/')) return jsonResponse({})
+    throw new Error(`Unexpected request: ${path}`)
+  }
+
+  const workspace = useEchoWorkspace({
+    selectedGameAccountId: ref(1),
+    boundPlayerUid: ref('123456789'),
+    workspaceLocked: ref(false),
+    onError: () => {},
+  })
+
+  try {
+    await workspace.refresh()
+    const firstNext = workspace.createNextEchoFromActive()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    assert.equal(workspace.saving.value, true)
+
+    const secondNext = workspace.createNextEchoFromActive()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    assert.equal(createRequests, 1)
+
+    createResponse.resolve(jsonResponse({ id: 74, status: 'draft', substats: [], set_name: baseEcho.set_name, cost: 1, main_stat: 'atk_percent', is_continuous_tuning: true }))
+    await Promise.all([firstNext, secondNext])
+
+    assert.equal(workspace.activeEchoId.value, 74)
+  } finally {
+    workspace.dispose()
+    globalThis.document = originalDocument
+    globalThis.fetch = originalFetch
+  }
+})
+
+test('next echo creation is ignored while a tier save is pending', async () => {
+  const originalDocument = globalThis.document
+  const originalFetch = globalThis.fetch
+  const substatResponse = deferred()
+  const baseEcho = {
+    id: 76,
+    status: 'draft',
+    substats: [],
+    set_name: sonataEffects[0].name,
+    cost: 1,
+    main_stat: 'atk_percent',
+    is_continuous_tuning: true,
+  }
+  let createRequests = 0
+  globalThis.document = { cookie: 'csrftoken=test' }
+  globalThis.fetch = async (url, options = {}) => {
+    const path = String(url)
+    if (path.includes('/echoes/?game_account_id=1')) return jsonResponse({ results: [baseEcho] })
+    if (path.includes('/substats/') && options.method === 'POST') return substatResponse.promise
+    if (path.endsWith('/echoes/') && options.method === 'POST') {
+      createRequests += 1
+      return jsonResponse({ id: 77, status: 'draft', substats: [], set_name: baseEcho.set_name, cost: 1, main_stat: 'atk_percent', is_continuous_tuning: true })
+    }
+    if (path.includes('/prediction/')) return jsonResponse({ candidates: [] })
+    if (path.includes('/stats/') || path.includes('/model-evaluation/')) return jsonResponse({})
+    throw new Error(`Unexpected request: ${path}`)
+  }
+
+  const workspace = useEchoWorkspace({
+    selectedGameAccountId: ref(1),
+    boundPlayerUid: ref('123456789'),
+    workspaceLocked: ref(false),
+    onError: () => {},
+  })
+
+  try {
+    await workspace.refresh()
+    const tierSave = workspace.clickTier(
+      { recorded: null, substat_type: 'crit_damage' },
+      { value: 12.6 },
+    )
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    await workspace.createNextEchoFromActive()
+
+    assert.equal(createRequests, 0)
+    assert.equal(workspace.activeEchoId.value, 76)
+
+    substatResponse.resolve(jsonResponse({ id: 761, position: 1, substat_type: 'crit_damage', tier_value: 12.6 }))
+    await tierSave
+  } finally {
+    workspace.dispose()
+    globalThis.document = originalDocument
+    globalThis.fetch = originalFetch
+  }
+})
+
 test('next echo is not prepared while the current echo still has only four substats', async () => {
   const originalDocument = globalThis.document
   const originalFetch = globalThis.fetch
@@ -407,12 +526,16 @@ test('next echo uses a prepared draft after the fifth recorded substat', async (
     )
     await new Promise((resolve) => setTimeout(resolve, 0))
     assert.equal(createRequests, 1)
+    assert.equal(workspace.sessionEchoDelta.value, 0)
+    assert.equal(workspace.visibleSessionEchoDelta.value, 0)
 
     await workspace.createNextEchoFromActive()
 
     assert.equal(createRequests, 1)
     assert.equal(workspace.activeEchoId.value, 84)
     assert.equal(workspace.activeEcho.value.substats.length, 0)
+    assert.equal(workspace.sessionEchoDelta.value, 0)
+    assert.equal(workspace.visibleSessionEchoDelta.value, 0)
   } finally {
     workspace.dispose()
     globalThis.document = originalDocument
@@ -1127,6 +1250,66 @@ test('tier entry increments loaded stats total locally without refreshing analyt
   }
 })
 
+test('tier entry shows a temporary capsule delta without clearing the session total', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] })
+
+  const originalDocument = globalThis.document
+  const originalFetch = globalThis.fetch
+  globalThis.document = { cookie: 'csrftoken=test' }
+  globalThis.fetch = async (url, options = {}) => {
+    const path = String(url)
+    if (path.includes('/echoes/?game_account_id=1')) {
+      return jsonResponse({
+        results: [{
+          id: 294,
+          status: 'in_progress',
+          substats: [{ id: 2941, position: 1, substat_type: 'crit_rate', tier_value: 6.3 }],
+          set_name: sonataEffects[0].name,
+          cost: 1,
+          main_stat: 'atk_percent',
+          is_continuous_tuning: true,
+        }],
+      })
+    }
+    if (path.includes('/prediction/')) return jsonResponse({ candidates: [] })
+    if (path.includes('/stats/')) return jsonResponse({ total_rolls: 84 })
+    if (path.includes('/model-evaluation/')) return jsonResponse({})
+    if (path.includes('/substats/') && options.method === 'POST') {
+      return jsonResponse({ id: 2942, position: 2, substat_type: 'crit_damage', tier_value: 12.6 })
+    }
+    throw new Error(`Unexpected request: ${path}`)
+  }
+
+  const workspace = useEchoWorkspace({
+    selectedGameAccountId: ref(1),
+    boundPlayerUid: ref('123456789'),
+    workspaceLocked: ref(false),
+    onError: () => {},
+  })
+
+  try {
+    await workspace.refresh()
+    assert.equal(workspace.visibleSessionSampleDelta.value, 0)
+
+    await workspace.clickTier(
+      { recorded: null, substat_type: 'crit_damage' },
+      { value: 12.6 },
+    )
+
+    assert.equal(workspace.sessionSampleDelta.value, 1)
+    assert.equal(workspace.visibleSessionSampleDelta.value, 1)
+
+    t.mock.timers.tick(850)
+
+    assert.equal(workspace.sessionSampleDelta.value, 1)
+    assert.equal(workspace.visibleSessionSampleDelta.value, 0)
+  } finally {
+    workspace.dispose()
+    globalThis.document = originalDocument
+    globalThis.fetch = originalFetch
+  }
+})
+
 test('undo decrements loaded stats total locally after the backend removes a roll', async () => {
   const originalDocument = globalThis.document
   const originalFetch = globalThis.fetch
@@ -1280,7 +1463,63 @@ test('undo rolls back the session sample delta for an entry recorded in this ses
   }
 })
 
-test('first tier entry on an empty echo increments the session echo delta', async () => {
+test('undo is ignored while a tier save is pending', async () => {
+  const originalDocument = globalThis.document
+  const originalFetch = globalThis.fetch
+  const substatResponse = deferred()
+  let undoRequests = 0
+  const baseEcho = {
+    id: 306,
+    status: 'draft',
+    substats: [],
+    set_name: sonataEffects[0].name,
+    cost: 1,
+    main_stat: 'atk_percent',
+    is_continuous_tuning: true,
+  }
+  globalThis.document = { cookie: 'csrftoken=test' }
+  globalThis.fetch = async (url, options = {}) => {
+    const path = String(url)
+    if (path.includes('/echoes/?game_account_id=1')) return jsonResponse({ results: [baseEcho] })
+    if (path.includes('/substats/') && options.method === 'POST') return substatResponse.promise
+    if (path.includes('/substats/latest/') && options.method === 'DELETE') {
+      undoRequests += 1
+      return jsonResponse({ echo: baseEcho })
+    }
+    if (path.includes('/prediction/')) return jsonResponse({ candidates: [] })
+    if (path.includes('/stats/') || path.includes('/model-evaluation/')) return jsonResponse({})
+    throw new Error(`Unexpected request: ${path}`)
+  }
+
+  const workspace = useEchoWorkspace({
+    selectedGameAccountId: ref(1),
+    boundPlayerUid: ref('123456789'),
+    workspaceLocked: ref(false),
+    onError: () => {},
+  })
+
+  try {
+    await workspace.refresh()
+    const tierSave = workspace.clickTier(
+      { recorded: null, substat_type: 'crit_damage' },
+      { value: 12.6 },
+    )
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    await workspace.undoActiveSubstat()
+
+    assert.equal(undoRequests, 0)
+
+    substatResponse.resolve(jsonResponse({ id: 3061, position: 1, substat_type: 'crit_damage', tier_value: 12.6 }))
+    await tierSave
+  } finally {
+    workspace.dispose()
+    globalThis.document = originalDocument
+    globalThis.fetch = originalFetch
+  }
+})
+
+test('first tier entry on an empty echo only shows a sample delta', async () => {
   const originalDocument = globalThis.document
   const originalFetch = globalThis.fetch
   globalThis.document = { cookie: 'csrftoken=test' }
@@ -1338,7 +1577,8 @@ test('first tier entry on an empty echo increments the session echo delta', asyn
     )
 
     assert.equal(workspace.visibleEchoCount.value, 1)
-    assert.equal(workspace.sessionEchoDelta.value, 1)
+    assert.equal(workspace.sessionEchoDelta.value, 0)
+    assert.equal(workspace.visibleSessionEchoDelta.value, 0)
     assert.equal(workspace.sessionSampleDelta.value, 1)
 
     await workspace.undoActiveSubstat()
@@ -1346,6 +1586,437 @@ test('first tier entry on an empty echo increments the session echo delta', asyn
     assert.equal(workspace.visibleEchoCount.value, 0)
     assert.equal(workspace.sessionEchoDelta.value, 0)
     assert.equal(workspace.sessionSampleDelta.value, 0)
+  } finally {
+    workspace.dispose()
+    globalThis.document = originalDocument
+    globalThis.fetch = originalFetch
+  }
+})
+
+test('fifth tier entry completes the echo without showing an echo-created delta', async () => {
+  const originalDocument = globalThis.document
+  const originalFetch = globalThis.fetch
+  globalThis.document = { cookie: 'csrftoken=test' }
+  globalThis.fetch = async (url, options = {}) => {
+    const path = String(url)
+    if (path.includes('/echoes/?game_account_id=1')) {
+      return jsonResponse({
+        results: [{
+          id: 297,
+          status: 'in_progress',
+          substats: [
+            { id: 2971, position: 1, substat_type: 'crit_rate', tier_value: 6.3 },
+            { id: 2972, position: 2, substat_type: 'crit_damage', tier_value: 12.6 },
+            { id: 2973, position: 3, substat_type: 'atk_percent', tier_value: 8.6 },
+            { id: 2974, position: 4, substat_type: 'flat_atk', tier_value: 30 },
+          ],
+          set_name: sonataEffects[0].name,
+          cost: 1,
+          main_stat: 'atk_percent',
+          is_continuous_tuning: true,
+        }],
+      })
+    }
+    if (path.includes('/prediction/')) return jsonResponse({ candidates: [] })
+    if (path.includes('/stats/')) return jsonResponse({ total_rolls: 84 })
+    if (path.includes('/model-evaluation/')) return jsonResponse({})
+    if (path.includes('/substats/') && options.method === 'POST') {
+      return jsonResponse({ id: 2975, position: 5, substat_type: 'flat_hp', tier_value: 580 })
+    }
+    throw new Error(`Unexpected request: ${path}`)
+  }
+
+  const workspace = useEchoWorkspace({
+    selectedGameAccountId: ref(1),
+    boundPlayerUid: ref('123456789'),
+    workspaceLocked: ref(false),
+    onError: () => {},
+  })
+
+  try {
+    await workspace.refresh()
+
+    await workspace.clickTier(
+      { recorded: null, substat_type: 'flat_hp' },
+      { value: 580 },
+    )
+
+    assert.equal(workspace.activeEcho.value.status, 'completed')
+    assert.equal(workspace.sessionEchoDelta.value, 0)
+    assert.equal(workspace.visibleSessionEchoDelta.value, 0)
+    assert.equal(workspace.sessionSampleDelta.value, 1)
+  } finally {
+    workspace.dispose()
+    globalThis.document = originalDocument
+    globalThis.fetch = originalFetch
+  }
+})
+
+test('moving to the next echo records a delta when it creates a fresh draft id', async () => {
+  const originalDocument = globalThis.document
+  const originalFetch = globalThis.fetch
+  const baseEcho = {
+    id: 298,
+    status: 'in_progress',
+    substats: [
+      { id: 2981, position: 1, substat_type: 'crit_rate', tier_value: 6.3 },
+      { id: 2982, position: 2, substat_type: 'crit_damage', tier_value: 12.6 },
+    ],
+    set_name: sonataEffects[0].name,
+    cost: 1,
+    main_stat: 'atk_percent',
+    is_continuous_tuning: true,
+  }
+  globalThis.document = { cookie: 'csrftoken=test' }
+  globalThis.fetch = async (url, options = {}) => {
+    const path = String(url)
+    if (path.includes('/echoes/?game_account_id=1')) return jsonResponse({ results: [baseEcho] })
+    if (path.endsWith('/echoes/') && options.method === 'POST') {
+      const createdPayload = JSON.parse(options.body)
+      return jsonResponse({
+        id: 299,
+        status: 'draft',
+        substats: [],
+        set_name: createdPayload.set_name,
+        cost: createdPayload.cost,
+        main_stat: createdPayload.main_stat,
+        is_continuous_tuning: createdPayload.is_continuous_tuning,
+      })
+    }
+    if (path.includes('/prediction/')) return jsonResponse({ candidates: [] })
+    if (path.includes('/stats/') || path.includes('/model-evaluation/')) return jsonResponse({})
+    throw new Error(`Unexpected request: ${path}`)
+  }
+
+  const workspace = useEchoWorkspace({
+    selectedGameAccountId: ref(1),
+    boundPlayerUid: ref('123456789'),
+    workspaceLocked: ref(false),
+    onError: () => {},
+  })
+
+  try {
+    await workspace.refresh()
+
+    await workspace.createNextEchoFromActive()
+
+    assert.equal(workspace.activeEchoId.value, 299)
+    assert.equal(workspace.sessionEchoDelta.value, 1)
+    assert.equal(workspace.visibleSessionEchoDelta.value, 1)
+  } finally {
+    workspace.dispose()
+    globalThis.document = originalDocument
+    globalThis.fetch = originalFetch
+  }
+})
+
+test('undo does not roll back an echo-created delta for the active draft id', async () => {
+  const originalDocument = globalThis.document
+  const originalFetch = globalThis.fetch
+  const sourceEcho = {
+    id: 307,
+    status: 'completed',
+    substats: [
+      { id: 3071, position: 1, substat_type: 'crit_rate', tier_value: 6.3 },
+      { id: 3072, position: 2, substat_type: 'crit_damage', tier_value: 12.6 },
+      { id: 3073, position: 3, substat_type: 'atk_percent', tier_value: 8.6 },
+      { id: 3074, position: 4, substat_type: 'flat_atk', tier_value: 30 },
+      { id: 3075, position: 5, substat_type: 'flat_hp', tier_value: 580 },
+    ],
+    set_name: sonataEffects[0].name,
+    cost: 1,
+    main_stat: 'atk_percent',
+    is_continuous_tuning: true,
+  }
+  const createdCompleteEcho = {
+    id: 308,
+    status: 'completed',
+    substats: [
+      { id: 3081, position: 1, substat_type: 'crit_rate', tier_value: 6.3 },
+      { id: 3082, position: 2, substat_type: 'crit_damage', tier_value: 12.6 },
+      { id: 3083, position: 3, substat_type: 'atk_percent', tier_value: 8.6 },
+      { id: 3084, position: 4, substat_type: 'flat_atk', tier_value: 30 },
+      { id: 3085, position: 5, substat_type: 'flat_hp', tier_value: 580 },
+    ],
+    set_name: sonataEffects[0].name,
+    cost: 1,
+    main_stat: 'atk_percent',
+    is_continuous_tuning: true,
+  }
+  globalThis.document = { cookie: 'csrftoken=test' }
+  globalThis.fetch = async (url, options = {}) => {
+    const path = String(url)
+    if (path.includes('/echoes/?game_account_id=1')) return jsonResponse({ results: [sourceEcho] })
+    if (path.endsWith('/echoes/') && options.method === 'POST') {
+      const createdPayload = JSON.parse(options.body)
+      return jsonResponse({
+        id: 308,
+        status: 'draft',
+        substats: [],
+        set_name: createdPayload.set_name,
+        cost: createdPayload.cost,
+        main_stat: createdPayload.main_stat,
+        is_continuous_tuning: createdPayload.is_continuous_tuning,
+      })
+    }
+    if (path.includes('/substats/latest/') && options.method === 'DELETE') {
+      return jsonResponse({
+        echo: {
+          ...createdCompleteEcho,
+          status: 'in_progress',
+          substats: createdCompleteEcho.substats.slice(0, 4),
+        },
+      })
+    }
+    if (path.includes('/prediction/')) return jsonResponse({ candidates: [] })
+    if (path.includes('/stats/')) return jsonResponse({ total_rolls: 84 })
+    if (path.includes('/model-evaluation/')) return jsonResponse({})
+    throw new Error(`Unexpected request: ${path}`)
+  }
+
+  const workspace = useEchoWorkspace({
+    selectedGameAccountId: ref(1),
+    boundPlayerUid: ref('123456789'),
+    workspaceLocked: ref(false),
+    onError: () => {},
+  })
+
+  try {
+    await workspace.refresh()
+
+    await workspace.createNextEchoFromActive()
+
+    assert.equal(workspace.activeEchoId.value, 308)
+    assert.equal(workspace.sessionEchoDelta.value, 1)
+
+    workspace.echoes.value = workspace.echoes.value.map((echo) => (
+      echo.id === 308 ? createdCompleteEcho : echo
+    ))
+
+    await workspace.undoActiveSubstat()
+
+    assert.equal(workspace.activeEcho.value.substats.length, 4)
+    assert.equal(workspace.sessionEchoDelta.value, 1)
+  } finally {
+    workspace.dispose()
+    globalThis.document = originalDocument
+    globalThis.fetch = originalFetch
+  }
+})
+
+test('discarding the active echo records the replacement draft creation', async () => {
+  const originalDocument = globalThis.document
+  const originalFetch = globalThis.fetch
+  let listRequests = 0
+  const activeEcho = {
+    id: 300,
+    status: 'draft',
+    substats: [],
+    set_name: sonataEffects[0].name,
+    cost: 1,
+    main_stat: 'atk_percent',
+    is_continuous_tuning: true,
+  }
+  globalThis.document = { cookie: 'csrftoken=test' }
+  globalThis.fetch = async (url, options = {}) => {
+    const path = String(url)
+    if (path.includes('/echoes/?game_account_id=1')) {
+      listRequests += 1
+      return jsonResponse({
+        results: listRequests === 1
+          ? [activeEcho]
+          : [{ ...activeEcho, status: 'archived' }],
+      })
+    }
+    if (path.includes('/echoes/300/') && options.method === 'PATCH') {
+      return jsonResponse({ ...activeEcho, status: 'archived' })
+    }
+    if (path.endsWith('/echoes/') && options.method === 'POST') {
+      const createdPayload = JSON.parse(options.body)
+      return jsonResponse({
+        id: 301,
+        status: 'draft',
+        substats: [],
+        set_name: createdPayload.set_name,
+        cost: createdPayload.cost,
+        main_stat: createdPayload.main_stat,
+        is_continuous_tuning: createdPayload.is_continuous_tuning,
+      })
+    }
+    if (path.includes('/prediction/')) return jsonResponse({ candidates: [] })
+    if (path.includes('/stats/') || path.includes('/model-evaluation/')) return jsonResponse({})
+    throw new Error(`Unexpected request: ${path}`)
+  }
+
+  const workspace = useEchoWorkspace({
+    selectedGameAccountId: ref(1),
+    boundPlayerUid: ref('123456789'),
+    workspaceLocked: ref(false),
+    onError: () => {},
+  })
+
+  try {
+    await workspace.refresh()
+
+    await workspace.discardActiveEcho()
+
+    assert.equal(workspace.sessionEchoDelta.value, 1)
+    assert.equal(workspace.visibleSessionEchoDelta.value, 1)
+  } finally {
+    workspace.dispose()
+    globalThis.document = originalDocument
+    globalThis.fetch = originalFetch
+  }
+})
+
+test('discarding the active echo activates a replacement draft without full workspace refresh', async () => {
+  const originalDocument = globalThis.document
+  const originalFetch = globalThis.fetch
+  const requestOrder = []
+  let listRequests = 0
+  const activeEcho = {
+    id: 302,
+    status: 'draft',
+    substats: [],
+    set_name: sonataEffects[0].name,
+    cost: 1,
+    main_stat: 'atk_percent',
+    is_continuous_tuning: true,
+  }
+  const archivedEcho = { ...activeEcho, status: 'archived' }
+  globalThis.document = { cookie: 'csrftoken=test' }
+  globalThis.fetch = async (url, options = {}) => {
+    const path = String(url)
+    if (path.includes('/echoes/?game_account_id=1')) {
+      listRequests += 1
+      requestOrder.push('list')
+      return jsonResponse({ results: listRequests === 1 ? [activeEcho] : [archivedEcho] })
+    }
+    if (path.includes('/stats/')) {
+      requestOrder.push('stats')
+      return jsonResponse({ total_rolls: 84 })
+    }
+    if (path.includes('/model-evaluation/')) {
+      requestOrder.push('model-evaluation')
+      return jsonResponse({})
+    }
+    if (path.includes('/echoes/302/') && options.method === 'PATCH') {
+      requestOrder.push('archive')
+      return jsonResponse(archivedEcho)
+    }
+    if (path.endsWith('/echoes/') && options.method === 'POST') {
+      requestOrder.push('create')
+      const createdPayload = JSON.parse(options.body)
+      return jsonResponse({
+        id: 303,
+        status: 'draft',
+        substats: [],
+        set_name: createdPayload.set_name,
+        cost: createdPayload.cost,
+        main_stat: createdPayload.main_stat,
+        is_continuous_tuning: createdPayload.is_continuous_tuning,
+      })
+    }
+    if (path.includes('/prediction/')) {
+      requestOrder.push('prediction')
+      return jsonResponse({ candidates: [] })
+    }
+    throw new Error(`Unexpected request: ${path}`)
+  }
+
+  const workspace = useEchoWorkspace({
+    selectedGameAccountId: ref(1),
+    boundPlayerUid: ref('123456789'),
+    workspaceLocked: ref(false),
+    onError: () => {},
+  })
+
+  try {
+    await workspace.refresh()
+    requestOrder.length = 0
+
+    await workspace.discardActiveEcho()
+
+    assert.deepEqual(requestOrder, ['archive', 'create'])
+    assert.equal(listRequests, 1)
+    assert.equal(workspace.activeEchoId.value, 303)
+    assert.equal(workspace.activeEcho.value.status, 'draft')
+    assert.equal(workspace.echoes.value.some((echo) => echo.id === 302 && echo.status === 'archived'), true)
+    assert.equal(workspace.sessionEchoDelta.value, 1)
+  } finally {
+    workspace.dispose()
+    globalThis.document = originalDocument
+    globalThis.fetch = originalFetch
+  }
+})
+
+test('tier clicks are ignored while discard is still saving', async () => {
+  const originalDocument = globalThis.document
+  const originalFetch = globalThis.fetch
+  const archiveResponse = deferred()
+  let substatRequests = 0
+  const activeEcho = {
+    id: 304,
+    status: 'draft',
+    substats: [],
+    set_name: sonataEffects[0].name,
+    cost: 1,
+    main_stat: 'atk_percent',
+    is_continuous_tuning: true,
+  }
+  globalThis.document = { cookie: 'csrftoken=test' }
+  globalThis.fetch = async (url, options = {}) => {
+    const path = String(url)
+    if (path.includes('/echoes/?game_account_id=1')) {
+      return jsonResponse({ results: [{ ...activeEcho, status: 'archived' }] })
+    }
+    if (path.includes('/stats/') || path.includes('/model-evaluation/')) return jsonResponse({})
+    if (path.includes('/echoes/304/') && options.method === 'PATCH') return archiveResponse.promise
+    if (path.endsWith('/echoes/') && options.method === 'POST') {
+      const createdPayload = JSON.parse(options.body)
+      return jsonResponse({
+        id: 305,
+        status: 'draft',
+        substats: [],
+        set_name: createdPayload.set_name,
+        cost: createdPayload.cost,
+        main_stat: createdPayload.main_stat,
+        is_continuous_tuning: createdPayload.is_continuous_tuning,
+      })
+    }
+    if (path.includes('/substats/') && options.method === 'POST') {
+      substatRequests += 1
+      return jsonResponse({ id: 3041, position: 1, substat_type: 'crit_damage', tier_value: 12.6 })
+    }
+    if (path.includes('/prediction/')) return jsonResponse({ candidates: [] })
+    throw new Error(`Unexpected request: ${path}`)
+  }
+
+  const workspace = useEchoWorkspace({
+    selectedGameAccountId: ref(1),
+    boundPlayerUid: ref('123456789'),
+    workspaceLocked: ref(false),
+    onError: () => {},
+  })
+
+  try {
+    await workspace.refresh()
+    workspace.echoes.value = [activeEcho]
+    workspace.activeEchoId.value = activeEcho.id
+
+    const discardPromise = workspace.discardActiveEcho()
+    assert.equal(workspace.saving.value, true)
+
+    await workspace.clickTier(
+      { recorded: null, substat_type: 'crit_damage' },
+      { value: 12.6 },
+    )
+
+    archiveResponse.resolve(jsonResponse({ ...activeEcho, status: 'archived' }))
+    await discardPromise
+
+    assert.equal(substatRequests, 0)
+    assert.equal(workspace.activeEchoId.value, 305)
   } finally {
     workspace.dispose()
     globalThis.document = originalDocument

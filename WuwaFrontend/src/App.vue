@@ -54,6 +54,8 @@ const {
   stats,
   undoActiveSubstat,
   visibleEchoCount,
+  visibleSessionEchoDelta,
+  visibleSessionSampleDelta,
 } = useEchoWorkspace({
   selectedGameAccountId,
   boundPlayerUid,
@@ -256,8 +258,8 @@ onBeforeUnmount(() => {
           <h1>你好，漂泊者</h1>
         </div>
         <div class="hero-stats">
-          <div class="hero-stat hero-stat-with-delta"><strong>{{ visibleEchoCount }}</strong><Transition name="metric-delta"><em v-if="sessionEchoDelta" :key="sessionEchoDelta" class="metric-delta-badge" :title="`本次新增 ${sessionEchoDelta} 个声骸`">+{{ sessionEchoDelta }}</em></Transition><span>历史声骸</span></div>
-          <div class="hero-stat hero-stat-with-delta"><strong>{{ stats?.total_rolls || 0 }}</strong><Transition name="metric-delta"><em v-if="sessionSampleDelta" :key="sessionSampleDelta" class="metric-delta-badge" :title="`本次录入新增 ${sessionSampleDelta} 条样本`">+{{ sessionSampleDelta }}</em></Transition><span>总样本</span></div>
+          <div class="hero-stat hero-stat-with-delta"><strong>{{ visibleEchoCount }}</strong><Transition name="metric-delta"><em v-if="visibleSessionEchoDelta" :key="visibleSessionEchoDelta" class="metric-delta-badge" :title="`本次新增 ${visibleSessionEchoDelta} 个声骸`">+{{ visibleSessionEchoDelta }}</em></Transition><span>历史声骸</span></div>
+          <div class="hero-stat hero-stat-with-delta"><strong>{{ stats?.total_rolls || 0 }}</strong><Transition name="metric-delta"><em v-if="visibleSessionSampleDelta" :key="visibleSessionSampleDelta" class="metric-delta-badge" :title="`本次录入新增 ${visibleSessionSampleDelta} 条样本`">+{{ visibleSessionSampleDelta }}</em></Transition><span>总样本</span></div>
           <div class="hero-stat"><strong class="hero-confidence-value">{{ prediction ? confidenceText(prediction.confidence) : '低' }}</strong><span>置信度</span></div>
         </div>
       </section>
