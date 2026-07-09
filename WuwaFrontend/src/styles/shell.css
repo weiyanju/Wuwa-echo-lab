@@ -132,11 +132,8 @@
 .app-shell.theme-dark .hero-stats div {
   border-color: rgba(63, 86, 102, 0.72);
   background: #1d2a35;
-  color: #cbd8e2;
-}
-
-.app-shell.theme-dark .hero-stats div {
   box-shadow: none;
+  color: #cbd8e2;
 }
 
 .app-shell.theme-dark .metric-delta-badge { border-color: rgba(55, 179, 127, 0.34); color: #8be0bd; background: rgba(32, 64, 55, 0.72); }
@@ -702,10 +699,7 @@
   font-weight: 700; line-height: 1.08; letter-spacing: 0;
 }
 
-.hero-band.compact h1::after {
-  width: 54px; height: 3px; border-radius: 999px; background: linear-gradient(90deg, #1769d2, rgba(23, 105, 210, 0)); content: "";
-}
-
+.hero-band.compact h1::after { width: 54px; height: 3px; border-radius: 999px; background: linear-gradient(90deg, #1769d2, rgba(23, 105, 210, 0)); content: ""; }
 .hero-band.compact .hero-stats {
   display: flex;
   gap: 0;

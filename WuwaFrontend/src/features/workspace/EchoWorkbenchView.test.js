@@ -20,7 +20,7 @@ test('echo workbench owns setup and active echo presentation', async () => {
   assert.match(source, /ref="sonataGridRef"/)
   assert.match(source, /:aria-current="config\.sonata === effect\.name \? 'true' : null"/)
   assert.match(source, />ECHO SETUP</)
-  assert.match(source, /选择套装、COST、主词条后开始记录。/)
+  assert.match(source, /选择套装、COST、主词条后开始录入。/)
   assert.match(captureSource, /activeSonataEffect/)
   assert.match(captureSource, /class="active-echo-stage"/)
   assert.match(captureSource, /class="active-echo-set-badge"/)
@@ -270,6 +270,17 @@ test('active echo console separates the ledger and uses one action rail button s
   assert.doesNotMatch(style, /\.active-action-button \.active-action-icon/)
 })
 
+test('dark active echo actions use a single tonal hierarchy', async () => {
+  const style = await readFile(new URL('../../styles/features/workspace.css', import.meta.url), 'utf8')
+
+  assert.match(style, /\.app-shell\.theme-dark \.undo-action \{[\s\S]+border-color: #31485c;[\s\S]+color: #c8d5df;[\s\S]+background: #101b23;/)
+  assert.match(style, /\.app-shell\.theme-dark \.undo-action:hover:not\(:disabled\) \{[\s\S]+border-color: #4b78a1;[\s\S]+color: #e8f3ff;[\s\S]+background: #152839;/)
+  assert.match(style, /\.app-shell\.theme-dark \.discard-action \{[\s\S]+border-color: #5c3440;[\s\S]+color: #ff9aaa;[\s\S]+background: #101b23;/)
+  assert.match(style, /\.app-shell\.theme-dark \.discard-action:hover:not\(:disabled\) \{[\s\S]+border-color: #9b4a5b;[\s\S]+color: #ffd4db;[\s\S]+background: #2a1b23;/)
+  assert.match(style, /\.app-shell\.theme-dark \.next-action \{[\s\S]+border-color: #2361b7;[\s\S]+color: #ffffff;[\s\S]+background: #2361b7;/)
+  assert.match(style, /\.app-shell\.theme-dark \.next-action:hover:not\(:disabled\) \{[\s\S]+border-color: #2a73d1;[\s\S]+background: #2a73d1;/)
+})
+
 test('echo workbench keeps tier values calm and probabilities secondary', async () => {
   const source = await readFile(new URL('./EchoWorkbenchView.vue', import.meta.url), 'utf8')
   const style = await readFile(new URL('../../styles/features/workspace.css', import.meta.url), 'utf8')
@@ -395,10 +406,12 @@ test('echo workbench owns setup panel height synchronization', async () => {
   assert.match(source, /const sonataGridRef = ref\(null\)/)
   assert.match(source, /async function focusActiveSonata/)
   assert.match(source, /querySelector\('button\.active'\)/)
-  assert.match(source, /grid\.scrollTop = Math\.max\(0, targetScroll\)/)
-  assert.match(source, /\(\) => props\.config\.sonata,\s+focusActiveSonata,/)
+  assert.match(source, /export function sonataScrollTopForActiveButton/)
+  assert.match(source, /grid\.scrollTop = sonataScrollTopForActiveButton\(grid, activeButton\)/)
+  assert.match(source, /async function syncSetupPanelLayout\(\) \{[\s\S]+await syncSetupPanelHeight\(\)[\s\S]+await focusActiveSonata\(\)[\s\S]+\}/)
+  assert.match(source, /window\.addEventListener\('resize', syncSetupPanelLayout\)/)
+  assert.match(source, /window\.removeEventListener\('resize', syncSetupPanelLayout\)/)
+  assert.match(source, /syncSetupPanelLayout,\s+\{ flush: 'post' \}/)
   assert.match(source, /\(\) => `\$\{props\.activeEcho\?\.id \|\| ''\}:\$\{props\.config\.cost\}:\$\{props\.config\.main_stat\}:\$\{props\.config\.sonata\}`/)
   assert.doesNotMatch(source, /substats\.length/)
-  assert.match(source, /window\.addEventListener\('resize', syncSetupPanelHeight\)/)
-  assert.match(source, /window\.removeEventListener\('resize', syncSetupPanelHeight\)/)
 })

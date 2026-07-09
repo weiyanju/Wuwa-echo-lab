@@ -64,7 +64,7 @@ function submitUidBinding() {
 <template>
   <section class="uid-setup-shell">
     <header class="uid-setup-topbar">
-      <a class="wordmark" href="#" @click.prevent>Wuwa Echo Terminal</a>
+      <a class="wordmark" href="#" @click.prevent>Tethys System</a>
       <nav class="pill-tabs disabled-tabs" aria-label="页面">
         <button class="active" type="button" disabled>工作台</button>
         <button type="button" disabled>统计</button>

@@ -31,7 +31,7 @@ test('login view recreates the terminal homepage design', async () => {
   assert.match(source, /历史调谐记录/)
   assert.match(source, /本地截图识别/)
   assert.match(source, /多账号独立管理/)
-  assert.match(source, /副词条预测面板/)
+  assert.match(source, /副词条预测/)
 })
 
 test('login view presents login and register as terminal tabs', async () => {

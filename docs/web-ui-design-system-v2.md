@@ -1,4 +1,4 @@
-# Wuwa Echo Terminal - Web UI 设计系统 V2.1
+# Tethys System - Web UI 设计系统 V2.1
 
 ## 1. 文档状态
 
@@ -8,7 +8,7 @@
 
 当前结论：
 
-- 首页的 `Wuwa Echo Terminal / 鸣潮声骸终端` 方向是正确的，应继续保留。
+- 首页的 `Tethys System / 泰缇斯枢纽` 方向是正确的，应继续保留。
 - 登录后的工作台不应被重构成 VS Code 客户端式界面。
 - VS Code 官网、Linear、Vercel 的审美可以作为局部参考，但不能直接照搬成完整页面结构。
 - 当前圆角版本的工作台基础可以保留，后续应在其上渐进优化。
@@ -96,7 +96,7 @@
 
 首页 / 登录页可以继续保持终端感：
 
-- `Wuwa Echo Terminal` 产品识别。
+- `Tethys System / 泰缇斯枢纽` 产品识别。
 - 浅色终端表面。
 - 等宽字体点缀。
 - 精确边框。

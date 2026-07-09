@@ -1,10 +1,10 @@
-# Wuwa Echo Terminal 首页设计方案
+# Tethys System 首页设计方案
 
 > 本文档沉淀 Web 首页 / 登录页方向。全局 Web 视觉判断以 [`web-ui-design-system-v2.md`](./web-ui-design-system-v2.md) 为最高优先级；首页与工作台的关系以 V2.1 口径为准。
 
 ## 1. 设计定位
 
-`Wuwa Echo Terminal / 鸣潮声骸终端` 首页是产品入口，不是登录后的工作台。
+`Tethys System / 泰缇斯枢纽` 首页是产品入口，不是登录后的工作台。
 
 它的目标：
 
@@ -260,7 +260,7 @@ components/UI/BaseTerminalButton.vue
 
 首页改动应满足：
 
-- 保留 `Wuwa Echo Terminal / 鸣潮声骸终端` 识别。
+- 保留 `Tethys System / 泰缇斯枢纽` 识别。
 - 登录 / 注册路径清楚。
 - 不暴露工作台内部模块。
 - 不展示假数据。

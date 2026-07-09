@@ -215,7 +215,7 @@ onBeforeUnmount(() => {
   <main class="app-shell" :class="{ 'theme-dark': isDarkTheme }">
     <section v-if="loading" class="auth-shell">
       <div class="auth-copy">
-        <span class="brand-mark">Wuwa Echo Terminal</span>
+        <span class="brand-mark">Tethys System</span>
         <h1>正在连接声骸研究台</h1>
       </div>
     </section>
@@ -238,7 +238,7 @@ onBeforeUnmount(() => {
 
     <section v-else class="dashboard">
       <header class="topbar">
-        <a class="wordmark" href="#" @click.prevent="page = 'workspace'">Wuwa Echo Terminal</a>
+        <a class="wordmark" href="#" @click.prevent="page = 'workspace'">Tethys System</a>
         <nav class="pill-tabs" aria-label="页面">
           <button :class="{ active: page === 'workspace' }" @click="page = 'workspace'">工作台</button>
           <button :class="{ active: page === 'stats' }" @click="page = 'stats'">统计</button>

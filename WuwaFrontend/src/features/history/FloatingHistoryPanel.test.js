@@ -52,3 +52,15 @@ test('floating history presents echo config as the pre-pill inline metadata row'
   assert.doesNotMatch(style, /\.echo-meta-line/)
   assert.doesNotMatch(style, /\.echo-progress/)
 })
+
+test('floating history keeps the title and filters compact', async () => {
+  const style = await readFile(new URL('../../styles/features/history.css', import.meta.url), 'utf8')
+
+  assert.match(style, /\.floating-history-handle \{[\s\S]+margin: -4px -4px 0;/)
+  assert.match(style, /\.floating-history-handle \{[\s\S]+padding: 4px 154px 0 4px;/)
+  assert.match(style, /\.floating-history-handle\.section-heading \{[\s\S]+margin-bottom: 0;/)
+  assert.match(style, /\.history-filter-bar \{[\s\S]+margin: 0 0 2px;/)
+  assert.match(style, /\.compact-heading \{[\s\S]+margin-bottom: 0;/)
+  assert.match(style, /\.history-records \{[\s\S]+gap: 8px;/)
+  assert.match(style, /\.history-records h2 \{[\s\S]+margin-bottom: 0;/)
+})

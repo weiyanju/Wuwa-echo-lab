@@ -150,32 +150,38 @@
 .app-shell.theme-dark .active-prediction-alternative { color: #b5c8bb; }
 
 .app-shell.theme-dark .undo-action {
-  border-color: rgba(93, 168, 255, 0.24);
-  color: #dbe6ed;
-  background: rgba(16, 27, 35, 0.86);
+  border-color: #31485c;
+  color: #c8d5df;
+  background: #101b23;
 }
 
 .app-shell.theme-dark .undo-action:hover:not(:disabled) {
-  border-color: rgba(93, 168, 255, 0.5);
-  color: #8dc3ff;
-  background: rgba(47, 98, 143, 0.22);
+  border-color: #4b78a1;
+  color: #e8f3ff;
+  background: #152839;
 }
 
 .app-shell.theme-dark .discard-action {
-  border-color: rgba(255, 111, 133, 0.34);
-  color: #ff9aad;
-  background: rgba(91, 24, 38, 0.34);
+  border-color: #5c3440;
+  color: #ff9aaa;
+  background: #101b23;
+}
+
+.app-shell.theme-dark .discard-action:hover:not(:disabled) {
+  border-color: #9b4a5b;
+  color: #ffd4db;
+  background: #2a1b23;
 }
 
 .app-shell.theme-dark .next-action {
-  border-color: #5da8ff;
-  color: #06121b;
-  background: #8dc3ff;
+  border-color: #2361b7;
+  color: #ffffff;
+  background: #2361b7;
 }
 
 .app-shell.theme-dark .next-action:hover:not(:disabled) {
-  border-color: #b9dcff;
-  background: #b9dcff;
+  border-color: #2a73d1;
+  background: #2a73d1;
 }
 
 .app-shell.theme-dark .active-actions,

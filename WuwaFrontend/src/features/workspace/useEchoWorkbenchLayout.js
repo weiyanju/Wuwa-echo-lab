@@ -6,6 +6,41 @@ function waitForFrame() {
   })
 }
 
+function numericScrollPadding(grid, property) {
+  const styles = grid.ownerDocument?.defaultView?.getComputedStyle?.(grid) || window.getComputedStyle(grid)
+  const value = Number.parseFloat(styles[property])
+  return Number.isFinite(value) ? value : 0
+}
+
+function clampScrollTop(grid, scrollTop) {
+  const maxScrollTop = Number.isFinite(grid.scrollHeight)
+    ? Math.max(0, grid.scrollHeight - grid.clientHeight)
+    : Number.POSITIVE_INFINITY
+  return Math.min(maxScrollTop, Math.max(0, scrollTop))
+}
+
+export function sonataScrollTopForActiveButton(grid, activeButton) {
+  const paddingTop = numericScrollPadding(grid, 'scrollPaddingTop')
+  const paddingBottom = numericScrollPadding(grid, 'scrollPaddingBottom')
+  const gridRect = grid.getBoundingClientRect()
+  const activeRect = activeButton.getBoundingClientRect()
+  const viewportTop = grid.scrollTop + paddingTop
+  const viewportBottom = grid.scrollTop + grid.clientHeight - paddingBottom
+  const activeTop = grid.scrollTop + activeRect.top - gridRect.top
+  const activeHeight = activeButton.offsetHeight || activeRect.height || 0
+  const activeBottom = activeTop + activeHeight
+
+  if (activeTop < viewportTop) {
+    return clampScrollTop(grid, activeTop - paddingTop)
+  }
+
+  if (activeBottom > viewportBottom) {
+    return clampScrollTop(grid, activeBottom - grid.clientHeight + paddingBottom)
+  }
+
+  return grid.scrollTop
+}
+
 export function useEchoWorkbenchLayout(props, legalMainStats) {
   const createPanelRef = ref(null)
   const galleryPanelRef = ref(null)
@@ -34,10 +69,12 @@ export function useEchoWorkbenchLayout(props, legalMainStats) {
     const activeButton = grid?.querySelector('button.active')
     if (!grid || !activeButton) return
 
-    const gridRect = grid.getBoundingClientRect()
-    const activeRect = activeButton.getBoundingClientRect()
-    const targetScroll = grid.scrollTop + activeRect.top - gridRect.top - ((grid.clientHeight - activeButton.offsetHeight) / 2)
-    grid.scrollTop = Math.max(0, targetScroll)
+    grid.scrollTop = sonataScrollTopForActiveButton(grid, activeButton)
+  }
+
+  async function syncSetupPanelLayout() {
+    await syncSetupPanelHeight()
+    await focusActiveSonata()
   }
 
   function clearMainStatRowHeight(event) {
@@ -77,24 +114,17 @@ export function useEchoWorkbenchLayout(props, legalMainStats) {
   }
 
   onMounted(() => {
-    syncSetupPanelHeight()
-    focusActiveSonata()
-    window.addEventListener('resize', syncSetupPanelHeight)
+    syncSetupPanelLayout()
+    window.addEventListener('resize', syncSetupPanelLayout)
   })
 
   onBeforeUnmount(() => {
-    window.removeEventListener('resize', syncSetupPanelHeight)
+    window.removeEventListener('resize', syncSetupPanelLayout)
   })
 
   watch(
     () => `${props.activeEcho?.id || ''}:${props.config.cost}:${props.config.main_stat}:${props.config.sonata}`,
-    syncSetupPanelHeight,
-    { flush: 'post' },
-  )
-
-  watch(
-    () => props.config.sonata,
-    focusActiveSonata,
+    syncSetupPanelLayout,
     { flush: 'post' },
   )
 

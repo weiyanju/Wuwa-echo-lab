@@ -14,7 +14,7 @@ const terminalFeatures = [
   { title: '历史调谐记录', path: 'M4 21v-7m0-4V3m8 18v-9m0-4V3m8 18v-5m0-4V3M1 14h6m2-6h6m2 8h6' },
   { title: '本地截图识别', path: 'M6 3H3v3m15-3h3v3M6 21H3v-3m15 3h3v-3M3 12h18' },
   { title: '多账号独立管理', path: 'M4 6a8 3 0 1016 0A8 3 0 104 6zm0 0v12a8 3 0 1016 0V6' },
-  { title: '副词条预测面板', path: 'M3 21h18M3 21V3m4 12l4-4 4 4 5-9' },
+  { title: '副词条预测', path: 'M3 21h18M3 21V3m4 12l4-4 4 4 5-9' },
 ]
 const authTabs = [
   { mode: 'login', label: '终端登录' },
@@ -63,7 +63,7 @@ function submitAuth() {
     <nav class="terminal-navbar">
       <div class="terminal-brand">
         <span class="terminal-brand-icon"></span>
-        Wuwa Echo Terminal <span>| 鸣潮声骸终端</span>
+        Tethys System <span>| 泰缇斯枢纽</span>
       </div>
       <div class="terminal-system-status"><span></span>SYSTEM.ONLINE</div>
     </nav>

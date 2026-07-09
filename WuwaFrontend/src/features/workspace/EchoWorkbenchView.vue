@@ -74,7 +74,7 @@ function iconMask(source) { return { '--icon-url': `url("${source}")` } }
       <div class="section-heading">
         <span class="eyebrow">ECHO SETUP</span>
         <h2>初始化声骸</h2>
-        <p>选择套装、COST、主词条后开始记录。</p>
+        <p>选择套装、COST、主词条后开始录入。</p>
       </div>
 
       <form class="echo-form" @submit.prevent>
