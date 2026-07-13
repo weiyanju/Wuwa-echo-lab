@@ -161,6 +161,9 @@
   background: linear-gradient(180deg, rgba(20, 31, 41, 0.97), rgba(15, 23, 32, 0.92));
 }
 
+.app-shell.theme-dark .uid-setup-shell .disabled-tabs button { color: #98aab7; background: transparent; opacity: 1; }
+.app-shell.theme-dark .uid-setup-shell .disabled-tabs button.active { border-color: rgba(93, 168, 255, 0.36); color: #8dc3ff; background: rgba(93, 168, 255, 0.12); opacity: 1; }
+
 .app-shell.theme-dark .uid-setup-card {
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
 }

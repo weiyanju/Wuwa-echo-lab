@@ -47,3 +47,22 @@ test('login view presents login and register as terminal tabs', async () => {
   assert.match(source, /EXECUTE_LOGIN\(\)/)
   assert.match(source, /INIT_REGISTER\(\)/)
 })
+
+test('login view announces form errors and associates them with every credential field', async () => {
+  const source = await readFile(new URL('./LoginView.vue', import.meta.url), 'utf8')
+
+  assert.equal((source.match(/:aria-invalid="Boolean\(displayedError\)"/g) || []).length, 3)
+  assert.equal((source.match(/:aria-errormessage="displayedError \? 'auth-form-error' : undefined"/g) || []).length, 3)
+  assert.match(source, /<p v-if="displayedError" id="auth-form-error" class="error-text" role="alert">/)
+})
+
+test('login view keeps content visible without motion and defines a complete dark palette', async () => {
+  const style = await readFile(new URL('../../styles/features/auth.css', import.meta.url), 'utf8')
+
+  assert.match(style, /\.terminal-subtitle \{[\s\S]+opacity: 1;[\s\S]+animation:[^;]+ both;/)
+  assert.match(style, /\.terminal-features-grid \{[\s\S]+opacity: 1;[\s\S]+animation:[^;]+ both;/)
+  assert.match(style, /\.terminal-auth-wrapper \{[^}]+opacity: 1;[^}]+animation:[^;]+ both;/)
+  assert.match(style, /\.app-shell\.theme-dark \.terminal-home \{[\s\S]+--terminal-page: #0f1720;[\s\S]+--terminal-card: #17232d;[\s\S]+--terminal-text: #e7eef4;/)
+  assert.match(style, /\.app-shell\.theme-dark \.terminal-navbar \{[^}]+background: rgba\(15, 23, 32, 0\.85\);/)
+  assert.match(style, /@media \(prefers-reduced-motion: reduce\) \{[\s\S]+\.terminal-subtitle,[\s\S]+\.terminal-features-grid,[\s\S]+\.terminal-auth-wrapper \{[\s\S]+opacity: 1;[\s\S]+transform: none;[\s\S]+animation: none;/)
+})

@@ -91,18 +91,18 @@ function submitAuth() {
             <form class="terminal-form-view" @submit.prevent="submitAuth">
               <label class="terminal-input-group">
                 {{ isRegister ? '新建操作员账号' : '操作员账号' }}
-                <input v-model="authForm.username" class="terminal-standard-input" autocomplete="username" placeholder="请输入账号" />
+                <input v-model="authForm.username" class="terminal-standard-input" autocomplete="username" placeholder="请输入账号" :aria-invalid="Boolean(displayedError)" :aria-errormessage="displayedError ? 'auth-form-error' : undefined" />
               </label>
               <label class="terminal-input-group">
                 {{ isRegister ? '设置访问密钥' : '访问密钥' }}
-                <input v-model="authForm.password" class="terminal-standard-input" type="password" :autocomplete="isRegister ? 'new-password' : 'current-password'" placeholder="••••••••" />
+                <input v-model="authForm.password" class="terminal-standard-input" type="password" :autocomplete="isRegister ? 'new-password' : 'current-password'" placeholder="••••••••" :aria-invalid="Boolean(displayedError)" :aria-errormessage="displayedError ? 'auth-form-error' : undefined" />
               </label>
               <label v-if="isRegister" class="terminal-input-group">
                 确认访问密钥
-                <input v-model="confirmPassword" class="terminal-standard-input" type="password" autocomplete="new-password" placeholder="再次输入密钥" />
+                <input v-model="confirmPassword" class="terminal-standard-input" type="password" autocomplete="new-password" placeholder="再次输入密钥" :aria-invalid="Boolean(displayedError)" :aria-errormessage="displayedError ? 'auth-form-error' : undefined" />
               </label>
               <label v-else class="terminal-form-options"><input v-model="saveLogin" type="checkbox" /> 保持连接状态</label>
-              <p v-if="displayedError" class="error-text">{{ displayedError }}</p>
+              <p v-if="displayedError" id="auth-form-error" class="error-text" role="alert">{{ displayedError }}</p>
               <button class="terminal-primary-btn" type="submit">{{ isRegister ? 'INIT_REGISTER()' : 'EXECUTE_LOGIN()' }}</button>
             </form>
           </div>

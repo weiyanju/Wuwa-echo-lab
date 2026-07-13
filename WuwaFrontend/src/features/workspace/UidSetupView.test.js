@@ -54,3 +54,11 @@ test('uid setup keeps shell commands and excludes rejected explanatory copy', as
   assert.doesNotMatch(source, /最多\s*5\s*个|数据隔离|不可删除|统计功能|识别功能/)
   assert.doesNotMatch(source, /locked-workbench/)
 })
+
+test('uid setup completes its dark theme for disabled navigation', async () => {
+  const style = await readFile(new URL('../../styles/features/uid-setup.css', import.meta.url), 'utf8')
+
+  assert.match(style, /\.uid-setup-card \{[\s\S]+background: var\(--canvas\);/)
+  assert.match(style, /\.app-shell\.theme-dark \.uid-setup-shell \.disabled-tabs button \{[^}]+color: #98aab7;[^}]+background: transparent;/)
+  assert.match(style, /\.app-shell\.theme-dark \.uid-setup-shell \.disabled-tabs button\.active \{[^}]+color: #8dc3ff;[^}]+background: rgba\(93, 168, 255, 0\.12\);/)
+})

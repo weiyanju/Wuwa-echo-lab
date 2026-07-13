@@ -471,14 +471,12 @@ onBeforeUnmount(() => {
           :class="{ best: row.isBest, expanded: expandedModelDetailKey === row.key, disabled: row.disabled }"
           :title="row.evaluated ? `${row.label}基于 ${row.evaluated} 条样本回测` : `${row.label}等待回测样本`"
         >
-          <div
+          <button
             class="model-bar-summary"
-            role="button"
-            tabindex="0"
+            type="button"
             :aria-expanded="expandedModelDetailKey === row.key"
             @click="toggleModelDetail(row.key)"
-            @keydown.enter="toggleModelDetail(row.key)"
-            @keydown.space.prevent="toggleModelDetail(row.key)"
+            :aria-label="expandedModelDetailKey === row.key ? `收起${row.label}详情` : `展开${row.label}详情`"
           >
             <strong>
               {{ row.label }}
@@ -488,17 +486,10 @@ onBeforeUnmount(() => {
             <small><span>{{ row.note }}</span></small>
             <span class="model-hit-rate">{{ modelHitRateText(row) }}</span>
             <span class="model-loss">{{ modelLossText(row) }}</span>
-            <button
-              class="model-expand-state"
-              type="button"
-              :aria-expanded="expandedModelDetailKey === row.key"
-              :aria-label="expandedModelDetailKey === row.key ? `收起${row.label}详情` : `展开${row.label}详情`"
-              :title="expandedModelDetailKey === row.key ? '收起' : '展开'"
-              @click.stop="toggleModelDetail(row.key)"
-            >
+            <span class="model-expand-state" aria-hidden="true">
               <span class="ui-line-icon model-expand-chevron" :style="iconMask(chevronDownIcon)" aria-hidden="true"></span>
-            </button>
-          </div>
+            </span>
+          </button>
           <i class="model-row-progress" :title="modelProgressTitle(row)">
             <b :style="{ width: row.hitRate == null ? '0%' : `${Math.max(row.relativeHitRate * 92, 8)}%` }"></b>
           </i>

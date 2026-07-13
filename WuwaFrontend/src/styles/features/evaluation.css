@@ -3329,9 +3329,15 @@
     "note hit loss action";
   grid-template-columns: minmax(0, 1fr) var(--model-hit-col) var(--model-loss-col) var(--model-action-col);
   gap: 3px var(--model-col-gap);
-  padding-left: 12px;
+  border: 0;
   border-radius: 8px;
+  padding: 0 0 0 12px;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  text-align: inherit;
   cursor: pointer;
+  appearance: none;
 }
 
 .model-bars article > .model-bar-summary:focus-visible {
@@ -3425,11 +3431,6 @@
   border-color: rgba(23, 105, 210, 0.24);
   color: #1769d2;
   background: rgba(23, 105, 210, 0.08);
-}
-
-.model-expand-state:focus-visible {
-  outline: 2px solid rgba(23, 105, 210, 0.28);
-  outline-offset: 2px;
 }
 
 .model-bars article.expanded .model-expand-state {

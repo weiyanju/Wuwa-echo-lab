@@ -17,3 +17,14 @@ test('evaluation backtest owns model detail interactions and cleanup', async () 
   assert.match(appSource, /import EvaluationBacktest from '\.\/features\/evaluation\/EvaluationBacktest\.vue'/)
   assert.match(appSource, /<EvaluationBacktest[\s\S]+:model-details="modelDetailCards"/)
 })
+
+test('model detail summary uses one native disclosure button without nested controls', async () => {
+  const source = await readFile(new URL('./EvaluationBacktest.vue', import.meta.url), 'utf8')
+  const style = await readFile(new URL('../../styles/features/evaluation.css', import.meta.url), 'utf8')
+
+  assert.match(source, /<button\s+class="model-bar-summary"\s+type="button"\s+:aria-expanded="expandedModelDetailKey === row\.key"\s+@click="toggleModelDetail\(row\.key\)"/)
+  assert.match(source, /<span class="model-expand-state" aria-hidden="true">/)
+  assert.doesNotMatch(source, /class="model-bar-summary"\s+role="button"/)
+  assert.doesNotMatch(source, /<button\s+class="model-expand-state"/)
+  assert.match(style, /\.model-bars article > \.model-bar-summary \{[\s\S]+border: 0;[\s\S]+background: transparent;[\s\S]+font: inherit;[\s\S]+appearance: none;/)
+})
