@@ -160,6 +160,10 @@ test('the functional login caret finishes beside the title instead of at the col
   const authStyle = await read('./styles/features/auth.css')
 
   assert.match(authStyle, /\.terminal-title \{[\s\S]+--terminal-title-width: 8em;/)
+  assert.match(authStyle, /\.terminal-title \{[\s\S]+--terminal-caret-gap: 0\.14em;/)
+  assert.match(authStyle, /\.terminal-title \{[\s\S]+box-sizing: content-box;/)
+  assert.match(authStyle, /\.terminal-title \{[\s\S]+padding-inline-end: var\(--terminal-caret-gap\);/)
+  assert.match(authStyle, /@media \(max-width: 520px\) \{[\s\S]+\.terminal-title \{[^}]+padding-inline-end: 0;/)
   assert.match(authStyle, /@keyframes terminal-typing \{ to \{ width: var\(--terminal-title-width\); \} \}/)
   assert.doesNotMatch(authStyle, /@keyframes terminal-typing \{ to \{ width: 100%; \} \}/)
 })
