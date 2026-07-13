@@ -35,15 +35,19 @@
 
 .recognition-panel h2 {
   margin: 3px 0 0;
-  font-size: 16px;
-  font-weight: 650;
-  line-height: 1.16;
+  font-family: var(--font-title);
+  font-size: var(--text-card-title);
+  font-weight: var(--weight-title);
+  line-height: var(--leading-title);
+  letter-spacing: var(--tracking-cjk);
 }
 
 .recognition-panel p {
   margin: 4px 0 0;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-body);
+  line-height: var(--leading-caption);
 }
 
 .recognition-refresh-button,
@@ -52,14 +56,14 @@
   border-radius: 999px;
   background: #fff;
   color: var(--ink);
-  font-weight: 700;
+  font-weight: var(--weight-control);
   cursor: pointer;
 }
 
 .recognition-refresh-button {
-  width: 34px;
-  height: 34px;
-  min-height: 34px;
+  width: 40px;
+  height: 40px;
+  min-height: 40px;
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
@@ -125,9 +129,9 @@
 .recognition-state-copy strong {
   display: block;
   color: var(--ink);
-  font-size: 14px;
-  font-weight: 650;
-  line-height: 1.2;
+  font-size: var(--text-control);
+  font-weight: var(--weight-control);
+  line-height: var(--leading-control);
 }
 
 .recognition-metric-grid {
@@ -150,18 +154,20 @@
   display: block;
   color: var(--ink);
   font-family: var(--font-data);
-  font-size: 16px;
+  font-size: var(--text-data-md);
   font-variant-numeric: tabular-nums;
-  font-weight: 700;
-  line-height: 1;
+  font-weight: var(--weight-data);
+  line-height: var(--leading-data);
+  letter-spacing: var(--tracking-data);
 }
 
 .recognition-metric-grid span {
   display: block;
   margin-top: 6px;
   color: var(--muted);
-  font-size: 12px;
-  font-weight: 650;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-label);
+  line-height: var(--leading-label);
 }
 
 .recognition-review-list {
@@ -191,14 +197,17 @@
 .recognition-review-row strong {
   display: block;
   color: var(--ink);
-  font-size: 14px;
+  font-size: var(--text-control);
+  font-weight: var(--weight-control);
+  line-height: var(--leading-control);
 }
 
 .recognition-review-row span,
 .recognition-empty-row {
   color: var(--muted);
-  font-size: 12px;
-  font-weight: 650;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-label);
+  line-height: var(--leading-label);
 }
 
 .recognition-review-row button {
@@ -206,6 +215,8 @@
   min-height: 34px;
   padding: 0 14px;
   color: #d9304c;
+  font-size: var(--text-control);
+  line-height: var(--leading-control);
 }
 
 .recognition-status-conflict,

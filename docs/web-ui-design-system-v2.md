@@ -249,6 +249,8 @@
 
 Wuwa 的登录后产品界面采用一套克制型 Data Bento 字体系统：学习 AI 数据看板 / Bento 信息图的现代无衬线气质、强数字层级和高密度数据排版，但不复制其配色、页面骨架或装饰性 AI Dashboard 风格。
 
+Web 字体以 `docs/superpowers/specs/2026-07-13-wuwa-typography-system-design.md` 为准：IBM Plex Sans SC 承担中文与常规 UI，IBM Plex Mono 只承担短技术信息；中文、拉丁、数字使用独立语义入口，正式字重为 400 / 500 / 600 / 700。
+
 字体目标：
 
 - 现代无衬线。
@@ -263,52 +265,59 @@ Wuwa 的登录后产品界面采用一套克制型 Data Bento 字体系统：学
 前端以 `WuwaFrontend/src/styles/tokens.css` 为字体 token owner：
 
 ```css
---font-cjk: "Wuwa CJK", "Microsoft YaHei UI", system-ui, sans-serif;
+--font-cjk: "IBM Plex Sans SC", "Noto Sans SC", "Microsoft YaHei UI", system-ui, sans-serif;
 --font-ui: var(--font-cjk);
 --font-title: var(--font-cjk);
---font-data: var(--font-cjk);
---font-mono: ui-monospace, Consolas, "Courier New", monospace;
+--font-latin: "IBM Plex Sans SC", "IBM Plex Sans", system-ui, sans-serif;
+--font-data: var(--font-latin);
+--font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
 ```
 
 使用规则：
 
-- `--font-cjk`：中文 UI 字体入口，优先承接 `Wuwa CJK` 400 / 500 / 700。当前 `Wuwa CJK` 由 OFL-1.1 授权的 `@fontsource/noto-sans-sc` 简中 WOFF2 提供，异常时只保留必要系统兜底。
+- `--font-cjk`：中文 UI 字体入口，由 OFL-1.1 授权的 IBM Plex Sans SC 提供，异常时回退到 Noto Sans SC、Microsoft YaHei UI 与系统字体。
 - `--font-ui`：正文、导航、按钮、表单、常规面板标题。
 - `--font-title`：页面标题、统计/评估页的大区块标题、登录页产品识别。
+- `--font-latin`：TETHYS 品牌、普通拉丁术语和模型名；首版使用 IBM Plex Sans SC 的配套拉丁字形。
 - `--font-data`：UID、声骸编号、概率、百分比、样本数、排名、命中率、分数、价格和所有需要横向比较的数字。
 - `--font-mono`：仅用于代码、协议、短技术状态和诊断 metadata，不用于大面积正文。
 
 中文字体加载规则：
 
-- 内置中文字体只允许走 `Wuwa CJK` 入口，默认只声明 400 / 500 / 700 三档。
-- 不把完整中文字体家族全部打包进首屏，不引入 300 / 600 / 800 / 900 等额外字重，除非有明确性能预算和 UI 证据。
-- 默认字体文件来自 `@fontsource/noto-sans-sc/files/`，只引用 `noto-sans-sc-chinese-simplified-400-normal.woff2`、`500` 和 `700` 三个简中 WOFF2。
+- IBM Plex Sans SC 只加载 Regular、Medium、SemiBold、Bold 四档 split WOFF2，IBM Plex Mono 只加载 Medium 与 SemiBold。
+- 正式 Sans 字重只允许 400 / 500 / 600 / 700；禁止声明 650、680、720、740、760、800、900 等未加载字重。
+- 字体文件来自 `@ibm/plex-sans-sc` 与 `@ibm/plex-mono` 官方包，不依赖运行时第三方 CDN。
 - active token 只写真实接入的字体和必要系统兜底。没有安装、没有随包提供、也没有被构建引用的字体名不进入代码或规范示例。
-- 若中文文案相对稳定，优先使用子集化 `woff2`，避免完整 CJK 字体拖慢首屏。
+- `font-synthesis: none` 必须保留，禁止浏览器伪造粗体或斜体。
 
 ### 8.2 字号和字重层级
 
-登录后产品 UI 使用固定 rem 字阶，不使用随视口宽度变化的 `clamp()` 作为常规标题字号；`clamp()` 仅允许在首页/登录页展示性区域使用。
+产品 UI 使用固定字阶；标题字号不随视口连续缩放，窄屏只通过明确媒体查询切换到批准值。
 
 | 角色 | 用途 | 推荐字号 | 推荐字重 | 行高 |
 |---|---|---:|---:|---:|
-| Page Title | 工作台 / 统计 / 评估页面标题 | 1.5rem - 1.75rem | 700 | 1.12 |
-| Section Title | 大区块标题 | 1.125rem - 1.3125rem | 650 - 700 | 1.2 |
-| Card Title | 卡片标题 / 图表标题 | 0.9375rem - 1rem | 650 - 700 | 1.25 |
-| Metric XL | 统计 / 评估核心数字 | 2.125rem - 2.625rem | 780 - 800 | 0.98 |
-| Metric LG | 摘要卡片数字 | 1.5rem - 1.875rem | 740 - 760 | 1 |
-| Metric MD | 表格、排名、概率、分数 | 0.8125rem - 1.125rem | 650 - 740 | 1.1 |
-| Body | 正文说明 | 0.875rem - 0.9375rem | 400 - 500 | 1.45 |
-| Caption | 英文说明、来源、标签 | 0.6875rem - 0.8125rem | 550 - 650 | 1.25 |
+| Page Title | 工作台问候、页面主标题 | 1.75rem / 28px | 700 | 1.15 |
+| Section Title | 大区块标题 | 1.3125rem / 21px | 700 | 1.15 |
+| Card Title | 卡片、图表、面板标题 | 1rem / 16px | 700 | 1.15–1.25 |
+| Body | 正文说明 | 0.9375rem / 15px | 400 | 1.5 |
+| Control | 按钮、选项、主要列表文字 | 0.875rem / 14px | 600 | 1.25 |
+| Label | 字段、状态、图表类别 | 0.8125rem / 13px | 600 | 1.3 |
+| Caption | 说明、来源、辅助 metadata | 0.75rem / 12px | 400–500 | 1.35 |
+| Micro | 空间受限的非交互图表 metadata | 0.6875rem / 11px | 500 | 1.35 |
+| Data SM | UID、概率、密集表格数字 | 0.9375rem / 15px | 600 | 1.05 |
+| Data MD | 普通指标 | 1.125rem / 18px | 600 | 1.05 |
+| Data LG | 主指标 | 1.5rem / 24px | 700 | 1.05 |
+| Data XL | 页面级分数 | 1.875rem / 30px | 700 | 1.05 |
 
 规则：
 
-- 主标题厚重但克制，不使用 900 字重制造黑块。
+- 主标题厚重但克制，最高字重为 700。
 - 大数字只在统计、评估、预测摘要、首页状态摘要中放大。
 - 工作台录入矩阵、历史记录、识别复核保持紧凑，不使用海报级数字。
-- 中文标题 `letter-spacing: 0`，不做松散字距。
+- 中文标题和正文使用 `--tracking-cjk: 0`，不做松散字距。
 - 英文说明不应比中文标题或数字更抢眼。
-- 英文全大写短标签最多使用 `letter-spacing: 0.02em`，按钮、正文、中文标题不加字距。
+- 普通拉丁使用 `--tracking-latin: 0`，缩写使用 `--tracking-abbr: 0.02em`，全大写短状态使用 `--tracking-caps: 0.06em`，TETHYS 品牌使用 `--tracking-brand: 0.08em`。
+- 交互文字不得小于 12px；仅空间受限的非交互图表 metadata 可使用 11px。禁止 10px、半像素字号、负字距和裸非零字距。
 
 ### 8.3 数字排版规则
 
@@ -318,7 +327,7 @@ Wuwa 的登录后产品界面采用一套克制型 Data Bento 字体系统：学
 font-family: var(--font-data);
 font-variant-numeric: tabular-nums;
 font-feature-settings: "tnum";
-letter-spacing: 0;
+letter-spacing: var(--tracking-data);
 ```
 
 全局数字工具类由 `WuwaFrontend/src/styles/base.css` 提供：
@@ -334,7 +343,7 @@ letter-spacing: 0;
 使用规则：
 
 - 数字和单位分层，单位字号约为数字的 55% - 70%。
-- 单位字重 500 - 650，不能过淡。
+- 单位字重使用 500 或 600，不能过淡。
 - 表格、矩阵和图表轴线中的数字优先稳定宽度，不追求装饰。
 - 当前值、对照值和异常值通过既有语义色表达，不引入参考图配色。
 - 不使用渐变文字、负字距、过细灰字或装饰字体。

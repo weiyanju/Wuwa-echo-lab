@@ -265,7 +265,9 @@
 .echo-item span,
 .echo-item small {
   color: var(--steel);
-  font-size: 14px;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-supporting);
+  line-height: var(--leading-caption);
 }
 
 .records-panel {
@@ -346,6 +348,14 @@
   margin-bottom: 0;
 }
 
+.floating-history-handle h2 {
+  font-family: var(--font-title);
+  font-size: var(--text-card-title);
+  font-weight: var(--weight-title);
+  line-height: var(--leading-title);
+  letter-spacing: var(--tracking-cjk);
+}
+
 .floating-history-panel.pinned .floating-history-handle {
   cursor: default;
 }
@@ -378,9 +388,12 @@
   grid-column: 1 / -1;
   margin: 2px 0 0;
   color: var(--steel);
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1.25;
+  font-family: var(--font-data);
+  font-size: var(--text-label);
+  font-weight: var(--weight-data);
+  line-height: var(--leading-data);
+  letter-spacing: var(--tracking-data);
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
@@ -410,8 +423,10 @@
   padding: 5px 9px 5px 10px;
   color: var(--steel);
   background: rgba(248, 250, 252, 0.86);
-  font-size: 12px;
-  font-weight: 700;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-control);
+  line-height: var(--leading-control);
+  letter-spacing: var(--tracking-cjk);
   transition: transform 160ms ease-out, border-color 160ms ease-out, background-color 160ms ease-out, box-shadow 160ms ease-out, color 160ms ease-out;
 }
 
@@ -421,8 +436,12 @@
   padding: 2px 6px;
   color: inherit;
   background: rgba(255, 255, 255, 0.72);
-  font-size: 11px;
-  line-height: 1.2;
+  font-family: var(--font-data);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-data);
+  line-height: var(--leading-data);
+  letter-spacing: var(--tracking-data);
+  font-variant-numeric: tabular-nums;
   text-align: center;
 }
 
@@ -694,13 +713,14 @@
 .echo-item span,
 .echo-item small {
   min-width: 0;
-  line-height: 1.35;
+  line-height: var(--leading-caption);
   overflow-wrap: anywhere;
 }
 
 .echo-item small {
   color: var(--steel);
-  font-size: 12px;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-supporting);
 }
 
 .echo-item.active {
@@ -740,10 +760,10 @@
   padding: 3px 7px;
   color: var(--canvas);
   background: var(--primary);
-  font-size: 11px;
+  font-size: var(--text-caption);
   font-style: normal;
-  font-weight: 700;
-  line-height: 1.2;
+  font-weight: var(--weight-label);
+  line-height: var(--leading-label);
 }
 
 .echo-item-head {
@@ -756,13 +776,16 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: start;
   gap: 6px;
-  font-size: 14px;
+  font-size: var(--text-control);
+  font-weight: var(--weight-control);
+  line-height: var(--leading-control);
 }
 
 .echo-item-head > span {
   color: var(--steel);
-  font-size: 12px;
-  line-height: 1.35;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-supporting);
+  line-height: var(--leading-caption);
 }
 
 .echo-roll-list {
@@ -787,8 +810,9 @@
 .echo-roll-list strong {
   display: block;
   color: var(--ink-deep);
-  font-size: 12px;
-  line-height: 1.25;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-label);
+  line-height: var(--leading-label);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -797,8 +821,9 @@
 .echo-roll-list small,
 .echo-roll-empty {
   color: var(--steel);
-  font-size: 12px;
-  font-weight: 500;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-supporting);
+  line-height: var(--leading-caption);
   white-space: nowrap;
 }
 

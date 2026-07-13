@@ -8,6 +8,7 @@ import historyTerminalIcon from '../../assets/icons/rovers-terminal-expand.png'
 import { mainStatLabels, substatLabels } from '../../data/substats'
 import { displayEchoName } from '../../services/echoDisplay'
 import { sortVisibleEchoHistory, statusBadge } from '../../services/echoWorkflow'
+import { readFloatingHistoryPosition } from './floatingHistoryPosition.js'
 
 const props = defineProps({
   echoes: {
@@ -27,11 +28,16 @@ const props = defineProps({
 const emit = defineEmits(['select'])
 
 const floatingHistoryRef = ref(null)
-const floatingHistoryPosition = ref(readFloatingHistoryPosition())
+const isHistoryMinimized = ref(localStorage.getItem('wuwa-floating-history-minimized') === 'true')
+const floatingHistoryPosition = ref(readFloatingHistoryPosition({
+  storedPosition: localStorage.getItem('wuwa-floating-history-position'),
+  viewportWidth: typeof window === 'undefined' ? 1366 : window.innerWidth,
+  viewportHeight: typeof window === 'undefined' ? 768 : window.innerHeight,
+  minimized: isHistoryMinimized.value,
+}))
 const floatingHistoryExpandedSize = ref(readFloatingHistoryExpandedSize())
 const floatingHistoryRestoreMinimizedPosition = ref(null)
 const floatingHistoryRestoreShowcasePosition = ref(null)
-const isHistoryMinimized = ref(localStorage.getItem('wuwa-floating-history-minimized') === 'true')
 const isHistoryPinned = ref(localStorage.getItem('wuwa-floating-history-pinned') === 'true')
 const isHistoryShowcase = ref(false)
 const historyFilter = ref('all')
@@ -101,18 +107,6 @@ const floatingHistoryStyle = computed(() => {
 
 function iconMask(source) {
   return { '--icon-url': `url("${source}")` }
-}
-
-function readFloatingHistoryPosition() {
-  try {
-    const stored = JSON.parse(localStorage.getItem('wuwa-floating-history-position') || 'null')
-    if (Number.isFinite(stored?.x) && Number.isFinite(stored?.y)) {
-      return stored
-    }
-  } catch {
-    // Ignore invalid saved panel coordinates.
-  }
-  return { x: 32, y: 150 }
 }
 
 function readFloatingHistoryExpandedSize() {

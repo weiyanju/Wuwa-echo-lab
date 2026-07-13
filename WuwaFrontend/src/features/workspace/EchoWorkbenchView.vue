@@ -1,11 +1,11 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import topPredictedIcon from '../../assets/icons/fast-arrow-up.svg'
 import { mainStatLabels, mainStatsByCost } from '../../data/substats'
 import { sonataEffects } from '../../data/sonataEffects'
 import { formatPercent, formatSubstatTierNumber, formatSubstatTierUnit, formatSubstatTierValue } from '../../services/formatters'
 import ActiveEchoCapturePanel from './ActiveEchoCapturePanel.vue'
-import { useEchoWorkbenchLayout } from './useEchoWorkbenchLayout'
+import { filterSonataEffects, useEchoWorkbenchLayout } from './useEchoWorkbenchLayout'
 
 const props = defineProps({
   config: {
@@ -28,6 +28,10 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  configCreationNotice: {
+    type: String,
+    default: '',
+  },
 })
 
 const emit = defineEmits(['config-change', 'undo', 'discard', 'next', 'select-tier', 'preview-change'])
@@ -35,6 +39,10 @@ const costOptions = Object.freeze([1, 3, 4])
 const selectedSonataEffect = computed(() => sonataEffects.find((effect) => effect.name === props.config.sonata) || null)
 const availableCosts = computed(() => selectedSonataEffect.value?.availableCosts || costOptions)
 const legalMainStats = computed(() => mainStatsByCost[props.config.cost] || [])
+const sonataQuery = ref('')
+const filteredSonataEffects = computed(() => filterSonataEffects(sonataEffects, sonataQuery.value))
+const visibleSonataNames = computed(() => filteredSonataEffects.value.map((effect) => effect.name))
+const configChangeCreatesEcho = computed(() => Boolean(props.activeEcho?.substats?.length))
 const predictionRankings = computed(() => props.matrixRows
   .filter((row) => row.candidate && !row.recorded && Number.isFinite(row.candidate?.p_final))
   .sort((left, right) => right.candidate.p_final - left.candidate.p_final)
@@ -46,20 +54,21 @@ const predictionRankings = computed(() => props.matrixRows
     substat_type: row.substat_type,
   })))
 const {
-  createPanelRef,
-  galleryPanelRef,
   mainStatRowRef,
   sonataGridRef,
-  setupPanelStyle,
   mainStatRowStyle,
   clearMainStatRowHeight,
-} = useEchoWorkbenchLayout(props, legalMainStats)
+} = useEchoWorkbenchLayout(props, legalMainStats, visibleSonataNames)
 
 function tierButtonKey(row, tier) { return `${row.substat_type}:${tier.value}` }
 
 function rowPendingTierKey(row) { return props.pendingTierKey.startsWith(`${row.substat_type}:`) ? props.pendingTierKey : '' }
 
 function isTierPending(row, tier) { return props.pendingTierKey === tierButtonKey(row, tier) }
+
+function isRecordedTier(row, tier) {
+  return Boolean(row.recorded) && Number(row.recorded.tier_value) === Number(tier.value)
+}
 
 function isCostAvailable(cost) { return availableCosts.value.includes(cost) }
 
@@ -70,19 +79,25 @@ function iconMask(source) { return { '--icon-url': `url("${source}")` } }
 
 <template>
   <div class="workspace-sidebar">
-    <aside ref="createPanelRef" class="product-panel create-panel" :style="setupPanelStyle">
-      <div class="section-heading">
-        <span class="eyebrow">ECHO SETUP</span>
-        <h2>初始化声骸</h2>
-        <p>选择套装、COST、主词条后开始录入。</p>
-      </div>
+    <aside class="product-panel create-panel">
+      <div class="setup-panel-content">
+        <div class="section-heading">
+          <span class="eyebrow">ECHO SETUP</span>
+          <h2>初始化声骸</h2>
+          <p>选择套装、COST、主词条后开始录入。</p>
+        </div>
 
-      <form class="echo-form" @submit.prevent>
+        <form class="echo-form" @submit.prevent>
         <fieldset>
           <legend>套装</legend>
+          <label class="sonata-search-field">
+            <span class="sr-only">搜索套装</span>
+            <input v-model="sonataQuery" type="search" inputmode="search" placeholder="搜索套装" autocomplete="off" />
+          </label>
+          <p v-if="configChangeCreatesEcho" class="setup-behavior-hint">选择其他配置将新建声骸</p>
           <div ref="sonataGridRef" class="sonata-grid">
             <button
-              v-for="effect in sonataEffects"
+              v-for="effect in filteredSonataEffects"
               :key="effect.id"
               type="button"
               :class="{ active: config.sonata === effect.name }"
@@ -92,6 +107,7 @@ function iconMask(source) { return { '--icon-url': `url("${source}")` } }
               <img :src="effect.icon" :alt="effect.name" />
               <span>{{ effect.name }}</span>
             </button>
+            <p v-if="!filteredSonataEffects.length" class="sonata-empty-state">未找到匹配套装</p>
           </div>
         </fieldset>
 
@@ -128,11 +144,17 @@ function iconMask(source) { return { '--icon-url': `url("${source}")` } }
           </div>
         </fieldset>
 
-      </form>
+        </form>
+        <Transition name="config-notice">
+          <p v-if="configCreationNotice" class="setup-creation-notice" role="status" aria-live="polite">
+            {{ configCreationNotice }}
+          </p>
+        </Transition>
+      </div>
     </aside>
   </div>
 
-  <section ref="galleryPanelRef" class="gallery-panel">
+  <section class="gallery-panel">
     <ActiveEchoCapturePanel
       :config="config"
       :active-echo="activeEcho"
@@ -150,7 +172,7 @@ function iconMask(source) { return { '--icon-url': `url("${source}")` } }
         :key="row.substat_type"
         class="substat-row"
         :class="{ recorded: row.recorded, 'top-predicted-row': row.topPredicted && !row.recorded }"
-        v-memo="[row.recorded?.id, row.recorded?.tier_value, row.candidate?.p_final, row.candidate?.baseline_deviation, row.topPredicted, rowPendingTierKey(row)]"
+        v-memo="[row.recorded?.id, row.recorded?.tier_value, row.candidate?.p_final, row.candidate?.baseline_deviation, row.topPredicted, Boolean(props.pendingTierKey), rowPendingTierKey(row)]"
       >
         <div class="substat-meta">
           <div class="substat-title-line">
@@ -164,13 +186,16 @@ function iconMask(source) { return { '--icon-url': `url("${source}")` } }
             v-for="tier in row.tier_table"
             :key="`${row.substat_type}-${tier.value}`"
             type="button"
-            :disabled="Boolean(row.recorded) || isTierPending(row, tier)"
+            :class="{ 'recorded-tier': isRecordedTier(row, tier), 'saving-tier': isTierPending(row, tier) }"
+            :disabled="Boolean(row.recorded) || Boolean(pendingTierKey)"
+            :aria-busy="isTierPending(row, tier)"
             @click="emit('select-tier', { row, tier })"
           >
             <strong class="tier-value">
               {{ formatSubstatTierNumber(row.substat_type, tier.value) }}<span v-if="formatSubstatTierUnit(row.substat_type)" class="tier-unit">{{ formatSubstatTierUnit(row.substat_type) }}</span>
             </strong>
-            <span class="tier-probability">{{ formatPercent(tier.probability, 1) }}</span>
+            <span v-if="isTierPending(row, tier)" class="tier-probability tier-saving-label">保存中</span>
+            <span v-else class="tier-probability">{{ formatPercent(tier.probability, 1) }}</span>
           </button>
         </div>
       </article>

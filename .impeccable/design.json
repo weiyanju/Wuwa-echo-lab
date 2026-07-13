@@ -1,0 +1,448 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-13T10:57:43.4967134+08:00",
+  "title": "Design System: Wuwa / Tethys System",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "泰缇斯蓝",
+        "tonalRamp": [
+          "oklch(15% 0.06 255)",
+          "oklch(25% 0.11 255)",
+          "oklch(35% 0.15 255)",
+          "oklch(45% 0.18 255)",
+          "oklch(55% 0.19 255)",
+          "oklch(65% 0.16 255)",
+          "oklch(80% 0.10 255)",
+          "oklch(95% 0.03 255)"
+        ]
+      },
+      "primary-deep": {
+        "role": "primary",
+        "displayName": "深泰缇斯蓝",
+        "tonalRamp": [
+          "oklch(15% 0.06 255)",
+          "oklch(25% 0.11 255)",
+          "oklch(35% 0.15 255)",
+          "oklch(45% 0.18 255)",
+          "oklch(55% 0.17 255)",
+          "oklch(65% 0.14 255)",
+          "oklch(80% 0.08 255)",
+          "oklch(95% 0.02 255)"
+        ]
+      },
+      "prediction": {
+        "role": "secondary",
+        "displayName": "预测绿",
+        "tonalRamp": [
+          "oklch(15% 0.035 160)",
+          "oklch(25% 0.070 160)",
+          "oklch(35% 0.105 160)",
+          "oklch(45% 0.130 160)",
+          "oklch(55% 0.140 160)",
+          "oklch(65% 0.115 160)",
+          "oklch(80% 0.065 160)",
+          "oklch(95% 0.018 160)"
+        ]
+      },
+      "ink-strong": {
+        "role": "neutral",
+        "displayName": "深墨文字",
+        "tonalRamp": [
+          "oklch(15% 0.018 225)",
+          "oklch(25% 0.018 225)",
+          "oklch(35% 0.016 225)",
+          "oklch(45% 0.014 225)",
+          "oklch(55% 0.012 225)",
+          "oklch(65% 0.010 225)",
+          "oklch(80% 0.007 225)",
+          "oklch(95% 0.003 225)"
+        ]
+      },
+      "ink-main": {
+        "role": "neutral",
+        "displayName": "正文墨色",
+        "tonalRamp": [
+          "oklch(15% 0.014 230)",
+          "oklch(25% 0.014 230)",
+          "oklch(35% 0.013 230)",
+          "oklch(45% 0.012 230)",
+          "oklch(55% 0.010 230)",
+          "oklch(65% 0.009 230)",
+          "oklch(80% 0.006 230)",
+          "oklch(95% 0.003 230)"
+        ]
+      },
+      "text-muted": {
+        "role": "neutral",
+        "displayName": "钢灰说明",
+        "tonalRamp": [
+          "oklch(15% 0.018 235)",
+          "oklch(25% 0.022 235)",
+          "oklch(35% 0.024 235)",
+          "oklch(45% 0.024 235)",
+          "oklch(55% 0.022 235)",
+          "oklch(65% 0.018 235)",
+          "oklch(80% 0.010 235)",
+          "oklch(95% 0.004 235)"
+        ]
+      },
+      "text-subtle": {
+        "role": "neutral",
+        "displayName": "雾灰提示",
+        "tonalRamp": [
+          "oklch(15% 0.016 235)",
+          "oklch(25% 0.020 235)",
+          "oklch(35% 0.022 235)",
+          "oklch(45% 0.022 235)",
+          "oklch(55% 0.020 235)",
+          "oklch(65% 0.016 235)",
+          "oklch(80% 0.009 235)",
+          "oklch(95% 0.003 235)"
+        ]
+      },
+      "canvas": {
+        "role": "neutral",
+        "displayName": "冷白画布",
+        "tonalRamp": [
+          "oklch(15% 0.004 240)",
+          "oklch(25% 0.005 240)",
+          "oklch(35% 0.006 240)",
+          "oklch(45% 0.007 240)",
+          "oklch(55% 0.008 240)",
+          "oklch(65% 0.008 240)",
+          "oklch(80% 0.006 240)",
+          "oklch(95% 0.003 240)"
+        ]
+      },
+      "surface-root": {
+        "role": "neutral",
+        "displayName": "冰雾底色",
+        "tonalRamp": [
+          "oklch(15% 0.006 245)",
+          "oklch(25% 0.008 245)",
+          "oklch(35% 0.010 245)",
+          "oklch(45% 0.011 245)",
+          "oklch(55% 0.012 245)",
+          "oklch(65% 0.011 245)",
+          "oklch(80% 0.008 245)",
+          "oklch(95% 0.004 245)"
+        ]
+      },
+      "surface-soft": {
+        "role": "neutral",
+        "displayName": "柔灰表面",
+        "tonalRamp": [
+          "oklch(15% 0.007 240)",
+          "oklch(25% 0.009 240)",
+          "oklch(35% 0.011 240)",
+          "oklch(45% 0.012 240)",
+          "oklch(55% 0.013 240)",
+          "oklch(65% 0.012 240)",
+          "oklch(80% 0.009 240)",
+          "oklch(95% 0.004 240)"
+        ]
+      },
+      "surface-prediction": {
+        "role": "neutral",
+        "displayName": "预测雾面",
+        "tonalRamp": [
+          "oklch(15% 0.006 235)",
+          "oklch(25% 0.008 235)",
+          "oklch(35% 0.010 235)",
+          "oklch(45% 0.011 235)",
+          "oklch(55% 0.012 235)",
+          "oklch(65% 0.011 235)",
+          "oklch(80% 0.008 235)",
+          "oklch(95% 0.004 235)"
+        ]
+      },
+      "border-soft": {
+        "role": "neutral",
+        "displayName": "柔边界",
+        "tonalRamp": [
+          "oklch(15% 0.008 235)",
+          "oklch(25% 0.010 235)",
+          "oklch(35% 0.012 235)",
+          "oklch(45% 0.014 235)",
+          "oklch(55% 0.015 235)",
+          "oklch(65% 0.014 235)",
+          "oklch(80% 0.010 235)",
+          "oklch(95% 0.004 235)"
+        ]
+      },
+      "border-strong": {
+        "role": "neutral",
+        "displayName": "强边界",
+        "tonalRamp": [
+          "oklch(15% 0.009 235)",
+          "oklch(25% 0.012 235)",
+          "oklch(35% 0.014 235)",
+          "oklch(45% 0.016 235)",
+          "oklch(55% 0.017 235)",
+          "oklch(65% 0.016 235)",
+          "oklch(80% 0.011 235)",
+          "oklch(95% 0.004 235)"
+        ]
+      },
+      "success": {
+        "role": "secondary",
+        "displayName": "成功绿",
+        "tonalRamp": [
+          "oklch(15% 0.035 150)",
+          "oklch(25% 0.070 150)",
+          "oklch(35% 0.105 150)",
+          "oklch(45% 0.135 150)",
+          "oklch(55% 0.145 150)",
+          "oklch(65% 0.120 150)",
+          "oklch(80% 0.070 150)",
+          "oklch(95% 0.020 150)"
+        ]
+      },
+      "warning": {
+        "role": "secondary",
+        "displayName": "确认琥珀",
+        "tonalRamp": [
+          "oklch(15% 0.035 85)",
+          "oklch(25% 0.075 85)",
+          "oklch(35% 0.115 85)",
+          "oklch(45% 0.150 85)",
+          "oklch(55% 0.170 85)",
+          "oklch(65% 0.145 85)",
+          "oklch(80% 0.085 85)",
+          "oklch(95% 0.025 85)"
+        ]
+      },
+      "critical": {
+        "role": "secondary",
+        "displayName": "错误红",
+        "tonalRamp": [
+          "oklch(15% 0.045 20)",
+          "oklch(25% 0.090 20)",
+          "oklch(35% 0.135 20)",
+          "oklch(45% 0.175 20)",
+          "oklch(55% 0.190 20)",
+          "oklch(65% 0.155 20)",
+          "oklch(80% 0.090 20)",
+          "oklch(95% 0.025 20)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Page Title",
+        "purpose": "工作台、统计和评估页面标题；固定字号，不做营销海报式放大。"
+      },
+      "headline": {
+        "displayName": "Section Title",
+        "purpose": "大区块标题，建立清晰但克制的内容层级。"
+      },
+      "title": {
+        "displayName": "Card Title",
+        "purpose": "卡片、图表和紧凑面板标题。"
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "说明、表单和一般内容。"
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "按钮、字段、badge 和短状态。"
+      },
+      "data": {
+        "displayName": "Data",
+        "purpose": "概率、UID、样本量、排名和分数，强制稳定数字宽度。"
+      }
+    },
+    "shadows": [
+      {
+        "name": "sticky-ambient",
+        "value": "0 10px 32px rgba(39, 55, 71, 0.06)",
+        "purpose": "粘性顶部导航与滚动内容之间的低对比环境阴影。"
+      },
+      {
+        "name": "floating-panel",
+        "value": "0 18px 42px rgba(0, 0, 0, 0.24)",
+        "purpose": "菜单、浮层与真正脱离文档流的面板。"
+      },
+      {
+        "name": "focus-halo",
+        "value": "0 0 0 2px rgba(24, 118, 242, 0.10)",
+        "purpose": "输入与控件聚焦时的辅助轮廓。"
+      }
+    ],
+    "motion": [
+      {
+        "name": "state-fast",
+        "value": "100ms cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "hover、active 和颜色状态变化。"
+      },
+      {
+        "name": "panel-reveal",
+        "value": "160ms cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "菜单、浮层与紧凑面板显隐。"
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "compact",
+        "value": "520px"
+      },
+      {
+        "name": "stacked",
+        "value": "860px"
+      },
+      {
+        "name": "navigation-wrap",
+        "value": "980px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "局部区域唯一的最高权重动作，使用泰缇斯蓝实底。",
+      "html": "<button class=\"ds-btn-primary\" type=\"button\">下一个</button>",
+      "css": ".ds-btn-primary { min-width: 144px; min-height: 46px; border: 1px solid var(--primary, #0064e0); border-radius: 12px; padding: 7px 12px; color: var(--canvas, #ffffff); background: var(--primary, #0064e0); font: 700 14px/1.25 \"Wuwa CJK\", \"Microsoft YaHei UI\", system-ui, sans-serif; transition: background-color 100ms cubic-bezier(0.22, 1, 0.36, 1), border-color 100ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-btn-primary:hover { border-color: var(--primary-deep, #0457cb); background: var(--primary-deep, #0457cb); } .ds-btn-primary:focus-visible { outline: 3px solid rgba(0, 100, 224, 0.26); outline-offset: 3px; } .ds-btn-primary:active { background: var(--primary-deep, #0457cb); } .ds-btn-primary:disabled { cursor: not-allowed; opacity: 0.48; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "辅助动作，保持冷白表面与清晰边界。",
+      "html": "<button class=\"ds-btn-secondary\" type=\"button\">撤销</button>",
+      "css": ".ds-btn-secondary { min-width: 104px; min-height: 40px; border: 1px solid rgba(93, 108, 123, 0.28); border-radius: 12px; padding: 7px 12px; color: #253648; background: var(--canvas, #ffffff); font: 700 14px/1.25 \"Wuwa CJK\", \"Microsoft YaHei UI\", system-ui, sans-serif; transition: background-color 100ms cubic-bezier(0.22, 1, 0.36, 1), border-color 100ms cubic-bezier(0.22, 1, 0.36, 1), color 100ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-btn-secondary:hover { border-color: rgba(0, 100, 224, 0.30); color: var(--primary-deep, #0457cb); background: #f4f8ff; } .ds-btn-secondary:focus-visible { outline: 3px solid rgba(0, 100, 224, 0.26); outline-offset: 3px; } .ds-btn-secondary:active { background: #eef5ff; } .ds-btn-secondary:disabled { cursor: not-allowed; opacity: 0.48; }"
+    },
+    {
+      "name": "Destructive Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "弃置与删除等破坏性动作，保持语义清楚但不与主操作争夺面积。",
+      "html": "<button class=\"ds-btn-danger\" type=\"button\">弃置</button>",
+      "css": ".ds-btn-danger { min-width: 104px; min-height: 40px; border: 1px solid rgba(228, 30, 63, 0.24); border-radius: 12px; padding: 7px 12px; color: var(--critical, #e41e3f); background: var(--canvas, #ffffff); font: 700 14px/1.25 \"Wuwa CJK\", \"Microsoft YaHei UI\", system-ui, sans-serif; transition: background-color 100ms cubic-bezier(0.22, 1, 0.36, 1), border-color 100ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-btn-danger:hover { border-color: rgba(228, 30, 63, 0.36); background: #fff0f4; } .ds-btn-danger:focus-visible { outline: 3px solid rgba(228, 30, 63, 0.22); outline-offset: 3px; } .ds-btn-danger:active { background: #ffe7ed; } .ds-btn-danger:disabled { cursor: not-allowed; opacity: 0.48; }"
+    },
+    {
+      "name": "Top Navigation",
+      "kind": "nav",
+      "refersTo": "nav-tab-active",
+      "description": "工作台、统计和评估的稳定顶部导航，当前模块使用高对比深墨胶囊。",
+      "html": "<nav class=\"ds-nav\" aria-label=\"页面\"><button class=\"ds-nav-tab ds-nav-tab-active\">工作台</button><button class=\"ds-nav-tab\">统计</button><button class=\"ds-nav-tab\">评估</button></nav>",
+      "css": ".ds-nav { display: flex; align-items: center; gap: 8px; padding: 4px; } .ds-nav-tab { min-height: 44px; border: 1px solid transparent; border-radius: 999px; padding: 7px 18px; color: var(--ink-main, #1c1e21); background: transparent; font: 700 14px/1.25 \"Wuwa CJK\", \"Microsoft YaHei UI\", system-ui, sans-serif; transition: background-color 100ms cubic-bezier(0.22, 1, 0.36, 1), border-color 100ms cubic-bezier(0.22, 1, 0.36, 1), color 100ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-nav-tab:hover { background: var(--surface-soft, #f1f4f7); } .ds-nav-tab:focus-visible { outline: 3px solid rgba(0, 100, 224, 0.26); outline-offset: 2px; } .ds-nav-tab-active { border-color: var(--ink-strong, #0a1317); color: var(--canvas, #ffffff); background: var(--ink-strong, #0a1317); } .ds-nav-tab-active:hover { background: #162127; }"
+    },
+    {
+      "name": "Input Field",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "44px 高的紧凑字段，focus 同时强化边框与可见轮廓。",
+      "html": "<label class=\"ds-field\"><span>游戏 UID</span><input class=\"ds-input\" value=\"100000001\" aria-label=\"游戏 UID\"></label>",
+      "css": ".ds-field { display: grid; gap: 8px; color: var(--ink-main, #1c1e21); font: 700 14px/1.25 \"Wuwa CJK\", \"Microsoft YaHei UI\", system-ui, sans-serif; } .ds-input { width: 280px; height: 44px; border: 1px solid var(--border-strong, #ced0d4); border-radius: 8px; padding: 12px; color: var(--ink-main, #1c1e21); background: var(--canvas, #ffffff); font: 400 15px/1.45 \"Wuwa CJK\", \"Microsoft YaHei UI\", system-ui, sans-serif; font-variant-numeric: tabular-nums; transition: border-color 100ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 100ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-input:hover { border-color: #9cacba; } .ds-input:focus { border-color: #1876f2; outline: none; box-shadow: 0 0 0 2px rgba(24, 118, 242, 0.10); } .ds-input:disabled { color: var(--text-subtle, #8595a4); background: var(--surface-soft, #f1f4f7); }"
+    },
+    {
+      "name": "UID Context Chip",
+      "kind": "chip",
+      "refersTo": "uid-chip",
+      "description": "持续可见的账号与游戏 UID 上下文，绿色状态点只表达真实可用状态。",
+      "html": "<button class=\"ds-uid-chip\" type=\"button\" aria-label=\"UID 100000001\"><span class=\"ds-uid-dot\" aria-hidden=\"true\"></span><span class=\"ds-uid-label\">UID</span><strong class=\"ds-uid-value\">100000001</strong><span class=\"ds-uid-chevron\" aria-hidden=\"true\">⌄</span></button>",
+      "css": ".ds-uid-chip { display: inline-flex; align-items: center; gap: 7px; min-height: 40px; border: 1px solid rgba(191, 207, 221, 0.82); border-radius: 999px; padding: 8px 14px; color: #405668; background: rgba(255, 255, 255, 0.92); font: 700 14px/1.25 \"Wuwa CJK\", \"Microsoft YaHei UI\", system-ui, sans-serif; transition: background-color 100ms cubic-bezier(0.22, 1, 0.36, 1), border-color 100ms cubic-bezier(0.22, 1, 0.36, 1), color 100ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-uid-chip:hover { border-color: rgba(23, 105, 210, 0.34); color: #1769d2; background: #f6f9fd; } .ds-uid-chip:focus-visible { outline: 3px solid rgba(0, 100, 224, 0.26); outline-offset: 3px; } .ds-uid-chip:active { background: #eef5fc; } .ds-uid-dot { width: 8px; height: 8px; border-radius: 999px; background: #2c9f70; box-shadow: 0 0 0 3px rgba(44, 159, 112, 0.12); } .ds-uid-label { color: #6f8293; font-size: 12px; } .ds-uid-value { color: #2f4659; font-size: 15px; font-variant-numeric: tabular-nums; } .ds-uid-chevron { color: #6f8293; font-size: 14px; }"
+    },
+    {
+      "name": "Product Panel",
+      "kind": "card",
+      "refersTo": "product-panel",
+      "description": "承担明确任务的大面板，依靠冷白表面和柔边界建立结构。",
+      "html": "<section class=\"ds-panel\"><span class=\"ds-panel-eyebrow\">ECHO SETUP</span><h2>初始化声骸</h2><p>选择套装、COST、主词条后开始录入。</p></section>",
+      "css": ".ds-panel { width: min(420px, 100%); border: 1px solid var(--border-soft, #dee3e9); border-radius: 24px; padding: 28px; color: var(--ink-strong, #0a1317); background: var(--canvas, #ffffff); font-family: \"Wuwa CJK\", \"Microsoft YaHei UI\", system-ui, sans-serif; } .ds-panel:hover { border-color: var(--border-strong, #ced0d4); } .ds-panel:focus-within { border-color: rgba(0, 100, 224, 0.42); } .ds-panel-eyebrow { color: var(--text-muted, #5d6c7b); font-size: 12px; font-weight: 700; } .ds-panel h2 { margin: 8px 0; font-size: 21px; line-height: 1.2; } .ds-panel p { margin: 0; color: var(--text-muted, #5d6c7b); font-size: 15px; line-height: 1.45; }"
+    },
+    {
+      "name": "Prediction Summary",
+      "kind": "custom",
+      "refersTo": "prediction-rail",
+      "description": "紧凑展示最高显示概率的并列预测与其他可能，保持模型不确定性与数字可比性。",
+      "html": "<section class=\"ds-prediction-rail\" aria-label=\"下一个副词条预测\"><span class=\"ds-prediction-heading\">预测</span><div class=\"ds-prediction-line ds-prediction-primary\"><em>防御百分比</em><strong>9.3%</strong></div><div class=\"ds-prediction-line ds-prediction-primary\"><em>共鸣效率</em><strong>9.3%</strong></div><span class=\"ds-prediction-heading ds-prediction-muted\">其他可能</span><div class=\"ds-prediction-line\"><em>防御固定值</em><strong>9.2%</strong></div></section>",
+      "css": ".ds-prediction-rail { display: grid; align-content: center; width: 240px; min-height: 176px; gap: 5px; border-left: 1px solid rgba(216, 226, 234, 0.72); padding: 16px; color: var(--ink-strong, #0a1317); background: var(--surface-prediction, #f7f9fb); font-family: \"Wuwa CJK\", \"Microsoft YaHei UI\", system-ui, sans-serif; } .ds-prediction-heading { color: var(--prediction, #2c9f70); font-size: 11px; font-weight: 700; line-height: 1; } .ds-prediction-muted { margin-top: 2px; color: #8b9aa7; } .ds-prediction-line { display: grid; grid-template-columns: minmax(max-content, 1fr) max-content; align-items: center; gap: 6px; min-height: 26px; border: 1px solid transparent; border-radius: 10px; padding: 5px 6px; color: #526675; font-size: 12px; line-height: 1.15; transition: background-color 100ms cubic-bezier(0.22, 1, 0.36, 1), border-color 100ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-prediction-line:hover { border-color: var(--border-soft, #dee3e9); background: var(--canvas, #ffffff); } .ds-prediction-line:focus-within { border-color: rgba(0, 100, 224, 0.42); } .ds-prediction-primary { border-color: rgba(44, 159, 112, 0.12); color: #166b4a; background: rgba(44, 159, 112, 0.10); } .ds-prediction-line em { font-style: normal; font-weight: 700; } .ds-prediction-line strong { justify-self: end; font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "泰缇斯研究台",
+    "overview": "Wuwa 是玩家在普通室内光线下长时间录入、核对和分析声骸数据的桌面工作台。浅色表面、稳定对齐和有限强调色让界面在高密度下保持冷静，游戏语境通过术语、数据模型和流程出现，不依赖装饰性视觉效果。\n\n系统气质必须清晰、克制、专业、低噪音。Web 是深度工作台，优先保证账号与 UID 上下文、数据可信和高频录入效率；首页可以保留轻量终端感，但登录后的界面必须回到熟悉、稳定的生产力工具语言。\n\n界面明确拒绝营销落地页、视觉特效展示、通用企业后台、调试控制台和另一套账号或 UID 心智。外部参考只提供视觉词汇，绝不替代 Wuwa 自己的业务结构。",
+    "keyCharacteristics": [
+      "浅色优先，蓝色只承担关键动作、当前选择和重要状态。",
+      "冷灰边框与近白表面建立结构，阴影只服务真实层级。",
+      "圆角现代但不软萌，数据区紧凑但不拥挤。",
+      "数字稳定对齐，概率、UID、样本量和分数易于纵向比较。",
+      "顶部导航保持清楚，历史记录和识别复核不得压迫主任务。"
+    ],
+    "rules": [
+      {
+        "name": "The Task Surface Rule",
+        "body": "每一个面板必须对应真实任务；没有业务意义的 chrome、卡片和状态条一律删除。",
+        "section": "overview"
+      },
+      {
+        "name": "The One Voice Rule",
+        "body": "蓝色只出现在关键动作、当前选择和状态指示中；同一屏幕不得让多个区域同时争夺主强调色。",
+        "section": "colors"
+      },
+      {
+        "name": "The Semantic Color Rule",
+        "body": "绿色、琥珀色和红色必须对应真实状态，绝不用于装饰；状态还必须配合文字、图标或形状表达。",
+        "section": "colors"
+      },
+      {
+        "name": "The Light-First Rule",
+        "body": "浅色模式是基准。暗色模式只能做等价语义映射，不能成为霓虹化或开发者控制台风格的另一套产品。",
+        "section": "colors"
+      },
+      {
+        "name": "The Stable Number Rule",
+        "body": "所有可比较数字必须启用等宽数字，数值和单位分层，但单位不得淡到影响识别。",
+        "section": "typography"
+      },
+      {
+        "name": "The One Family Rule",
+        "body": "登录后的产品界面只使用 Wuwa CJK 字体入口；禁止为单页情绪或单个指标引入新的字体家族。",
+        "section": "typography"
+      },
+      {
+        "name": "The No Poster Type Rule",
+        "body": "工作台不是营销海报。常规 UI 文本不得使用 800/900 形成黑块，只有核心统计数字可以短暂提高字重。",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat-by-Default Rule",
+        "body": "静态面板必须保持平坦；如果移除阴影后层级仍然清楚，就不允许添加阴影。",
+        "section": "elevation"
+      },
+      {
+        "name": "The Structural Shadow Rule",
+        "body": "阴影只能说明悬浮、粘性或聚焦关系，禁止用重阴影、发光边缘和多层阴影制造“高级感”。",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do 先展示当前系统账号、当前游戏 UID 和数据状态，再展示数据操作。",
+      "Do 使用泰缇斯蓝表达主操作、当前选择和焦点，并控制同屏强调数量。",
+      "Do 使用 1px 冷灰边框、近白表面和少量真实阴影建立层级。",
+      "Do 为概率、UID、声骸编号、样本数、排名和分数启用 tabular-nums。",
+      "Do 保持顶部导航、圆角工作台和短路径录入流程，桌面端优先保证信息密度与稳定布局。",
+      "Do 让错误、不可用和低置信度状态说明用户下一步能做什么。",
+      "Do 保留可见键盘焦点，并在可行处提供至少 44px 的点击目标。",
+      "Do 让历史记录与本地识别复核默认安静，只在待处理、冲突或低置信度时提高权重。"
+    ],
+    "donts": [
+      "Don't 让界面感觉像营销落地页、视觉特效展示、通用企业后台、调试控制台，或拥有另一套账号与 UID 心智的独立产品。",
+      "Don't 使用假数据预览、重玻璃效果、装饰性卡片堆叠、超大 hero，或暴露后端地址等开发者概念。",
+      "Don't 恢复左侧 Activity Bar、底部 Status Bar、文件标签式导航、完整 IDE Shell 或暗色编辑器优先的视觉体系。",
+      "Don't 使用大面积紫色、蓝紫色 AI 渐变、渐变文字、发光边缘或赛博朋克霓虹字体。",
+      "Don't 使用超过 1px 的彩色左侧或右侧条纹装饰卡片、列表项、提示和状态；改用完整边框、背景色、图标或文字。",
+      "Don't 使用卡片套卡片、相同卡片网格或没有业务意义的面板来制造视觉节奏。",
+      "Don't 把 modal 当作默认解决方案；先使用内联、渐进展开、侧栏或就地反馈。",
+      "Don't 让 hover 上浮、缩放、弹跳，或动画改变布局；常规反馈保持在 80–160ms 并尊重 prefers-reduced-motion。",
+      "Don't 只靠颜色表达成功、警告、错误、选中或禁用状态。",
+      "Don't 为单个页面临时引入字体栈、配色体系、组件语法、UI 框架或全局状态管理方案。"
+    ]
+  }
+}

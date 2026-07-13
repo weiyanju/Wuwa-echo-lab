@@ -110,13 +110,22 @@
   color: #ff9aa5;
 }
 
-.brand-mark,
+.brand-mark {
+  color: var(--steel);
+  font-family: var(--font-latin);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-label);
+  line-height: var(--leading-label);
+  letter-spacing: var(--tracking-abbr);
+  text-transform: uppercase;
+}
+
 .eyebrow {
   color: var(--steel);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0;
-  text-transform: uppercase;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-label);
+  line-height: var(--leading-label);
+  letter-spacing: var(--tracking-cjk);
 }
 
 h1,
@@ -126,35 +135,43 @@ p {
   margin-top: 0;
 }
 
+.display-title,
 h1 {
   max-width: 920px;
   margin-bottom: 0;
-  font-size: clamp(44px, 5vw, 64px);
-  font-weight: 600;
-  line-height: 1.08;
-  letter-spacing: 0;
-  font-feature-settings: "ss01", "ss02";
+  font-family: var(--font-title);
+  font-size: var(--text-page-title);
+  font-weight: var(--weight-title);
+  line-height: var(--leading-title);
+  letter-spacing: var(--tracking-cjk);
   word-break: keep-all;
 }
 
+.section-heading h2,
 h2 {
   margin-bottom: 8px;
-  font-size: 24px;
-  font-weight: 500;
-  line-height: 1.25;
-  letter-spacing: 0;
-  font-feature-settings: "ss01", "ss02";
+  font-family: var(--font-title);
+  font-size: var(--text-section-title);
+  font-weight: var(--weight-title);
+  line-height: var(--leading-title);
+  letter-spacing: var(--tracking-cjk);
 }
 
 h3 {
   margin: 32px 0 12px;
-  font-size: 18px;
-  line-height: 1.44;
+  font-family: var(--font-title);
+  font-size: var(--text-card-title);
+  font-weight: var(--weight-title);
+  line-height: var(--leading-title);
+  letter-spacing: var(--tracking-cjk);
 }
 
 p {
   color: var(--slate, #4b4c4f);
-  line-height: 1.5;
+  font-size: var(--text-body);
+  font-weight: var(--weight-body);
+  line-height: var(--leading-body);
+  letter-spacing: var(--tracking-cjk);
 }
 
 .button-primary,
@@ -165,9 +182,10 @@ p {
 .button-next {
   min-height: 44px;
   border-radius: 100px;
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0;
+  font-size: var(--text-control);
+  font-weight: var(--weight-control);
+  line-height: var(--leading-control);
+  letter-spacing: var(--tracking-cjk);
   transition: background-color 180ms ease-out, border-color 180ms ease-out, color 180ms ease-out, transform 180ms ease-out;
 }
 
@@ -282,8 +300,10 @@ label {
   display: grid;
   gap: 8px;
   color: var(--ink);
-  font-size: 14px;
-  font-weight: 700;
+  font-size: var(--text-label);
+  font-weight: var(--weight-label);
+  line-height: var(--leading-label);
+  letter-spacing: var(--tracking-cjk);
 }
 
 input {
@@ -294,6 +314,11 @@ input {
   padding: 12px;
   color: var(--ink);
   background: var(--canvas);
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  font-weight: var(--weight-body);
+  line-height: var(--leading-body);
+  letter-spacing: var(--tracking-cjk);
 }
 
 input:focus {
@@ -312,8 +337,10 @@ fieldset {
 legend {
   margin-bottom: 8px;
   color: var(--ink);
-  font-size: 14px;
-  font-weight: 700;
+  font-size: var(--text-label);
+  font-weight: var(--weight-label);
+  line-height: var(--leading-label);
+  letter-spacing: var(--tracking-cjk);
 }
 
 .checkbox-row {
@@ -327,15 +354,25 @@ legend {
   height: 18px;
 }
 
-.section-heading p,
+.section-heading p {
+  color: var(--steel);
+  font-size: var(--text-body);
+  font-weight: var(--weight-body);
+  line-height: var(--leading-body);
+}
+
 .empty-text {
   color: var(--steel);
-  font-size: 14px;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-body);
+  line-height: var(--leading-caption);
 }
 
 .error-text {
   color: var(--critical);
-  font-weight: 700;
+  font-size: var(--text-body);
+  font-weight: var(--weight-supporting);
+  line-height: var(--leading-body);
 }
 
 .section-heading {
@@ -346,13 +383,6 @@ legend {
   width: 100%;
 }
 
-@media (max-width: 860px) {
-
-  h1 {
-    font-size: 40px;
-  }
-}
-
 @media (max-width: 520px) {
 
   .product-panel {
@@ -360,8 +390,8 @@ legend {
     padding: 20px;
   }
 
+  .display-title,
   h1 {
-    font-size: 32px;
     max-width: 100%;
     word-break: normal;
     overflow-wrap: anywhere;

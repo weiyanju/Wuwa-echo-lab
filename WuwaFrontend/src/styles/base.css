@@ -16,7 +16,7 @@ body {
   font-family: var(--font-data);
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
-  letter-spacing: 0;
+  letter-spacing: var(--tracking-data);
 }
 
 button,

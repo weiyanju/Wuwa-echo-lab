@@ -950,8 +950,73 @@ test('echo workspace coerces unsupported costs when switching sonata', async () 
     assert.equal(updatedPayload.cost, 4)
     assert.ok(mainStatsByCost[4].includes(updatedPayload.main_stat))
     assert.equal(workspace.echoForm.value.cost, 4)
+    assert.equal(workspace.activeEcho.value.id, 41)
   } finally {
     workspace?.dispose()
+    globalThis.document = originalDocument
+    globalThis.fetch = originalFetch
+  }
+})
+
+test('config selection immediately creates and announces a new echo after recording has started', async () => {
+  const originalDocument = globalThis.document
+  const originalFetch = globalThis.fetch
+  const firstSet = sonataEffects[0]
+  const nextSet = sonataEffects.find((effect) => effect.name !== firstSet.name)
+  const records = [{
+    id: 41,
+    status: 'in_progress',
+    substats: [{ id: 401, position: 1, substat_type: 'crit_rate', tier_value: 6.3 }],
+    set_name: firstSet.name,
+    cost: firstSet.availableCosts[0],
+    main_stat: mainStatsByCost[firstSet.availableCosts[0]][0],
+    is_continuous_tuning: true,
+  }]
+  let createRequests = 0
+  globalThis.document = { cookie: 'csrftoken=test' }
+  globalThis.fetch = async (url, options = {}) => {
+    const path = String(url)
+    if (path.includes('/echoes/?game_account_id=1')) return jsonResponse({ results: records })
+    if (path.endsWith('/echoes/') && options.method === 'POST') {
+      createRequests += 1
+      const payload = JSON.parse(options.body)
+      const echo = {
+        id: 41 + createRequests,
+        status: 'draft',
+        substats: [],
+        set_name: payload.set_name,
+        cost: payload.cost,
+        main_stat: payload.main_stat,
+        is_continuous_tuning: true,
+      }
+      records.unshift(echo)
+      return jsonResponse(echo)
+    }
+    if (path.includes('/prediction/')) return jsonResponse({ candidates: [] })
+    if (path.includes('/stats/') || path.includes('/model-evaluation/')) return jsonResponse({})
+    throw new Error(`Unexpected request: ${path}`)
+  }
+
+  const workspace = useEchoWorkspace({
+    selectedGameAccountId: ref(1),
+    boundPlayerUid: ref('123456789'),
+    workspaceLocked: ref(false),
+    onError: () => {},
+  })
+  try {
+    await workspace.refresh()
+    await workspace.applyEchoConfig({ sonata: nextSet.name })
+
+    assert.equal(createRequests, 1)
+    assert.equal(workspace.activeEcho.value.id, 42)
+    assert.equal(workspace.activeEcho.value.substats.length, 0)
+    assert.equal(workspace.echoes.value.find((echo) => echo.id === 41).substats.length, 1)
+    assert.match(workspace.configCreationNotice.value, new RegExp(`^已新建：${nextSet.name} · COST `))
+
+    await workspace.applyEchoConfig({ sonata: workspace.echoForm.value.sonata })
+    assert.equal(createRequests, 1)
+  } finally {
+    workspace.dispose()
     globalThis.document = originalDocument
     globalThis.fetch = originalFetch
   }

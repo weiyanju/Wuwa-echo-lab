@@ -119,8 +119,11 @@
 
 .uid-binding-copy h1 {
   margin: 0;
-  font-size: clamp(24px, 3vw, 30px);
-  letter-spacing: -0.04em;
+  font-family: var(--font-title);
+  font-size: var(--text-page-title);
+  font-weight: var(--weight-title);
+  line-height: var(--leading-title);
+  letter-spacing: var(--tracking-cjk);
 }
 
 .uid-binding-copy p,
@@ -129,8 +132,23 @@
   color: var(--muted);
 }
 
+.uid-binding-copy p {
+  font-size: var(--text-body);
+  font-weight: var(--weight-body);
+  line-height: var(--leading-body);
+}
+
+.uid-binding-field input {
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  letter-spacing: var(--tracking-data);
+}
+
 .uid-binding-hint {
-  font-size: 13px;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-supporting);
+  line-height: var(--leading-caption);
   text-align: center;
 }
 

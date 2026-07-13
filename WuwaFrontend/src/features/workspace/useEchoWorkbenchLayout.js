@@ -1,4 +1,4 @@
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 
 function waitForFrame() {
   return new Promise((resolve) => {
@@ -17,6 +17,16 @@ function clampScrollTop(grid, scrollTop) {
     ? Math.max(0, grid.scrollHeight - grid.clientHeight)
     : Number.POSITIVE_INFINITY
   return Math.min(maxScrollTop, Math.max(0, scrollTop))
+}
+
+function normalizedSonataSearch(value) {
+  return String(value || '').replace(/\s+/g, '').toLocaleLowerCase('zh-CN')
+}
+
+export function filterSonataEffects(effects, query) {
+  const normalizedQuery = normalizedSonataSearch(query)
+  if (!normalizedQuery) return effects
+  return effects.filter((effect) => normalizedSonataSearch(effect.name).includes(normalizedQuery))
 }
 
 export function sonataScrollTopForActiveButton(grid, activeButton) {
@@ -41,26 +51,12 @@ export function sonataScrollTopForActiveButton(grid, activeButton) {
   return grid.scrollTop
 }
 
-export function useEchoWorkbenchLayout(props, legalMainStats) {
-  const createPanelRef = ref(null)
-  const galleryPanelRef = ref(null)
+export function useEchoWorkbenchLayout(props, legalMainStats, visibleSonataNames) {
   const mainStatRowRef = ref(null)
   const sonataGridRef = ref(null)
-  const setupPanelHeight = ref(null)
   const mainStatRowHeight = ref(null)
-  const setupPanelStyle = computed(() => (setupPanelHeight.value ? { height: `${setupPanelHeight.value}px` } : {}))
   const mainStatRowStyle = computed(() => (mainStatRowHeight.value === null ? {} : { height: `${mainStatRowHeight.value}px` }))
   let mainStatRowAnimationId = 0
-
-  async function syncSetupPanelHeight() {
-    await nextTick()
-    await waitForFrame()
-    if (!createPanelRef.value || !galleryPanelRef.value || window.matchMedia('(max-width: 860px)').matches) {
-      setupPanelHeight.value = null
-      return
-    }
-    setupPanelHeight.value = Math.ceil(galleryPanelRef.value.getBoundingClientRect().height)
-  }
 
   async function focusActiveSonata() {
     await nextTick()
@@ -70,11 +66,6 @@ export function useEchoWorkbenchLayout(props, legalMainStats) {
     if (!grid || !activeButton) return
 
     grid.scrollTop = sonataScrollTopForActiveButton(grid, activeButton)
-  }
-
-  async function syncSetupPanelLayout() {
-    await syncSetupPanelHeight()
-    await focusActiveSonata()
   }
 
   function clearMainStatRowHeight(event) {
@@ -113,18 +104,17 @@ export function useEchoWorkbenchLayout(props, legalMainStats) {
     }
   }
 
-  onMounted(() => {
-    syncSetupPanelLayout()
-    window.addEventListener('resize', syncSetupPanelLayout)
-  })
-
-  onBeforeUnmount(() => {
-    window.removeEventListener('resize', syncSetupPanelLayout)
-  })
+  onMounted(focusActiveSonata)
 
   watch(
     () => `${props.activeEcho?.id || ''}:${props.config.cost}:${props.config.main_stat}:${props.config.sonata}`,
-    syncSetupPanelLayout,
+    focusActiveSonata,
+    { flush: 'post' },
+  )
+
+  watch(
+    () => visibleSonataNames.value.join('|'),
+    focusActiveSonata,
     { flush: 'post' },
   )
 
@@ -135,11 +125,8 @@ export function useEchoWorkbenchLayout(props, legalMainStats) {
   )
 
   return {
-    createPanelRef,
-    galleryPanelRef,
     mainStatRowRef,
     sonataGridRef,
-    setupPanelStyle,
     mainStatRowStyle,
     clearMainStatRowHeight,
   }

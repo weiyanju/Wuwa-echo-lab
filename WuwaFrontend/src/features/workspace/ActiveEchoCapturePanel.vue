@@ -47,14 +47,32 @@ const activeRecordPills = computed(() => [
   mainStatLabels[props.activeEcho?.main_stat || props.config.main_stat] || props.activeEcho?.main_stat || props.config.main_stat,
 ].filter(Boolean))
 const rollSlots = computed(() => Array.from({ length: 5 }, (_, index) => (
-  activeEchoSubstats.value[index] || { id: `pending-${index + 1}`, position: index + 1, pending: true }
+  activeEchoSubstats.value[index] || {
+    id: `pending-${index + 1}`,
+    position: index + 1,
+    pending: true,
+    current: index === activeEchoSubstats.value.length,
+  }
 )))
 const activePredictionRankings = computed(() => props.predictionRankings
   .slice(0, 3)
   .filter((prediction) => prediction?.label && Number.isFinite(prediction.probability))
   .map((prediction, index) => ({ ...prediction, rank: prediction.rank || index + 1 })))
-const activePredictionRecommendation = computed(() => activePredictionRankings.value[0] || null)
-const activePredictionAlternatives = computed(() => activePredictionRankings.value.slice(1))
+
+function predictionDisplayBucket(probability) {
+  return Math.round(probability * 1000)
+}
+
+const activePredictionTopBucket = computed(() => {
+  const topPrediction = activePredictionRankings.value[0]
+  return topPrediction ? predictionDisplayBucket(topPrediction.probability) : null
+})
+const activePredictionRecommendations = computed(() => activePredictionRankings.value.filter(
+  (prediction) => predictionDisplayBucket(prediction.probability) === activePredictionTopBucket.value,
+))
+const activePredictionAlternatives = computed(() => activePredictionRankings.value.filter(
+  (prediction) => predictionDisplayBucket(prediction.probability) !== activePredictionTopBucket.value,
+))
 
 function movePreviewEcho(direction) {
   const total = activeEchoesForCost.value.length
@@ -129,14 +147,22 @@ watch([() => previewSonataEffect.value?.name, previewCost, () => props.activeEch
               <em v-for="pill in activeRecordPills" :key="pill" class="active-record-pill">{{ pill }}</em>
             </span>
           </div>
-          <strong class="active-record-count-badge"><span>{{ activeEchoSubstats.length }}</span><small>/5</small></strong>
-          <div class="active-progress-segments" aria-label="声骸副词条录入进度">
-            <i v-for="(filled, index) in progressSegments" :key="index" :class="{ filled }"></i>
+          <div class="active-progress-row">
+            <div class="active-progress-segments" aria-label="声骸副词条录入进度">
+              <i v-for="(filled, index) in progressSegments" :key="index" :class="{ filled }"></i>
+            </div>
+            <strong class="active-record-count-badge"><span>{{ activeEchoSubstats.length }}</span><small>/5</small></strong>
           </div>
         </div>
 
         <div class="roll-strip" :class="{ empty: !activeEchoSubstats.length }">
-          <span v-for="roll in rollSlots" :key="roll.id" class="roll-slot" :class="{ pending: roll.pending }">
+          <span
+            v-for="roll in rollSlots"
+            :key="roll.id"
+            class="roll-slot"
+            :class="{ pending: roll.pending, current: roll.current }"
+            :aria-current="roll.current ? 'step' : null"
+          >
             <strong class="roll-position">{{ roll.position }}.</strong>
             <template v-if="!roll.pending">
               <em class="roll-name">{{ substatLabels[roll.substat_type] }}</em>
@@ -148,13 +174,17 @@ watch([() => previewSonataEffect.value?.name, previewCost, () => props.activeEch
       </div>
       <aside v-if="activeEcho" class="active-actions record-actions active-action-bar active-action-rail" aria-label="声骸操作">
         <div class="active-prediction-card" aria-label="下一个副词条预测">
-          <div v-if="activePredictionRecommendation" class="active-prediction-table">
-            <span class="active-prediction-subheading active-prediction-suggestion-heading">建议</span>
-            <span class="active-prediction-line active-prediction-suggestion">
-              <em class="active-prediction-label">{{ activePredictionRecommendation.label }}</em>
-              <strong class="active-prediction-probability">{{ formatPercent(activePredictionRecommendation.probability, 1) }}</strong>
+          <div v-if="activePredictionRecommendations.length" class="active-prediction-table">
+            <span class="active-prediction-subheading active-prediction-suggestion-heading">预测</span>
+            <span
+              v-for="prediction in activePredictionRecommendations"
+              :key="prediction.substat_type || prediction.label"
+              class="active-prediction-line active-prediction-suggestion"
+            >
+              <em class="active-prediction-label">{{ prediction.label }}</em>
+              <strong class="active-prediction-probability">{{ formatPercent(prediction.probability, 1) }}</strong>
             </span>
-            <span v-if="activePredictionAlternatives.length" class="active-prediction-subheading">备选</span>
+            <span v-if="activePredictionAlternatives.length" class="active-prediction-subheading">其他可能</span>
             <span
               v-for="prediction in activePredictionAlternatives"
               :key="prediction.substat_type || prediction.label"

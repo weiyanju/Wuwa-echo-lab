@@ -10,13 +10,21 @@ test('floating history owns its filters and panel interaction state', async () =
   assert.match(source, /import historyTerminalDarkIcon from '\.\.\/\.\.\/assets\/icons\/pangu-terminal-dark\.png'/)
   assert.match(source, /import historyTerminalIcon from '\.\.\/\.\.\/assets\/icons\/rovers-terminal-expand\.png'/)
   assert.match(source, /const historyFilter = ref\('all'\)/)
-  assert.match(source, /const floatingHistoryPosition = ref\(readFloatingHistoryPosition\(\)\)/)
   assert.match(source, /const isHistoryMinimized = ref\(localStorage\.getItem\('wuwa-floating-history-minimized'\) === 'true'\)/)
+  assert.match(source, /const floatingHistoryPosition = ref\(readFloatingHistoryPosition\(\{/)
   assert.match(source, /const isHistoryPinned = ref\(localStorage\.getItem\('wuwa-floating-history-pinned'\) === 'true'\)/)
   assert.match(source, /const isHistoryShowcase = ref\(false\)/)
   assert.match(source, /class="history-action-icon terminal-expand-icon"/)
   assert.match(source, /minimizedHistoryTerminalIcon/)
   assert.match(source, /terminalExpandIconStyle/)
+})
+
+test('floating history uses the safe default only when no saved position exists', async () => {
+  const source = await readFile(new URL('./FloatingHistoryPanel.vue', import.meta.url), 'utf8')
+
+  assert.match(source, /import \{ readFloatingHistoryPosition \} from '\.\/floatingHistoryPosition\.js'/)
+  assert.match(source, /storedPosition: localStorage\.getItem\('wuwa-floating-history-position'\)/)
+  assert.match(source, /minimized: isHistoryMinimized\.value/)
 })
 
 test('floating history emits selection and cleans up document listeners', async () => {
@@ -48,7 +56,7 @@ test('floating history presents echo config as the pre-pill inline metadata row'
   assert.doesNotMatch(source, /class="echo-progress"/)
   assert.doesNotMatch(source, /class="echo-meta-pills"/)
   assert.doesNotMatch(source, /class="echo-meta-pill/)
-  assert.match(style, /\.echo-item-head > span \{[\s\S]+font-size: 12px;/)
+  assert.match(style, /\.echo-item-head > span \{[\s\S]+font-size: var\(--text-caption\);/)
   assert.doesNotMatch(style, /\.echo-meta-line/)
   assert.doesNotMatch(style, /\.echo-progress/)
 })

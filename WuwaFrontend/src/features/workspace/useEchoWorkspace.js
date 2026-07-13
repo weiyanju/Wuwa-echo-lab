@@ -4,15 +4,16 @@ import { buildNextEchoConfig, isReusableDraft, sortVisibleEchoHistory } from '..
 import { buildModelDetailCards } from '../../services/modelDetails.js'
 import { substatLabels, substatOrder, tierTables } from '../../data/substats.js'
 import { createEchoAssetIdentity } from './echoAssetIdentity.js'
+import { createConfigCreationNoticeController, echoConfigMatches } from './echoConfigCreation.js'
 import { createActivePredictionRefreshController } from './echoPredictionRefresh.js'
 import { createEchoSessionDeltaController } from './echoSessionDeltas.js'
 import { createDefaultEchoForm, createEchoPayload, createPreparedNextEchoController, normalizeEchoConfig } from './echoWorkspaceDrafts.js'
 import { appendRollToEchoList, buildOptimisticRollDraft, removeOptimisticRollFromEchoList, replaceOptimisticRollInEchoList } from './echoWorkspaceMutations.js'
 import { adjustWorkspaceStatsForSubstat } from './echoWorkspaceStats.js'
-
 export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, workspaceLocked, onError }) {
   const saving = ref(false)
   const pendingTierKey = ref('')
+  const configCreationNotice = ref('')
   const echoes = ref([])
   const activeEchoId = ref(null)
   const prediction = ref(null)
@@ -20,6 +21,7 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
   const evaluation = ref(null)
   const echoForm = ref(createDefaultEchoForm())
   let lifecycleGeneration = 0, refreshRequestId = 0
+  const { announce: announceConfigCreation, clear: clearConfigCreationNotice } = createConfigCreationNoticeController(configCreationNotice)
   const sessionDeltas = createEchoSessionDeltaController()
   const { sessionEchoDelta, sessionSampleDelta, visibleSessionEchoDelta, visibleSessionSampleDelta } = sessionDeltas
 
@@ -84,6 +86,7 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
     lifecycleGeneration += 1
     refreshRequestId += 1
     cancelActivePredictionRefresh()
+    clearConfigCreationNotice()
     nextDraft.clear()
     saving.value = false
     pendingTierKey.value = ''
@@ -256,11 +259,12 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
     onError('')
     nextDraft.clear()
     const nextConfig = normalizeEchoConfig({ ...echoForm.value, ...partialConfig })
+    if (echoConfigMatches(activeEcho.value, nextConfig)) return activeEcho.value
     echoForm.value = nextConfig
     if (!activeEcho.value) {
       await createEchoWithConfig(nextConfig)
       await refresh()
-      return
+      return activeEcho.value
     }
     if (isReusableDraft(activeEcho.value)) {
       try {
@@ -272,14 +276,20 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
           ...echoAssetIdentity.selectedEchoAssetFieldsForConfig(nextConfig),
         })
         replaceEcho(updated)
+        activateEcho(updated)
         refreshActiveInBackground()
+        return updated
       } catch (err) {
         reportError(err)
+        return null
       }
-      return
     }
-    await createEchoWithConfig(nextConfig)
-    await refresh()
+    const created = await createEchoWithConfig(nextConfig)
+    if (created) {
+      announceConfigCreation(nextConfig)
+      await refresh()
+    }
+    return created
   }
 
   async function discardActiveEcho() {
@@ -362,6 +372,7 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
     activeEchoId,
     applyEchoConfig,
     clickTier,
+    configCreationNotice,
     createNextEchoFromActive,
     discardActiveEcho,
     dispose,

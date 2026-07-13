@@ -97,7 +97,7 @@ test('topbar uses a compact accessible TETHYS wordmark without changing the hero
   assert.doesNotMatch(appSource, /<a class="wordmark"[^>]*>Tethys System<\/a>/)
   assert.match(appSource, /<section class="hero-band compact">[\s\S]+<h1>你好，漂泊者<\/h1>/)
   assert.match(appSource, /<span>历史声骸<\/span>[\s\S]+<span>总样本<\/span>[\s\S]+<span>置信度<\/span>/)
-  assert.match(shellStyleSource, /\.wordmark \{[\s\S]+gap: 10px;[\s\S]+font-size: 16px;[\s\S]+font-weight: 700;[\s\S]+letter-spacing: 0\.08em;/)
+  assert.match(shellStyleSource, /\.wordmark \{[\s\S]+gap: 10px;[\s\S]+font-family: var\(--font-latin\);[\s\S]+font-size: 16px;[\s\S]+font-weight: var\(--weight-control\);[\s\S]+letter-spacing: var\(--tracking-brand\);/)
   assert.match(shellStyleSource, /\.wordmark-symbol \{[^}]+position: relative;[^}]+flex: 0 0 auto;[^}]+width: 20px;[^}]+height: 20px;/)
   assert.match(shellStyleSource, /\.wordmark-symbol::before \{[^}]+border: 1\.5px solid var\(--primary\);/)
   assert.match(shellStyleSource, /\.wordmark-symbol::after \{[^}]+background: var\(--primary\);/)
@@ -112,6 +112,26 @@ test('topbar centers page navigation between asymmetric side controls', async ()
   assert.match(shellStyleSource, /\.wordmark \{[^}]*justify-self: start;/)
   assert.match(shellStyleSource, /\.account-actions \{[^}]*justify-self: end;/)
   assert.match(shellStyleSource, /@media \(max-width: 860px\) \{[\s\S]*?\.topbar \{[^}]*display: flex;[^}]*flex-direction: column;/)
+})
+
+test('workbench shell uses a shorter hero and accessible small control targets', async () => {
+  const shellStyleSource = await readFile(new URL('./styles/shell.css', import.meta.url), 'utf8')
+  const recognitionStyleSource = await readFile(new URL('./styles/features/recognition.css', import.meta.url), 'utf8')
+  const activeStyleSource = await readFile(new URL('./styles/features/workspace-active.css', import.meta.url), 'utf8')
+
+  assert.match(shellStyleSource, /\.hero-band\.compact \{[^}]+min-height: 80px;[^}]+padding: 8px 18px;/)
+  assert.match(shellStyleSource, /\.hero-band\.compact h1 \{[^}]+display: flex;[^}]+width: max-content;[^}]+transform: translateY\(4px\);/)
+  assert.match(shellStyleSource, /\.hero-band\.compact \.hero-stats div \{[^}]+padding: 5px 20px 3px;/)
+  assert.match(shellStyleSource, /\.topbar \.pill-tabs button \{[^}]+min-height: 40px;/)
+  assert.match(recognitionStyleSource, /\.recognition-refresh-button \{[^}]+width: 40px;[^}]+height: 40px;[^}]+min-height: 40px;/)
+  assert.match(activeStyleSource, /\.active-echo-nav \{[^}]+width: 40px;[^}]+height: 40px;/)
+})
+
+test('app wires immediate config creation feedback into the workbench', async () => {
+  const source = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
+
+  assert.match(source, /configCreationNotice,/)
+  assert.match(source, /:config-creation-notice="configCreationNotice"/)
 })
 
 test('topbar renders the shared uid switcher for game account selection', async () => {
@@ -395,10 +415,9 @@ test('tier clicks update the active echo without blocking on full workspace refr
   assert.doesNotMatch(clickTierBody, /saving\.value = true/)
   assert.doesNotMatch(clickTierBody, /await refreshActive\(\)/)
   assert.doesNotMatch(clickTierBody, /refreshAll\(\)/)
-  assert.match(workbenchSource, /:disabled="Boolean\(row\.recorded\) \|\| isTierPending\(row, tier\)"/)
+  assert.match(workbenchSource, /:disabled="Boolean\(row\.recorded\) \|\| Boolean\(pendingTierKey\)"/)
   assert.match(workbenchSource, /function rowPendingTierKey\(row\)/)
-  assert.match(workbenchSource, /v-memo="\[row\.recorded\?\.id, row\.recorded\?\.tier_value, row\.candidate\?\.p_final, row\.candidate\?\.baseline_deviation, row\.topPredicted, rowPendingTierKey\(row\)\]"/)
-  assert.doesNotMatch(workbenchSource, /row\.topPredicted, pendingTierKey\]/)
+  assert.match(workbenchSource, /v-memo="\[row\.recorded\?\.id, row\.recorded\?\.tier_value, row\.candidate\?\.p_final, row\.candidate\?\.baseline_deviation, row\.topPredicted, Boolean\(props\.pendingTierKey\), rowPendingTierKey\(row\)\]"/)
   assert.doesNotMatch(workbenchSource, /:disabled="Boolean\(row\.recorded\) \|\| saving"/)
   assert.doesNotMatch(workspaceSource, /activeEchoId\.value\}:\$\{activeEcho\.value\?\.substats\.length/)
   assert.match(workspaceStyleSource, /\.substat-row \{[\s\S]+contain: layout paint;/)
@@ -660,7 +679,7 @@ test('stats page focuses on analytics charts instead of prediction diagnostics',
   assert.match(statisticsStyleSource, /\.stats-diagnostic-stage-meta \{/)
   assert.match(statisticsStyleSource, /\.stats-diagnostic-stage-chip \{/)
   assert.doesNotMatch(statisticsStyleSource, /\.stats-diagnostic-sample-pill \{/)
-  assert.match(statisticsStyleSource, /\.stats-diagnostic-note \{[\s\S]+font-weight: 500;/)
+  assert.match(statisticsStyleSource, /\.stats-diagnostic-note \{[\s\S]+font-weight: var\(--weight-supporting\);/)
   assert.doesNotMatch(statisticsStyleSource, /\.stats-diagnostic-meta \{/)
   assert.match(statisticsStyleSource, /\.stats-diagnostic-panel \{/)
   assert.match(statisticsStyleSource, /\.stats-diagnostic-primary \{/)

@@ -34,6 +34,7 @@ const {
   activeEchoId,
   applyEchoConfig,
   clickTier,
+  configCreationNotice,
   createNextEchoFromActive,
   discardActiveEcho,
   dispose: disposeWorkspace,
@@ -273,6 +274,7 @@ onBeforeUnmount(() => {
           :matrix-rows="matrixRows"
           :saving="saving"
           :pending-tier-key="pendingTierKey"
+          :config-creation-notice="configCreationNotice"
           @config-change="applyEchoConfig"
           @undo="undoActiveSubstat"
           @discard="discardActiveEcho"

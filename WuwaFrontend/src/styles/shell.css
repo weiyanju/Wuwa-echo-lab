@@ -189,9 +189,10 @@
 .pill-tabs button {
   min-height: 44px;
   border-radius: 100px;
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0;
+  font-size: var(--text-control);
+  font-weight: var(--weight-control);
+  line-height: var(--leading-control);
+  letter-spacing: var(--tracking-cjk);
   transition: background-color 180ms ease-out, border-color 180ms ease-out, color 180ms ease-out, transform 180ms ease-out;
 }
 
@@ -239,13 +240,20 @@
 
 .hero-stats strong {
   display: block;
-  font-size: 28px;
-  font-weight: 500;
+  font-family: var(--font-data);
+  font-size: var(--text-data-xl);
+  font-weight: var(--weight-emphasis);
+  line-height: var(--leading-data);
+  letter-spacing: var(--tracking-data);
+  font-variant-numeric: tabular-nums;
 }
 
 .hero-stats span {
   color: var(--steel);
-  font-size: 14px;
+  font-size: var(--text-label);
+  font-weight: var(--weight-label);
+  line-height: var(--leading-label);
+  letter-spacing: var(--tracking-cjk);
 }
 
 .dashboard {
@@ -275,9 +283,11 @@
   justify-self: start;
   gap: 10px;
   color: var(--ink-deep);
+  font-family: var(--font-latin);
   font-size: 16px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-weight: var(--weight-control);
+  line-height: 1.1;
+  letter-spacing: var(--tracking-brand);
   text-decoration: none;
 }
 
@@ -305,8 +315,8 @@
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 251, 253, 0.82)),
     rgba(255, 255, 255, 0.82);
-  font-size: 15px;
-  font-weight: 700;
+  font-size: var(--text-data-sm);
+  font-weight: var(--weight-data);
 }
 
 .uid-chip-button {
@@ -347,15 +357,21 @@
 
 .uid-chip-label {
   color: #6f8293;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0;
+  font-family: var(--font-latin);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-label);
+  line-height: var(--leading-label);
+  letter-spacing: var(--tracking-abbr);
 }
 
 .uid-chip-value {
   color: #2f4659;
-  font-size: 15px;
-  font-weight: 800;
+  font-family: var(--font-data);
+  font-size: var(--text-data-sm);
+  font-weight: var(--weight-data);
+  line-height: var(--leading-data);
+  letter-spacing: var(--tracking-data);
+  font-variant-numeric: tabular-nums;
 }
 
 .uid-chip-button:hover .uid-chip-label,
@@ -405,20 +421,23 @@
   align-items: center;
   justify-content: space-between;
   color: #6f8293;
-  font-size: 12px;
-  font-weight: 900;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-label);
+  line-height: var(--leading-label);
 }
 
 .uid-switcher-menu-top strong {
   color: #2f4659;
-  font-size: 13px;
+  font-size: var(--text-label);
+  font-weight: var(--weight-label);
 }
 
 .uid-switcher-field,
 .uid-recent-list > span {
   color: #6f8293;
-  font-size: 12px;
-  font-weight: 800;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-supporting);
+  line-height: var(--leading-caption);
 }
 
 .uid-switcher-field {
@@ -428,8 +447,9 @@
 
 .uid-switcher-field label {
   color: #6f8293;
-  font-size: 12px;
-  font-weight: 900;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-label);
+  line-height: var(--leading-label);
 }
 
 .uid-switcher-field input {
@@ -440,8 +460,12 @@
   padding: 9px 12px;
   color: #263746;
   background: #ffffff;
-  font: inherit;
-  font-weight: 700;
+  font-family: var(--font-data);
+  font-size: var(--text-data-sm);
+  font-weight: var(--weight-supporting);
+  line-height: var(--leading-body);
+  letter-spacing: var(--tracking-data);
+  font-variant-numeric: tabular-nums;
 }
 
 .uid-recent-list {
@@ -461,8 +485,9 @@
   color: #526575;
   background: rgba(248, 251, 253, 0.92);
   font: inherit;
-  font-size: 13px;
-  font-weight: 800;
+  font-size: var(--text-label);
+  font-weight: var(--weight-control);
+  line-height: var(--leading-control);
   cursor: pointer;
 }
 
@@ -491,8 +516,9 @@
   color: #6f8293;
   background: rgba(255, 255, 255, 0.74);
   font-style: normal;
-  font-size: 11px;
-  font-weight: 900;
+  font-size: var(--text-micro);
+  font-weight: var(--weight-label);
+  line-height: var(--leading-data);
 }
 
 .uid-account-check {
@@ -511,8 +537,9 @@
 .uid-switcher-error {
   margin: 0;
   color: var(--critical);
-  font-size: 12px;
-  font-weight: 800;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-supporting);
+  line-height: var(--leading-caption);
 }
 
 .uid-switcher-submit {
@@ -521,8 +548,10 @@
   border-radius: 12px;
   color: #ffffff;
   background: linear-gradient(135deg, #1769d2, #2c9f70);
-  font: inherit;
-  font-weight: 900;
+  font-family: var(--font-ui);
+  font-size: var(--text-control);
+  font-weight: var(--weight-control);
+  line-height: var(--leading-control);
   cursor: pointer;
   box-shadow: 0 12px 24px rgba(23, 105, 210, 0.18);
 }
@@ -533,8 +562,10 @@
   border-radius: 12px;
   color: #1769d2;
   background: rgba(23, 105, 210, 0.06);
-  font: inherit;
-  font-weight: 900;
+  font-family: var(--font-ui);
+  font-size: var(--text-control);
+  font-weight: var(--weight-control);
+  line-height: var(--leading-control);
   cursor: pointer;
 }
 
@@ -662,11 +693,11 @@
 
 .hero-band h1 {
   margin-top: 14px;
-  font-family: var(--font-ui);
-  font-size: clamp(42px, 4vw, 56px);
-  font-weight: 800;
-  line-height: 1.02;
-  letter-spacing: 0;
+  font-family: var(--font-title);
+  font-size: 48px;
+  font-weight: var(--weight-title);
+  line-height: var(--leading-title);
+  letter-spacing: var(--tracking-cjk);
 }
 
 .hero-band p {
@@ -674,13 +705,14 @@
   margin-top: 12px;
   margin-bottom: 0;
   color: #465866;
-  font-size: 17px;
-  line-height: 1.55;
+  font-size: var(--text-body);
+  font-weight: var(--weight-body);
+  line-height: var(--leading-body);
 }
 
 .hero-band.compact {
-  min-height: 66px; grid-template-columns: minmax(0, 1fr) auto; gap: 14px;
-  border-radius: 18px; padding: 14px 18px; box-shadow: none;
+  min-height: 80px; grid-template-columns: minmax(0, 1fr) auto; gap: 14px;
+  border-radius: 18px; padding: 8px 18px; box-shadow: none;
   background: radial-gradient(circle at 4% 45%, rgba(23, 105, 210, 0.13), transparent 26%), linear-gradient(90deg, rgba(239, 246, 255, 0.72), rgba(255, 255, 255, 0.92)), #ffffff;
 }
 
@@ -689,11 +721,11 @@
 }
 
 .hero-band.compact h1 {
-  position: relative; display: inline-flex; align-items: baseline; gap: 10px;
+  position: relative; display: flex; align-items: baseline; gap: 10px; width: max-content; transform: translateY(4px);
   margin-top: 0;
-  font-family: var(--font-ui);
-  font-size: 2rem;
-  font-weight: 700; line-height: 1.08; letter-spacing: 0;
+  font-family: var(--font-title);
+  font-size: var(--text-page-title);
+  font-weight: var(--weight-title); line-height: var(--leading-title); letter-spacing: var(--tracking-cjk);
 }
 
 .hero-band.compact h1::after { width: 54px; height: 3px; border-radius: 999px; background: linear-gradient(90deg, #1769d2, rgba(23, 105, 210, 0)); content: ""; }
@@ -704,12 +736,12 @@
 
 .hero-band.compact .hero-stats div {
   min-width: 96px; border: 0; border-left: 1px solid rgba(216, 226, 234, 0.86);
-  border-radius: 0; padding: 10px 20px 5px; background: transparent; box-shadow: none;
+  border-radius: 0; padding: 5px 20px 3px; background: transparent; box-shadow: none;
 }
 
-.hero-band.compact .hero-stats strong { font-family: var(--font-data); font-size: 23px; font-variant-numeric: tabular-nums; }
+.hero-band.compact .hero-stats strong { font-family: var(--font-data); font-size: var(--text-data-xl); font-weight: var(--weight-emphasis); line-height: var(--leading-data); letter-spacing: var(--tracking-data); font-variant-numeric: tabular-nums; }
 
-.hero-band.compact .hero-stats span { margin-top: 4px; font-size: 12px; }
+.hero-band.compact .hero-stats span { margin-top: 4px; font-size: var(--text-label); font-weight: var(--weight-label); line-height: var(--leading-label); letter-spacing: var(--tracking-cjk); }
 
 .hero-stats div {
   min-width: 126px;
@@ -720,13 +752,13 @@
   box-shadow: 0 12px 30px rgba(39, 55, 71, 0.06);
 }
 
-.hero-stats strong { color: #071116; font-family: var(--font-data); font-size: 34px; font-variant-numeric: tabular-nums; line-height: 1; }
+.hero-stats strong { color: #071116; font-family: var(--font-data); font-size: var(--text-data-xl); font-weight: var(--weight-emphasis); line-height: var(--leading-data); letter-spacing: var(--tracking-data); font-variant-numeric: tabular-nums; }
 
 .hero-stat { position: relative; display: grid; justify-items: center; align-content: center; text-align: center; }
 
 .hero-stat strong { width: 100%; text-align: center; }
 
-.metric-delta-badge { position: absolute; top: -10px; right: 8px; min-width: 27px; padding: 2px 7px; border: 1px solid rgba(44, 159, 112, 0.26); border-radius: 999px; color: #157653; background: rgba(231, 248, 240, 0.92); font-family: var(--font-data); font-size: 11px; font-style: normal; font-weight: 700; line-height: 1.2; text-align: center; font-variant-numeric: tabular-nums; box-shadow: 0 6px 16px rgba(44, 159, 112, 0.12); pointer-events: none; }
+.metric-delta-badge { position: absolute; top: -10px; right: 8px; min-width: 27px; padding: 2px 7px; border: 1px solid rgba(44, 159, 112, 0.26); border-radius: 999px; color: #157653; background: rgba(231, 248, 240, 0.92); font-family: var(--font-data); font-size: var(--text-micro); font-style: normal; font-weight: var(--weight-label); line-height: var(--leading-data); letter-spacing: var(--tracking-data); text-align: center; font-variant-numeric: tabular-nums; box-shadow: 0 6px 16px rgba(44, 159, 112, 0.12); pointer-events: none; }
 
 .metric-delta-enter-active,
 .metric-delta-leave-active { transition: opacity 180ms cubic-bezier(0.19, 1, 0.22, 1), transform 180ms cubic-bezier(0.19, 1, 0.22, 1); }
@@ -749,8 +781,10 @@
   display: block;
   margin-top: 8px;
   color: #64717c;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--text-label);
+  font-weight: var(--weight-label);
+  line-height: var(--leading-label);
+  letter-spacing: var(--tracking-cjk);
 }
 
 .topbar .pill-tabs {
@@ -761,7 +795,7 @@
 }
 
 .topbar .pill-tabs button {
-  min-height: 36px;
+  min-height: 40px;
   border: 0;
   padding: 7px 18px;
   background: transparent;

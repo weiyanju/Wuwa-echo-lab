@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { sonataScrollTopForActiveButton } from './useEchoWorkbenchLayout.js'
+import { filterSonataEffects, sonataScrollTopForActiveButton } from './useEchoWorkbenchLayout.js'
 
 function createGrid({
   scrollTop = 0,
@@ -96,4 +96,18 @@ test('sonata focus clamps the last active option to the scroll limit', () => {
   }
 
   assert.equal(sonataScrollTopForActiveButton(grid, lastButton), 312)
+})
+
+test('sonata filtering ignores spaces and case without changing the source list', () => {
+  const effects = [{ name: 'Echo Setup' }, { name: '碎梦亡鬼之魇' }]
+
+  assert.deepEqual(filterSonataEffects(effects, ' echoSET '), [{ name: 'Echo Setup' }])
+  assert.deepEqual(filterSonataEffects(effects, '碎 梦'), [{ name: '碎梦亡鬼之魇' }])
+  assert.equal(effects.length, 2)
+})
+
+test('empty sonata filtering returns every option', () => {
+  const effects = [{ name: 'A' }, { name: 'B' }]
+
+  assert.deepEqual(filterSonataEffects(effects, '   '), effects)
 })
