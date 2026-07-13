@@ -167,3 +167,16 @@ test('the functional login caret finishes beside the title instead of at the col
   assert.match(authStyle, /@keyframes terminal-typing \{ to \{ width: var\(--terminal-title-width\); \} \}/)
   assert.doesNotMatch(authStyle, /@keyframes terminal-typing \{ to \{ width: 100%; \} \}/)
 })
+
+test('evaluation dark theme consumes existing semantic theme tokens without remapping values', async () => {
+  const controls = await read('./styles/controls.css')
+  const evaluation = await read('./styles/features/evaluation.css')
+
+  assert.match(controls, /\.app-shell\.theme-dark \{[\s\S]+--primary-deep: #8dc3ff;[\s\S]+--ink-deep: #e7eef4;[\s\S]+--charcoal: #a9bac7;[\s\S]+--steel: #98aab7;[\s\S]+--surface-soft: #17232d;/)
+  assert.doesNotMatch(evaluation, /#(?:e7eef4|a9bac7|98aab7|17232d|8dc3ff)\b/i)
+  assert.match(evaluation, /color: var\(--ink-deep\);/)
+  assert.match(evaluation, /color: var\(--charcoal\);/)
+  assert.match(evaluation, /color: var\(--steel\);/)
+  assert.match(evaluation, /var\(--surface-soft\)/)
+  assert.match(evaluation, /color: var\(--primary-deep\);/)
+})

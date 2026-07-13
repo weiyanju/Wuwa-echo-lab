@@ -4,13 +4,13 @@
   border-color: rgba(83, 107, 124, 0.66);
   background:
     linear-gradient(180deg, rgba(25, 39, 50, 0.96), rgba(20, 32, 42, 0.94)),
-    #17232d;
+    var(--surface-soft);
   box-shadow: 0 18px 42px rgba(0, 0, 0, 0.24);
 }
 
 .app-shell.theme-dark .model-bars article > .model-bar-summary > small,
 .app-shell.theme-dark .model-side-title {
-  color: #a9bac7;
+  color: var(--charcoal);
 }
 
 .app-shell.theme-dark .model-bars article,
@@ -35,13 +35,13 @@
 }
 
 .app-shell.theme-dark .model-bar-summary strong {
-  color: #e7eef4;
+  color: var(--ink-deep);
 }
 
 .app-shell.theme-dark .evaluation-panel {
   background:
     linear-gradient(180deg, rgba(24, 38, 49, 0.96), rgba(18, 30, 40, 0.94)),
-    #17232d;
+    var(--surface-soft);
 }
 
 .app-shell.theme-dark .evaluation-status-bar h2,
@@ -53,7 +53,7 @@
 .app-shell.theme-dark .evaluation-brief .eyebrow,
 .app-shell.theme-dark .evaluation-brief h2,
 .app-shell.theme-dark .evaluation-brief p {
-  color: #e7eef4;
+  color: var(--ink-deep);
 }
 
 .app-shell.theme-dark .evaluation-section-title p,
@@ -72,7 +72,7 @@
 .app-shell.theme-dark .evaluation-coverage-metrics small,
 .app-shell.theme-dark .evaluation-technical-metrics span,
 .app-shell.theme-dark .evaluation-technical-metrics small {
-  color: #a9bac7;
+  color: var(--charcoal);
 }
 
 .app-shell.theme-dark .evaluation-section-title > span,
@@ -133,7 +133,7 @@
 .app-shell.theme-dark .model-bars-large strong,
 .app-shell.theme-dark .model-metric-grid strong,
 .app-shell.theme-dark .evaluation-metrics strong {
-  color: #e7eef4;
+  color: var(--ink-deep);
 }
 
 .app-shell.theme-dark .evaluation-coverage-metrics i,
@@ -162,7 +162,7 @@
 .app-shell.theme-dark .model-detail-grid footer,
 .app-shell.theme-dark .evaluation-metrics small,
 .app-shell.theme-dark .model-bar-summary small {
-  color: #a9bac7;
+  color: var(--charcoal);
 }
 
 .app-shell.theme-dark .fusion-shared-legend {
@@ -172,7 +172,7 @@
 }
 
 .app-shell.theme-dark .fusion-shared-legend small {
-  color: #98aab7;
+  color: var(--steel);
 }
 
 .app-shell.theme-dark .fusion-weight-grid article,
@@ -215,14 +215,14 @@
 
 .app-shell.theme-dark .summary-model-link-dominant {
   border-color: color-mix(in srgb, var(--summary-accent) 44%, #2c3c48);
-  color: color-mix(in srgb, var(--summary-accent) 42%, #e7eef4);
-  background: color-mix(in srgb, var(--summary-accent) 18%, #17232d);
+  color: color-mix(in srgb, var(--summary-accent) 42%, var(--ink-deep));
+  background: color-mix(in srgb, var(--summary-accent) 18%, var(--surface-soft));
 }
 
 .app-shell.theme-dark .summary-model-link:hover,
 .app-shell.theme-dark .summary-model-link:focus-visible,
 .app-shell.theme-dark .summary-model-link.active {
-  background: color-mix(in srgb, var(--summary-accent) 28%, #17232d);
+  background: color-mix(in srgb, var(--summary-accent) 28%, var(--surface-soft));
 }
 
 .app-shell.theme-dark .chart-card,
@@ -271,7 +271,7 @@
 
 .app-shell.theme-dark .model-expand-state {
   border-color: rgba(93, 168, 255, 0.36);
-  color: #8dc3ff;
+  color: var(--primary-deep);
   background: rgba(47, 98, 143, 0.28);
 }
 
@@ -285,11 +285,11 @@
 }
 
 .app-shell.theme-dark .model-insight-tabs button {
-  color: #a9bac7;
+  color: var(--charcoal);
 }
 
 .app-shell.theme-dark .model-insight-tabs button.active {
-  color: #e7eef4;
+  color: var(--ink-deep);
   background: #263746;
 }
 
@@ -308,7 +308,7 @@
 .app-shell.theme-dark .markov-axis-chart i,
 .app-shell.theme-dark .markov-axis-chart .markov-axis-legend i,
 .app-shell.theme-dark .model-side-title .evaluation-help-icon {
-  color: #a9bac7;
+  color: var(--charcoal);
 }
 
 .app-shell.theme-dark .rule-deviation-axis {
@@ -340,7 +340,7 @@
 }
 
 .app-shell.theme-dark .evaluation-summary-line strong {
-  color: #a9bac7;
+  color: var(--charcoal);
 }
 
 .app-shell.theme-dark .summary-model-link {
@@ -348,7 +348,7 @@
 }
 
 .app-shell.theme-dark .summary-model-link-auxiliary {
-  color: #98aab7;
+  color: var(--steel);
 }
 
 .app-shell.theme-dark .model-bars-head {
@@ -357,7 +357,7 @@
 }
 
 .app-shell.theme-dark .model-bars-head .evaluation-help-icon {
-  color: #a9bac7;
+  color: var(--charcoal);
 }
 
 .app-shell.theme-dark .model-row-detail {
@@ -403,7 +403,7 @@
   background:
     linear-gradient(135deg, color-mix(in srgb, var(--model-accent) 13%, transparent), transparent 36%),
     linear-gradient(180deg, rgba(29, 44, 56, 0.94), rgba(22, 35, 45, 0.96)),
-    #17232d;
+    var(--surface-soft);
 }
 
 .app-shell.theme-dark .model-insight-weight span,
@@ -412,7 +412,7 @@
 .app-shell.theme-dark .model-insight-card.dominant .model-insight-weight span {
   border-color: color-mix(in srgb, var(--model-accent) 36%, #2c3c48);
   color: color-mix(in srgb, var(--model-accent) 34%, #dce8ef);
-  background: color-mix(in srgb, var(--model-accent) 16%, #17232d);
+  background: color-mix(in srgb, var(--model-accent) 16%, var(--surface-soft));
 }
 
 .app-shell.theme-dark .model-insight-card.warn .model-insight-weight span,
@@ -427,11 +427,11 @@
 .app-shell.theme-dark .model-judgement-summary {
   border-color: color-mix(in srgb, var(--model-accent) 24%, rgba(75, 98, 113, 0.7));
   color: #b9cad6;
-  background: color-mix(in srgb, var(--model-accent) 7%, #17232d);
+  background: color-mix(in srgb, var(--model-accent) 7%, var(--surface-soft));
 }
 
 .app-shell.theme-dark .model-judgement-label {
-  color: color-mix(in srgb, var(--model-accent) 76%, #e7eef4);
+  color: color-mix(in srgb, var(--model-accent) 76%, var(--ink-deep));
 }
 
 .app-shell.theme-dark .model-player-note,
@@ -453,7 +453,7 @@
 .app-shell.theme-dark .model-weight-change,
 .app-shell.theme-dark .model-insight-side footer,
 .app-shell.theme-dark .model-side-status-row small {
-  color: #98aab7;
+  color: var(--steel);
 }
 
 .app-shell.theme-dark .model-weight-change {
@@ -481,7 +481,7 @@
 }
 
 .app-shell.theme-dark .bayes-contribution-labels {
-  color: #a9bac7;
+  color: var(--charcoal);
 }
 
 .app-shell.theme-dark .model-chart-bayes {
@@ -542,7 +542,7 @@
 .app-shell.theme-dark .bayes-path-nodes span,
 .app-shell.theme-dark .bayes-path-list article.primary .bayes-path-nodes span:nth-child(3),
 .app-shell.theme-dark .bayes-path-list article.secondary .bayes-path-nodes span:nth-child(3) {
-  color: #e7eef4;
+  color: var(--ink-deep);
 }
 
 .app-shell.theme-dark .bayes-path-copy p {
@@ -562,7 +562,7 @@
 
 .app-shell.theme-dark .model-segment-strip div {
   color: #dbe6ed;
-  background: linear-gradient(90deg, color-mix(in srgb, var(--model-accent) 18%, #17232d), rgba(23, 35, 45, 0.7));
+  background: linear-gradient(90deg, color-mix(in srgb, var(--model-accent) 18%, var(--surface-soft)), rgba(23, 35, 45, 0.7));
 }
 
 .app-shell.theme-dark .model-segment-strip div + div {
@@ -591,7 +591,7 @@
 .app-shell.theme-dark .model-bars-large label,
 .app-shell.theme-dark .model-bars-large label strong,
 .app-shell.theme-dark .model-group-bars strong {
-  color: #e7eef4;
+  color: var(--ink-deep);
 }
 
 .app-shell.theme-dark .cycle-window-card-body span,
@@ -600,7 +600,7 @@
 .app-shell.theme-dark .markov-penalty-grid span,
 .app-shell.theme-dark .markov-penalty-grid small,
 .app-shell.theme-dark .model-bars-large small {
-  color: #a9bac7;
+  color: var(--charcoal);
 }
 
 .app-shell.theme-dark .markov-axis-chart {
@@ -624,7 +624,7 @@
 }
 
 .app-shell.theme-dark .markov-axis-chart i {
-  background: #17232d;
+  background: var(--surface-soft);
 }
 
 .app-shell.theme-dark .markov-node-label {
@@ -635,11 +635,11 @@
 
 .app-shell.theme-dark .markov-axis-chart span {
   color: color-mix(in srgb, var(--node-color) 34%, #dbe6ed);
-  background: color-mix(in srgb, var(--node-color) 14%, #17232d);
+  background: color-mix(in srgb, var(--node-color) 14%, var(--surface-soft));
 }
 
 .app-shell.theme-dark .markov-axis-chart strong {
-  color: #e7eef4;
+  color: var(--ink-deep);
 }
 
 .app-shell.theme-dark .markov-axis-chart .markov-axis-legend span {
@@ -648,13 +648,13 @@
 
 .app-shell.theme-dark .markov-axis-chart .markov-axis-legend .normal-dot,
 .app-shell.theme-dark .markov-axis-legend .normal-dot {
-  border-color: #98aab7;
-  background: #17232d;
+  border-color: var(--steel);
+  background: var(--surface-soft);
 }
 
 .app-shell.theme-dark .rule-deviation-chart {
   --rule-guide: rgba(143, 162, 177, 0.18);
-  --rule-axis: #a9bac7;
+  --rule-axis: var(--charcoal);
   border-color: rgba(63, 86, 102, 0.72);
   background:
     linear-gradient(90deg, rgba(52, 120, 184, 0.11), transparent 24%),
@@ -684,15 +684,15 @@
   border-color: rgba(63, 86, 102, 0.72);
   background:
     linear-gradient(180deg, rgba(29, 44, 56, 0.72), rgba(18, 30, 40, 0.82)),
-    #17232d;
+    var(--surface-soft);
 }
 
 .app-shell.theme-dark .context-check-name {
-  color: #e7eef4;
+  color: var(--ink-deep);
 }
 
 .app-shell.theme-dark .context-check-head {
-  color: #a9bac7;
+  color: var(--charcoal);
 }
 
 .app-shell.theme-dark .context-check-head {
@@ -720,11 +720,11 @@
 }
 
 .app-shell.theme-dark .model-evidence-panel li strong {
-  color: #e7eef4;
+  color: var(--ink-deep);
 }
 
 .app-shell.theme-dark .model-evidence-panel li span {
-  color: #a9bac7;
+  color: var(--charcoal);
 }
 
 .app-shell.theme-dark .evaluation-detail-stack .model-insight-side {
@@ -4565,11 +4565,11 @@
 }
 
 .app-shell.theme-dark .context-overall-progress strong {
-  color: #e7eef4;
+  color: var(--ink-deep);
 }
 
 .app-shell.theme-dark .context-overall-progress span {
-  color: #a9bac7;
+  color: var(--charcoal);
 }
 
 .weight-marker {
