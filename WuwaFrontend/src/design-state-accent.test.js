@@ -205,3 +205,20 @@ test('history dark theme reuses surface, text, and primary theme tokens without 
   assert.match(history, /var\(--surface-soft\)/)
   assert.match(history, /color: var\(--primary-deep\);/)
 })
+
+test('shell and shared controls consume dark theme tokens while keeping one source definition', async () => {
+  const controls = await read('./styles/controls.css')
+  const shell = await read('./styles/shell.css')
+
+  assert.doesNotMatch(shell, /#(?:e7eef4|a9bac7|98aab7|17232d|8dc3ff)\b/i)
+  for (const value of ['#5da8ff', '#8dc3ff', '#e7eef4', '#a9bac7', '#98aab7', '#17232d']) {
+    assert.equal((controls.match(new RegExp(value, 'gi')) ?? []).length, 1, `${value} should exist only in the theme token definition`)
+  }
+  assert.match(shell, /color: var\(--ink-deep\);/)
+  assert.match(shell, /color: var\(--charcoal\);/)
+  assert.match(shell, /color: var\(--steel\);/)
+  assert.match(shell, /var\(--surface-soft\)/)
+  assert.match(shell, /color: var\(--primary-deep\);/)
+  assert.match(controls, /background: linear-gradient\(180deg, #7cbcff, var\(--primary\)\);/)
+  assert.match(controls, /accent-color: var\(--primary\);/)
+})

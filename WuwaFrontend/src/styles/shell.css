@@ -5,14 +5,14 @@
   border-color: rgba(83, 107, 124, 0.66);
   background:
     linear-gradient(180deg, rgba(25, 39, 50, 0.96), rgba(20, 32, 42, 0.94)),
-    #17232d;
+    var(--surface-soft);
   box-shadow: 0 18px 42px rgba(0, 0, 0, 0.24);
 }
 
 .app-shell.theme-dark .hero-band.compact {
   background:
     linear-gradient(90deg, rgba(25, 39, 50, 0.98), rgba(21, 34, 44, 0.96)),
-    #17232d;
+    var(--surface-soft);
 }
 
 .app-shell.theme-dark .uid-chip,
@@ -26,7 +26,7 @@
 .app-shell.theme-dark .uid-chip-button:hover,
 .app-shell.theme-dark .uid-chip-button[aria-expanded="true"] {
   border-color: rgba(93, 168, 255, 0.5);
-  color: #8dc3ff;
+  color: var(--primary-deep);
   background: rgba(38, 55, 70, 0.96);
 }
 
@@ -38,15 +38,15 @@
 }
 
 .app-shell.theme-dark .uid-chip-label {
-  color: #98aab7;
+  color: var(--steel);
 }
 
 .app-shell.theme-dark .uid-chip-value {
-  color: #e7eef4;
+  color: var(--ink-deep);
 }
 
 .app-shell.theme-dark .uid-chip-chevron {
-  color: #a9bac7;
+  color: var(--charcoal);
 }
 
 .app-shell.theme-dark .uid-chip-button:hover .uid-chip-label,
@@ -57,21 +57,21 @@
 .app-shell.theme-dark .uid-chip-button:hover .uid-chip-value,
 .app-shell.theme-dark .uid-chip-button[aria-expanded="true"] .uid-chip-value,
 .app-shell.theme-dark .uid-chip-button[aria-expanded="true"] .uid-chip-chevron {
-  color: #8dc3ff;
+  color: var(--primary-deep);
 }
 
 .app-shell.theme-dark .uid-switcher-menu {
   border-color: rgba(83, 107, 124, 0.72);
-  color: #e7eef4;
+  color: var(--ink-deep);
   background:
     linear-gradient(180deg, rgba(25, 39, 50, 0.98), rgba(20, 32, 42, 0.96)),
-    #17232d;
+    var(--surface-soft);
   box-shadow: 0 24px 58px rgba(0, 0, 0, 0.34);
 }
 
 .app-shell.theme-dark .uid-switcher-field,
 .app-shell.theme-dark .uid-recent-list > span {
-  color: #98aab7;
+  color: var(--steel);
 }
 
 .app-shell.theme-dark .uid-recent-list button {
@@ -88,18 +88,18 @@
 
 .app-shell.theme-dark .uid-recent-list button.current {
   border-color: rgba(93, 168, 255, 0.36);
-  color: #e7eef4;
+  color: var(--ink-deep);
   background:
     linear-gradient(90deg, rgba(93, 168, 255, 0.13), rgba(29, 42, 53, 0.9));
 }
 
 .app-shell.theme-dark .uid-recent-list button.current:hover {
-  color: #e7eef4;
+  color: var(--ink-deep);
 }
 
 .app-shell.theme-dark .uid-recent-list button em {
   border-color: rgba(83, 107, 124, 0.62);
-  color: #a9bac7;
+  color: var(--charcoal);
   background: rgba(20, 32, 42, 0.78);
 }
 
@@ -111,22 +111,22 @@
 
 .app-shell.theme-dark .pill-tabs .active {
   border-color: rgba(93, 168, 255, 0.5);
-  color: #e7eef4;
+  color: var(--ink-deep);
   background: #263746;
   box-shadow: inset 0 0 0 1px rgba(93, 168, 255, 0.18);
 }
 
 .app-shell.theme-dark .hero-stats span {
-  color: #a9bac7;
+  color: var(--charcoal);
 }
 
 .app-shell.theme-dark .wordmark,
 .app-shell.theme-dark .hero-stats strong {
-  color: #e7eef4;
+  color: var(--ink-deep);
 }
 
 .app-shell.theme-dark .hero-band p {
-  color: #a9bac7;
+  color: var(--charcoal);
 }
 
 .app-shell.theme-dark .hero-stats div {
@@ -159,13 +159,13 @@
 }
 
 .app-shell.theme-dark .topbar .pill-tabs button:hover {
-  color: #e7eef4;
+  color: var(--ink-deep);
   background: rgba(93, 168, 255, 0.12);
 }
 
 .app-shell.theme-dark .topbar .pill-tabs .active {
   border-color: rgba(93, 168, 255, 0.56);
-  color: #e7eef4;
+  color: var(--ink-deep);
   background:
     linear-gradient(180deg, rgba(50, 73, 91, 0.94), rgba(38, 55, 70, 0.96)),
     #263746;
