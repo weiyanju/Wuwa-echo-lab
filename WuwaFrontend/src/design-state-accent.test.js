@@ -222,3 +222,16 @@ test('shell and shared controls consume dark theme tokens while keeping one sour
   assert.match(controls, /background: linear-gradient\(180deg, #7cbcff, var\(--primary\)\);/)
   assert.match(controls, /accent-color: var\(--primary\);/)
 })
+
+test('shared action buttons use stable control geometry while navigation remains pill-shaped', async () => {
+  const controls = await read('./styles/controls.css')
+  const shell = await read('./styles/shell.css')
+
+  assert.match(controls, /\.button-primary,[\s\S]+\.button-next \{[\s\S]+min-height: 44px;[\s\S]+border-radius: 12px;/)
+  assert.doesNotMatch(controls, /\.button-primary,[\s\S]+\.button-next \{[^}]+transition:[^}]+transform/)
+  assert.doesNotMatch(controls, /\.button-(?:primary|buy|danger|next):hover[^{]*\{[^}]*transform:/)
+  assert.match(controls, /\.button-danger,[\s\S]+\.button-next \{[\s\S]+min-height: 44px;/)
+  assert.doesNotMatch(controls, /\.button-(?:danger|next):hover[^{]*\{[^}]*box-shadow:\s*0\s+8px\s+18px/)
+  assert.match(shell, /\.pill-tabs button \{[\s\S]+border-radius: 100px;/)
+  assert.match(shell, /\.uid-chip \{[\s\S]+border-radius: 100px;/)
+})
