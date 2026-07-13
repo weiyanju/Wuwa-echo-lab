@@ -145,14 +145,13 @@
   display: flex;
   min-height: clamp(60px, 5vw, 90px);
   align-items: center;
-  border-left: 4px solid var(--terminal-primary);
-  margin-bottom: clamp(40px, 4vw, 56px);
-  padding-left: clamp(16px, 1.5vw, 24px);
+  margin-bottom: clamp(36px, 3.5vw, 52px);
 }
 
 .terminal-title {
+  --terminal-title-width: 8em;
   width: 0;
-  max-width: none;
+  max-width: 100%;
   overflow: hidden;
   border-right: 4px solid var(--terminal-primary);
   margin: 0;
@@ -283,7 +282,7 @@
 @keyframes terminal-pulse-glow { from { opacity: 0.3; transform: translate(-50%, -50%) scale(0.8); } to { opacity: 1; transform: translate(-50%, -50%) scale(1.2); } }
 @keyframes terminal-status-blink { 50% { opacity: 0.5; } }
 @keyframes terminal-fade-slide-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes terminal-typing { to { width: 100%; } }
+@keyframes terminal-typing { to { width: var(--terminal-title-width); } }
 @keyframes terminal-blink { 0%, 100% { border-color: transparent; } 50% { border-color: var(--terminal-primary); } }
 
 @media (max-width: 860px) {
@@ -291,7 +290,7 @@
   .terminal-container { grid-template-columns: 1fr; gap: 48px; padding: 40px 24px; }
   .terminal-hero-content { max-width: 100%; }
   .terminal-title { font-size: 48px; }
-  .terminal-title-wrapper { border-left-width: 3px; margin-bottom: 32px; padding-left: 16px; }
+  .terminal-title-wrapper { margin-bottom: 32px; }
   .terminal-features-grid { grid-template-columns: 1fr; gap: 24px; }
   .terminal-feature-text h4 { white-space: normal; }
   .terminal-auth-card { min-height: auto; }

@@ -1,5 +1,6 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import historySelectedIcon from '../../assets/icons/check.svg'
 import historyMinimizeIcon from '../../assets/icons/panel-left.svg'
 import historyPinnedIcon from '../../assets/icons/pin.svg'
 import historyShowcaseIcon from '../../assets/icons/layout-list.svg'
@@ -596,6 +597,7 @@ onBeforeUnmount(() => {
         :aria-pressed="historyFilter === option.key"
         @click="historyFilter = option.key"
       >
+        <span class="ui-line-icon history-filter-selected-icon" :style="iconMask(historySelectedIcon)" aria-hidden="true"></span>
         <span>{{ option.label }}</span>
         <strong>{{ option.count }}</strong>
       </button>
@@ -612,6 +614,7 @@ onBeforeUnmount(() => {
           discarded: echo.status === 'archived',
         }"
         :style="{ '--substat-count': echo.substats.length }"
+        :aria-current="echo.id === activeEchoId ? 'true' : null"
         @click="emit('select', echo.id)"
       >
         <div class="echo-item-head">

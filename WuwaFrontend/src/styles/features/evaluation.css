@@ -425,7 +425,13 @@
 }
 
 .app-shell.theme-dark .model-judgement-summary {
+  border-color: color-mix(in srgb, var(--model-accent) 24%, rgba(75, 98, 113, 0.7));
   color: #b9cad6;
+  background: color-mix(in srgb, var(--model-accent) 7%, #17232d);
+}
+
+.app-shell.theme-dark .model-judgement-label {
+  color: color-mix(in srgb, var(--model-accent) 76%, #e7eef4);
 }
 
 .app-shell.theme-dark .model-player-note,
@@ -568,7 +574,6 @@
 .app-shell.theme-dark .markov-penalty-grid article,
 .app-shell.theme-dark .model-bars-large div {
   border-color: rgba(63, 86, 102, 0.72);
-  border-top-color: color-mix(in srgb, var(--window-accent, var(--model-accent)) 42%, #2c3c48);
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--window-accent, var(--model-accent)) 12%, transparent), transparent 48%),
     rgba(17, 29, 38, 0.68);
@@ -1271,22 +1276,7 @@
   transition:
     border-color 160ms ease,
     background 160ms ease,
-    box-shadow 160ms ease,
-    transform 160ms ease;
-}
-
-.model-detail-thumb::before {
-  position: absolute;
-  top: 12px;
-  bottom: 12px;
-  left: 0;
-  width: 3px;
-  height: auto;
-  border-radius: 0 999px 999px 0;
-  background: linear-gradient(90deg, #1769d2, #2c9f70);
-  content: "";
-  opacity: 0;
-  transition: opacity 160ms ease;
+    box-shadow 160ms ease;
 }
 
 .model-detail-thumb:hover,
@@ -1297,10 +1287,6 @@
     linear-gradient(135deg, rgba(23, 105, 210, 0.055), rgba(48, 164, 108, 0.055)),
     #ffffff;
   box-shadow: 0 8px 18px rgba(26, 39, 52, 0.055);
-}
-
-.model-detail-thumb.active::before {
-  opacity: 1;
 }
 
 .model-detail-thumb:focus-visible {
@@ -1569,13 +1555,29 @@
 }
 
 .model-judgement-summary {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
   margin: 0;
-  border-left: 2px solid color-mix(in srgb, var(--model-accent) 34%, transparent);
-  padding: 3px 0 3px 10px;
+  border: 1px solid color-mix(in srgb, var(--model-accent) 18%, #d8e2ea);
+  border-radius: 10px;
+  padding: 8px 10px;
   color: #334d60;
+  background: color-mix(in srgb, var(--model-accent) 5%, #f7f9fb);
   font-size: var(--text-label);
   font-weight: var(--weight-supporting);
   line-height: var(--leading-body);
+}
+
+.model-judgement-label {
+  margin-top: 1px;
+  color: color-mix(in srgb, var(--model-accent) 78%, #1e2b34);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-control);
+  line-height: var(--leading-label);
+  letter-spacing: var(--tracking-cjk);
+  white-space: nowrap;
 }
 
 .model-chart-title small {
@@ -1898,7 +1900,6 @@
   box-sizing: border-box;
   position: relative;
   border: 1px solid #dce5ec;
-  border-top: 3px solid color-mix(in srgb, var(--window-accent) 54%, #dce5ec);
   border-radius: 10px;
   min-width: 0;
   min-height: 116px;
@@ -2429,7 +2430,6 @@
   display: grid;
   gap: 8px;
   border: 1px solid #dce5ec;
-  border-top: 2px solid color-mix(in srgb, var(--model-accent) 30%, #dce5ec);
   border-radius: 10px;
   min-width: 0;
   min-height: 88px;
@@ -2659,7 +2659,6 @@
   align-items: center;
   min-height: 54px;
   border: 1px solid #dce5ec;
-  border-top: 3px solid color-mix(in srgb, var(--model-accent) 48%, #dce5ec);
   border-radius: 10px;
   padding: 10px 14px 11px;
   background:
@@ -2891,7 +2890,6 @@
   display: grid;
   gap: 6px;
   border: 1px solid #dce5ec;
-  border-top: 3px solid color-mix(in srgb, var(--model-accent) 48%, #dce5ec);
   border-radius: 10px;
   min-width: 0;
   padding: 12px 14px 13px;
@@ -3266,7 +3264,6 @@
   background:
     linear-gradient(180deg, rgba(241, 247, 253, 0.94), rgba(255, 255, 255, 0.96)),
     #ffffff;
-  box-shadow: inset 0 3px 0 rgba(47, 131, 216, 0.34);
 }
 
 .model-bars article.best {
@@ -3277,7 +3274,6 @@
   background:
     linear-gradient(180deg, rgba(246, 253, 250, 0.86), rgba(255, 255, 255, 0.95)),
     #ffffff;
-  box-shadow: inset 0 3px 0 rgba(44, 159, 112, 0.38);
 }
 
 .model-bars article.best.expanded {
@@ -3286,7 +3282,6 @@
   background:
     linear-gradient(180deg, rgba(242, 253, 248, 0.9), rgba(255, 255, 255, 0.96)),
     #ffffff;
-  box-shadow: inset 0 3px 0 rgba(44, 159, 112, 0.42);
 }
 
 .model-bars article.disabled,

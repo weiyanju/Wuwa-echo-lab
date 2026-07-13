@@ -524,7 +524,7 @@ onBeforeUnmount(() => {
 
                 <div class="model-insight-body">
                   <section v-if="modelInsightView(model) === 'distribution'" class="model-insight-chart" :class="`model-chart-${model.key}`">
-                    <p class="model-judgement-summary">{{ modelJudgementSummary(model) }}</p>
+                    <p class="model-judgement-summary"><span class="model-judgement-label">判断</span><span>{{ modelJudgementSummary(model) }}</span></p>
 
                     <div v-if="model.key === 'bayes'" class="bayes-contribution-chart">
                       <div class="bayes-contribution-labels">
@@ -655,7 +655,7 @@ onBeforeUnmount(() => {
                   </section>
 
                   <section v-else-if="modelInsightView(model) === 'evidence'" class="model-evidence-panel">
-                    <p class="model-judgement-summary">{{ model.detail }}</p>
+                    <p class="model-judgement-summary"><span class="model-judgement-label">判断</span><span>{{ model.detail }}</span></p>
                     <ul>
                       <li v-for="(item, index) in model.evidence" :key="item">
                         <strong>{{ item }}</strong>

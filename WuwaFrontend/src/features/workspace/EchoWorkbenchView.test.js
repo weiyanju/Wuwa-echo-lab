@@ -364,7 +364,7 @@ test('workspace styles keep long substat titles and recorded rows stable', async
   assert.match(style, /\.roll-slot \{[\s\S]+min-height: 36px;/)
   assert.match(style, /\.roll-slot\.pending \{[\s\S]+color: var\(--stone\);/)
   assert.match(style, /\.substat-meta \{[\s\S]+min-height: 46px;/)
-  assert.match(style, /\.substat-row\.top-predicted-row \{[\s\S]+box-shadow: inset 4px 0 0 rgba\(44, 159, 112, 0\.62\);/)
+  assert.match(style, /\.substat-row\.top-predicted-row \{\s+border-color: rgba\(44, 159, 112, 0\.52\);\s+background: rgba\(44, 159, 112, 0\.08\);\s+\}/)
   assert.match(style, /\.substat-row\.recorded \{[\s\S]+box-shadow: none;/)
 })
 

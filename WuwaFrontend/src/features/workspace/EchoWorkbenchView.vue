@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue'
+import selectedCheckIcon from '../../assets/icons/check.svg'
 import topPredictedIcon from '../../assets/icons/fast-arrow-up.svg'
 import { mainStatLabels, mainStatsByCost } from '../../data/substats'
 import { sonataEffects } from '../../data/sonataEffects'
@@ -106,6 +107,7 @@ function iconMask(source) { return { '--icon-url': `url("${source}")` } }
             >
               <img :src="effect.icon" :alt="effect.name" />
               <span>{{ effect.name }}</span>
+              <span v-if="config.sonata === effect.name" class="ui-line-icon sonata-selected-indicator" :style="iconMask(selectedCheckIcon)" aria-hidden="true"></span>
             </button>
             <p v-if="!filteredSonataEffects.length" class="sonata-empty-state">未找到匹配套装</p>
           </div>
