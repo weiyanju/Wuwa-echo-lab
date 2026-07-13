@@ -4,20 +4,20 @@
   border-color: rgba(83, 107, 124, 0.66);
   background:
     linear-gradient(180deg, rgba(25, 39, 50, 0.96), rgba(20, 32, 42, 0.94)),
-    #17232d;
+    var(--surface-soft);
   box-shadow: 0 18px 42px rgba(0, 0, 0, 0.24);
 }
 
 .app-shell.theme-dark .active-summary strong,
 .app-shell.theme-dark .substat-row strong,
 .app-shell.theme-dark .tier-grid button strong {
-  color: #e7eef4;
+  color: var(--ink-deep);
 }
 
 .app-shell.theme-dark .active-summary p,
 .app-shell.theme-dark .substat-row span,
 .app-shell.theme-dark .tier-grid button span {
-  color: #a9bac7;
+  color: var(--charcoal);
 }
 
 .app-shell.theme-dark .active-summary,
@@ -45,17 +45,17 @@
 .app-shell.theme-dark .sonata-grid button.active,
 .app-shell.theme-dark .option-row .active {
   border-color: #5da8ff;
-  color: #e7eef4;
+  color: var(--ink-deep);
   background: #263746;
   box-shadow: inset 0 0 0 1px rgba(93, 168, 255, 0.2);
 }
 
-.app-shell.theme-dark .option-row button:disabled { border-color: rgba(55, 74, 88, 0.66); color: #788998; background: #17232d; }
+.app-shell.theme-dark .option-row button:disabled { border-color: rgba(55, 74, 88, 0.66); color: #788998; background: var(--surface-soft); }
 
 .app-shell.theme-dark .substat-row.recorded .tier-grid button:disabled:not(.recorded-tier) { border-color: rgba(55, 74, 88, 0.46); color: #687b89; background: rgba(18, 32, 42, 0.7); }
 
 .app-shell.theme-dark .tier-grid button.recorded-tier:disabled,
-.app-shell.theme-dark .tier-grid button.saving-tier:disabled { border-color: rgba(93, 168, 255, 0.58); color: #e7eef4; background: rgba(93, 168, 255, 0.18); box-shadow: inset 0 0 0 1px rgba(93, 168, 255, 0.12); }
+.app-shell.theme-dark .tier-grid button.saving-tier:disabled { border-color: rgba(93, 168, 255, 0.58); color: var(--ink-deep); background: rgba(93, 168, 255, 0.18); box-shadow: inset 0 0 0 1px rgba(93, 168, 255, 0.12); }
 
 .app-shell.theme-dark .tier-saving-label { color: #b8d9ff; }
 
@@ -63,7 +63,7 @@
 .app-shell.theme-dark .progress-card span,
 .app-shell.theme-dark .record-progress-card span,
 .app-shell.theme-dark .active-record-head span {
-  color: #98aab7;
+  color: var(--steel);
 }
 
 .app-shell.theme-dark .active-summary { border-color: transparent; background: transparent; }
@@ -97,19 +97,19 @@
   background: rgba(16, 27, 35, 0.86);
 }
 .app-shell.theme-dark .active-echo-stage-dots button.active {
-  background: #8dc3ff;
+  background: var(--primary-deep);
 }
-.app-shell.theme-dark .active-echo-name-title { color: #e7eef4; }
+.app-shell.theme-dark .active-echo-name-title { color: var(--ink-deep); }
 
 .app-shell.theme-dark .active-record-pill {
   border-color: rgba(93, 168, 255, 0.24);
-  color: #a9bac7;
+  color: var(--charcoal);
   background: rgba(16, 27, 35, 0.86);
 }
 
 .app-shell.theme-dark .active-record-count-badge {
   border-color: transparent;
-  color: #a9bac7;
+  color: var(--charcoal);
   background: transparent;
 }
 
@@ -129,10 +129,10 @@
   background: rgba(16, 27, 35, 0.72);
 }
 
-.app-shell.theme-dark .roll-strip-head { border-color: rgba(82, 106, 122, 0.34); color: #98aab7; }
+.app-shell.theme-dark .roll-strip-head { border-color: rgba(82, 106, 122, 0.34); color: var(--steel); }
 
 .app-shell.theme-dark .roll-strip span strong {
-  color: #e7eef4;
+  color: var(--ink-deep);
 }
 
 .app-shell.theme-dark .roll-slot.pending { color: #788998; }
@@ -140,9 +140,9 @@
   color: #dbe6ed;
   background: rgba(93, 168, 255, 0.08);
 }
-.app-shell.theme-dark .roll-slot.pending.current .roll-position { color: #8dc3ff; }
+.app-shell.theme-dark .roll-slot.pending.current .roll-position { color: var(--primary-deep); }
 
-.app-shell.theme-dark .active-prediction-empty { color: #98aab7; }
+.app-shell.theme-dark .active-prediction-empty { color: var(--steel); }
 .app-shell.theme-dark .active-prediction-card { border-color: transparent; background: transparent; }
 .app-shell.theme-dark .active-prediction-suggestion { border-color: rgba(55, 179, 127, 0.2); color: #bfe8d1; background: rgba(55, 179, 127, 0.14); }
 .app-shell.theme-dark .active-prediction-subheading { color: #8fa0ad; }
@@ -193,7 +193,7 @@
 .app-shell.theme-dark .active-action-rail { background: #14212b; }
 
 .app-shell.theme-dark .progress-card {
-  color: #e7eef4;
+  color: var(--ink-deep);
 }
 
 .app-shell.theme-dark .progress-track {
@@ -229,7 +229,7 @@
 
 .app-shell.theme-dark .tier-grid button strong,
 .app-shell.theme-dark .tier-unit {
-  color: #e7eef4;
+  color: var(--ink-deep);
 }
 
 .app-shell.theme-dark .tier-grid button:active:not(:disabled) { border-color: #5da8ff; }
@@ -246,7 +246,7 @@
 }
 
 .app-shell.theme-dark .sonata-grid::-webkit-scrollbar-thumb {
-  border-color: #17232d;
+  border-color: var(--surface-soft);
 }
 
 .option-row {

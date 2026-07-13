@@ -180,3 +180,16 @@ test('evaluation dark theme consumes existing semantic theme tokens without rema
   assert.match(evaluation, /var\(--surface-soft\)/)
   assert.match(evaluation, /color: var\(--primary-deep\);/)
 })
+
+test('workspace dark theme consumes the same semantic theme tokens without visual remapping', async () => {
+  const controls = await read('./styles/controls.css')
+  const workspace = await read('./styles/features/workspace.css')
+
+  assert.match(controls, /\.app-shell\.theme-dark \{[\s\S]+--primary-deep: #8dc3ff;[\s\S]+--ink-deep: #e7eef4;[\s\S]+--charcoal: #a9bac7;[\s\S]+--steel: #98aab7;[\s\S]+--surface-soft: #17232d;/)
+  assert.doesNotMatch(workspace, /#(?:e7eef4|a9bac7|98aab7|17232d|8dc3ff)\b/i)
+  assert.match(workspace, /color: var\(--ink-deep\);/)
+  assert.match(workspace, /color: var\(--charcoal\);/)
+  assert.match(workspace, /color: var\(--steel\);/)
+  assert.match(workspace, /var\(--surface-soft\)/)
+  assert.match(workspace, /(?:color|background): var\(--primary-deep\);/)
+})

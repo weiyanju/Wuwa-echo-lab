@@ -431,7 +431,7 @@ test('echo workbench disables costs unavailable for the selected sonata', async 
   assert.match(source, /:disabled="!isCostAvailable\(cost\)"/)
   assert.match(source, /@click="selectCost\(cost\)"/)
   assert.match(style, /\.option-row button:disabled \{[\s\S]+opacity: 0\.46;/)
-  assert.match(style, /\.app-shell\.theme-dark \.option-row button:disabled \{[\s\S]+background: #17232d;/)
+  assert.match(style, /\.app-shell\.theme-dark \.option-row button:disabled \{[\s\S]+background: var\(--surface-soft\);/)
 })
 
 test('echo workbench uses equal outer columns with viewport-sticky setup content', async () => {
