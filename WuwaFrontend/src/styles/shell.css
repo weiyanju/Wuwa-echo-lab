@@ -219,9 +219,9 @@
 }
 
 .topbar {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
   gap: 24px;
 }
 
@@ -272,6 +272,7 @@
 .wordmark {
   display: inline-flex;
   align-items: center;
+  justify-self: start;
   gap: 10px;
   color: var(--ink-deep);
   font-size: 16px;
@@ -288,6 +289,7 @@
   position: relative;
   display: flex;
   align-items: center;
+  justify-self: end;
   gap: 10px;
 }
 

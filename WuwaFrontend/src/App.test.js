@@ -105,6 +105,15 @@ test('topbar uses a compact accessible TETHYS wordmark without changing the hero
   assert.doesNotMatch(shellStyleSource, /\.wordmark::before \{[^}]+linear-gradient/)
 })
 
+test('topbar centers page navigation between asymmetric side controls', async () => {
+  const shellStyleSource = await readFile(new URL('./styles/shell.css', import.meta.url), 'utf8')
+
+  assert.match(shellStyleSource, /\.topbar \{[^}]*display: grid;[^}]*grid-template-columns: minmax\(0, 1fr\) auto minmax\(0, 1fr\);/)
+  assert.match(shellStyleSource, /\.wordmark \{[^}]*justify-self: start;/)
+  assert.match(shellStyleSource, /\.account-actions \{[^}]*justify-self: end;/)
+  assert.match(shellStyleSource, /@media \(max-width: 860px\) \{[\s\S]*?\.topbar \{[^}]*display: flex;[^}]*flex-direction: column;/)
+})
+
 test('topbar renders the shared uid switcher for game account selection', async () => {
   const appSource = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
   const uidSetupSource = await readFile(new URL('./features/workspace/UidSetupView.vue', import.meta.url), 'utf8')
