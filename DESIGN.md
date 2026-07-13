@@ -4,11 +4,13 @@ description: 冷静、精确、低噪音的声骸数据工作台。
 colors:
   primary: "#0064e0"
   primary-deep: "#0457cb"
+  primary-soft: "#f4f8ff"
   prediction: "#2c9f70"
+  prediction-ink: "#166b4a"
   ink-strong: "#0a1317"
   ink-main: "#1c1e21"
   text-muted: "#5d6c7b"
-  text-subtle: "#8595a4"
+  decorative-muted: "#8595a4"
   canvas: "#ffffff"
   surface-root: "#f6f8fb"
   surface-soft: "#f1f4f7"
@@ -16,8 +18,12 @@ colors:
   border-soft: "#dee3e9"
   border-strong: "#ced0d4"
   success: "#31a24c"
+  success-ink: "#18723a"
   warning: "#f7b928"
+  warning-ink: "#6b4f00"
   critical: "#e41e3f"
+  critical-deep: "#bd1730"
+  critical-soft: "#fff3f5"
 typography:
   display:
     fontFamily: "IBM Plex Sans SC, Noto Sans SC, Microsoft YaHei UI, system-ui, sans-serif"
@@ -43,23 +49,29 @@ typography:
     fontWeight: 400
     lineHeight: 1.5
     letterSpacing: "0"
+  control:
+    fontFamily: "IBM Plex Sans SC, Noto Sans SC, Microsoft YaHei UI, system-ui, sans-serif"
+    fontSize: "0.875rem"
+    fontWeight: 600
+    lineHeight: 1.25
+    letterSpacing: "0"
   label:
     fontFamily: "IBM Plex Sans SC, Noto Sans SC, Microsoft YaHei UI, system-ui, sans-serif"
     fontSize: "0.8125rem"
     fontWeight: 600
     lineHeight: 1.3
     letterSpacing: "0"
+  caption:
+    fontFamily: "IBM Plex Sans SC, Noto Sans SC, Microsoft YaHei UI, system-ui, sans-serif"
+    fontSize: "0.75rem"
+    fontWeight: 500
+    lineHeight: 1.35
+    letterSpacing: "0"
   data:
     fontFamily: "IBM Plex Sans SC, IBM Plex Sans, system-ui, sans-serif"
     fontSize: "1.125rem"
     fontWeight: 600
     lineHeight: 1.05
-    letterSpacing: "0"
-  latin:
-    fontFamily: "IBM Plex Sans SC, IBM Plex Sans, system-ui, sans-serif"
-    fontSize: "0.875rem"
-    fontWeight: 600
-    lineHeight: 1.25
     letterSpacing: "0"
   mono:
     fontFamily: "IBM Plex Mono, ui-monospace, Consolas, monospace"
@@ -70,10 +82,13 @@ typography:
 rounded:
   none: "0px"
   dense: "8px"
-  sm: "12px"
-  md: "16px"
-  lg: "20px"
-  xl: "24px"
+  compact: "10px"
+  control: "12px"
+  card: "14px"
+  card-large: "16px"
+  panel-compact: "18px"
+  panel-small: "20px"
+  panel: "24px"
   pill: "999px"
 spacing:
   xs: "4px"
@@ -81,55 +96,56 @@ spacing:
   md: "12px"
   lg: "16px"
   xl: "20px"
-  2xl: "24px"
-  3xl: "28px"
+  xxl: "24px"
+  xxxl: "28px"
+  display: "32px"
 components:
   button-primary:
     backgroundColor: "{colors.primary}"
     textColor: "{colors.canvas}"
-    typography: "{typography.label}"
-    rounded: "{rounded.sm}"
-    padding: "7px 12px"
-    height: "46px"
+    typography: "{typography.control}"
+    rounded: "{rounded.control}"
+    padding: "10px 18px"
+    height: "44px"
   button-primary-hover:
     backgroundColor: "{colors.primary-deep}"
     textColor: "{colors.canvas}"
-    typography: "{typography.label}"
-    rounded: "{rounded.sm}"
-    padding: "7px 12px"
-    height: "46px"
+    typography: "{typography.control}"
+    rounded: "{rounded.control}"
+    padding: "10px 18px"
+    height: "44px"
   button-secondary:
     backgroundColor: "{colors.canvas}"
     textColor: "{colors.ink-strong}"
-    typography: "{typography.label}"
-    rounded: "{rounded.sm}"
-    padding: "7px 12px"
-    height: "40px"
+    typography: "{typography.control}"
+    rounded: "{rounded.control}"
+    padding: "10px 18px"
+    height: "44px"
   button-danger:
     backgroundColor: "{colors.canvas}"
-    textColor: "{colors.critical}"
-    typography: "{typography.label}"
-    rounded: "{rounded.sm}"
-    padding: "7px 12px"
-    height: "40px"
+    textColor: "{colors.critical-deep}"
+    typography: "{typography.control}"
+    rounded: "{rounded.control}"
+    padding: "10px 16px"
+    height: "44px"
   nav-tab-active:
     backgroundColor: "{colors.ink-strong}"
     textColor: "{colors.canvas}"
-    typography: "{typography.label}"
+    typography: "{typography.control}"
     rounded: "{rounded.pill}"
-    padding: "7px 18px"
-    height: "36px"
+    padding: "8px 18px"
+    height: "40px"
   input-field:
     backgroundColor: "{colors.canvas}"
     textColor: "{colors.ink-main}"
     typography: "{typography.body}"
-    rounded: "{rounded.dense}"
-    padding: "12px"
+    rounded: "{rounded.control}"
+    padding: "10px 12px"
     height: "44px"
   uid-chip:
     backgroundColor: "{colors.canvas}"
     textColor: "{colors.text-muted}"
-    typography: "{typography.label}"
+    typography: "{typography.control}"
     rounded: "{rounded.pill}"
     padding: "8px 14px"
     height: "40px"
@@ -137,205 +153,293 @@ components:
     backgroundColor: "{colors.canvas}"
     textColor: "{colors.ink-strong}"
     typography: "{typography.body}"
-    rounded: "{rounded.xl}"
-    padding: "28px"
+    rounded: "{rounded.panel}"
+    padding: "24px"
   prediction-rail:
     backgroundColor: "{colors.surface-prediction}"
     textColor: "{colors.ink-strong}"
     typography: "{typography.label}"
     rounded: "{rounded.none}"
     padding: "16px"
+  bayes-path:
+    backgroundColor: "{colors.canvas}"
+    textColor: "{colors.ink-strong}"
+    typography: "{typography.body}"
+    rounded: "{rounded.card}"
+    padding: "16px"
+  floating-history-panel:
+    backgroundColor: "{colors.canvas}"
+    textColor: "{colors.ink-strong}"
+    typography: "{typography.body}"
+    rounded: "{rounded.card-large}"
+    padding: "16px"
+    width: "320px"
 ---
 
 # Design System: Wuwa / Tethys System
 
-## 0. Usage and precedence
+## 0. 使用方式与审查边界
 
-本文件是 Web 当前视觉实现的总入口，负责颜色、字体、圆角、间距、阴影、组件语言和交互状态。跨端产品行为与账号、UID、数据可信边界遵循 `docs/product-interface-principles.md`；Web 长期方向遵循 `docs/web-ui-design-system-v2.md`；页面专项规则在不冲突的前提下补充本文件。
+本文件是 Wuwa Web 当前设计的最高视觉入口，但它不把任何外部工具的通用规则自动升级为项目决策。当前已经被用户确认的页面截图、浏览器渲染结果、稳定实现和明确设计决策共同构成批准基线；后续改动默认在此基础上渐进演进。
 
-开发前必须先读 `PRODUCT.md` 与本文件。`docs/superpowers/`、`docs/archive/` 和 `memory/` 只提供专项背景或历史决策。文档与实现冲突时，先确认预期并同步两者，禁止静默降低规范来迁就现有代码。
+Impeccable `audit` 是技术诊断和候选问题清单，不是设计定稿，也不直接授权修改颜色、字体、圆角、阴影、动效或组件结构。Audit 的严重等级、健康分数、命令建议和颜色字面量数量都不能替代项目判断。
+
+当本文件、`.impeccable/design.json` 与实现冲突时，不自动修改代码迎合文档，也不自动降低文档迎合代码。先将冲突标记为待决策项，用户批准具体方案后再同步文档、实现和测试。
+
+每项审查发现必须先归入以下类型：
+
+- **无视觉修复**：语义 HTML、ARIA 关联、焦点管理和内容默认可见等；可以在保持截图稳定的前提下实施。
+- **实测后决定**：动画性能、CSS 与字体加载、响应式溢出和点击目标；先取得浏览器或性能数据。
+- **视觉提案**：配色、字体层级、圆角、阴影、按钮造型和动效语言；必须提供局部前后对比并获得用户批准。
+- **项目例外**：真实表达路径、进度、数据结构或品牌交互的功能图形；记录后不再按装饰性反模式反复整改。
+
+颜色 token 化、主题变量收敛和 CSS ownership 整理的第一阶段必须保持零视觉漂移：只能改变命名和引用方式，不能改变最终计算颜色、字体角色、字号、字重、间距或组件几何。
 
 ## 1. Overview
 
 **Creative North Star: "泰缇斯研究台"**
 
-Wuwa 是玩家在普通室内光线下长时间录入、核对和分析声骸数据的桌面工作台。浅色表面、稳定对齐和有限强调色让界面在高密度下保持冷静，游戏语境通过术语、数据模型和流程出现，不依赖装饰性视觉效果。
+Wuwa 是玩家在普通室内光线下长时间录入、核对和分析声骸数据的桌面工作台。视觉系统服务于可信数据、稳定账号与 UID 上下文以及高频录入效率；游戏语境来自术语、数据模型和工作流程，而不是装饰性特效。
 
-系统气质必须清晰、克制、专业、低噪音。Web 是深度工作台，优先保证账号与 UID 上下文、数据可信和高频录入效率；首页可以保留轻量终端感，但登录后的界面必须回到熟悉、稳定的生产力工具语言。
+界面必须清晰、克制、专业、低噪音。浅色模式是首要设计基准，暗色模式只做同等语义映射。首页可以保留受控的终端语气，但登录后的工作台、统计和评估必须回到熟悉、稳定的生产力工具语言。
 
-界面明确拒绝营销落地页、视觉特效展示、通用企业后台、调试控制台和另一套账号或 UID 心智。外部参考只提供视觉词汇，绝不替代 Wuwa 自己的业务结构。
+本文件是 Web 视觉 token、字体、组件语言和交互状态的规范入口。跨端行为遵循 `docs/product-interface-principles.md`，Web 长期方向遵循 `docs/web-ui-design-system-v2.md`，页面规范在不冲突时补充本文件。实现与本文件冲突时先确认预期，再同步代码、测试和长期文档；不得静默降低规范来迁就历史样式。
 
 **Key Characteristics:**
 
-- 浅色优先，蓝色只承担关键动作、当前选择和重要状态。
-- 冷灰边框与近白表面建立结构，阴影只服务真实层级。
-- 圆角现代但不软萌，数据区紧凑但不拥挤。
-- 数字稳定对齐，概率、UID、样本量和分数易于纵向比较。
-- 顶部导航保持清楚，历史记录和识别复核不得压迫主任务。
+- 浅色优先，蓝色只承担关键动作、当前选择、焦点和高价值状态。
+- 冷灰边框与近白表面建立结构，阴影只解释真实悬浮层级。
+- 页面容器柔和，中型卡片克制，密集数据单元保持紧凑。
+- 数字稳定对齐，概率、UID、样本量、权重和分数便于纵向比较。
+- 顶部导航明确，历史记录和识别复核辅助主任务但不压迫主流程。
+- 桌面端优先维持信息密度，窄屏通过结构重排而不是缩小可读文字解决空间问题。
 
-**The Task Surface Rule.** 每一个面板必须对应真实任务；没有业务意义的 chrome、卡片和状态条一律删除。
+**The Task Surface Rule.** 每一个面板必须对应真实任务；没有业务意义的 chrome、卡片、状态条和装饰层一律删除。
+
+**The Approved Baseline Rule.** 当前已经被用户确认的页面截图、浏览器渲染结果、稳定实现和明确设计决策共同构成批准基线；Impeccable 或其他通用工具的规则只能提供候选问题，不能自动覆盖该基线。
+
+**The Audit Triage Rule.** Audit 发现必须先归类为无视觉修复、实测后决定、视觉提案或项目例外；只有无视觉修复可以在保持渲染稳定的前提下直接实施，视觉提案必须获得用户批准。
+
+**The No Visual Drift Rule.** Token 化、主题收敛和样式重构默认只改变命名与引用，不改变最终色值、字体、间距或几何；任何视觉变化必须限定范围、说明用户价值并提供前后截图。
 
 ## 2. Colors
 
-这是一套受控的浅色工具型调色板：泰缇斯蓝负责行动，深墨负责层级，冷白与雾灰负责长时间工作的安静背景。
+调色板采用冷白表面、深墨文字和一个受控蓝色强调。预测色与成功色虽然同属绿色家族，但语义必须分开：预测表示模型输出，成功表示已经发生的正向结果。
 
 ### Primary
 
 - **泰缇斯蓝** (`colors.primary`)：唯一主强调色，用于主操作、当前选择、焦点和高价值状态。
-- **深泰缇斯蓝** (`colors.primary-deep`)：用于主操作的 hover、active 以及需要更强对比的选中状态。
+- **深泰缇斯蓝** (`colors.primary-deep`)：主操作 hover、active 及需要更强对比的选中状态。
+- **浅泰缇斯蓝** (`colors.primary-soft`)：主操作的低权重 hover 背景、选中行和焦点附近的轻量表面。
+
+### Secondary
+
+- **预测绿** (`colors.prediction`)：图形、进度和模型聚焦结果；作为普通文字时改用 `colors.prediction-ink`。
+- **预测深绿** (`colors.prediction-ink`)：预测标签和说明文字，在白色背景上保持 WCAG AA 对比度。
 
 ### Neutral
 
 - **深墨文字** (`colors.ink-strong`)：页面标题、关键数值和最高层级文本。
 - **正文墨色** (`colors.ink-main`)：正文、表单值和常规操作文本。
-- **钢灰说明** (`colors.text-muted`)：辅助信息、caption 和次级状态。
-- **雾灰提示** (`colors.text-subtle`)：占位、弱提示和非关键 metadata，禁止承载关键操作信息。
+- **钢灰说明** (`colors.text-muted`)：辅助信息、caption、placeholder 和次级状态；它是在浅色表面上允许使用的最低文本对比色。
+- **雾灰装饰** (`colors.decorative-muted`)：仅用于非文字图形、刻度线和禁用装饰；禁止承载 placeholder、正文或操作信息。
 - **冷白画布** (`colors.canvas`)：主要内容表面。
 - **冰雾底色** (`colors.surface-root`)：页面背景与大区域分隔。
 - **柔灰表面** (`colors.surface-soft`)：次级面板、禁用背景和低权重分组。
-- **预测雾面** (`colors.surface-prediction`)：预测摘要与紧凑的算法结果区域。
+- **预测雾面** (`colors.surface-prediction`)：紧凑预测摘要和算法结果区域。
 - **柔边界** (`colors.border-soft`)：默认容器、卡片和行分隔。
-- **强边界** (`colors.border-strong`)：输入框和需要更清楚轮廓的控件。
+- **强边界** (`colors.border-strong`)：输入框及需要更清楚轮廓的控件。
 
-### Secondary
+### Semantic states
 
-- **预测绿** (`colors.prediction`)：贯穿右侧预测摘要和下方“预测概率提升”行，表示模型当前聚焦结果，不等同于成功状态。
-- **成功绿** (`colors.success`)：仅用于保存成功、识别成功、已记录和真实正向状态。
-- **确认琥珀** (`colors.warning`)：仅用于低置信度、待确认和可恢复风险。
-- **错误红** (`colors.critical`)：仅用于失败、不可提交、冲突和破坏性操作。
+- **成功绿** (`colors.success`)：图标、状态点和图形填充；成功文字使用 `colors.success-ink`。
+- **成功深绿** (`colors.success-ink`)：保存成功、识别成功和已记录文字。
+- **确认琥珀** (`colors.warning`)：低置信度、待确认和可恢复风险的图形或浅底；文字使用 `colors.warning-ink`。
+- **警告深琥珀** (`colors.warning-ink`)：警告文字和边界标签。
+- **错误红** (`colors.critical`)：错误图标、边框和状态填充。
+- **错误深红** (`colors.critical-deep`)：错误文字和破坏性操作文字。
+- **错误浅红** (`colors.critical-soft`)：错误说明和破坏性操作 hover 的低权重背景。
+
+### Dark equivalence
+
+暗色模式使用 `#0f1720` 画布、`#17232d` 次级表面、`#e7eef4` 主文字、`#a9bac7` 次级文字、`#2c3c48` 强边界和 `#243542` 柔边界。主蓝映射为 `#5da8ff`，但视觉权重、状态含义和组件结构必须与浅色模式相同；禁止添加霓虹发光、装饰渐变或另一套终端产品语言。
 
 ### Named Rules
 
-**The One Voice Rule.** 蓝色只出现在关键动作、当前选择和状态指示中；同一屏幕不得让多个区域同时争夺主强调色。
+**The One Voice Rule.** 蓝色只出现在关键动作、当前选择和状态指示中；同一局部区域只能有一个最高权重主操作。
 
-**The Semantic Color Rule.** 绿色、琥珀色和红色必须对应真实状态，绝不用于装饰；状态还必须配合文字、图标或形状表达。
+**The Semantic Color Rule.** 预测、成功、警告和错误必须对应真实含义，并配合文字、图标或形状表达，绝不只靠颜色区分。
 
-**The Light-First Rule.** 浅色模式是基准。暗色模式只能做等价语义映射，不能成为霓虹化或开发者控制台风格的另一套产品。
+**The Readability Guardrail Rule.** 关键正文、表单值、操作标签、错误信息和焦点状态必须清楚可读；对比度用于发现文字过灰和状态不可辨等真实回归，不用于按 audit 分数批量重映射项目色板。禁用内容、装饰线、非文字图形和低权重图表刻度按实际语义判断。
+
+**The Light-First Rule.** 浅色模式是基准，暗色模式只能做等价语义映射，不能成为霓虹化或开发者控制台风格的另一套产品。
+
+### Token layering
+
+- 全局语义 token 只承载主色、文字、表面、边框、成功、警告和错误。
+- 评估模型、Bayes 路径、覆盖范围、识别和工作台专属语义使用 feature token。
+- 数据图形内部允许保留表达具体数据含义的局部颜色，但必须提供需要的主题映射。
+- 颜色字面量数量不等于设计缺陷数量；不得为了减少统计数字而改变现有视觉，也不得把全部图表颜色提升为全局 token。
+
+### Approved functional graphic exceptions
+
+- Bayes Exact / Wildcard 路径左侧的实线与虚线路径标记属于推理结构图形。
+- 登录标题的 4px 打字光标及其已批准间距属于品牌交互图形。
+- 真实表达进度、概率分布、模型路径或状态结构的线条属于功能图形。
+- 例外只保护功能语义，不豁免溢出、遮挡、错误交互或不可读文字。
 
 ## 3. Typography
 
 **Display/Body Font:** IBM Plex Sans SC（Noto Sans SC、Microsoft YaHei UI 与 system-ui 兜底）
 
-**Label Font:** IBM Plex Sans SC
+**Data/Latin Font:** IBM Plex Sans SC 的配套拉丁字形；通过独立语义入口启用稳定数字特性
 
 **Technical Mono Font:** IBM Plex Mono；只用于协议、状态码和短技术 metadata
 
-**Character:** IBM Plex 超级家族承担完整产品层级，气质理性、清晰、有轻微未来技术感但不机械。中文、普通拉丁文本、可比较数字与短技术文本使用独立语义入口；数据通过字号、真实字重和稳定数字宽度获得力量。
+**Character:** IBM Plex 超级家族让中文、拉丁文本、数据与短技术信息保持同一工程气质。层级来自固定字阶、真实字重、清楚行高和稳定数字宽度，不依赖任意字距、夸张大字或临时字体。
 
-完整规则以 [Wuwa / Tethys Web 字体设计系统](docs/superpowers/specs/2026-07-13-wuwa-typography-system-design.md) 为准。正式 Sans 字重仅使用 400 / 500 / 600 / 700，Mono 仅使用 500 / 600。
+完整规则以 `docs/superpowers/specs/2026-07-13-wuwa-typography-system-design.md` 为准。Sans 只加载并使用 400 / 500 / 600 / 700，Mono 只使用 500 / 600；`font-synthesis: none` 必须保留。
 
 ### Hierarchy
 
-- **Display** (`typography.display`)：页面标题和工作台问候语；固定字号，不随视口缩放。
-- **Headline** (`typography.headline`)：大区块标题；与正文形成明确但克制的层级。
-- **Title** (`typography.title`)：卡片、图表和面板标题；适合高密度区域。
-- **Body** (`typography.body`)：说明、表单和一般内容；长段落限制在 65–75ch。
-- **Label** (`typography.label`)：按钮、badge、字段标签和短状态；中文不增加字距。
-- **Data** (`typography.data`)：UID、声骸编号、概率、百分比、样本量、排名和分数；必须使用 `tabular-nums`。
+- **Display** (`typography.display`)：页面标题和工作台问候语；固定 28px，不随视口连续缩放。
+- **Headline** (`typography.headline`)：大区块标题，21px / 700。
+- **Title** (`typography.title`)：卡片、图表和面板标题，16px / 700。
+- **Body** (`typography.body`)：说明、表单和一般内容，15px / 400；长段落控制在 65–75ch。
+- **Control** (`typography.control`)：按钮、选项和主要列表文字，14px / 600。
+- **Label** (`typography.label`)：字段、状态和图表类别，13px / 600。
+- **Caption** (`typography.caption`)：说明、来源和辅助 metadata，12px / 500。
+- **Data** (`typography.data`)：UID、声骸编号、概率、样本量、权重、排名和分数；必须使用 `tabular-nums`。
+- **Micro**：仅空间受限的非交互图表 metadata 可以使用 11px / 500，不进入交互控件。
 
 ### Named Rules
 
 **The Stable Number Rule.** 所有可比较数字必须启用等宽数字，数值和单位分层，但单位不得淡到影响识别。
 
-**The Semantic Entry Rule.** 中文、普通拉丁文本、品牌、数据与 Mono 技术文本分别使用 `--font-cjk`、`--font-latin`、`--font-data` 和 `--font-mono`；不得为单页临时引入新的字体家族。
+**The Semantic Entry Rule.** 中文、普通拉丁、品牌、数据与 Mono 技术文本分别使用 `--font-cjk`、`--font-latin`、`--font-data` 和 `--font-mono`；中文字段标签和正文不得使用 Mono。
 
-**The Tracking Rule.** 中文默认字距为 0；普通拉丁与数字也保持 0，缩写、全大写状态和 TETHYS 品牌只使用对应 tracking token。禁止负字距和任意裸字距。
+**The Tracking Rule.** 中文、普通拉丁和数字字距为 0；缩写、全大写短状态和 TETHYS 品牌只使用已有 tracking token。禁止负字距和裸非零字距。
 
-**The Real Weight Rule.** 只声明已经加载的 400 / 500 / 600 / 700 字重；标题和最高级数据最多使用 700，不允许 650、720、800、900 等无效或合成字重。
+**The Real Weight Rule.** 只声明已经加载的字重；标题和最高级数据最多使用 700，禁止 650、720、800、900 等无效或合成字重。
 
-**The Minimum Size Rule.** 交互文字不得小于 12px；仅空间受限的非交互图表 metadata 可使用 11px。禁止 10px 和半像素字号。
+**The Minimum Size Rule.** 交互文字不得小于 12px；禁止 10px、半像素字号和为了塞入容器而缩小文字。
 
 ## 4. Elevation
 
-系统采用结构化扁平策略。静态表面依靠背景色和 1px 冷灰边框分层，常规卡片没有阴影；顶部粘性导航使用低对比环境阴影，菜单、浮层和可拖动历史面板使用更明确但柔和的阴影。焦点环属于可访问性反馈，不是装饰。
+系统采用结构化扁平策略。静态表面通过背景色和 1px 冷灰边框分层；顶部粘性导航、菜单和可拖动历史面板才使用阴影。焦点轮廓属于可访问性反馈，不是装饰阴影。
 
 ### Shadow Vocabulary
 
-- **Sticky Ambient** (`0 10px 32px rgba(39, 55, 71, 0.06)`)：仅用于粘性顶部导航等需要与滚动内容分离的表面。
-- **Floating Panel** (`0 18px 42px rgba(0, 0, 0, 0.24)`)：仅用于菜单、浮层和真正脱离文档流的面板。
-- **Focus Halo** (`0 0 0 2px rgba(24, 118, 242, 0.10)`)：输入与控件聚焦时的辅助轮廓，必须同时保留清晰边框。
+- **Sticky Ambient** (`0 10px 32px rgba(39, 55, 71, 0.06)`)：用于粘性顶部导航；使用阴影时不再叠加装饰性强边框。
+- **Overlay Compact** (`0 4px 8px rgba(15, 23, 42, 0.12)`)：用于菜单和短浮层，可与 1px 边框配合。
+- **Floating Panel** (`0 22px 60px rgba(15, 23, 42, 0.18)`)：仅用于真正脱离文档流的可拖动面板；使用该阴影时不叠加 1px 装饰边框。
+- **Focus Ring** (`3px solid rgba(0, 100, 224, 0.26)`)：键盘焦点轮廓，偏移 3px；不得仅依赖 box-shadow。
 
 ### Named Rules
 
-**The Flat-by-Default Rule.** 静态面板必须保持平坦；如果移除阴影后层级仍然清楚，就不允许添加阴影。
+**The Flat-by-Default Rule.** 静态面板和卡片保持平坦；如果移除阴影后层级仍清楚，就不允许添加阴影。
 
-**The Structural Shadow Rule.** 阴影只能说明悬浮、粘性或聚焦关系，禁止用重阴影、发光边缘和多层阴影制造“高级感”。
+**The One Depth Cue Rule.** 同一个元素只能选择清晰边框或宽柔阴影作为主要层级线索，禁止 1px 边框与 16px 以上模糊阴影的 ghost-card 组合。
+
+**The Structural Shadow Rule.** 阴影只能说明粘性、悬浮、拖动或聚焦关系，禁止用重阴影、发光边缘和多层阴影制造“高级感”。
 
 ## 5. Components
 
-组件应精确而克制。所有高频控件必须拥有 default、hover、focus、active、disabled、loading 和 error 中适用的完整状态，并保持同一套形状、颜色和排版词汇。
+组件应精确而克制。所有高频控件必须拥有适用的 default、hover、focus-visible、active、disabled、loading、saving 和 error 状态，并保持同一套形状、颜色和排版词汇。
 
 ### Buttons
 
-- **Shape:** 常规按钮使用轻柔矩形圆角（`rounded.sm`）；只有导航筛选、状态胶囊和紧凑上下文控件使用 `rounded.pill`。
-- **Primary:** 泰缇斯蓝实底、冷白文字，局部区域只允许一个最高权重主按钮。
-- **Hover / Focus:** hover 只改变背景、边框或文字色；focus 使用清晰蓝色轮廓；禁止上浮、缩放、弹跳或造成布局移动。
-- **Secondary:** 冷白底、冷灰边框和深墨文字，用于辅助动作。
-- **Danger:** 冷白底、错误红文字和弱红边框，用于弃置、删除和不可逆操作；文案必须明确动作对象。
+- **Shape:** 常规按钮为 12px 圆角、至少 44px 点击高度；胶囊只用于导航筛选、状态和紧凑上下文控件。
+- **Primary:** 泰缇斯蓝实底、冷白文字，局部区域只有一个最高权重主按钮。
+- **Secondary:** 冷白底、1px 冷灰边框和深墨文字。
+- **Danger:** 冷白底、错误深红文字和弱红边框，文案必须说明动作对象。
+- **Hover / Focus:** hover 只改变背景、边框或文字色；focus-visible 使用清晰蓝色轮廓。禁止上浮、缩放、弹跳、发光和布局移动。
+- **State:** disabled 保留可理解标签；loading 和 saving 不改变按钮尺寸。
 
-### Chips
+### Chips and navigation pills
 
-- **Style:** 只在状态、筛选、UID 上下文或短 metadata 需要紧凑包裹时使用胶囊形；默认浅底、细边框、稳定行高。
-- **State:** selected 使用深墨或泰缇斯蓝强化；success、warning、critical 必须带文字语义，禁止只换颜色。
+- 胶囊只用于顶部导航、UID 上下文、筛选、短 metadata 和真实状态。
+- 默认状态透明或浅底，active 使用深墨或泰缇斯蓝；选中状态必须同时提供文字、图标或形状线索。
+- 主导航点击目标至少 44px，视觉胶囊可以保持 40px。
 
-### Cards / Containers
+### Cards and containers
 
-- **Corner Style:** 页面级面板使用 `rounded.lg` 或 `rounded.xl`，中型卡片使用 `rounded.md`，密集矩阵使用 `rounded.dense` 或 `rounded.sm`。
-- **Background:** 主表面使用冷白画布，次级分组使用冰雾或柔灰表面。
-- **Shadow Strategy:** 静态卡片无阴影，浮层遵循 Elevation 章节。
-- **Border:** 默认 1px 柔边界；selected、focus 和 active 才提高边框对比。
-- **Internal Padding:** 大面板使用 24–28px，中型面板使用 16–20px，密集数据区域使用 8–12px。
+- 页面级容器使用 20–24px；中型面板和卡片使用 14–18px；密集矩阵使用 8–12px。
+- 主表面使用冷白画布，次级分组使用冰雾或柔灰表面。
+- 默认 1px 柔边界；selected、focus 和 active 才提高边框对比。
+- 静态卡片无阴影，不允许卡片套卡片。大面板内边距 24–28px，中型面板 16–20px，密集区域 8–12px。
 
-### Inputs / Fields
+### Inputs and fields
 
-- **Style:** 44px 高、1px 强边界、冷白背景和紧凑圆角（`rounded.dense`）。
-- **Focus:** 边框切换为泰缇斯蓝，并出现可见 Focus Halo；不得仅依赖阴影。
-- **Error / Disabled:** 错误信息贴近字段并说明下一步；disabled 使用柔灰背景、降低对比并保留可理解标签。
+- 字段高度 44px、圆角 12px、1px 强边界、冷白背景；字段标签使用产品 Sans。
+- placeholder 使用 `colors.text-muted`，不得使用更浅的装饰灰。
+- focus-visible 同时强化蓝色边框和外部轮廓；错误信息紧贴字段并说明下一步。
 
-### Navigation
+### Global navigation and UID
 
-- 顶部导航是 Web 的全局导航，左侧使用紧凑 `TETHYS` 字标，中部主要模块相对整条导航视觉居中，右侧承载 UID、主题和账号操作。
-- 登录、加载与 UID 首次绑定等入口场景可以使用完整 `Tethys System / 泰缇斯枢纽`；登录后的全局导航只显示短字标 `TETHYS`。
-- 默认 tab 透明或浅底，active 使用高对比深墨底；触控目标至少 44px，紧凑视觉高度可通过外层点击区实现。
-- 窄屏允许换行或结构化堆叠，禁止恢复 Activity Bar、Status Bar 或文件标签隐喻。
+- 顶部导航左侧使用紧凑 `TETHYS` 字标，中部模块相对整条导航视觉居中，右侧承载 UID、主题和账号操作。
+- 登录、加载和 UID 首次绑定可以使用完整 `Tethys System / 泰缇斯枢纽`；登录后的全局导航只显示短字标 `TETHYS`。
+- UID 必须持续可见；切换菜单显示真实账号状态并在关闭后恢复焦点。
 
-### Prediction Summary
+### Workbench configuration and entry matrix
 
-- 预测摘要直接融入浅灰操作轨道，不再使用独立外框或嵌套卡片；轨道宽度在 192–240px 之间随可用空间调整。
-- 使用预测绿连接右侧摘要和下方“预测概率提升”行，将最高显示概率的并列预测与其他可能建立一致层级。
-- 预测名称左对齐，概率右对齐并使用稳定数字宽度；显示为相同概率的结果必须归入同一个“预测”分组。
-- 文案采用“预测 / 其他可能”，强调模型输出而非替用户作决策。
+- 桌面端使用左侧配置区与右侧主录入区。左侧内部内容在可用视口内吸顶并独立滚动，不能被右侧矩阵无限拉长。
+- 套装搜索只过滤可见选项；0/5 时配置变化修改空白草稿，已有录入时立即新建并切换对应声骸。
+- 档位保存期间锁定整组矩阵并标记保存目标；已录入行只强化实际档位。
+- 1180–1440px 保持八档数值单行；1179px 以下切换单列并取消左侧吸顶与强制高度。
 
-### Workbench Configuration
+### Prediction and evaluation graphics
 
-- 桌面端使用左侧配置区与右侧主录入区。左侧外层参与页面网格，内部配置内容在可用视口内吸顶并独立滚动，不能被右侧词条矩阵总高度无限拉长。
-- 套装列表提供搜索。搜索只过滤可见选项，不改变当前已选套装。
-- 当前声骸为 0/5 时，套装、COST 或主词条变化直接修改空白草稿；已经录入至少一个副词条时，选择不同配置立即新建并切换到使用该配置的声骸。
-- 配置变化会新建声骸时，界面必须提前显示“选择其他配置将新建声骸”，创建成功后提供就地反馈。
-- 档位保存期间锁定整组矩阵并标记保存目标；已录入行只强化实际档位，其他候选保持安静。
+- 预测摘要使用“预测 / 其他可能”，相同显示概率归入同一预测分组；名称左对齐，概率右对齐。
+- 预测绿表示模型输出，不代表成功。模型、概率和置信度必须使用文本语义和稳定数字宽度。
+- 彩色左右侧边条不得作为卡片、列表、提示或状态的装饰强调。1px 结构分隔线可以使用；Bayes 路径卡片左侧的路径线属于表达推理结构的功能图形，可以保留，并必须与路径节点、线型或标签共同表达含义。
+
+### History and recognition overlays
+
+- 历史记录是可拖动、可收起的辅助面板，默认在右下安全区最小化；不得遮挡主录入和关键操作。
+- 本地识别复核默认安静，只在冲突、低置信度或待确认时提高权重。
+- 浮层必须有明确层级、键盘焦点和关闭路径，不得用大面积阴影替代结构。
+
+### Authentication surface
+
+- 首页可以使用轻量终端语气和短协议文本，但中文表单标签、正文和按钮说明仍使用产品 Sans。
+- 打字光标是标题的功能性动画，不属于彩色侧边条；它必须停在文字末端，并在 `prefers-reduced-motion` 下关闭。
+- 主要内容默认可见，进入动画只能增强呈现，不能依赖 `opacity: 0` 或宽度动画才能显示内容。
+
+### Responsive and motion
+
+- `1440px` 是宽桌面上界参考；`1180–1440px` 使用紧凑桌面布局；`1179px` 以下工作台单列；`980px` 处理全局导航；`860px` 处理主要组件堆叠；`520px` 处理窄屏间距和触控。
+- 常规状态反馈为 80–120ms，面板显隐为 120–160ms；只动画 opacity、transform 或颜色等不会触发布局重排的属性。
+- 每一项非必要动画都必须提供 `prefers-reduced-motion` 替代。内容在无动画、后台标签页和自动化渲染中仍须完整可见。
 
 ## 6. Do's and Don'ts
 
-### Do:
+### Do
 
-- **Do** 先展示当前系统账号、当前游戏 UID 和数据状态，再展示数据操作。
-- **Do** 使用泰缇斯蓝表达主操作、当前选择和焦点，并控制同屏强调数量。
-- **Do** 使用 1px 冷灰边框、近白表面和少量真实阴影建立层级。
-- **Do** 为概率、UID、声骸编号、样本数、排名和分数启用 `tabular-nums`。
-- **Do** 保持顶部导航、圆角工作台和短路径录入流程，桌面端优先保证信息密度与稳定布局。
-- **Do** 让错误、不可用和低置信度状态说明用户下一步能做什么。
-- **Do** 保留可见键盘焦点，并在可行处提供至少 44px 的点击目标。
-- **Do** 让历史记录与本地识别复核默认安静，只在待处理、冲突或低置信度时提高权重。
+- **Do** 使用真实账号、UID、保存、预测、识别和冲突状态组织界面。
+- **Do** 使用 1px 冷灰边框、近白表面和单一明确层级线索建立结构。
+- **Do** 为所有可比较数字启用 `tabular-nums`，让概率、样本量、UID 和分数稳定对齐。
+- **Do** 同时使用文字、图标或形状表达 selected、success、warning、critical 和 disabled。
+- **Do** 在窄屏重排结构并保持文字可读，不通过缩小到 12px 以下解决空间问题。
+- **Do** 让错误、空状态和不可用状态说明用户下一步可以做什么。
+- **Do** 将纯视觉改动限制在现有 Vue、公共样式和 feature CSS ownership 内。
+- **Do** 把当前批准渲染作为视觉改动的默认比较基线。
+- **Do** 在修改颜色、字体、圆角、阴影或动效前提供局部前后截图并获得批准。
+- **Do** 先以相同最终值完成全局 token、feature token 和局部数据可视化颜色的分层。
 
-### Don't:
+### Don't
 
-- **Don't** 让界面感觉像营销落地页、视觉特效展示、通用企业后台、调试控制台，或拥有另一套账号与 UID 心智的独立产品。
-- **Don't** 使用假数据预览、重玻璃效果、装饰性卡片堆叠、超大 hero，或暴露后端地址等开发者概念。
-- **Don't** 恢复左侧 Activity Bar、底部 Status Bar、文件标签式导航、完整 IDE Shell 或暗色编辑器优先的视觉体系。
-- **Don't** 使用大面积紫色、蓝紫色 AI 渐变、渐变文字、发光边缘或赛博朋克霓虹字体。
-- **Don't** 使用超过 1px 的彩色左侧或右侧条纹装饰卡片、列表项、提示和状态；改用完整边框、背景色、图标或文字。
-- **Don't** 使用卡片套卡片、相同卡片网格或没有业务意义的面板来制造视觉节奏。
-- **Don't** 把 modal 当作默认解决方案；先使用内联、渐进展开、侧栏或就地反馈。
-- **Don't** 让 hover 上浮、缩放、弹跳，或动画改变布局；常规反馈保持在 80–160ms 并尊重 `prefers-reduced-motion`。
-- **Don't** 只靠颜色表达成功、警告、错误、选中或禁用状态。
-- **Don't** 为单个页面临时引入字体栈、配色体系、组件语法、UI 框架或全局状态管理方案。
+- **Don't** 把产品做成营销落地页、视觉特效展示、通用企业后台、调试控制台或另一套账号 / UID 心智。
+- **Don't** 暴露后端地址、开发配置、内部状态码或虚构数据预览。
+- **Don't** 恢复 Activity Bar、Status Bar、文件标签式导航、完整 IDE Shell 或暗色编辑器优先方向。
+- **Don't** 使用大面积紫色、蓝紫 AI 渐变、渐变文字、玻璃拟态、发光边缘、装饰性卡片堆叠或超大 hero。
+- **Don't** 在卡片、列表、callout 或 alert 左右使用超过 1px 的彩色侧边强调；功能图形必须真实表达路径、进度或结构。
+- **Don't** 组合 1px 边框和 16px 以上模糊阴影制造 ghost card，也不要使用嵌套卡片。
+- **Don't** 把所有按钮、字段和卡片做成胶囊；胶囊必须有导航、筛选、状态或上下文语义。
+- **Don't** 让 hover 上浮、缩放、弹跳或改变布局，也不要动画 width、height、margin、padding 和位置属性。
+- **Don't** 让内容依赖进入动画才可见；每项非必要动画都必须尊重 `prefers-reduced-motion`。
+- **Don't** 为提高 audit 分数、减少颜色字面量或满足通用偏好而批量替换现有配色、字体或组件造型。
+- **Don't** 让关键正文、表单值、操作标签和错误信息使用不可读的浅灰色，也不要让 `colors.decorative-muted` 承载这些内容。
+- **Don't** 把已登记的 Bayes 路径、登录打字光标或其他功能图形当作装饰性侧边条删除。
+- **Don't** 为单页引入新字体栈、无效字重、负字距、10px 文字或大面积 Mono 中文。
+- **Don't** 新增没有业务意义的组件、全局状态管理、UI 框架或视觉 chrome。

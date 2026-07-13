@@ -1,275 +1,398 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-07-13T16:57:39.0795232+08:00",
+  "generatedAt": "2026-07-13T22:17:21.6656453+08:00",
   "title": "Design System: Wuwa / Tethys System",
   "extensions": {
     "colorMeta": {
       "primary": {
         "role": "primary",
         "displayName": "泰缇斯蓝",
+        "canonical": "#0064e0",
         "tonalRamp": [
-          "oklch(15% 0.06 255)",
-          "oklch(25% 0.11 255)",
-          "oklch(35% 0.15 255)",
+          "oklch(15% 0.18 255)",
+          "oklch(25% 0.18 255)",
+          "oklch(35% 0.18 255)",
           "oklch(45% 0.18 255)",
-          "oklch(55% 0.19 255)",
-          "oklch(65% 0.16 255)",
-          "oklch(80% 0.10 255)",
-          "oklch(95% 0.03 255)"
+          "oklch(55% 0.18 255)",
+          "oklch(65% 0.18 255)",
+          "oklch(80% 0.18 255)",
+          "oklch(95% 0.18 255)"
         ]
       },
-      "primary-deep": {
+    "primary-deep": {
         "role": "primary",
         "displayName": "深泰缇斯蓝",
+        "canonical": "#0457cb",
         "tonalRamp": [
-          "oklch(15% 0.06 255)",
-          "oklch(25% 0.11 255)",
-          "oklch(35% 0.15 255)",
-          "oklch(45% 0.18 255)",
-          "oklch(55% 0.17 255)",
-          "oklch(65% 0.14 255)",
-          "oklch(80% 0.08 255)",
-          "oklch(95% 0.02 255)"
-        ]
-      },
+          "oklch(15% 0.16 255)",
+          "oklch(25% 0.16 255)",
+          "oklch(35% 0.16 255)",
+          "oklch(45% 0.16 255)",
+          "oklch(55% 0.16 255)",
+          "oklch(65% 0.16 255)",
+          "oklch(80% 0.16 255)",
+          "oklch(95% 0.16 255)"
+      ]
+    },
+    "primary-soft": {
+      "role": "primary",
+      "displayName": "浅泰缇斯蓝",
+      "canonical": "#f4f8ff",
+      "tonalRamp": [
+        "oklch(15% 0.018 255)",
+        "oklch(25% 0.018 255)",
+        "oklch(35% 0.018 255)",
+        "oklch(45% 0.018 255)",
+        "oklch(55% 0.018 255)",
+        "oklch(65% 0.018 255)",
+        "oklch(80% 0.018 255)",
+        "oklch(95% 0.018 255)"
+      ]
+    },
       "prediction": {
         "role": "secondary",
         "displayName": "预测绿",
+        "canonical": "#2c9f70",
         "tonalRamp": [
-          "oklch(15% 0.035 160)",
-          "oklch(25% 0.070 160)",
-          "oklch(35% 0.105 160)",
-          "oklch(45% 0.130 160)",
-          "oklch(55% 0.140 160)",
-          "oklch(65% 0.115 160)",
-          "oklch(80% 0.065 160)",
-          "oklch(95% 0.018 160)"
+          "oklch(15% 0.14 160)",
+          "oklch(25% 0.14 160)",
+          "oklch(35% 0.14 160)",
+          "oklch(45% 0.14 160)",
+          "oklch(55% 0.14 160)",
+          "oklch(65% 0.14 160)",
+          "oklch(80% 0.14 160)",
+          "oklch(95% 0.14 160)"
+        ]
+      },
+      "prediction-ink": {
+        "role": "secondary",
+        "displayName": "预测深绿",
+        "canonical": "#166b4a",
+        "tonalRamp": [
+          "oklch(15% 0.10 160)",
+          "oklch(25% 0.10 160)",
+          "oklch(35% 0.10 160)",
+          "oklch(45% 0.10 160)",
+          "oklch(55% 0.10 160)",
+          "oklch(65% 0.10 160)",
+          "oklch(80% 0.10 160)",
+          "oklch(95% 0.10 160)"
         ]
       },
       "ink-strong": {
         "role": "neutral",
         "displayName": "深墨文字",
+        "canonical": "#0a1317",
         "tonalRamp": [
           "oklch(15% 0.018 225)",
           "oklch(25% 0.018 225)",
-          "oklch(35% 0.016 225)",
-          "oklch(45% 0.014 225)",
-          "oklch(55% 0.012 225)",
-          "oklch(65% 0.010 225)",
-          "oklch(80% 0.007 225)",
-          "oklch(95% 0.003 225)"
+          "oklch(35% 0.018 225)",
+          "oklch(45% 0.018 225)",
+          "oklch(55% 0.018 225)",
+          "oklch(65% 0.018 225)",
+          "oklch(80% 0.018 225)",
+          "oklch(95% 0.018 225)"
         ]
       },
       "ink-main": {
         "role": "neutral",
         "displayName": "正文墨色",
+        "canonical": "#1c1e21",
         "tonalRamp": [
           "oklch(15% 0.014 230)",
           "oklch(25% 0.014 230)",
-          "oklch(35% 0.013 230)",
-          "oklch(45% 0.012 230)",
-          "oklch(55% 0.010 230)",
-          "oklch(65% 0.009 230)",
-          "oklch(80% 0.006 230)",
-          "oklch(95% 0.003 230)"
+          "oklch(35% 0.014 230)",
+          "oklch(45% 0.014 230)",
+          "oklch(55% 0.014 230)",
+          "oklch(65% 0.014 230)",
+          "oklch(80% 0.014 230)",
+          "oklch(95% 0.014 230)"
         ]
       },
       "text-muted": {
         "role": "neutral",
         "displayName": "钢灰说明",
+        "canonical": "#5d6c7b",
         "tonalRamp": [
-          "oklch(15% 0.018 235)",
-          "oklch(25% 0.022 235)",
-          "oklch(35% 0.024 235)",
-          "oklch(45% 0.024 235)",
-          "oklch(55% 0.022 235)",
-          "oklch(65% 0.018 235)",
-          "oklch(80% 0.010 235)",
-          "oklch(95% 0.004 235)"
+          "oklch(15% 0.018 240)",
+          "oklch(25% 0.018 240)",
+          "oklch(35% 0.018 240)",
+          "oklch(45% 0.018 240)",
+          "oklch(55% 0.018 240)",
+          "oklch(65% 0.018 240)",
+          "oklch(80% 0.018 240)",
+          "oklch(95% 0.018 240)"
         ]
       },
-      "text-subtle": {
+      "decorative-muted": {
         "role": "neutral",
-        "displayName": "雾灰提示",
+        "displayName": "雾灰装饰",
+        "canonical": "#8595a4",
         "tonalRamp": [
-          "oklch(15% 0.016 235)",
-          "oklch(25% 0.020 235)",
-          "oklch(35% 0.022 235)",
-          "oklch(45% 0.022 235)",
-          "oklch(55% 0.020 235)",
-          "oklch(65% 0.016 235)",
-          "oklch(80% 0.009 235)",
-          "oklch(95% 0.003 235)"
+          "oklch(15% 0.014 235)",
+          "oklch(25% 0.014 235)",
+          "oklch(35% 0.014 235)",
+          "oklch(45% 0.014 235)",
+          "oklch(55% 0.014 235)",
+          "oklch(65% 0.014 235)",
+          "oklch(80% 0.014 235)",
+          "oklch(95% 0.014 235)"
         ]
       },
       "canvas": {
         "role": "neutral",
         "displayName": "冷白画布",
+        "canonical": "#ffffff",
         "tonalRamp": [
-          "oklch(15% 0.004 240)",
-          "oklch(25% 0.005 240)",
-          "oklch(35% 0.006 240)",
-          "oklch(45% 0.007 240)",
-          "oklch(55% 0.008 240)",
-          "oklch(65% 0.008 240)",
-          "oklch(80% 0.006 240)",
-          "oklch(95% 0.003 240)"
+          "oklch(15% 0 0)",
+          "oklch(25% 0 0)",
+          "oklch(35% 0 0)",
+          "oklch(45% 0 0)",
+          "oklch(55% 0 0)",
+          "oklch(65% 0 0)",
+          "oklch(80% 0 0)",
+          "oklch(95% 0 0)"
         ]
       },
       "surface-root": {
         "role": "neutral",
         "displayName": "冰雾底色",
+        "canonical": "#f6f8fb",
         "tonalRamp": [
-          "oklch(15% 0.006 245)",
+          "oklch(15% 0.008 245)",
           "oklch(25% 0.008 245)",
-          "oklch(35% 0.010 245)",
-          "oklch(45% 0.011 245)",
-          "oklch(55% 0.012 245)",
-          "oklch(65% 0.011 245)",
+          "oklch(35% 0.008 245)",
+          "oklch(45% 0.008 245)",
+          "oklch(55% 0.008 245)",
+          "oklch(65% 0.008 245)",
           "oklch(80% 0.008 245)",
-          "oklch(95% 0.004 245)"
+          "oklch(95% 0.008 245)"
         ]
       },
       "surface-soft": {
         "role": "neutral",
         "displayName": "柔灰表面",
+        "canonical": "#f1f4f7",
         "tonalRamp": [
-          "oklch(15% 0.007 240)",
-          "oklch(25% 0.009 240)",
-          "oklch(35% 0.011 240)",
-          "oklch(45% 0.012 240)",
-          "oklch(55% 0.013 240)",
-          "oklch(65% 0.012 240)",
-          "oklch(80% 0.009 240)",
-          "oklch(95% 0.004 240)"
+          "oklch(15% 0.008 235)",
+          "oklch(25% 0.008 235)",
+          "oklch(35% 0.008 235)",
+          "oklch(45% 0.008 235)",
+          "oklch(55% 0.008 235)",
+          "oklch(65% 0.008 235)",
+          "oklch(80% 0.008 235)",
+          "oklch(95% 0.008 235)"
         ]
       },
       "surface-prediction": {
         "role": "neutral",
         "displayName": "预测雾面",
+        "canonical": "#f7f9fb",
         "tonalRamp": [
-          "oklch(15% 0.006 235)",
-          "oklch(25% 0.008 235)",
-          "oklch(35% 0.010 235)",
-          "oklch(45% 0.011 235)",
-          "oklch(55% 0.012 235)",
-          "oklch(65% 0.011 235)",
-          "oklch(80% 0.008 235)",
-          "oklch(95% 0.004 235)"
+          "oklch(15% 0.006 225)",
+          "oklch(25% 0.006 225)",
+          "oklch(35% 0.006 225)",
+          "oklch(45% 0.006 225)",
+          "oklch(55% 0.006 225)",
+          "oklch(65% 0.006 225)",
+          "oklch(80% 0.006 225)",
+          "oklch(95% 0.006 225)"
         ]
       },
       "border-soft": {
         "role": "neutral",
         "displayName": "柔边界",
+        "canonical": "#dee3e9",
         "tonalRamp": [
-          "oklch(15% 0.008 235)",
+          "oklch(15% 0.010 235)",
           "oklch(25% 0.010 235)",
-          "oklch(35% 0.012 235)",
-          "oklch(45% 0.014 235)",
-          "oklch(55% 0.015 235)",
-          "oklch(65% 0.014 235)",
+          "oklch(35% 0.010 235)",
+          "oklch(45% 0.010 235)",
+          "oklch(55% 0.010 235)",
+          "oklch(65% 0.010 235)",
           "oklch(80% 0.010 235)",
-          "oklch(95% 0.004 235)"
+          "oklch(95% 0.010 235)"
         ]
       },
       "border-strong": {
         "role": "neutral",
         "displayName": "强边界",
+        "canonical": "#ced0d4",
         "tonalRamp": [
-          "oklch(15% 0.009 235)",
+          "oklch(15% 0.012 235)",
           "oklch(25% 0.012 235)",
-          "oklch(35% 0.014 235)",
-          "oklch(45% 0.016 235)",
-          "oklch(55% 0.017 235)",
-          "oklch(65% 0.016 235)",
-          "oklch(80% 0.011 235)",
-          "oklch(95% 0.004 235)"
+          "oklch(35% 0.012 235)",
+          "oklch(45% 0.012 235)",
+          "oklch(55% 0.012 235)",
+          "oklch(65% 0.012 235)",
+          "oklch(80% 0.012 235)",
+          "oklch(95% 0.012 235)"
         ]
       },
       "success": {
-        "role": "secondary",
+        "role": "tertiary",
         "displayName": "成功绿",
+        "canonical": "#31a24c",
         "tonalRamp": [
-          "oklch(15% 0.035 150)",
-          "oklch(25% 0.070 150)",
-          "oklch(35% 0.105 150)",
-          "oklch(45% 0.135 150)",
-          "oklch(55% 0.145 150)",
-          "oklch(65% 0.120 150)",
-          "oklch(80% 0.070 150)",
-          "oklch(95% 0.020 150)"
+          "oklch(15% 0.15 145)",
+          "oklch(25% 0.15 145)",
+          "oklch(35% 0.15 145)",
+          "oklch(45% 0.15 145)",
+          "oklch(55% 0.15 145)",
+          "oklch(65% 0.15 145)",
+          "oklch(80% 0.15 145)",
+          "oklch(95% 0.15 145)"
+        ]
+      },
+      "success-ink": {
+        "role": "tertiary",
+        "displayName": "成功深绿",
+        "canonical": "#18723a",
+        "tonalRamp": [
+          "oklch(15% 0.11 145)",
+          "oklch(25% 0.11 145)",
+          "oklch(35% 0.11 145)",
+          "oklch(45% 0.11 145)",
+          "oklch(55% 0.11 145)",
+          "oklch(65% 0.11 145)",
+          "oklch(80% 0.11 145)",
+          "oklch(95% 0.11 145)"
         ]
       },
       "warning": {
-        "role": "secondary",
+        "role": "tertiary",
         "displayName": "确认琥珀",
+        "canonical": "#f7b928",
         "tonalRamp": [
-          "oklch(15% 0.035 85)",
-          "oklch(25% 0.075 85)",
-          "oklch(35% 0.115 85)",
-          "oklch(45% 0.150 85)",
-          "oklch(55% 0.170 85)",
-          "oklch(65% 0.145 85)",
-          "oklch(80% 0.085 85)",
-          "oklch(95% 0.025 85)"
+          "oklch(15% 0.16 85)",
+          "oklch(25% 0.16 85)",
+          "oklch(35% 0.16 85)",
+          "oklch(45% 0.16 85)",
+          "oklch(55% 0.16 85)",
+          "oklch(65% 0.16 85)",
+          "oklch(80% 0.16 85)",
+          "oklch(95% 0.16 85)"
+        ]
+      },
+      "warning-ink": {
+        "role": "tertiary",
+        "displayName": "警告深琥珀",
+        "canonical": "#6b4f00",
+        "tonalRamp": [
+          "oklch(15% 0.10 85)",
+          "oklch(25% 0.10 85)",
+          "oklch(35% 0.10 85)",
+          "oklch(45% 0.10 85)",
+          "oklch(55% 0.10 85)",
+          "oklch(65% 0.10 85)",
+          "oklch(80% 0.10 85)",
+          "oklch(95% 0.10 85)"
         ]
       },
       "critical": {
-        "role": "secondary",
+        "role": "tertiary",
         "displayName": "错误红",
+        "canonical": "#e41e3f",
         "tonalRamp": [
-          "oklch(15% 0.045 20)",
-          "oklch(25% 0.090 20)",
-          "oklch(35% 0.135 20)",
-          "oklch(45% 0.175 20)",
-          "oklch(55% 0.190 20)",
-          "oklch(65% 0.155 20)",
-          "oklch(80% 0.090 20)",
-          "oklch(95% 0.025 20)"
+          "oklch(15% 0.20 20)",
+          "oklch(25% 0.20 20)",
+          "oklch(35% 0.20 20)",
+          "oklch(45% 0.20 20)",
+          "oklch(55% 0.20 20)",
+          "oklch(65% 0.20 20)",
+          "oklch(80% 0.20 20)",
+          "oklch(95% 0.20 20)"
         ]
-      }
+      },
+    "critical-deep": {
+        "role": "tertiary",
+        "displayName": "错误深红",
+        "canonical": "#bd1730",
+        "tonalRamp": [
+          "oklch(15% 0.17 20)",
+          "oklch(25% 0.17 20)",
+          "oklch(35% 0.17 20)",
+          "oklch(45% 0.17 20)",
+          "oklch(55% 0.17 20)",
+          "oklch(65% 0.17 20)",
+          "oklch(80% 0.17 20)",
+          "oklch(95% 0.17 20)"
+      ]
+    },
+    "critical-soft": {
+      "role": "tertiary",
+      "displayName": "错误浅红",
+      "canonical": "#fff3f5",
+      "tonalRamp": [
+        "oklch(15% 0.018 20)",
+        "oklch(25% 0.018 20)",
+        "oklch(35% 0.018 20)",
+        "oklch(45% 0.018 20)",
+        "oklch(55% 0.018 20)",
+        "oklch(65% 0.018 20)",
+        "oklch(80% 0.018 20)",
+        "oklch(95% 0.018 20)"
+      ]
+    }
     },
     "typographyMeta": {
       "display": {
-        "displayName": "Page Title",
-        "purpose": "工作台、统计和评估页面标题；固定字号，不做营销海报式放大。"
+        "displayName": "页面标题",
+        "purpose": "页面标题和工作台问候语；28px / 700。"
       },
       "headline": {
-        "displayName": "Section Title",
-        "purpose": "大区块标题，建立清晰但克制的内容层级。"
+        "displayName": "区块标题",
+        "purpose": "大区块标题；21px / 700。"
       },
       "title": {
-        "displayName": "Card Title",
-        "purpose": "卡片、图表和紧凑面板标题。"
+        "displayName": "卡片标题",
+        "purpose": "卡片、图表和面板标题；16px / 700。"
       },
       "body": {
-        "displayName": "Body",
-        "purpose": "说明、表单和一般内容。"
+        "displayName": "正文",
+        "purpose": "说明、表单和一般内容；15px / 400。"
+      },
+      "control": {
+        "displayName": "控件",
+        "purpose": "按钮、选项和主要列表文字；14px / 600。"
       },
       "label": {
-        "displayName": "Label",
-        "purpose": "按钮、字段、badge 和短状态。"
+        "displayName": "标签",
+        "purpose": "字段、状态和图表类别；13px / 600。"
+      },
+      "caption": {
+        "displayName": "说明",
+        "purpose": "来源和辅助 metadata；12px / 500。"
       },
       "data": {
-        "displayName": "Data",
-        "purpose": "概率、UID、样本量、排名和分数，强制稳定数字宽度。"
+        "displayName": "数据",
+        "purpose": "UID、概率、样本量、权重和分数；强制 tabular-nums。"
+      },
+      "mono": {
+        "displayName": "短技术文本",
+        "purpose": "协议、状态码和短技术 metadata；不得用于中文正文和字段标签。"
       }
     },
     "shadows": [
       {
         "name": "sticky-ambient",
         "value": "0 10px 32px rgba(39, 55, 71, 0.06)",
-        "purpose": "粘性顶部导航与滚动内容之间的低对比环境阴影。"
+        "purpose": "粘性顶部导航与滚动内容分离；不叠加装饰性强边框。"
+      },
+      {
+        "name": "overlay-compact",
+        "value": "0 4px 8px rgba(15, 23, 42, 0.12)",
+        "purpose": "菜单和短浮层，可与 1px 边框配合。"
       },
       {
         "name": "floating-panel",
-        "value": "0 18px 42px rgba(0, 0, 0, 0.24)",
-        "purpose": "菜单、浮层与真正脱离文档流的面板。"
+        "value": "0 22px 60px rgba(15, 23, 42, 0.18)",
+        "purpose": "真正脱离文档流的可拖动面板；使用时不叠加装饰边框。"
       },
       {
-        "name": "focus-halo",
-        "value": "0 0 0 2px rgba(24, 118, 242, 0.10)",
-        "purpose": "输入与控件聚焦时的辅助轮廓。"
+        "name": "focus-ring",
+        "value": "3px solid rgba(0, 100, 224, 0.26)",
+        "purpose": "键盘 focus-visible 轮廓，outline-offset 为 3px。"
       }
     ],
     "motion": [
@@ -281,7 +404,12 @@
       {
         "name": "panel-reveal",
         "value": "160ms cubic-bezier(0.22, 1, 0.36, 1)",
-        "purpose": "菜单、浮层与紧凑面板显隐。"
+        "purpose": "菜单、浮层和紧凑面板显隐。"
+      },
+      {
+        "name": "reduced-motion",
+        "value": "0ms",
+        "purpose": "非必要动画在 prefers-reduced-motion 下即时完成；内容始终默认可见。"
       }
     ],
     "breakpoints": [
@@ -296,104 +424,175 @@
       {
         "name": "navigation-wrap",
         "value": "980px"
+      },
+      {
+        "name": "workbench-stack",
+        "value": "1179px"
+      },
+      {
+        "name": "medium-desktop-ceiling",
+        "value": "1440px"
       }
-    ]
+    ],
+    "themes": {
+      "dark": {
+        "primary": "#5da8ff",
+        "primary-deep": "#8dc3ff",
+        "canvas": "#0f1720",
+        "surface": "#17232d",
+        "ink-strong": "#e7eef4",
+        "ink-main": "#cbd8e2",
+        "text-muted": "#a9bac7",
+        "border-strong": "#2c3c48",
+        "border-soft": "#243542",
+        "success": "#37b37f",
+        "warning": "#d9a33a",
+        "critical": "#ef6b7a"
+      }
+    }
   },
   "components": [
     {
       "name": "Primary Button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "局部区域唯一的最高权重动作，使用泰缇斯蓝实底。",
-      "html": "<button class=\"ds-btn-primary\" type=\"button\">下一个</button>",
-      "css": ".ds-btn-primary { min-width: 144px; min-height: 46px; border: 1px solid var(--primary, #0064e0); border-radius: 12px; padding: 7px 12px; color: var(--canvas, #ffffff); background: var(--primary, #0064e0); font: 600 14px/1.25 \"IBM Plex Sans SC\", \"Noto Sans SC\", \"Microsoft YaHei UI\", system-ui, sans-serif; transition: background-color 100ms cubic-bezier(0.22, 1, 0.36, 1), border-color 100ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-btn-primary:hover { border-color: var(--primary-deep, #0457cb); background: var(--primary-deep, #0457cb); } .ds-btn-primary:focus-visible { outline: 3px solid rgba(0, 100, 224, 0.26); outline-offset: 3px; } .ds-btn-primary:active { background: var(--primary-deep, #0457cb); } .ds-btn-primary:disabled { cursor: not-allowed; opacity: 0.48; }"
+      "description": "局部区域唯一的最高权重动作，使用泰缇斯蓝实底与矩形圆角。",
+      "html": "<button class=\"ds-btn-primary\" type=\"button\">保存记录</button>",
+      "css": ".ds-btn-primary { min-height: 44px; border: 1px solid var(--primary, #0064e0); border-radius: 12px; padding: 10px 18px; color: #fff; background: var(--primary, #0064e0); font: 600 14px/1.25 var(--font-cjk, system-ui, sans-serif); transition: background-color 100ms cubic-bezier(0.22, 1, 0.36, 1), border-color 100ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-btn-primary:hover { border-color: var(--primary-deep, #0457cb); background: var(--primary-deep, #0457cb); } .ds-btn-primary:focus-visible { outline: 3px solid rgba(0, 100, 224, 0.26); outline-offset: 3px; } .ds-btn-primary:disabled { cursor: not-allowed; opacity: 0.48; }"
     },
     {
       "name": "Secondary Button",
       "kind": "button",
       "refersTo": "button-secondary",
-      "description": "辅助动作，保持冷白表面与清晰边界。",
+      "description": "辅助动作，使用冷白表面、1px 冷灰边界和稳定矩形。",
       "html": "<button class=\"ds-btn-secondary\" type=\"button\">撤销</button>",
-      "css": ".ds-btn-secondary { min-width: 104px; min-height: 40px; border: 1px solid rgba(93, 108, 123, 0.28); border-radius: 12px; padding: 7px 12px; color: #253648; background: var(--canvas, #ffffff); font: 600 14px/1.25 \"IBM Plex Sans SC\", \"Noto Sans SC\", \"Microsoft YaHei UI\", system-ui, sans-serif; transition: background-color 100ms cubic-bezier(0.22, 1, 0.36, 1), border-color 100ms cubic-bezier(0.22, 1, 0.36, 1), color 100ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-btn-secondary:hover { border-color: rgba(0, 100, 224, 0.30); color: var(--primary-deep, #0457cb); background: #f4f8ff; } .ds-btn-secondary:focus-visible { outline: 3px solid rgba(0, 100, 224, 0.26); outline-offset: 3px; } .ds-btn-secondary:active { background: #eef5ff; } .ds-btn-secondary:disabled { cursor: not-allowed; opacity: 0.48; }"
+      "css": ".ds-btn-secondary { min-height: 44px; border: 1px solid var(--border-strong, #ced0d4); border-radius: 12px; padding: 10px 18px; color: var(--ink-strong, #0a1317); background: var(--canvas, #fff); font: 600 14px/1.25 var(--font-cjk, system-ui, sans-serif); transition: background-color 100ms cubic-bezier(0.22, 1, 0.36, 1), border-color 100ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-btn-secondary:hover { border-color: rgba(0, 100, 224, 0.34); background: var(--primary-soft, #f4f8ff); } .ds-btn-secondary:focus-visible { outline: 3px solid rgba(0, 100, 224, 0.26); outline-offset: 3px; } .ds-btn-secondary:disabled { cursor: not-allowed; opacity: 0.48; }"
     },
     {
       "name": "Destructive Button",
       "kind": "button",
       "refersTo": "button-danger",
-      "description": "弃置与删除等破坏性动作，保持语义清楚但不与主操作争夺面积。",
-      "html": "<button class=\"ds-btn-danger\" type=\"button\">弃置</button>",
-      "css": ".ds-btn-danger { min-width: 104px; min-height: 40px; border: 1px solid rgba(228, 30, 63, 0.24); border-radius: 12px; padding: 7px 12px; color: var(--critical, #e41e3f); background: var(--canvas, #ffffff); font: 600 14px/1.25 \"IBM Plex Sans SC\", \"Noto Sans SC\", \"Microsoft YaHei UI\", system-ui, sans-serif; transition: background-color 100ms cubic-bezier(0.22, 1, 0.36, 1), border-color 100ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-btn-danger:hover { border-color: rgba(228, 30, 63, 0.36); background: #fff0f4; } .ds-btn-danger:focus-visible { outline: 3px solid rgba(228, 30, 63, 0.22); outline-offset: 3px; } .ds-btn-danger:active { background: #ffe7ed; } .ds-btn-danger:disabled { cursor: not-allowed; opacity: 0.48; }"
+      "description": "弃置和删除等破坏性动作，保持语义清楚且不与主操作争夺面积。",
+      "html": "<button class=\"ds-btn-danger\" type=\"button\">弃置当前声骸</button>",
+      "css": ".ds-btn-danger { min-height: 44px; border: 1px solid rgba(228, 30, 63, 0.28); border-radius: 12px; padding: 10px 16px; color: var(--critical-deep, #bd1730); background: var(--canvas, #fff); font: 600 14px/1.25 var(--font-cjk, system-ui, sans-serif); transition: background-color 100ms cubic-bezier(0.22, 1, 0.36, 1), border-color 100ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-btn-danger:hover { border-color: rgba(189, 23, 48, 0.42); background: var(--critical-soft, #fff3f5); } .ds-btn-danger:focus-visible { outline: 3px solid rgba(228, 30, 63, 0.22); outline-offset: 3px; }"
     },
     {
       "name": "Top Navigation",
       "kind": "nav",
       "refersTo": "nav-tab-active",
       "description": "工作台、统计和评估的稳定顶部导航，当前模块使用高对比深墨胶囊。",
-      "html": "<nav class=\"ds-nav\" aria-label=\"页面\"><button class=\"ds-nav-tab ds-nav-tab-active\">工作台</button><button class=\"ds-nav-tab\">统计</button><button class=\"ds-nav-tab\">评估</button></nav>",
-      "css": ".ds-nav { display: flex; align-items: center; gap: 8px; padding: 4px; } .ds-nav-tab { min-height: 44px; border: 1px solid transparent; border-radius: 999px; padding: 7px 18px; color: var(--ink-main, #1c1e21); background: transparent; font: 600 14px/1.25 \"IBM Plex Sans SC\", \"Noto Sans SC\", \"Microsoft YaHei UI\", system-ui, sans-serif; transition: background-color 100ms cubic-bezier(0.22, 1, 0.36, 1), border-color 100ms cubic-bezier(0.22, 1, 0.36, 1), color 100ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-nav-tab:hover { background: var(--surface-soft, #f1f4f7); } .ds-nav-tab:focus-visible { outline: 3px solid rgba(0, 100, 224, 0.26); outline-offset: 2px; } .ds-nav-tab-active { border-color: var(--ink-strong, #0a1317); color: var(--canvas, #ffffff); background: var(--ink-strong, #0a1317); } .ds-nav-tab-active:hover { background: #162127; }"
+      "html": "<nav class=\"ds-nav\" aria-label=\"页面\"><button class=\"ds-nav-tab ds-nav-tab-active\" aria-current=\"page\">工作台</button><button class=\"ds-nav-tab\">统计</button><button class=\"ds-nav-tab\">评估</button></nav>",
+      "css": ".ds-nav { display: flex; align-items: center; gap: 8px; padding: 2px; } .ds-nav-tab { min-height: 40px; border: 1px solid transparent; border-radius: 999px; padding: 8px 18px; color: var(--ink-main, #1c1e21); background: transparent; font: 600 14px/1.25 var(--font-cjk, system-ui, sans-serif); transition: background-color 100ms cubic-bezier(0.22, 1, 0.36, 1), border-color 100ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-nav-tab:hover { background: var(--surface-soft, #f1f4f7); } .ds-nav-tab:focus-visible { outline: 3px solid rgba(0, 100, 224, 0.26); outline-offset: 2px; } .ds-nav-tab-active { color: #fff; background: var(--ink-strong, #0a1317); }"
     },
     {
       "name": "Input Field",
       "kind": "input",
       "refersTo": "input-field",
-      "description": "44px 高的紧凑字段，focus 同时强化边框与可见轮廓。",
-      "html": "<label class=\"ds-field\"><span>游戏 UID</span><input class=\"ds-input\" value=\"100000001\" aria-label=\"游戏 UID\"></label>",
-      "css": ".ds-field { display: grid; gap: 8px; color: var(--ink-main, #1c1e21); font: 600 14px/1.25 \"IBM Plex Sans SC\", \"Noto Sans SC\", \"Microsoft YaHei UI\", system-ui, sans-serif; } .ds-input { width: 280px; height: 44px; border: 1px solid var(--border-strong, #ced0d4); border-radius: 8px; padding: 12px; color: var(--ink-main, #1c1e21); background: var(--canvas, #ffffff); font: 400 15px/1.45 \"IBM Plex Sans SC\", \"Noto Sans SC\", \"Microsoft YaHei UI\", system-ui, sans-serif; font-variant-numeric: tabular-nums; transition: border-color 100ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 100ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-input:hover { border-color: #9cacba; } .ds-input:focus { border-color: #1876f2; outline: none; box-shadow: 0 0 0 2px rgba(24, 118, 242, 0.10); } .ds-input:disabled { color: var(--text-subtle, #8595a4); background: var(--surface-soft, #f1f4f7); }"
+      "description": "44px 高的产品字段，placeholder 使用满足 AA 的钢灰说明色。",
+      "html": "<label class=\"ds-field\"><span>游戏 UID</span><input class=\"ds-input\" placeholder=\"请输入 9 位 UID\" aria-describedby=\"ds-uid-hint\"><small id=\"ds-uid-hint\">仅绑定当前账号的游戏数据</small></label>",
+      "css": ".ds-field { display: grid; gap: 8px; color: var(--ink-main, #1c1e21); font: 600 13px/1.3 var(--font-cjk, system-ui, sans-serif); } .ds-input { width: 280px; height: 44px; border: 1px solid var(--border-strong, #ced0d4); border-radius: 12px; padding: 10px 12px; color: var(--ink-main, #1c1e21); background: var(--canvas, #fff); font: 400 15px/1.5 var(--font-cjk, system-ui, sans-serif); font-variant-numeric: tabular-nums; transition: border-color 100ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-input::placeholder { color: var(--text-muted, #5d6c7b); opacity: 1; } .ds-input:focus-visible { border-color: var(--primary, #0064e0); outline: 3px solid rgba(0, 100, 224, 0.26); outline-offset: 3px; } .ds-field small { color: var(--text-muted, #5d6c7b); font-size: 12px; font-weight: 500; }"
     },
     {
       "name": "UID Context Chip",
       "kind": "chip",
       "refersTo": "uid-chip",
       "description": "持续可见的账号与游戏 UID 上下文，绿色状态点只表达真实可用状态。",
-      "html": "<button class=\"ds-uid-chip\" type=\"button\" aria-label=\"UID 100000001\"><span class=\"ds-uid-dot\" aria-hidden=\"true\"></span><span class=\"ds-uid-label\">UID</span><strong class=\"ds-uid-value\">100000001</strong><span class=\"ds-uid-chevron\" aria-hidden=\"true\">⌄</span></button>",
-      "css": ".ds-uid-chip { display: inline-flex; align-items: center; gap: 7px; min-height: 40px; border: 1px solid rgba(191, 207, 221, 0.82); border-radius: 999px; padding: 8px 14px; color: #405668; background: rgba(255, 255, 255, 0.92); font: 600 14px/1.25 \"IBM Plex Sans SC\", \"Noto Sans SC\", \"Microsoft YaHei UI\", system-ui, sans-serif; transition: background-color 100ms cubic-bezier(0.22, 1, 0.36, 1), border-color 100ms cubic-bezier(0.22, 1, 0.36, 1), color 100ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-uid-chip:hover { border-color: rgba(23, 105, 210, 0.34); color: #1769d2; background: #f6f9fd; } .ds-uid-chip:focus-visible { outline: 3px solid rgba(0, 100, 224, 0.26); outline-offset: 3px; } .ds-uid-chip:active { background: #eef5fc; } .ds-uid-dot { width: 8px; height: 8px; border-radius: 999px; background: #2c9f70; box-shadow: 0 0 0 3px rgba(44, 159, 112, 0.12); } .ds-uid-label { color: #6f8293; font-size: 12px; } .ds-uid-value { color: #2f4659; font-size: 15px; font-variant-numeric: tabular-nums; } .ds-uid-chevron { color: #6f8293; font-size: 14px; }"
+      "html": "<button class=\"ds-uid-chip\" type=\"button\" aria-expanded=\"false\" aria-label=\"切换游戏 UID，当前 100000001\"><span class=\"ds-uid-dot\" aria-hidden=\"true\"></span><span class=\"ds-uid-label\">UID</span><strong>100000001</strong><span aria-hidden=\"true\">⌄</span></button>",
+      "css": ".ds-uid-chip { display: inline-flex; min-height: 40px; align-items: center; gap: 7px; border: 1px solid var(--border-soft, #dee3e9); border-radius: 999px; padding: 8px 14px; color: var(--text-muted, #5d6c7b); background: var(--canvas, #fff); font: 600 14px/1.25 var(--font-cjk, system-ui, sans-serif); transition: background-color 100ms cubic-bezier(0.22, 1, 0.36, 1), border-color 100ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-uid-chip:hover { border-color: rgba(0, 100, 224, 0.34); background: var(--primary-soft, #f4f8ff); } .ds-uid-chip:focus-visible { outline: 3px solid rgba(0, 100, 224, 0.26); outline-offset: 3px; } .ds-uid-chip strong { color: var(--ink-main, #1c1e21); font-variant-numeric: tabular-nums; } .ds-uid-dot { width: 8px; height: 8px; border-radius: 999px; background: var(--success, #31a24c); } .ds-uid-label { font-size: 12px; }"
     },
     {
       "name": "Product Panel",
       "kind": "card",
       "refersTo": "product-panel",
-      "description": "承担明确任务的大面板，依靠冷白表面和柔边界建立结构。",
-      "html": "<section class=\"ds-panel\"><span class=\"ds-panel-eyebrow\">ECHO SETUP</span><h2>初始化声骸</h2><p>选择套装、COST、主词条后开始录入。</p></section>",
-      "css": ".ds-panel { width: min(420px, 100%); border: 1px solid var(--border-soft, #dee3e9); border-radius: 24px; padding: 28px; color: var(--ink-strong, #0a1317); background: var(--canvas, #ffffff); font-family: \"IBM Plex Sans SC\", \"Noto Sans SC\", \"Microsoft YaHei UI\", system-ui, sans-serif; } .ds-panel:hover { border-color: var(--border-strong, #ced0d4); } .ds-panel:focus-within { border-color: rgba(0, 100, 224, 0.42); } .ds-panel-eyebrow { color: var(--text-muted, #5d6c7b); font-family: \"IBM Plex Sans SC\", \"IBM Plex Sans\", system-ui, sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; } .ds-panel h2 { margin: 8px 0; font-size: 21px; font-weight: 700; line-height: 1.2; } .ds-panel p { margin: 0; color: var(--text-muted, #5d6c7b); font-size: 15px; line-height: 1.45; }"
+      "description": "承担明确任务的页面级面板，依靠冷白表面和 1px 柔边界建立结构。",
+      "html": "<section class=\"ds-panel\"><span class=\"ds-panel-label\">声骸配置</span><h2>初始化声骸</h2><p>选择套装、COST 和主词条后开始录入。</p></section>",
+      "css": ".ds-panel { width: min(420px, 100%); border: 1px solid var(--border-soft, #dee3e9); border-radius: 24px; padding: 24px; color: var(--ink-strong, #0a1317); background: var(--canvas, #fff); font-family: var(--font-cjk, system-ui, sans-serif); } .ds-panel:focus-within { border-color: rgba(0, 100, 224, 0.42); } .ds-panel-label { color: var(--text-muted, #5d6c7b); font-size: 13px; font-weight: 600; } .ds-panel h2 { margin: 8px 0; font-size: 21px; font-weight: 700; line-height: 1.15; } .ds-panel p { max-width: 65ch; margin: 0; color: var(--text-muted, #5d6c7b); font-size: 15px; line-height: 1.5; }"
     },
     {
       "name": "Prediction Summary",
       "kind": "custom",
       "refersTo": "prediction-rail",
-      "description": "紧凑展示最高显示概率的并列预测与其他可能，保持模型不确定性与数字可比性。",
-      "html": "<section class=\"ds-prediction-rail\" aria-label=\"下一个副词条预测\"><span class=\"ds-prediction-heading\">预测</span><div class=\"ds-prediction-line ds-prediction-primary\"><em>防御百分比</em><strong>9.3%</strong></div><div class=\"ds-prediction-line ds-prediction-primary\"><em>共鸣效率</em><strong>9.3%</strong></div><span class=\"ds-prediction-heading ds-prediction-muted\">其他可能</span><div class=\"ds-prediction-line\"><em>防御固定值</em><strong>9.2%</strong></div></section>",
-      "css": ".ds-prediction-rail { display: grid; align-content: center; width: 240px; min-height: 176px; gap: 5px; border-left: 1px solid rgba(216, 226, 234, 0.72); padding: 16px; color: var(--ink-strong, #0a1317); background: var(--surface-prediction, #f7f9fb); font-family: \"IBM Plex Sans SC\", \"Noto Sans SC\", \"Microsoft YaHei UI\", system-ui, sans-serif; } .ds-prediction-heading { color: var(--prediction, #2c9f70); font-size: 11px; font-weight: 600; line-height: 1; } .ds-prediction-muted { margin-top: 2px; color: #8b9aa7; } .ds-prediction-line { display: grid; grid-template-columns: minmax(max-content, 1fr) max-content; align-items: center; gap: 6px; min-height: 26px; border: 1px solid transparent; border-radius: 10px; padding: 5px 6px; color: #526675; font-size: 12px; line-height: 1.15; transition: background-color 100ms cubic-bezier(0.22, 1, 0.36, 1), border-color 100ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-prediction-line:hover { border-color: var(--border-soft, #dee3e9); background: var(--canvas, #ffffff); } .ds-prediction-line:focus-within { border-color: rgba(0, 100, 224, 0.42); } .ds-prediction-primary { border-color: rgba(44, 159, 112, 0.12); color: #166b4a; background: rgba(44, 159, 112, 0.10); } .ds-prediction-line em { font-style: normal; font-weight: 600; } .ds-prediction-line strong { justify-self: end; font-family: \"IBM Plex Sans SC\", \"IBM Plex Sans\", system-ui, sans-serif; font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }"
+      "description": "紧凑展示并列预测与其他可能，保持模型不确定性和数字可比性。",
+      "html": "<section class=\"ds-prediction\" aria-label=\"下一个副词条预测\"><span class=\"ds-prediction-heading\">预测</span><div class=\"ds-prediction-line ds-prediction-primary\"><em>防御百分比</em><strong>9.3%</strong></div><div class=\"ds-prediction-line ds-prediction-primary\"><em>共鸣效率</em><strong>9.3%</strong></div><span class=\"ds-prediction-heading ds-prediction-muted\">其他可能</span><div class=\"ds-prediction-line\"><em>防御固定值</em><strong>9.2%</strong></div></section>",
+      "css": ".ds-prediction { display: grid; align-content: center; width: 240px; min-height: 176px; gap: 5px; border-left: 1px solid var(--border-soft, #dee3e9); padding: 16px; color: var(--ink-strong, #0a1317); background: var(--surface-prediction, #f7f9fb); font-family: var(--font-cjk, system-ui, sans-serif); } .ds-prediction-heading { color: var(--prediction-ink, #166b4a); font-size: 12px; font-weight: 600; } .ds-prediction-muted { margin-top: 2px; color: var(--text-muted, #5d6c7b); } .ds-prediction-line { display: grid; grid-template-columns: minmax(max-content, 1fr) max-content; align-items: center; gap: 6px; min-height: 28px; border: 1px solid transparent; border-radius: 10px; padding: 5px 6px; color: var(--text-muted, #5d6c7b); font-size: 12px; line-height: 1.3; } .ds-prediction-primary { border-color: rgba(44, 159, 112, 0.16); color: var(--prediction-ink, #166b4a); background: rgba(44, 159, 112, 0.10); } .ds-prediction-line em { font-style: normal; font-weight: 600; } .ds-prediction-line strong { justify-self: end; font-weight: 600; font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "name": "Bayes Path",
+      "kind": "custom",
+      "refersTo": "bayes-path",
+      "description": "左侧路径线是表达推理结构的功能图形，而不是卡片装饰侧边条。",
+      "html": "<section class=\"ds-bayes-card\" aria-label=\"Bayes Exact 路径\"><span class=\"ds-bayes-path\" aria-hidden=\"true\"></span><div class=\"ds-bayes-nodes\" aria-hidden=\"true\"><b>A</b><i>→</i><b>B</b><i>→</i><b>C</b></div><div><strong>Exact</strong><p>历史里出现过同样走势，当前判断更有底。</p></div></section>",
+      "css": ".ds-bayes-card { display: grid; grid-template-columns: 4px auto 1fr; align-items: center; gap: 16px; border: 1px solid var(--border-soft, #dee3e9); border-radius: 14px; padding: 16px; color: var(--ink-strong, #0a1317); background: #fff; font-family: var(--font-cjk, system-ui, sans-serif); } .ds-bayes-path { width: 4px; height: 68px; border-radius: 999px; background: var(--prediction, #2c9f70); } .ds-bayes-nodes { display: flex; align-items: center; gap: 10px; color: var(--primary-deep, #0457cb); } .ds-bayes-nodes b { display: grid; width: 40px; height: 40px; place-items: center; border: 1px solid rgba(0, 100, 224, 0.22); border-radius: 999px; background: var(--primary-soft, #f4f8ff); } .ds-bayes-nodes i { color: var(--text-muted, #5d6c7b); font-style: normal; } .ds-bayes-card p { margin: 6px 0 0; color: var(--text-muted, #5d6c7b); font-size: 13px; line-height: 1.4; }"
+    },
+    {
+      "name": "Floating History Panel",
+      "kind": "custom",
+      "refersTo": "floating-history-panel",
+      "description": "真正脱离文档流的可拖动历史面板，以单一柔阴影表达层级。",
+      "html": "<aside class=\"ds-history\" aria-label=\"历史记录\"><header><strong>历史记录</strong><button type=\"button\" aria-label=\"收起历史记录\">⌄</button></header><p>最近记录将显示在这里。</p></aside>",
+      "css": ".ds-history { width: 320px; border: 0; border-radius: 16px; padding: 16px; color: var(--ink-strong, #0a1317); background: #fff; box-shadow: 0 22px 60px rgba(15, 23, 42, 0.18); font-family: var(--font-cjk, system-ui, sans-serif); } .ds-history header { display: flex; align-items: center; justify-content: space-between; gap: 12px; } .ds-history button { width: 40px; height: 40px; border: 1px solid var(--border-soft, #dee3e9); border-radius: 999px; color: var(--ink-main, #1c1e21); background: #fff; } .ds-history button:focus-visible { outline: 3px solid rgba(0, 100, 224, 0.26); outline-offset: 3px; } .ds-history p { margin: 12px 0 0; color: var(--text-muted, #5d6c7b); font-size: 13px; line-height: 1.4; }"
     }
   ],
   "narrative": {
     "northStar": "泰缇斯研究台",
-    "overview": "Wuwa 是玩家在普通室内光线下长时间录入、核对和分析声骸数据的桌面工作台。浅色表面、稳定对齐和有限强调色让界面在高密度下保持冷静，游戏语境通过术语、数据模型和流程出现，不依赖装饰性视觉效果。\n\n系统气质必须清晰、克制、专业、低噪音。Web 是深度工作台，优先保证账号与 UID 上下文、数据可信和高频录入效率；首页可以保留轻量终端感，但登录后的界面必须回到熟悉、稳定的生产力工具语言。\n\n界面明确拒绝营销落地页、视觉特效展示、通用企业后台、调试控制台和另一套账号或 UID 心智。外部参考只提供视觉词汇，绝不替代 Wuwa 自己的业务结构。",
+    "overview": "Wuwa 是玩家在普通室内光线下长时间录入、核对和分析声骸数据的桌面工作台。视觉系统服务于可信数据、稳定账号与 UID 上下文以及高频录入效率；游戏语境来自术语、数据模型和工作流程，而不是装饰性特效。\n\n界面必须清晰、克制、专业、低噪音。浅色模式是首要设计基准，暗色模式只做同等语义映射。首页可以保留受控的终端语气，但登录后的工作台、统计和评估必须回到熟悉、稳定的生产力工具语言。\n\n本文件是 Web 视觉 token、字体、组件语言和交互状态的规范入口。跨端行为遵循 `docs/product-interface-principles.md`，Web 长期方向遵循 `docs/web-ui-design-system-v2.md`，页面规范在不冲突时补充本文件。实现与本文件冲突时先确认预期，再同步代码、测试和长期文档；不得静默降低规范来迁就历史样式。\n\n当前已经被用户确认的页面截图、浏览器渲染结果、稳定实现和明确设计决策共同构成批准基线。Impeccable audit 是技术诊断和候选问题清单，不是设计定稿，也不直接授权修改视觉语言。\n\n当文档与实现冲突时先记录为待决策项。Token 化、主题收敛和样式重构默认保持零视觉漂移；任何配色、字体、圆角、阴影、动效或组件造型变化必须提供局部前后对比并获得用户批准。",
     "keyCharacteristics": [
-      "浅色优先，蓝色只承担关键动作、当前选择和重要状态。",
-      "冷灰边框与近白表面建立结构，阴影只服务真实层级。",
-      "圆角现代但不软萌，数据区紧凑但不拥挤。",
-      "数字稳定对齐，概率、UID、样本量和分数易于纵向比较。",
-      "顶部导航保持清楚，历史记录和识别复核不得压迫主任务。"
+      "浅色优先，蓝色只承担关键动作、当前选择、焦点和高价值状态。",
+      "冷灰边框与近白表面建立结构，阴影只解释真实悬浮层级。",
+      "页面容器柔和，中型卡片克制，密集数据单元保持紧凑。",
+      "数字稳定对齐，概率、UID、样本量、权重和分数便于纵向比较。",
+      "顶部导航明确，历史记录和识别复核辅助主任务但不压迫主流程。",
+      "桌面端优先维持信息密度，窄屏通过结构重排而不是缩小可读文字解决空间问题。"
     ],
     "rules": [
       {
         "name": "The Task Surface Rule",
-        "body": "每一个面板必须对应真实任务；没有业务意义的 chrome、卡片和状态条一律删除。",
+        "body": "每一个面板必须对应真实任务；没有业务意义的 chrome、卡片、状态条和装饰层一律删除。",
+        "section": "overview"
+      },
+      {
+        "name": "The Approved Baseline Rule",
+        "body": "当前已经被用户确认的页面截图、浏览器渲染结果、稳定实现和明确设计决策共同构成批准基线；Impeccable 或其他通用工具的规则只能提供候选问题，不能自动覆盖该基线。",
+        "section": "overview"
+      },
+      {
+        "name": "The Audit Triage Rule",
+        "body": "Audit 发现必须先归类为无视觉修复、实测后决定、视觉提案或项目例外；只有无视觉修复可以在保持渲染稳定的前提下直接实施，视觉提案必须获得用户批准。",
+        "section": "overview"
+      },
+      {
+        "name": "The No Visual Drift Rule",
+        "body": "Token 化、主题收敛和样式重构默认只改变命名与引用，不改变最终色值、字体、间距或几何；任何视觉变化必须限定范围、说明用户价值并提供前后截图。",
         "section": "overview"
       },
       {
         "name": "The One Voice Rule",
-        "body": "蓝色只出现在关键动作、当前选择和状态指示中；同一屏幕不得让多个区域同时争夺主强调色。",
+        "body": "蓝色只出现在关键动作、当前选择和状态指示中；同一局部区域只能有一个最高权重主操作。",
         "section": "colors"
       },
       {
         "name": "The Semantic Color Rule",
-        "body": "绿色、琥珀色和红色必须对应真实状态，绝不用于装饰；状态还必须配合文字、图标或形状表达。",
+        "body": "预测、成功、警告和错误必须对应真实含义，并配合文字、图标或形状表达，绝不只靠颜色区分。",
         "section": "colors"
       },
       {
+        "name": "The Readability Guardrail Rule",
+        "body": "关键正文、表单值、操作标签、错误信息和焦点状态必须清楚可读；对比度用于发现文字过灰和状态不可辨等真实回归，不用于按 audit 分数批量重映射项目色板。禁用内容、装饰线、非文字图形和低权重图表刻度按实际语义判断。",
+        "section": "colors"
+      },
+      {
+        "name": "The Token Layering Rule",
+        "body": "全局 token 只承载跨页面语义；评估模型、Bayes 路径、覆盖范围、识别和工作台专属语义使用 feature token；局部数据图形可以保留有明确含义和主题映射的颜色。颜色字面量数量不等于设计缺陷数量。",
+        "section": "colors"
+      },
+      {
+        "name": "The Functional Graphic Exception Rule",
+        "body": "Bayes Exact / Wildcard 路径标记、登录标题 4px 打字光标及真实表达进度、概率分布、模型路径或状态结构的线条属于功能图形，不按装饰性侧边条处理。",
+        "section": "components"
+      },
+      {
         "name": "The Light-First Rule",
-        "body": "浅色模式是基准。暗色模式只能做等价语义映射，不能成为霓虹化或开发者控制台风格的另一套产品。",
+        "body": "浅色模式是基准，暗色模式只能做等价语义映射，不能成为霓虹化或开发者控制台风格的另一套产品。",
         "section": "colors"
       },
       {
@@ -402,47 +601,68 @@
         "section": "typography"
       },
       {
-        "name": "The One Family Rule",
-        "body": "中文、普通拉丁文本、品牌、数据与 Mono 技术文本分别使用既定语义字体入口；禁止为单页情绪或单个指标引入新的字体家族。",
+        "name": "The Semantic Entry Rule",
+        "body": "中文、普通拉丁、品牌、数据与 Mono 技术文本分别使用 `--font-cjk`、`--font-latin`、`--font-data` 和 `--font-mono`；中文字段标签和正文不得使用 Mono。",
         "section": "typography"
       },
       {
-        "name": "The No Poster Type Rule",
-        "body": "工作台不是营销海报。常规 UI 文本不得使用 800/900 形成黑块，只有核心统计数字可以短暂提高字重。",
+        "name": "The Tracking Rule",
+        "body": "中文、普通拉丁和数字字距为 0；缩写、全大写短状态和 TETHYS 品牌只使用已有 tracking token。禁止负字距和裸非零字距。",
+        "section": "typography"
+      },
+      {
+        "name": "The Real Weight Rule",
+        "body": "只声明已经加载的字重；标题和最高级数据最多使用 700，禁止 650、720、800、900 等无效或合成字重。",
+        "section": "typography"
+      },
+      {
+        "name": "The Minimum Size Rule",
+        "body": "交互文字不得小于 12px；禁止 10px、半像素字号和为了塞入容器而缩小文字。",
         "section": "typography"
       },
       {
         "name": "The Flat-by-Default Rule",
-        "body": "静态面板必须保持平坦；如果移除阴影后层级仍然清楚，就不允许添加阴影。",
+        "body": "静态面板和卡片保持平坦；如果移除阴影后层级仍清楚，就不允许添加阴影。",
+        "section": "elevation"
+      },
+      {
+        "name": "The One Depth Cue Rule",
+        "body": "同一个元素只能选择清晰边框或宽柔阴影作为主要层级线索，禁止 1px 边框与 16px 以上模糊阴影的 ghost-card 组合。",
         "section": "elevation"
       },
       {
         "name": "The Structural Shadow Rule",
-        "body": "阴影只能说明悬浮、粘性或聚焦关系，禁止用重阴影、发光边缘和多层阴影制造“高级感”。",
+        "body": "阴影只能说明粘性、悬浮、拖动或聚焦关系，禁止用重阴影、发光边缘和多层阴影制造“高级感”。",
         "section": "elevation"
       }
     ],
     "dos": [
-      "Do 先展示当前系统账号、当前游戏 UID 和数据状态，再展示数据操作。",
-      "Do 使用泰缇斯蓝表达主操作、当前选择和焦点，并控制同屏强调数量。",
-      "Do 使用 1px 冷灰边框、近白表面和少量真实阴影建立层级。",
-      "Do 为概率、UID、声骸编号、样本数、排名和分数启用 tabular-nums。",
-      "Do 保持顶部导航、圆角工作台和短路径录入流程，桌面端优先保证信息密度与稳定布局。",
-      "Do 让错误、不可用和低置信度状态说明用户下一步能做什么。",
-      "Do 保留可见键盘焦点，并在可行处提供至少 44px 的点击目标。",
-      "Do 让历史记录与本地识别复核默认安静，只在待处理、冲突或低置信度时提高权重。"
+      "**Do** 使用真实账号、UID、保存、预测、识别和冲突状态组织界面。",
+      "**Do** 使用 1px 冷灰边框、近白表面和单一明确层级线索建立结构。",
+      "**Do** 为所有可比较数字启用 `tabular-nums`，让概率、样本量、UID 和分数稳定对齐。",
+      "**Do** 同时使用文字、图标或形状表达 selected、success、warning、critical 和 disabled。",
+      "**Do** 在窄屏重排结构并保持文字可读，不通过缩小到 12px 以下解决空间问题。",
+      "**Do** 让错误、空状态和不可用状态说明用户下一步可以做什么。",
+      "**Do** 将纯视觉改动限制在现有 Vue、公共样式和 feature CSS ownership 内。",
+      "**Do** 把当前批准渲染作为视觉改动的默认比较基线。",
+      "**Do** 在修改颜色、字体、圆角、阴影或动效前提供局部前后截图并获得批准。",
+      "**Do** 先以相同最终值完成全局 token、feature token 和局部数据可视化颜色的分层。"
     ],
     "donts": [
-      "Don't 让界面感觉像营销落地页、视觉特效展示、通用企业后台、调试控制台，或拥有另一套账号与 UID 心智的独立产品。",
-      "Don't 使用假数据预览、重玻璃效果、装饰性卡片堆叠、超大 hero，或暴露后端地址等开发者概念。",
-      "Don't 恢复左侧 Activity Bar、底部 Status Bar、文件标签式导航、完整 IDE Shell 或暗色编辑器优先的视觉体系。",
-      "Don't 使用大面积紫色、蓝紫色 AI 渐变、渐变文字、发光边缘或赛博朋克霓虹字体。",
-      "Don't 使用超过 1px 的彩色左侧或右侧条纹装饰卡片、列表项、提示和状态；改用完整边框、背景色、图标或文字。",
-      "Don't 使用卡片套卡片、相同卡片网格或没有业务意义的面板来制造视觉节奏。",
-      "Don't 把 modal 当作默认解决方案；先使用内联、渐进展开、侧栏或就地反馈。",
-      "Don't 让 hover 上浮、缩放、弹跳，或动画改变布局；常规反馈保持在 80–160ms 并尊重 prefers-reduced-motion。",
-      "Don't 只靠颜色表达成功、警告、错误、选中或禁用状态。",
-      "Don't 为单个页面临时引入字体栈、配色体系、组件语法、UI 框架或全局状态管理方案。"
+      "**Don't** 把产品做成营销落地页、视觉特效展示、通用企业后台、调试控制台或另一套账号 / UID 心智。",
+      "**Don't** 暴露后端地址、开发配置、内部状态码或虚构数据预览。",
+      "**Don't** 恢复 Activity Bar、Status Bar、文件标签式导航、完整 IDE Shell 或暗色编辑器优先方向。",
+      "**Don't** 使用大面积紫色、蓝紫 AI 渐变、渐变文字、玻璃拟态、发光边缘、装饰性卡片堆叠或超大 hero。",
+      "**Don't** 在卡片、列表、callout 或 alert 左右使用超过 1px 的彩色侧边强调；功能图形必须真实表达路径、进度或结构。",
+      "**Don't** 组合 1px 边框和 16px 以上模糊阴影制造 ghost card，也不要使用嵌套卡片。",
+      "**Don't** 把所有按钮、字段和卡片做成胶囊；胶囊必须有导航、筛选、状态或上下文语义。",
+      "**Don't** 让 hover 上浮、缩放、弹跳或改变布局，也不要动画 width、height、margin、padding 和位置属性。",
+      "**Don't** 让内容依赖进入动画才可见；每项非必要动画都必须尊重 `prefers-reduced-motion`。",
+      "**Don't** 为提高 audit 分数、减少颜色字面量或满足通用偏好而批量替换现有配色、字体或组件造型。",
+      "**Don't** 让关键正文、表单值、操作标签和错误信息使用不可读的浅灰色，也不要让 `colors.decorative-muted` 承载这些内容。",
+      "**Don't** 把已登记的 Bayes 路径、登录打字光标或其他功能图形当作装饰性侧边条删除。",
+      "**Don't** 为单页引入新字体栈、无效字重、负字距、10px 文字或大面积 Mono 中文。",
+      "**Don't** 新增没有业务意义的组件、全局状态管理、UI 框架或视觉 chrome。"
     ]
   }
 }
