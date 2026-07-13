@@ -193,3 +193,15 @@ test('workspace dark theme consumes the same semantic theme tokens without visua
   assert.match(workspace, /var\(--surface-soft\)/)
   assert.match(workspace, /(?:color|background): var\(--primary-deep\);/)
 })
+
+test('history dark theme reuses surface, text, and primary theme tokens without remapping', async () => {
+  const controls = await read('./styles/controls.css')
+  const history = await read('./styles/features/history.css')
+
+  assert.match(controls, /\.app-shell\.theme-dark \{[\s\S]+--primary-deep: #8dc3ff;[\s\S]+--ink-deep: #e7eef4;[\s\S]+--steel: #98aab7;[\s\S]+--surface-soft: #17232d;/)
+  assert.doesNotMatch(history, /#(?:e7eef4|98aab7|17232d|8dc3ff)\b/i)
+  assert.match(history, /color: var\(--ink-deep\);/)
+  assert.match(history, /color: var\(--steel\);/)
+  assert.match(history, /var\(--surface-soft\)/)
+  assert.match(history, /color: var\(--primary-deep\);/)
+})

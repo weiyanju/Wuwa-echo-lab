@@ -4,7 +4,7 @@
   border-color: rgba(83, 107, 124, 0.66);
   background:
     linear-gradient(180deg, rgba(25, 39, 50, 0.96), rgba(20, 32, 42, 0.94)),
-    #17232d;
+    var(--surface-soft);
   box-shadow: 0 18px 42px rgba(0, 0, 0, 0.24);
 }
 
@@ -46,7 +46,7 @@
 .app-shell.theme-dark .floating-history-panel {
   background:
     linear-gradient(180deg, rgba(25, 39, 50, 0.94), rgba(20, 32, 42, 0.92)),
-    #17232d;
+    var(--surface-soft);
   backdrop-filter: saturate(125%) blur(18px);
 }
 
@@ -65,7 +65,7 @@
 .app-shell.theme-dark .echo-item-head > span,
 .app-shell.theme-dark .echo-roll-list small,
 .app-shell.theme-dark .echo-roll-empty {
-  color: #98aab7;
+  color: var(--steel);
 }
 
 .app-shell.theme-dark .history-filter-chip {
@@ -81,20 +81,20 @@
 
 .app-shell.theme-dark .history-filter-chip.all.active {
   border-color: rgba(143, 162, 177, 0.4);
-  color: #e7eef4;
+  color: var(--ink-deep);
   background: #263746;
   box-shadow: 0 0 0 1px rgba(143, 162, 177, 0.16);
 }
 
 .app-shell.theme-dark .history-filter-chip.current {
   border-color: rgba(93, 168, 255, 0.28);
-  color: #8dc3ff;
+  color: var(--primary-deep);
   background: rgba(40, 83, 124, 0.22);
 }
 
 .app-shell.theme-dark .history-filter-chip.current.active {
   border-color: rgba(93, 168, 255, 0.52);
-  color: #e7eef4;
+  color: var(--ink-deep);
   background: rgba(48, 98, 143, 0.5);
   box-shadow: 0 0 0 1px rgba(93, 168, 255, 0.18);
 }
@@ -140,13 +140,13 @@
 
 .app-shell.theme-dark .floating-history-actions button:hover {
   border-color: rgba(93, 168, 255, 0.46);
-  color: #8dc3ff;
+  color: var(--primary-deep);
   background: #223341;
 }
 
 .app-shell.theme-dark .floating-history-actions button.active {
   border-color: rgba(93, 168, 255, 0.58);
-  color: #e7eef4;
+  color: var(--ink-deep);
   background: #2b5f8d;
 }
 
@@ -164,7 +164,7 @@
 }
 
 .app-shell.theme-dark .echo-item strong {
-  color: #e7eef4;
+  color: var(--ink-deep);
 }
 
 .app-shell.theme-dark .echo-item em {
@@ -201,7 +201,7 @@
 }
 
 .app-shell.theme-dark .echo-list::-webkit-scrollbar-thumb {
-  border-color: #17232d;
+  border-color: var(--surface-soft);
 }
 
 .echo-item:hover {
