@@ -12,11 +12,10 @@ rem Optional environment overrides before running:
 rem   set SKIP_INSTALL=1
 rem   set SKIP_MIGRATE=1
 rem   set DB_NAME=wuwa_dev
-rem   set DB_USER=postgres
-rem   set DB_PASSWORD=your-password
+rem   set DB_USER=PostgreSQL
+rem   set DB_PASSWORD=root
 rem   set DB_HOST=127.0.0.1
 rem   set DB_PORT=5432
-rem   set DB_USE_SSH_TUNNEL=1
 rem   set BACKEND_PORT=8001
 rem   set POSTGRES_BIN=D:\path\to\pgsql\bin
 rem   set PGDATA=D:\path\to\pgdata
@@ -41,25 +40,13 @@ set "NODE_DIR=%ROOT%.tools\node"
 set "NPM=%NODE_DIR%\npm.cmd"
 set "NPM_CACHE=%ROOT%.tools\npm-cache"
 
-if not defined KEY_PATH set "KEY_PATH=C:\Users\qifan\Downloads\ssh.pem"
-if not defined SSH_USER set "SSH_USER=admin"
-if not defined SSH_HOST set "SSH_HOST=47.98.96.128"
-if not defined DB_USE_SSH_TUNNEL set "DB_USE_SSH_TUNNEL=0"
 if not defined DB_NAME set "DB_NAME=wuwa_dev"
 if not defined DB_USER set "DB_USER=PostgreSQL"
 if not defined DB_PASSWORD set "DB_PASSWORD=root"
 if not defined DB_ADMIN_USER set "DB_ADMIN_USER=postgres"
 if not defined DB_HOST set "DB_HOST=127.0.0.1"
-if not defined DB_PORT (
-    if "%DB_USE_SSH_TUNNEL%"=="1" (
-        set "DB_PORT=15432"
-    ) else (
-        set "DB_PORT=5432"
-    )
-)
+if not defined DB_PORT set "DB_PORT=5432"
 if not defined DB_CONN_MAX_AGE set "DB_CONN_MAX_AGE=60"
-if not defined DB_REMOTE_HOST set "DB_REMOTE_HOST=127.0.0.1"
-if not defined DB_REMOTE_PORT set "DB_REMOTE_PORT=5432"
 if not defined BACKEND_HOST set "BACKEND_HOST=127.0.0.1"
 if not defined BACKEND_PORT set "BACKEND_PORT=8001"
 if not defined FRONTEND_HOST set "FRONTEND_HOST=127.0.0.1"
@@ -71,6 +58,12 @@ if not defined START_POSTGRES_SERVICE set "START_POSTGRES_SERVICE=1"
 if not defined ENSURE_POSTGRES_DB set "ENSURE_POSTGRES_DB=1"
 if not defined PGDATA set "PGDATA=%ROOT%.tools\pgdata"
 if not defined PGLOG set "PGLOG=%ROOT%.tools\pg.log"
+
+if /I not "%DB_HOST%"=="127.0.0.1" if /I not "%DB_HOST%"=="localhost" (
+    echo ERROR: start-dev.bat only supports PostgreSQL on 127.0.0.1 or localhost.
+    echo Use deployment-specific configuration instead of the local launcher for remote hosts.
+    goto fail
+)
 
 if not defined POSTGRES_BIN (
     for /f "usebackq delims=" %%P in (`powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%FIND_POSTGRES_BIN_SCRIPT%" -Root "%ROOT_DIR%"`) do set "POSTGRES_BIN=%%P"
@@ -102,7 +95,6 @@ echo Node:        %NODE_DIR%\node.exe
 echo npm:         %NPM%
 echo Database:    %DB_USER%@%DB_HOST%:%DB_PORT%/%DB_NAME%
 echo DB pool:     CONN_MAX_AGE=%DB_CONN_MAX_AGE%
-if "%DB_USE_SSH_TUNNEL%"=="1" echo SSH tunnel:  %DB_HOST%:%DB_PORT% -^> %DB_REMOTE_HOST%:%DB_REMOTE_PORT% via %SSH_USER%@%SSH_HOST%
 echo Backend URL: http://%BACKEND_HOST%:%BACKEND_PORT%
 echo Frontend:    http://%FRONTEND_HOST%:%FRONTEND_PORT%
 echo.
@@ -149,35 +141,19 @@ if not exist "%NPM%" (
 
 if not exist "%NPM_CACHE%" mkdir "%NPM_CACHE%"
 
-if "%DB_USE_SSH_TUNNEL%"=="0" if "%DB_HOST%"=="127.0.0.1" (
-    if defined POSTGRES_BIN (
-        if not exist "%PG_CTL%" (
-            echo ERROR: pg_ctl.exe was not found at "%PG_CTL%".
-            goto fail
-        )
-
-        if not exist "%INITDB%" (
-            echo ERROR: initdb.exe was not found at "%INITDB%".
-            goto fail
-        )
-
-        if not exist "%PSQL%" (
-            echo ERROR: psql.exe was not found at "%PSQL%".
-            goto fail
-        )
-    )
-)
-
-if "%DB_USE_SSH_TUNNEL%"=="1" (
-    if not exist "%KEY_PATH%" (
-        echo ERROR: SSH private key was not found at "%KEY_PATH%".
-        echo Set KEY_PATH before running this script if your key is elsewhere.
+if defined POSTGRES_BIN (
+    if not exist "%PG_CTL%" (
+        echo ERROR: pg_ctl.exe was not found at "%PG_CTL%".
         goto fail
     )
 
-    where ssh >nul 2>nul
-    if errorlevel 1 (
-        echo ERROR: ssh was not found in PATH.
+    if not exist "%INITDB%" (
+        echo ERROR: initdb.exe was not found at "%INITDB%".
+        goto fail
+    )
+
+    if not exist "%PSQL%" (
+        echo ERROR: psql.exe was not found at "%PSQL%".
         goto fail
     )
 )
@@ -207,12 +183,7 @@ if "%ALLOW_OCCUPIED_PORTS%"=="0" (
     if errorlevel 1 goto fail
 )
 
-if "%DB_USE_SSH_TUNNEL%"=="1" (
-    echo Starting PostgreSQL SSH tunnel window...
-    start "Wuwa DB Tunnel" powershell.exe -NoExit -NoProfile -ExecutionPolicy Bypass -Command "$KeyPath='%KEY_PATH%'; $LocalPort=%DB_PORT%; $RemoteHost='%DB_REMOTE_HOST%'; $RemotePort=%DB_REMOTE_PORT%; $SshUser='%SSH_USER%'; $SshHost='%SSH_HOST%'; $RetryDelaySeconds=5; Write-Host ('PostgreSQL tunnel: 127.0.0.1:' + $LocalPort + ' -> ' + $RemoteHost + ':' + $RemotePort + ' via ' + $SshUser + '@' + $SshHost) -ForegroundColor Cyan; Write-Host 'Keep this window open. Press Ctrl+C to stop.' -ForegroundColor Yellow; while ($true) { ssh -i $KeyPath -L ($LocalPort.ToString() + ':' + $RemoteHost + ':' + $RemotePort) -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ExitOnForwardFailure=yes ($SshUser + '@' + $SshHost); Write-Host ''; Write-Host ('Tunnel disconnected. Reconnecting in ' + $RetryDelaySeconds + ' seconds...') -ForegroundColor Yellow; Start-Sleep -Seconds $RetryDelaySeconds }"
-)
-
-if "%DB_USE_SSH_TUNNEL%"=="0" if "%START_POSTGRES_SERVICE%"=="1" if "%DB_HOST%"=="127.0.0.1" (
+if "%START_POSTGRES_SERVICE%"=="1" (
     powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$hostName='%DB_HOST%'; $port=%DB_PORT%; try { $client=[Net.Sockets.TcpClient]::new(); $connect=$client.BeginConnect($hostName,$port,$null,$null); if ($connect.AsyncWaitHandle.WaitOne(750) -and $client.Connected) { $client.Close(); exit 0 }; $client.Close(); exit 1 } catch { exit 1 }"
     if errorlevel 1 (
         if "%CAN_USE_BUNDLED_POSTGRES%"=="1" (
@@ -310,11 +281,7 @@ echo Startup complete.
 echo Backend health: http://%BACKEND_HOST%:%BACKEND_PORT%/api/health/
 echo Frontend:       http://%FRONTEND_HOST%:%FRONTEND_PORT%/
 echo.
-if "%DB_USE_SSH_TUNNEL%"=="1" (
-    echo Close the "Wuwa Backend", "Wuwa Frontend", and "Wuwa DB Tunnel" windows to stop services.
-) else (
-    echo Close the "Wuwa Backend" and "Wuwa Frontend" windows to stop services.
-)
+echo Close the "Wuwa Backend" and "Wuwa Frontend" windows to stop services.
 goto end
 
 :fail

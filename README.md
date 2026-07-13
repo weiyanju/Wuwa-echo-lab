@@ -75,28 +75,20 @@ git switch --track origin/<branch-name>
 .\start-dev.bat
 ```
 
-`--check` 只检查 Node、npm、路径和启动脚本依赖，不启动服务。`start-dev.bat` 会安装依赖、执行 Django migration，并分别打开后端和前端窗口。该脚本只用于本地开发，数据库凭据应在运行前通过环境变量明确提供，不能把本地开发值用于共享环境或生产环境。
+`--check` 只检查 Node、npm、路径和启动脚本依赖，不启动服务。`start-dev.bat` 会安装依赖、执行 Django migration，并分别打开后端和前端窗口。该脚本只支持 `127.0.0.1` 或 `localhost` 上的 PostgreSQL，不提供 SSH 隧道或远端数据库启动能力。
+
+当前项目处于 pre-release 本地开发阶段，批准的 PostgreSQL 默认值为：数据库 `wuwa_dev`、角色 `PostgreSQL`、密码 `root`、主机 `127.0.0.1`、端口 `5432`。本地开发与自动化协作者应直接使用这条路径，不需要重复询问数据库方案，也不得改用 SQLite 绕开 PostgreSQL。需要适配不同的本机安装时，可以用环境变量覆盖这些默认值。
 
 可选环境变量：
 
 ```powershell
 $env:DB_NAME = "wuwa_dev"
-$env:DB_USER = "postgres"
-$env:DB_PASSWORD = "your-password"
+$env:DB_USER = "PostgreSQL"
+$env:DB_PASSWORD = "root"
 $env:DB_HOST = "127.0.0.1"
 $env:DB_PORT = "5432"
 $env:SKIP_INSTALL = "1"
 $env:SKIP_MIGRATE = "1"
-.\start-dev.bat
-```
-
-如果需要通过 SSH 隧道连接数据库，再设置：
-
-```powershell
-$env:DB_USE_SSH_TUNNEL = "1"
-$env:KEY_PATH = "C:\path\to\ssh.pem"
-$env:SSH_USER = "admin"
-$env:SSH_HOST = "your-server"
 .\start-dev.bat
 ```
 
@@ -107,8 +99,8 @@ $env:SSH_HOST = "your-server"
 ```powershell
 cd Wuwa
 $env:DB_NAME = "wuwa_dev"
-$env:DB_USER = "postgres"
-$env:DB_PASSWORD = "your-password"
+$env:DB_USER = "PostgreSQL"
+$env:DB_PASSWORD = "root"
 $env:DB_HOST = "127.0.0.1"
 $env:DB_PORT = "5432"
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
@@ -122,7 +114,21 @@ $env:DB_PORT = "5432"
 http://127.0.0.1:8001/api/health/
 ```
 
-数据库凭据不是仓库稳定默认值。手动启动、测试和部署都应显式设置 `DB_USER` 与 `DB_PASSWORD`，不要依赖 `settings.py` 或启动脚本中的本地开发回退值。
+这组凭据是当前阶段的本地开发约定，不是共享环境或生产凭据。未来开始服务器部署时，必须启用下面的生产配置门槛并重新提供安全值。
+
+### 生产配置门槛
+
+设置 `WUWA_ENV=production` 后，Django 不会继承本地数据库密码、localhost 主机白名单或本地 CORS/CSRF 来源，并强制 `DEBUG` 关闭。启动前必须显式提供：
+
+```powershell
+$env:WUWA_ENV = "production"
+$env:DJANGO_SECRET_KEY = "由部署环境安全提供"
+$env:DB_PASSWORD = "由部署环境安全提供"
+$env:DJANGO_ALLOWED_HOSTS = "api.example.com"
+$env:DJANGO_DEBUG = "false"
+```
+
+`DJANGO_ALLOWED_HOSTS` 使用逗号分隔。只有 Web 与 API 不同源时，才按实际部署地址设置逗号分隔的 `DJANGO_CORS_ALLOWED_ORIGINS` 和 `DJANGO_CSRF_TRUSTED_ORIGINS`。缺少必需值或在生产模式开启调试时，Django 会拒绝启动。真实密码、域名和远端地址仍不得提交到仓库。
 
 ### 前端
 
@@ -173,7 +179,6 @@ cd WuwaFrontend
 
 ```powershell
 cd Wuwa
-$env:DB_PASSWORD = "your-password"
 .\.venv\Scripts\python.exe manage.py test
 ```
 

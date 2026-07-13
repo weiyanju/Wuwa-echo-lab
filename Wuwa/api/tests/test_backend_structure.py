@@ -20,10 +20,11 @@ class BackendStructureTests(SimpleTestCase):
 
         self.assertEqual(api_models, set())
 
-    def test_database_password_is_not_hardcoded_to_local_default(self):
+    def test_local_database_default_is_named_and_limited_to_development(self):
         settings_source = (Path(__file__).resolve().parents[2] / "wuwa" / "settings.py").read_text(encoding="utf-8")
 
-        self.assertNotIn("os.environ.get('DB_PASSWORD', 'root')", settings_source)
+        self.assertIn("LOCAL_DEVELOPMENT_DB_PASSWORD = 'root'", settings_source)
+        self.assertIn("'' if IS_PRODUCTION else LOCAL_DEVELOPMENT_DB_PASSWORD", settings_source)
 
     def test_echoes_service_layer_owns_substat_creation(self):
         services = import_module("echoes.services")

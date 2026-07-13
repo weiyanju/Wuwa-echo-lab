@@ -52,6 +52,6 @@ WPF 任务还必须阅读：
 
 ## 仓库卫生
 
-- 不提交密码、密钥、token、真实远端地址、用户本地绝对路径或私有配置。
+- 除下述唯一例外外，不提交密码、密钥、token、真实远端地址、用户本地绝对路径或私有配置：pre-release 阶段允许保留仅绑定本机回环 PostgreSQL 的开发默认密码 `root`，其适用范围和生产切换要求以 `docs/security-privacy-and-data-boundaries.md` 为准。
 - 不提交 `.venv/`、`node_modules/`、`dist/`、`build/`、`tmp/`、日志、本地数据库或运行态 PID。
 - 暂存前检查 `git status --short` 和 `git diff --check`。

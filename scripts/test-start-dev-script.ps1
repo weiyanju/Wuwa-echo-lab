@@ -15,8 +15,20 @@ function Assert-Contains {
     }
 }
 
+function Assert-NotContains {
+    param(
+        [string] $Text,
+        [string] $Unexpected
+    )
+
+    if ($Text.Contains($Unexpected)) {
+        throw "Expected start-dev.bat not to contain: $Unexpected"
+    }
+}
+
 Assert-Contains $script 'if not defined DB_USER set "DB_USER=PostgreSQL"'
 Assert-Contains $script 'if not defined DB_PASSWORD set "DB_PASSWORD=root"'
+Assert-Contains $script 'start-dev.bat only supports PostgreSQL on 127.0.0.1 or localhost.'
 Assert-Contains $script 'if not defined START_POSTGRES_SERVICE set "START_POSTGRES_SERVICE=1"'
 Assert-Contains $script 'if not defined BACKEND_PORT set "BACKEND_PORT=8001"'
 Assert-Contains $script 'set "ROOT_DIR=%ROOT:~0,-1%"'
@@ -35,6 +47,23 @@ Assert-Contains $script 'if not "%NO_PAUSE%"=="1" pause'
 
 if ($script -match 'sqlite') {
     throw 'start-dev.bat must not contain SQLite fallback logic.'
+}
+
+foreach ($obsoleteToken in @(
+    'DB_USE_SSH_TUNNEL',
+    'DB_REMOTE_HOST',
+    'DB_REMOTE_PORT',
+    'SSH_HOST',
+    'SSH_USER',
+    'KEY_PATH',
+    'ssh -i',
+    'Wuwa DB Tunnel'
+)) {
+    Assert-NotContains $script $obsoleteToken
+}
+
+if ($script -match 'C:\\Users\\') {
+    throw 'start-dev.bat must not contain a user-local absolute path.'
 }
 
 $ensureScript = Join-Path $root 'scripts\ensure-postgres-dev-db.ps1'

@@ -102,13 +102,24 @@ git diff --stat
 
 ## 本地启动
 
+当前仓库处于 pre-release 本地开发阶段，Django 固定使用本机 PostgreSQL，不使用 SQLite 作为替代路径。批准的默认值为：数据库 `wuwa_dev`、角色 `PostgreSQL`、密码 `root`、主机 `127.0.0.1`、端口 `5432`。新的开发者和 AI 协作者应直接使用这些默认值，不需要重复确认数据库方案；如果本机配置不同，再通过环境变量覆盖。
+
+推荐先从仓库根目录运行本地专用启动器：
+
+```powershell
+.\start-dev.bat --check
+.\start-dev.bat
+```
+
+启动器只接受 `127.0.0.1` 或 `localhost`，不负责 SSH 隧道、远端数据库或生产部署。
+
 后端：
 
 ```powershell
 cd Wuwa
 $env:DB_NAME = "wuwa_dev"
-$env:DB_USER = "postgres"
-$env:DB_PASSWORD = "your-password"
+$env:DB_USER = "PostgreSQL"
+$env:DB_PASSWORD = "root"
 $env:DB_HOST = "127.0.0.1"
 $env:DB_PORT = "5432"
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
@@ -139,6 +150,12 @@ http://127.0.0.1:5173/
 ```
 
 Vite 会把 `/api` 代理到 `http://127.0.0.1:8001`，前端开发时直接调用 `/api/...`。
+
+### 生产配置边界
+
+服务器部署必须设置 `WUWA_ENV=production`，并通过部署环境显式提供 `DJANGO_SECRET_KEY`、`DB_PASSWORD` 和逗号分隔的 `DJANGO_ALLOWED_HOSTS`。生产模式默认关闭 `DEBUG`，不继承本地数据库密码和 localhost 的 CORS/CSRF 来源；缺少必需值或显式开启调试时会拒绝启动。
+
+Web 与 API 不同源时，再按实际地址设置逗号分隔的 `DJANGO_CORS_ALLOWED_ORIGINS` 与 `DJANGO_CSRF_TRUSTED_ORIGINS`。所有真实密码、域名、远端地址和私有路径只保留在服务器或不入库的本地配置中。
 
 ## 代码落点规则
 

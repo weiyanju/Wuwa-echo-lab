@@ -13,8 +13,38 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 import os
 from pathlib import Path
 
+from django.core.exceptions import ImproperlyConfigured
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+LOCAL_DEVELOPMENT_DB_PASSWORD = 'root'
+LOCAL_DEVELOPMENT_SECRET_KEY = 'wuwa-local-development-only-not-for-production'
+LOCAL_HOSTS = ['127.0.0.1', 'localhost']
+LOCAL_WEB_ORIGINS = [
+    'http://127.0.0.1:5173',
+    'http://localhost:5173',
+]
+
+
+def env_bool(name, default):
+    value = os.environ.get(name)
+    if value is None:
+        return default
+
+    normalized = value.strip().lower()
+    if normalized in {'1', 'true', 'yes', 'on'}:
+        return True
+    if normalized in {'0', 'false', 'no', 'off'}:
+        return False
+    raise ImproperlyConfigured(f'{name} must be a boolean value')
+
+
+def env_list(name, default):
+    value = os.environ.get(name)
+    if value is None:
+        return list(default)
+    return [item.strip() for item in value.split(',') if item.strip()]
 
 
 def env_int(name, default):
@@ -24,14 +54,24 @@ def env_int(name, default):
         return default
 
 
+WUWA_ENV = os.environ.get('WUWA_ENV', 'development').strip().lower()
+if WUWA_ENV not in {'development', 'production'}:
+    raise ImproperlyConfigured(
+        'WUWA_ENV must be either development or production'
+    )
+IS_PRODUCTION = WUWA_ENV == 'production'
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-xz(pu6-1rjsh=jiqgkml)z%^$7q#4x%1mrn$1=ex+dj#q&-!i#'
+# The fallback is an explicit local-development convenience, never a production key.
+SECRET_KEY = os.environ.get(
+    'DJANGO_SECRET_KEY',
+    '' if IS_PRODUCTION else LOCAL_DEVELOPMENT_SECRET_KEY,
+)
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env_bool('DJANGO_DEBUG', not IS_PRODUCTION)
 
 # Application definition
 
@@ -90,7 +130,10 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.environ.get('DB_NAME', 'wuwa_dev'),
         'USER': os.environ.get('DB_USER', 'PostgreSQL'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'root'),
+        'PASSWORD': os.environ.get(
+            'DB_PASSWORD',
+            '' if IS_PRODUCTION else LOCAL_DEVELOPMENT_DB_PASSWORD,
+        ),
         'HOST': os.environ.get('DB_HOST', '127.0.0.1'),
         'PORT': os.environ.get('DB_PORT', '5432'),
         'CONN_MAX_AGE': env_int('DB_CONN_MAX_AGE', 60),
@@ -134,17 +177,37 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-ALLOWED_HOSTS = [
-    '127.0.0.1',
-    'localhost',
-]
+ALLOWED_HOSTS = env_list(
+    'DJANGO_ALLOWED_HOSTS',
+    [] if IS_PRODUCTION else LOCAL_HOSTS,
+)
 
-CORS_ALLOWED_ORIGINS = [
-    'http://127.0.0.1:5173',
-    'http://localhost:5173',
-]
+CORS_ALLOWED_ORIGINS = env_list(
+    'DJANGO_CORS_ALLOWED_ORIGINS',
+    [] if IS_PRODUCTION else LOCAL_WEB_ORIGINS,
+)
 
-CSRF_TRUSTED_ORIGINS = [
-    'http://127.0.0.1:5173',
-    'http://localhost:5173',
-]
+CSRF_TRUSTED_ORIGINS = env_list(
+    'DJANGO_CSRF_TRUSTED_ORIGINS',
+    [] if IS_PRODUCTION else LOCAL_WEB_ORIGINS,
+)
+
+if IS_PRODUCTION:
+    missing_production_settings = [
+        name
+        for name, value in (
+            ('DJANGO_SECRET_KEY', SECRET_KEY),
+            ('DB_PASSWORD', DATABASES['default']['PASSWORD']),
+            ('DJANGO_ALLOWED_HOSTS', ALLOWED_HOSTS),
+        )
+        if not value
+    ]
+    if missing_production_settings:
+        raise ImproperlyConfigured(
+            'Production configuration requires: '
+            + ', '.join(missing_production_settings)
+        )
+    if DEBUG:
+        raise ImproperlyConfigured(
+            'DJANGO_DEBUG must be false in production'
+        )
