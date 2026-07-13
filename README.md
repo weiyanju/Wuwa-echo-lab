@@ -6,12 +6,15 @@ Wuwa 是一个前后端与本地助手分离的开发环境：
 - `WuwaFrontend/`: Vue + Vite Web 工作台。
 - `WuwaAssistant/`: WPF 本地助手与核心客户端。
 
-新开发者建议先阅读 [开发者入门手册](docs/developer-onboarding.md)，再按本 README 启动本地环境。
+新开发者必须先阅读 [开发者入门手册](docs/developer-onboarding.md)，再按本 README 启动本地环境。进行前端或 UI 开发前，还必须阅读 [Web 设计系统总入口](DESIGN.md)。
 
 ## 文档
 
 长期项目规范：
 
+- [产品上下文](PRODUCT.md)
+- [Web 设计系统总入口](DESIGN.md)
+- [结构化设计系统](.impeccable/design.json)
 - [产品原则与范围](docs/product-principles-and-scope.md)
 - [开发者入门手册](docs/developer-onboarding.md)
 - [架构规范](docs/architecture.md)
@@ -22,12 +25,14 @@ Wuwa 是一个前后端与本地助手分离的开发环境：
 - [API 与数据契约规范](docs/api-and-data-contracts.md)
 - [安全、隐私与数据边界规范](docs/security-privacy-and-data-boundaries.md)
 - [产品界面统一原则](docs/product-interface-principles.md)
+- [Web UI 设计系统 V2.1](docs/web-ui-design-system-v2.md)
+- [Web 首页设计](docs/web-homepage-terminal-design.md)
 - [WPF 本地助手 UI 规范](docs/wpf-assistant-ui-guidelines.md)
 - [Web 工作台 UI 规范](docs/web-workbench-ui-guidelines.md)
 - [路线图与优先级](docs/roadmap-and-prioritization.md)
 - [版本与发布策略](docs/versioning-and-release-policy.md)
 
-历史资料和阶段性文档归档到 `docs/archive/`。当前既有的 `docs/superpowers/plans/` 与 `docs/superpowers/specs/` 仍作为阶段资料保留，不替代上述长期规范。
+历史资料和阶段性文档归档到 `docs/archive/`。当前既有的 `docs/superpowers/plans/`、`docs/superpowers/specs/` 与 `memory/` 仍作为专项背景和历史决策保留，不替代上述长期规范。
 
 ## 开发环境
 
@@ -52,11 +57,11 @@ git switch main
 git pull origin main
 ```
 
-接手正在开发的功能分支时：
+接手正在开发的功能分支时，将 `<branch-name>` 替换为实际远端分支：
 
 ```powershell
 git fetch origin
-git switch --track origin/codex/workbench-terminal-ui
+git switch --track origin/<branch-name>
 ```
 
 更多分支规则见 [开发者入门手册](docs/developer-onboarding.md)。
@@ -70,7 +75,7 @@ git switch --track origin/codex/workbench-terminal-ui
 .\start-dev.bat
 ```
 
-`--check` 只检查 Node、npm、路径和启动脚本依赖，不启动服务。`start-dev.bat` 会安装依赖、执行 Django migration，并分别打开后端和前端窗口。
+`--check` 只检查 Node、npm、路径和启动脚本依赖，不启动服务。`start-dev.bat` 会安装依赖、执行 Django migration，并分别打开后端和前端窗口。该脚本只用于本地开发，数据库凭据应在运行前通过环境变量明确提供，不能把本地开发值用于共享环境或生产环境。
 
 可选环境变量：
 
@@ -117,7 +122,7 @@ $env:DB_PORT = "5432"
 http://127.0.0.1:8001/api/health/
 ```
 
-当前 Django 配置会从环境变量读取数据库连接。没有设置 `DB_PASSWORD` 时，本地 PostgreSQL 如果要求密码，测试或启动会失败。
+数据库凭据不是仓库稳定默认值。手动启动、测试和部署都应显式设置 `DB_USER` 与 `DB_PASSWORD`，不要依赖 `settings.py` 或启动脚本中的本地开发回退值。
 
 ### 前端
 

@@ -1,6 +1,6 @@
 # Tethys System 首页设计方案
 
-> 本文档沉淀 Web 首页 / 登录页方向。全局 Web 视觉判断以 [`web-ui-design-system-v2.md`](./web-ui-design-system-v2.md) 为最高优先级；首页与工作台的关系以 V2.1 口径为准。
+> 本文档沉淀 Web 首页 / 登录页方向。根目录 [`DESIGN.md`](../DESIGN.md) 定义当前视觉 token 与字体，Web 长期方向遵循 [`web-ui-design-system-v2.md`](./web-ui-design-system-v2.md)，本文补充入口场景规则。
 
 ## 1. 设计定位
 
@@ -62,7 +62,7 @@
 
 ### 2.3 字体
 
-主字体使用项目默认 UI 字体，优先保证中文可读性。
+中文、标题、正文、按钮和表单使用 `IBM Plex Sans SC`，回退到 `Noto Sans SC`、`Microsoft YaHei UI` 和系统字体。完整 `Tethys System / 泰缇斯枢纽` 品牌可以在首页、加载和首次绑定场景出现；登录后的顶部导航改用短字标 `TETHYS`。
 
 等宽字体只用于：
 
@@ -243,6 +243,7 @@ components/UI/BaseTerminalButton.vue
 本文档服务于 Web 首页，不替代：
 
 - `docs/product-interface-principles.md`
+- `DESIGN.md`
 - `docs/web-ui-design-system-v2.md`
 - `docs/web-workbench-ui-guidelines.md`
 - `docs/security-privacy-and-data-boundaries.md`
@@ -261,6 +262,7 @@ components/UI/BaseTerminalButton.vue
 首页改动应满足：
 
 - 保留 `Tethys System / 泰缇斯枢纽` 识别。
+- 不把入口场景的完整品牌文案复制回登录后的紧凑顶部导航。
 - 登录 / 注册路径清楚。
 - 不暴露工作台内部模块。
 - 不展示假数据。

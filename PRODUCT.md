@@ -2,6 +2,7 @@
 
 This file is a concise `impeccable` project context summary. The full product and UI rules remain in:
 
+- `DESIGN.md`
 - `docs/product-principles-and-scope.md`
 - `docs/product-interface-principles.md`
 - `docs/web-ui-design-system-v2.md`
@@ -22,7 +23,7 @@ Wuwa is an echo data management and local offline recognition assistant. The Web
 
 ## Brand Personality
 
-Clear, restrained, professional, and task-focused. For the Web frontend UI refactor, `docs/web-ui-design-system-v2.md` is the highest-priority visual and interaction reference: IDE-like, keyboard-first, high-density, command-palette-driven, and hyper-minimal. Game context should appear through terminology, data model, and workflow, not through decorative hero artwork or visual effects.
+Clear, restrained, professional, and task-focused. The authenticated Web app is a light-first, rounded productivity workbench with stable data alignment, compact controls, a short `TETHYS` wordmark, and limited semantic color. `DESIGN.md` owns the active visual tokens, typography, component language, and state vocabulary; `docs/web-ui-design-system-v2.md` owns the long-term Web direction. Game context appears through terminology, data, and workflow rather than decorative hero artwork or a simulated IDE shell.
 
 ## Anti-references
 
@@ -30,11 +31,12 @@ The UI should not feel like a marketing landing page, a visual-effects showcase,
 
 ## Design Principles
 
-1. Frontend UI visual systems, layout architecture, component states, shortcuts, and interaction details follow `docs/web-ui-design-system-v2.md` first.
+1. Cross-surface behavior follows `docs/product-interface-principles.md`; current Web visual implementation follows `DESIGN.md`, then the page-specific Web guidelines.
 2. Account and UID context come before data operations.
 3. Data readability and trust are more important than display effects.
 4. Web is the deep workbench; WPF remains the low-distraction local assistant.
 5. Errors and unavailable states must explain what the user can do next.
+6. Historical plans and implementation notes provide context, but do not override current long-term rules.
 
 ## Accessibility & Inclusion
 

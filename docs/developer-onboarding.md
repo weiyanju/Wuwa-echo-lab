@@ -9,9 +9,13 @@
 - `Wuwa/`: Django 后端，负责账号、声骸、识别记录、统计和 API。
 - `WuwaFrontend/`: Vue + Vite Web 工作台。
 - `WuwaAssistant/`: WPF 本地助手与可脱离 UI 测试的 Core 项目。
+- `PRODUCT.md`: 面向设计工具和协作者的精简产品上下文。
+- `DESIGN.md`: Web 视觉 token、字体、组件语言和交互状态的当前总入口。
+- `.impeccable/design.json`: 与 `DESIGN.md` 同步的结构化设计系统。
 - `docs/`: 当前有效的长期规范与设计文档。
 - `docs/archive/`: 已完成阶段、实现记录和历史背景。
 - `docs/superpowers/`: 阶段计划和规格记录，作为背景材料保留。
+- `memory/`: 聚焦性能问题的专项调查与历史决策，不作为长期规范入口。
 
 不要把 `tmp/`、`.venv/`、`node_modules/`、`dist/`、`build/`、`db.sqlite3`、日志、IDE 配置或本地私有说明提交到仓库。
 
@@ -19,18 +23,21 @@
 
 先读长期规范，再读当前功能对应的阶段资料。默认顺序如下：
 
-1. [产品原则与范围](./product-principles-and-scope.md)
-2. [架构规范](./architecture.md)
-3. [工程质量规范](./engineering-quality.md)
-4. [代码组织与风格规范](./code-organization-and-style.md)
-5. [API 与数据契约规范](./api-and-data-contracts.md)
-6. [安全、隐私与数据边界规范](./security-privacy-and-data-boundaries.md)
-7. [后台运行与性能规范](./performance-and-background-runtime.md)
-8. [产品界面统一原则](./product-interface-principles.md)
-9. 对应端的 UI 规范：
+1. [产品上下文](../PRODUCT.md)
+2. [产品原则与范围](./product-principles-and-scope.md)
+3. [架构规范](./architecture.md)
+4. [工程质量规范](./engineering-quality.md)
+5. [代码组织与风格规范](./code-organization-and-style.md)
+6. [API 与数据契约规范](./api-and-data-contracts.md)
+7. [安全、隐私与数据边界规范](./security-privacy-and-data-boundaries.md)
+8. [后台运行与性能规范](./performance-and-background-runtime.md)
+9. [产品界面统一原则](./product-interface-principles.md)
+10. 对应端的 UI 规范：
+   - [Web 设计系统总入口](../DESIGN.md)
+   - [Web UI 设计系统 V2.1](./web-ui-design-system-v2.md)
    - [Web 工作台 UI 规范](./web-workbench-ui-guidelines.md)
    - [WPF 本地助手 UI 规范](./wpf-assistant-ui-guidelines.md)
-10. [版本与发布策略](./versioning-and-release-policy.md)
+11. [版本与发布策略](./versioning-and-release-policy.md)
 
 如果正在接手某个具体功能，再补读 `docs/archive/` 或 `docs/superpowers/` 里与该功能相关的历史记录。
 
@@ -68,14 +75,14 @@ git switch main
 
 ```powershell
 git fetch origin
-git switch codex/workbench-terminal-ui
+git switch <branch-name>
 ```
 
 如果本地还没有该分支：
 
 ```powershell
 git fetch origin
-git switch --track origin/codex/workbench-terminal-ui
+git switch --track origin/<branch-name>
 ```
 
 开始新功能：
@@ -99,6 +106,11 @@ git diff --stat
 
 ```powershell
 cd Wuwa
+$env:DB_NAME = "wuwa_dev"
+$env:DB_USER = "postgres"
+$env:DB_PASSWORD = "your-password"
+$env:DB_HOST = "127.0.0.1"
+$env:DB_PORT = "5432"
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe manage.py migrate
 .\.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8001
@@ -147,9 +159,13 @@ Vite 会把 `/api` 代理到 `http://127.0.0.1:8001`，前端开发时直接调�
 
 Web 工作台开发必须遵循：
 
+- [产品上下文](../PRODUCT.md)
+- [Web 设计系统总入口](../DESIGN.md)
 - [产品界面统一原则](./product-interface-principles.md)
 - [Web 工作台 UI 规范](./web-workbench-ui-guidelines.md)
-- [Web UI Design System V2](./web-ui-design-system-v2.md)
+- [Web UI 设计系统 V2.1](./web-ui-design-system-v2.md)
+
+涉及字体、字重、字距或数字排版时，还必须阅读 [Web 字体设计系统](./superpowers/specs/2026-07-13-wuwa-typography-system-design.md)。
 
 WPF 本地助手开发必须遵循：
 
@@ -233,6 +249,7 @@ git push origin --delete codex/<feature-name>
 完成一个独立功能、修复或重构前，至少确认：
 
 - 代码放在正确 owner 下。
+- 开发前已经阅读当前任务对应的长期规范。
 - 没有把复杂逻辑塞进入口层。
 - 没有重复实现已有 API、service、component、style 或 formatter。
 - API、数据库、权限、隐私、OCR、截图或后台运行边界变更已经同步相关文档。

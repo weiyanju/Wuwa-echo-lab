@@ -1,6 +1,6 @@
 # 产品界面统一原则
 
-> 前端 UI 方向以 [`web-ui-design-system-v2.md`](./web-ui-design-system-v2.md) 为最高优先级。本文档负责沉淀 `Wuwa` 三端共同产品气质、账号/UID 心智、数据可信与边界判断。
+> 本文档负责沉淀 `Wuwa` 三端共同产品气质、账号/UID 心智、数据可信与边界判断。Web 当前视觉 token、字体和组件语言以根目录 [`DESIGN.md`](../DESIGN.md) 为准，Web 长期方向以 [`web-ui-design-system-v2.md`](./web-ui-design-system-v2.md) 为准。
 
 ## 1. 文档定位
 
@@ -90,6 +90,7 @@ Web 是深度工作台。
 - 支持筛选、表格、图表和详情页。
 - 信息密度高但结构清晰。
 - 适合用户主动打开后深入查看。
+- 登录后的全局导航使用紧凑 `TETHYS` 字标，完整 `Tethys System / 泰缇斯枢纽` 留在登录、加载和首次绑定等入口场景。
 
 它不应该：
 
@@ -317,6 +318,7 @@ WPF 和 Web 都必须考虑不同尺寸。
 - Web 首页见 [`web-homepage-terminal-design.md`](./web-homepage-terminal-design.md)。
 - Web 工作台见 [`web-workbench-ui-guidelines.md`](./web-workbench-ui-guidelines.md)。
 - Web 视觉系统见 [`web-ui-design-system-v2.md`](./web-ui-design-system-v2.md)。
+- Web 当前设计 token、字体与组件语言见根目录 [`DESIGN.md`](../DESIGN.md)。
 - 工程质量见 [`engineering-quality.md`](./engineering-quality.md)。
 - 性能与后台运行见 [`performance-and-background-runtime.md`](./performance-and-background-runtime.md)。
 - 代码组织见 [`code-organization-and-style.md`](./code-organization-and-style.md)。
@@ -328,3 +330,4 @@ WPF 和 Web 都必须考虑不同尺寸。
 - 不再按旧 V2.0 的完整 IDE 化方向推进 Web 工作台。
 - WPF 和 Web 可以有不同密度，但必须保持同一产品气质。
 - UI 改动不能脱离账号、UID、数据可信、后台低打扰这些核心产品约束。
+- 文档与实现冲突时先确认预期，不静默修改长期规则去迎合现有代码。

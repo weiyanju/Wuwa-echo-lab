@@ -102,7 +102,7 @@ API 字段、持久化和跨端数据契约见 [`api-and-data-contracts.md`](./a
 - WPF 是否继续变厚
 - Vue 是否继续堆在 `App.vue`
 - 后端 API 是否清楚绑定 `GameAccount`
-- UI 是否符合 [`product-interface-principles.md`](./product-interface-principles.md) 和对应端的 UI 规范
+- UI 是否符合 [`product-interface-principles.md`](./product-interface-principles.md)、根目录 [`DESIGN.md`](../DESIGN.md) 和对应端的 UI 规范
 - API 是否符合 [`api-and-data-contracts.md`](./api-and-data-contracts.md)
 - 是否改变了 [`security-privacy-and-data-boundaries.md`](./security-privacy-and-data-boundaries.md) 中的隐私边界
 - 测试是否覆盖关键契约
@@ -267,13 +267,13 @@ WPF 本地助手大部分时间会在后台运行，因此性能优化必须服�
 
 开发前默认阅读顺序：
 
-1. [`product-principles-and-scope.md`](./product-principles-and-scope.md)
+1. 根目录 [`PRODUCT.md`](../PRODUCT.md) 与 [`product-principles-and-scope.md`](./product-principles-and-scope.md)
 2. [`architecture.md`](./architecture.md)
 3. 本文与 [`code-organization-and-style.md`](./code-organization-and-style.md)
 4. [`api-and-data-contracts.md`](./api-and-data-contracts.md)
 5. [`security-privacy-and-data-boundaries.md`](./security-privacy-and-data-boundaries.md)
 6. [`performance-and-background-runtime.md`](./performance-and-background-runtime.md)
-7. [`product-interface-principles.md`](./product-interface-principles.md) 与对应端 UI 规范
+7. UI 任务阅读 [`product-interface-principles.md`](./product-interface-principles.md)、根目录 [`DESIGN.md`](../DESIGN.md) 与对应端 UI 规范
 8. 当前功能对应的阶段计划、专项设计或历史决策记录
 
 不要求每次开发机械地修改全部文档。同步范围按实际变化确定：
@@ -281,7 +281,7 @@ WPF 本地助手大部分时间会在后台运行，因此性能优化必须服�
 - 架构 owner、模块边界或依赖方向变化：更新 `architecture.md`。
 - 目录、命名、复用方式或代码职责变化：更新 `code-organization-and-style.md`。
 - API、字段、状态、持久化或数据库关系变化：更新 `api-and-data-contracts.md`。
-- UI 长期原则或公共组件规则变化：更新统一界面原则和对应端 UI 规范。
+- UI 长期原则或公共组件规则变化：更新统一界面原则、根目录 `DESIGN.md`、结构化设计文件和对应端 UI 规范。
 - 后台运行、OCR、缓存、资源占用策略变化：更新 `performance-and-background-runtime.md`。
 - 权限、截图、日志、账号或云端数据边界变化：更新 `security-privacy-and-data-boundaries.md`。
 - 产品优先级或阶段顺序变化：更新 `roadmap-and-prioritization.md`。
