@@ -89,6 +89,22 @@ test('topbar exposes an accessible theme toggle that resets to system color sche
   assert.match(styleSource, /\.app-shell\.theme-dark \.model-weight-change \{/)
 })
 
+test('topbar uses a compact accessible TETHYS wordmark without changing the hero', async () => {
+  const appSource = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
+  const shellStyleSource = await readFile(new URL('./styles/shell.css', import.meta.url), 'utf8')
+
+  assert.match(appSource, /<a class="wordmark" href="#" aria-label="返回 Tethys System 工作台" @click\.prevent="page = 'workspace'"><span class="wordmark-symbol" aria-hidden="true"><\/span>TETHYS<\/a>/)
+  assert.doesNotMatch(appSource, /<a class="wordmark"[^>]*>Tethys System<\/a>/)
+  assert.match(appSource, /<section class="hero-band compact">[\s\S]+<h1>你好，漂泊者<\/h1>/)
+  assert.match(appSource, /<span>历史声骸<\/span>[\s\S]+<span>总样本<\/span>[\s\S]+<span>置信度<\/span>/)
+  assert.match(shellStyleSource, /\.wordmark \{[\s\S]+gap: 10px;[\s\S]+font-size: 16px;[\s\S]+font-weight: 700;[\s\S]+letter-spacing: 0\.08em;/)
+  assert.match(shellStyleSource, /\.wordmark-symbol \{[^}]+position: relative;[^}]+flex: 0 0 auto;[^}]+width: 20px;[^}]+height: 20px;/)
+  assert.match(shellStyleSource, /\.wordmark-symbol::before \{[^}]+border: 1\.5px solid var\(--primary\);/)
+  assert.match(shellStyleSource, /\.wordmark-symbol::after \{[^}]+background: var\(--primary\);/)
+  assert.doesNotMatch(shellStyleSource, /\.wordmark-symbol(?:::(?:before|after))? \{[^}]+linear-gradient/)
+  assert.doesNotMatch(shellStyleSource, /\.wordmark::before \{[^}]+linear-gradient/)
+})
+
 test('topbar renders the shared uid switcher for game account selection', async () => {
   const appSource = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
   const uidSetupSource = await readFile(new URL('./features/workspace/UidSetupView.vue', import.meta.url), 'utf8')

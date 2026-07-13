@@ -238,7 +238,7 @@ onBeforeUnmount(() => {
 
     <section v-else class="dashboard">
       <header class="topbar">
-        <a class="wordmark" href="#" @click.prevent="page = 'workspace'">Tethys System</a>
+        <a class="wordmark" href="#" aria-label="返回 Tethys System 工作台" @click.prevent="page = 'workspace'"><span class="wordmark-symbol" aria-hidden="true"></span>TETHYS</a>
         <nav class="pill-tabs" aria-label="页面">
           <button :class="{ active: page === 'workspace' }" @click="page = 'workspace'">工作台</button>
           <button :class="{ active: page === 'stats' }" @click="page = 'stats'">统计</button>
