@@ -25,3 +25,27 @@
 - 390px 窄屏浏览器检查通过：完整标题与认证卡片立即显示，光标隐藏，标题自然换行，`scrollWidth === clientWidth`。
 - 浏览器控制台无 warning 或 error；验收结束后已停止临时 Vite 进程。
 - 减少动态效果、页面后台完成、计时器失败与组件清理由自动化测试和源码契约覆盖；当前浏览器运行环境不会在新建验收标签页时改变 `document.hidden`，因此没有将后台切换记录为浏览器实测结果。
+
+## 字体闪烁修复
+
+### 根因与实现
+
+- 已确认的根因是：完整字素动画开始时会先把标题 DOM 文本置空，`IBM Plex Sans SC` 的 `unicode-range` 字体切片因此要等对应汉字首次进入可见标题后才被匹配和加载；修复前冷缓存实测曾在标题 `opacity: 1` 不变时观察到全局字体状态 `loaded → loading → loaded`，形成使用 fallback 字体播放逐字动画的风险。
+- 首页现在通过 CSS Font Loading API 按完整标题准备最终 `700 56px "IBM Plex Sans SC"` 字形，准备成功后才启动完整字素动画。准备控制器使用 180ms 预算，并处理不支持、空匹配、拒绝、同步抛错、超时、取消和迟到结果抑制；任何失败都静态显示完整标题与认证卡片，不带着 fallback 字体播放。
+- Vue 生命周期门负责字体准备与打字动画之间的门控；页面隐藏、减少动态效果和窄屏变化会静态完成，组件卸载会停止流程并忽略迟到结果。
+
+### 自动化与构建
+
+- 新增可执行测试覆盖完整标题匹配到的全部字体 face、空匹配与失败回退、180ms 超时、取消、迟到结果抑制，以及 Vue runtime 生命周期、DOM mutation 后监听器顺序和清理。
+- fresh 完整前端测试：`243` 项通过，`0` 失败，`0` 跳过；命令退出码为 `0`。
+- fresh 生产构建：退出码为 `0`，Vite 报告 `71 modules transformed`。
+- 应用源码扫描未发现硬编码的具体字体资产 URL；`tokens.css` 只引用 `@ibm/plex-sans-sc` 与 `@ibm/plex-mono` 的官方 split CSS 包入口。
+
+### 浏览器验收
+
+- 使用全新 localhost origin 和不可达后端做冷缓存检查。新 origin 首批约 18ms 轮询帧在标题为空时观察到全局 `document.fonts.status` 从 `loading` 回到 `loaded`；后续同 origin 连续时序复现采样 `1210` 帧，间隔平均 `18.17ms`、范围 `15–62ms`，完整观察到空标题、`欢`、`欢迎`直至`欢迎回家，漂泊者`。所有非空帧都是完整字素前缀，标题 `opacity` 始终为 `1`、`visibility` 始终为 `visible`，没有文字淡入、闪烁或裁切；认证卡片只在完整标题后出现。
+- 全局 `document.fonts.status` 在认证卡片挂载后曾有一个约 20ms 采样帧短暂回到 `loading`。定向复现的 `820` 帧中，所有非空标题帧执行 `document.fonts.check('700 56px "IBM Plex Sans SC"', '欢迎回家，漂泊者')` 都返回 `true`；该窗口标题的 computed `font-family`、`font-weight: 700`、`font-size: 56px`、`opacity: 1`、`visibility: visible` 和 `459.83 × 61.59px` 尺寸保持稳定，FontFaceSet 枚举也没有未加载 face。因此全局 FontFaceSet 状态不能隔离判断标题 FOUT，标题验收以 title-specific readiness 与视觉指标为准。
+- Browser evaluate 代理不暴露 `performance.getEntriesByType('resource')`，无法取得字体资源时序；页面资产清单只确认观察到包内字体文件，未据此推断该瞬态对应的具体资源。
+- 登录与注册双向切换正常；空登录提交显示“请填写用户名和密码。”，随后仍能切换到注册模式，交互没有中断。
+- 有效的 390px viewport 检查中，首个标题 DOM 帧已同时包含完整标题与认证卡片，光标为 `display: none`；全部采样帧 `innerWidth === 390`，并满足 `scrollWidth === clientWidth`（`375 === 375`），截图目检无横向裁切、重叠或溢出。
+- 桌面、定向归因和 390px 页面控制台均无 warning 或 error。验收结束后已 finalize 本次创建的 8 个标签页，并精确停止 Vite PID `30088`；端口 `43190` 不再监听。
