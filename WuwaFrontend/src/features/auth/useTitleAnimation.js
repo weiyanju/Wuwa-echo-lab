@@ -1,6 +1,7 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 import { createTitleAnimation, shouldAnimateTitle } from './titleAnimation.js'
+import { createTitleFontPreparation } from './titleFont.js'
 
 export function useTitleAnimation(text, {
   windowTarget = globalThis.window,
@@ -17,6 +18,8 @@ export function useTitleAnimation(text, {
   const displayedTitle = ref(shouldPlay ? '' : text)
   const isComplete = ref(!shouldPlay)
   let animation = null
+  let fontPreparation = null
+  let stopped = false
 
   function complete() {
     if (animation) {
@@ -35,9 +38,23 @@ export function useTitleAnimation(text, {
     if (event.matches) complete()
   }
 
-  onMounted(() => {
+  onMounted(async () => {
     if (!shouldPlay) return
     if (documentTarget?.hidden || reducedMotionQuery.matches || compactViewportQuery.matches) {
+      complete()
+      return
+    }
+    documentTarget?.addEventListener('visibilitychange', handleDocumentVisibility)
+    reducedMotionQuery.addEventListener('change', handleStaticPreference)
+    compactViewportQuery.addEventListener('change', handleStaticPreference)
+    fontPreparation = createTitleFontPreparation({
+      text,
+      fontSet: documentTarget?.fonts,
+    })
+    fontPreparation.start()
+    const fontReady = await fontPreparation.ready
+    if (stopped || isComplete.value) return
+    if (!fontReady || documentTarget?.hidden || reducedMotionQuery.matches || compactViewportQuery.matches) {
       complete()
       return
     }
@@ -50,13 +67,12 @@ export function useTitleAnimation(text, {
         isComplete.value = true
       },
     })
-    documentTarget?.addEventListener('visibilitychange', handleDocumentVisibility)
-    reducedMotionQuery.addEventListener('change', handleStaticPreference)
-    compactViewportQuery.addEventListener('change', handleStaticPreference)
     animation.start()
   })
 
   onBeforeUnmount(() => {
+    stopped = true
+    fontPreparation?.cancel()
     animation?.cancel()
     documentTarget?.removeEventListener('visibilitychange', handleDocumentVisibility)
     reducedMotionQuery?.removeEventListener('change', handleStaticPreference)
