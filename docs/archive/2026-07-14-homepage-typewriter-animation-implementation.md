@@ -36,16 +36,16 @@
 
 ### 自动化与构建
 
-- 新增可执行测试覆盖完整标题匹配到的全部字体 face、空匹配与失败回退、180ms 超时、取消、迟到结果抑制，以及 Vue runtime 生命周期、DOM mutation 后监听器顺序和清理。
+- 新增可执行测试覆盖完整标题匹配到的全部字体 face、空匹配与失败回退、180ms 超时、取消和迟到结果抑制，以及 Vue runtime 生命周期、标题与认证卡片门控、字体等待成功/失败、字体 Promise 仍 pending 时已注册的页面可见性/减少动态效果/窄屏监听器、卸载清理；测试会在字体准备完成前断言监听器数量。
 - fresh 完整前端测试：`243` 项通过，`0` 失败，`0` 跳过；命令退出码为 `0`。
 - fresh 生产构建：退出码为 `0`，Vite 报告 `71 modules transformed`。
 - 应用源码扫描未发现硬编码的具体字体资产 URL；`tokens.css` 只引用 `@ibm/plex-sans-sc` 与 `@ibm/plex-mono` 的官方 split CSS 包入口。
 
 ### 浏览器验收
 
-- 使用全新 localhost origin 和不可达后端做冷缓存检查。新 origin 首批约 18ms 轮询帧在标题为空时观察到全局 `document.fonts.status` 从 `loading` 回到 `loaded`；后续同 origin 连续时序复现采样 `1210` 帧，间隔平均 `18.17ms`、范围 `15–62ms`，完整观察到空标题、`欢`、`欢迎`直至`欢迎回家，漂泊者`。所有非空帧都是完整字素前缀，标题 `opacity` 始终为 `1`、`visibility` 始终为 `visible`，没有文字淡入、闪烁或裁切；认证卡片只在完整标题后出现。
-- 全局 `document.fonts.status` 在认证卡片挂载后曾有一个约 20ms 采样帧短暂回到 `loading`。定向复现的 `820` 帧中，所有非空标题帧执行 `document.fonts.check('700 56px "IBM Plex Sans SC"', '欢迎回家，漂泊者')` 都返回 `true`；该窗口标题的 computed `font-family`、`font-weight: 700`、`font-size: 56px`、`opacity: 1`、`visibility: visible` 和 `459.83 × 61.59px` 尺寸保持稳定，FontFaceSet 枚举也没有未加载 face。因此全局 FontFaceSet 状态不能隔离判断标题 FOUT，标题验收以 title-specific readiness 与视觉指标为准。
+- 使用全新 `http://127.0.0.1:43191/` origin 和不可达后端做冷缓存检查；第一次导航与外部轮询在同一次 Browser 调用内连续完成，共采样 `1050` 帧，间隔平均 `21.08ms`、范围 `17–66ms`，没有超过 100ms 的间断。轨迹完整覆盖标题 DOM 尚未挂载、挂载后的空标题、`欢`、`欢迎`直至`欢迎回家，漂泊者`和认证卡片进入；所有非空帧都是完整字素前缀且 title-specific `document.fonts.check(...)` 为 `true`，标题 computed `font-family`、`font-weight: 700`、`font-size: 56px`、`opacity: 1` 和 `visibility: visible` 保持稳定，认证卡片只在完整标题后出现。
+- 全局 `document.fonts.status` 在认证卡片挂载后曾有一个约 20ms 采样帧短暂回到 `loading`。此前在 `43190` origin 的后续 title-specific 定向复现共采样 `820` 帧，所有非空标题帧执行 `document.fonts.check('700 56px "IBM Plex Sans SC"', '欢迎回家，漂泊者')` 都返回 `true`；该窗口标题的 computed `font-family`、`font-weight: 700`、`font-size: 56px`、`opacity: 1`、`visibility: visible` 和 `459.83 × 61.59px` 尺寸保持稳定，FontFaceSet 枚举也没有未加载 face。因此全局 FontFaceSet 状态不能隔离判断标题 FOUT，标题验收以 title-specific readiness 与视觉指标为准。
 - Browser evaluate 代理不暴露 `performance.getEntriesByType('resource')`，无法取得字体资源时序；页面资产清单只确认观察到包内字体文件，未据此推断该瞬态对应的具体资源。
 - 登录与注册双向切换正常；空登录提交显示“请填写用户名和密码。”，随后仍能切换到注册模式，交互没有中断。
 - 有效的 390px viewport 检查中，首个标题 DOM 帧已同时包含完整标题与认证卡片，光标为 `display: none`；全部采样帧 `innerWidth === 390`，并满足 `scrollWidth === clientWidth`（`375 === 375`），截图目检无横向裁切、重叠或溢出。
-- 桌面、定向归因和 390px 页面控制台均无 warning 或 error。验收结束后已 finalize 本次创建的 8 个标签页，并精确停止 Vite PID `30088`；端口 `43190` 不再监听。
+- 桌面、定向归因、390px 页面和补充冷缓存轨迹标签页的控制台均无 warning 或 error。原验收结束后已 finalize 创建的 8 个标签页并精确停止 Vite PID `30088`；补充轨迹结束后也已 finalize 新标签页并精确停止 PID `22808`，端口 `43190` 与 `43191` 均不再监听。
