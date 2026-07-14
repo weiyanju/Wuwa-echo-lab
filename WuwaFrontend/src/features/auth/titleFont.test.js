@@ -81,6 +81,47 @@ test('title font preparation rejects unsupported, empty, and failed loads', asyn
   assert.equal(await failed.ready, false)
 })
 
+test('title font preparation clears its timeout after an asynchronous load rejection', async () => {
+  const scheduler = createManualScheduler()
+  const preparation = createTitleFontPreparation({
+    text: '标题',
+    fontSet: { load: () => Promise.reject(new Error('font unavailable')) },
+    schedule: scheduler.schedule,
+    cancel: scheduler.cancel,
+  })
+
+  preparation.start()
+
+  assert.equal(scheduler.pendingCount(), 1)
+  assert.equal(await preparation.ready, false)
+  assert.equal(scheduler.pendingCount(), 0)
+})
+
+test('title font preparation starts only one load and timeout job', async () => {
+  const scheduler = createManualScheduler()
+  let loadCalls = 0
+  const preparation = createTitleFontPreparation({
+    text: '标题',
+    fontSet: {
+      load() {
+        loadCalls += 1
+        return new Promise(() => {})
+      },
+    },
+    schedule: scheduler.schedule,
+    cancel: scheduler.cancel,
+  })
+
+  preparation.start()
+  preparation.start()
+  preparation.start()
+
+  assert.equal(loadCalls, 1)
+  assert.equal(scheduler.pendingCount(), 1)
+  preparation.cancel()
+  assert.equal(await preparation.ready, false)
+})
+
 test('title font preparation times out without accepting a late result', async () => {
   const scheduler = createManualScheduler()
   let resolveLoad
