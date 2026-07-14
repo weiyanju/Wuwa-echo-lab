@@ -23,27 +23,27 @@
 - Create: `docs/design-baselines/web/2026-07-14/evaluation-light.png`
 - Create: `docs/design-baselines/web/2026-07-14/evaluation-dark.png`
 
-- [ ] **Step 1: Create the baseline manifest**
+- [x] **Step 1: Create the baseline manifest**
 
 Document the viewport, local URL, theme, page state, capture date, expected filenames, and the rule that these images are comparison evidence rather than normative replacements for `DESIGN.md`.
 
-- [ ] **Step 2: Capture the light login page**
+- [x] **Step 2: Capture the light login page**
 
 Open `http://127.0.0.1:61975/` at the desktop viewport and save a full-page screenshot as `login-light.png`.
 
-- [ ] **Step 3: Enter the authenticated application**
+- [x] **Step 3: Enter the authenticated application**
 
 Use the user's existing local development account in the in-app browser. Do not create, change, or commit credentials and do not create a second visual implementation.
 
-- [ ] **Step 4: Capture authenticated light pages**
+- [x] **Step 4: Capture authenticated light pages**
 
 Capture the current workbench, statistics page, and evaluation page as `workspace-light.png`, `statistics-light.png`, and `evaluation-light.png` without changing application data.
 
-- [ ] **Step 5: Capture authenticated dark pages and dark login**
+- [x] **Step 5: Capture authenticated dark pages and dark login**
 
 Use the existing theme toggle, capture the workbench, statistics, and evaluation pages in dark mode, then sign out without resetting the theme and capture `login-dark.png`.
 
-- [ ] **Step 6: Verify the baseline set**
+- [x] **Step 6: Verify the baseline set**
 
 Run:
 
@@ -61,7 +61,7 @@ Expected: the manifest plus exactly eight non-empty PNG files.
 - Modify: `WuwaFrontend/src/styles/features/recognition.css`
 - Modify: `WuwaFrontend/src/styles/features/uid-setup.css`
 
-- [ ] **Step 1: Write failing token-ownership tests**
+- [x] **Step 1: Write failing token-ownership tests**
 
 Add tests that require the remaining exact dark-theme matches to consume existing semantic tokens:
 
@@ -86,7 +86,7 @@ test('remaining feature dark themes reuse exact semantic tokens without remappin
 })
 ```
 
-- [ ] **Step 2: Run the focused test and verify RED**
+- [x] **Step 2: Run the focused test and verify RED**
 
 Run:
 
@@ -96,7 +96,7 @@ Run:
 
 Expected: fail because the literal values are still present.
 
-- [ ] **Step 3: Replace only exact semantic matches**
+- [x] **Step 3: Replace only exact semantic matches**
 
 Apply these mappings without changing any token source value:
 
@@ -110,11 +110,11 @@ Apply these mappings without changing any token source value:
 
 Do not migrate statistics chart colors, recognition status colors, login terminal-local tokens, gradients, translucent overlays, or values that merely look similar.
 
-- [ ] **Step 4: Run focused tests and verify GREEN**
+- [x] **Step 4: Run focused tests and verify GREEN**
 
 Run the focused test again. Expected: pass.
 
-- [ ] **Step 5: Compare computed styles against the archived baseline**
+- [x] **Step 5: Compare computed styles against the archived baseline**
 
 Verify the touched statistics, recognition, and UID selectors resolve to the same colors before and after migration in the browser.
 
@@ -134,11 +134,11 @@ git commit -m "refactor: finish feature dark theme token reuse"
 - Reference: `WuwaFrontend/src/styles/controls.css`
 - Reference: `WuwaFrontend/src/styles/features/*.css`
 
-- [ ] **Step 1: Inventory card containers, borders, radii, nesting, and shadows**
+- [x] **Step 1: Inventory card containers, borders, radii, nesting, and shadows**
 
 Record only verified inconsistencies against the approved baseline, including exact selector and file location. Keep Bayes path structure and data visualization containers out of decorative-card findings.
 
-- [ ] **Step 2: Produce one localized recommendation**
+- [x] **Step 2: Produce one localized recommendation**
 
 Compare keeping the current card, flattening it, or reducing only an unjustified shadow/radius. Recommend no change when the current hierarchy already serves the task.
 
