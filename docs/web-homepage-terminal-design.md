@@ -62,7 +62,7 @@
 
 ### 2.3 字体
 
-中文、标题、正文、按钮和表单使用 `IBM Plex Sans SC`，回退到 `Noto Sans SC`、`Microsoft YaHei UI` 和系统字体。完整 `Tethys System / 泰缇斯枢纽` 品牌可以在首页、加载和首次绑定场景出现；登录后的顶部导航改用短字标 `TETHYS`。
+中文、标题、正文、按钮和表单使用 `IBM Plex Sans SC`，回退到 `Noto Sans SC`、`Microsoft YaHei UI` 和系统字体。首页顶部使用蓝色圆环圆点图标与紧凑 `TETHYS` 字标；完整 `Tethys System / 泰缇斯枢纽` 名称仍可用于首页说明、加载和首次绑定等需要完整产品识别的入口场景。登录后的顶部导航继续使用短字标 `TETHYS`。
 
 等宽字体只用于：
 
@@ -103,7 +103,7 @@
 
 可以展示：
 
-- 品牌名。
+- 蓝色圆环圆点图标与紧凑 `TETHYS` 字标。
 - 轻量 Logo / 呼吸状态点。
 - `SYSTEM.ONLINE` 这类产品状态。
 - 主题切换、帮助或设置入口。
@@ -261,7 +261,7 @@ components/UI/BaseTerminalButton.vue
 
 首页改动应满足：
 
-- 保留 `Tethys System / 泰缇斯枢纽` 识别。
+- 首页顶部保留蓝色圆环圆点图标与紧凑 `TETHYS` 识别。
 - 不把入口场景的完整品牌文案复制回登录后的紧凑顶部导航。
 - 登录 / 注册路径清楚。
 - 不暴露工作台内部模块。
