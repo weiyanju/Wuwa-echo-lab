@@ -118,7 +118,7 @@ Run the focused test again. Expected: pass.
 
 Verify the touched statistics, recognition, and UID selectors resolve to the same colors before and after migration in the browser.
 
-- [ ] **Step 6: Commit the zero-drift token batch**
+- [x] **Step 6: Commit the zero-drift token batch**
 
 Stage only the test and three feature CSS files plus its implementation record, then commit with:
 
@@ -142,7 +142,7 @@ Record only verified inconsistencies against the approved baseline, including ex
 
 Compare keeping the current card, flattening it, or reducing only an unjustified shadow/radius. Recommend no change when the current hierarchy already serves the task.
 
-- [ ] **Step 3: Stop at the visual approval gate**
+- [x] **Step 3: Stop at the visual approval gate**
 
 Present the current and proposed local comparison to the user. Do not modify card CSS until that family is approved.
 
@@ -154,17 +154,19 @@ Present the current and proposed local comparison to the user. Do not modify car
 - Reference: `WuwaFrontend/src/styles/features/recognition.css`
 - Reference: `WuwaFrontend/src/styles/features/statistics.css`
 
-- [ ] **Step 1: Inventory every visible summary/callout color**
+- [x] **Step 1: Inventory every visible summary/callout color**
 
 Classify each as neutral guidance, positive state, warning state, model-specific data, or structural context. Do not require unrelated summaries to share a color when their semantics differ.
 
-- [ ] **Step 2: Identify accidental differences only**
+- [x] **Step 2: Identify accidental differences only**
 
 Report mismatches where the same semantic role uses different foreground, border, or surface treatment. Preserve deliberate model and state colors.
 
-- [ ] **Step 3: Stop at the visual approval gate**
+- [x] **Step 3: Stop at the visual approval gate**
 
 Present one localized before/after recommendation at a time. Do not batch recolor summaries.
+
+Result: the proposed statistics reliability recolor was withdrawn after confirming that `DESIGN.md` permits prediction green for progress. The user chose to keep the existing summary colors, so no summary CSS changed.
 
 ### Task 5: Review motion language
 
@@ -175,17 +177,19 @@ Present one localized before/after recommendation at a time. Do not batch recolo
 - Reference: `WuwaFrontend/src/styles/features/workspace.css`
 - Reference: `WuwaFrontend/src/styles/features/evaluation.css`
 
-- [ ] **Step 1: Inventory keyframes and transitions**
+- [x] **Step 1: Inventory keyframes and transitions**
 
 Classify motion as state feedback, loading/progress, structural reveal, or decoration. Flag layout-property animation, content visibility gating, duplicated timings, and missing reduced-motion alternatives.
 
-- [ ] **Step 2: Preserve approved functional motion**
+- [x] **Step 2: Preserve approved functional motion**
 
 Keep the login typing caret, status feedback, progress, and state transitions when they communicate real meaning. Recommend removal only for motion that is purely decorative or slows task flow.
 
-- [ ] **Step 3: Stop at the visual approval gate**
+- [x] **Step 3: Stop at the visual approval gate**
 
 Present one localized motion proposal with normal and reduced-motion behavior. Do not perform a global animation rewrite.
+
+Result: the user approved only the evaluation reduced-motion cascade fix. The final override now follows all evaluation animation declarations; normal motion and the remaining motion candidates are unchanged.
 
 ### Task 6: Verify and record each completed batch
 
@@ -193,7 +197,7 @@ Present one localized motion proposal with normal and reduced-motion behavior. D
 - Create: `docs/archive/2026-07-14-web-visual-baseline-and-token-completion.md`
 - Modify: `docs/superpowers/plans/2026-07-14-web-visual-baselines-and-component-review.md`
 
-- [ ] **Step 1: Run focused and full frontend tests**
+- [x] **Step 1: Run focused and full frontend tests**
 
 ```powershell
 ..\.tools\node\npm.cmd test
@@ -201,7 +205,7 @@ Present one localized motion proposal with normal and reduced-motion behavior. D
 
 Expected: all tests pass.
 
-- [ ] **Step 2: Run the production build**
+- [x] **Step 2: Run the production build**
 
 ```powershell
 ..\.tools\node\npm.cmd run build
@@ -209,7 +213,7 @@ Expected: all tests pass.
 
 Expected: Vite exits 0.
 
-- [ ] **Step 3: Check repository scope**
+- [x] **Step 3: Check repository scope**
 
 ```powershell
 git diff --check
@@ -219,6 +223,6 @@ git diff --name-only
 
 Expected: no unrelated existing workspace changes are staged or overwritten.
 
-- [ ] **Step 4: Record actual results**
+- [x] **Step 4: Record actual results**
 
 Document generated baselines, exact token mappings, browser comparisons, tests, build result, and the three component-family approval states. Do not mark unapproved visual work complete.
