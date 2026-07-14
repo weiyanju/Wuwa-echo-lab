@@ -6,6 +6,8 @@
 
 **Architecture:** Add a small framework-independent title animation controller that owns grapheme segmentation, timing, completion, and cancellation. `LoginView.vue` connects that controller to Vue lifecycle state and conditionally mounts the authentication card; feature CSS owns only the caret and entry transitions, with no animated layout properties.
 
+**Execution note:** The repository's `LoginView.vue` size guard required the browser preference, lifecycle, visibility, and cleanup wiring to be extracted into `useTitleAnimation.js`; the view now only consumes the composable's displayed-title and completion refs.
+
 **Tech Stack:** Vue 3 Composition API, native `Intl.Segmenter`, CSS transitions/keyframes, Node.js built-in test runner, Vite.
 
 ---
@@ -14,6 +16,8 @@
 
 - Create `WuwaFrontend/src/features/auth/titleAnimation.js`: pure grapheme segmentation, timing policy, animation controller, completion and cancellation.
 - Create `WuwaFrontend/src/features/auth/titleAnimation.test.js`: deterministic unit tests with an injected manual scheduler.
+- Create `WuwaFrontend/src/features/auth/useTitleAnimation.js`: Vue lifecycle, browser preference, background-page completion, and cleanup wiring.
+- Create `WuwaFrontend/src/features/auth/useTitleAnimation.test.js`: composable ownership and fallback contract tests.
 - Modify `WuwaFrontend/src/features/auth/LoginView.vue`: Vue lifecycle wiring, stable accessible title, independent caret, and authentication-card mount timing.
 - Modify `WuwaFrontend/src/features/auth/LoginView.test.js`: component source-contract and static-content regression tests.
 - Modify `WuwaFrontend/src/styles/features/auth.css`: remove width clipping, style the caret, define the 160ms card entry, and preserve static responsive/reduced-motion states.
