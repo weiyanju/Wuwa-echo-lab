@@ -62,27 +62,15 @@
   letter-spacing: var(--tracking-brand);
 }
 
-.terminal-brand span:last-child { margin-left: 8px; color: var(--terminal-muted); font-family: var(--font-ui); font-weight: var(--weight-body); letter-spacing: var(--tracking-cjk); }
 .terminal-brand-icon {
-  position: relative;
-  width: clamp(18px, 1.4vw, 20px);
-  height: clamp(18px, 1.4vw, 20px);
+  display: block;
+  width: 24px;
+  height: 24px;
   flex: 0 0 auto;
-  border-radius: var(--terminal-radius-sm);
-  background: var(--terminal-primary);
 }
 
-.terminal-brand-icon::after {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: #ffffff;
-  content: "";
-  transform: translate(-50%, -50%);
-  animation: terminal-pulse-glow 2.5s ease-in-out infinite alternate;
+.terminal-brand-wordmark {
+  white-space: nowrap;
 }
 
 .terminal-system-status {
@@ -282,12 +270,11 @@
 .app-shell.theme-dark .terminal-auth-card { border-color: var(--terminal-border); background: var(--terminal-card); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24); }
 .app-shell.theme-dark .terminal-standard-input:focus { border-color: var(--terminal-primary); background: #1d2a35; box-shadow: 0 0 0 1px var(--terminal-primary); }
 @keyframes terminal-dot-move { to { background-position: 24px 24px; } }
-@keyframes terminal-pulse-glow { from { opacity: 0.3; transform: translate(-50%, -50%) scale(0.8); } to { opacity: 1; transform: translate(-50%, -50%) scale(1.2); } }
 @keyframes terminal-status-blink { 50% { opacity: 0.5; } }
 @keyframes terminal-fade-slide-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes terminal-typing { to { width: var(--terminal-title-width); } }
 @keyframes terminal-blink { 0%, 100% { border-color: transparent; } 50% { border-color: var(--terminal-primary); } }
-@media (prefers-reduced-motion: reduce) { .terminal-home::before, .terminal-brand-icon::after, .terminal-system-status span { animation: none; } .terminal-subtitle, .terminal-features-grid, .terminal-auth-wrapper { opacity: 1; transform: none; animation: none; } .terminal-title { width: var(--terminal-title-width); animation: none; } .terminal-feature-item { transition: none; } .terminal-feature-item:hover { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .terminal-home::before, .terminal-system-status span { animation: none; } .terminal-subtitle, .terminal-features-grid, .terminal-auth-wrapper { opacity: 1; transform: none; animation: none; } .terminal-title { width: var(--terminal-title-width); animation: none; } .terminal-feature-item { transition: none; } .terminal-feature-item:hover { transform: none; } }
 @media (max-width: 860px) {
   .terminal-main-wrapper { align-items: flex-start; padding: 0; }
   .terminal-container { grid-template-columns: 1fr; gap: 48px; padding: 40px 24px; }

@@ -62,8 +62,8 @@ function submitAuth() {
   <section class="terminal-home">
     <nav class="terminal-navbar">
       <div class="terminal-brand">
-        <span class="terminal-brand-icon"></span>
-        Tethys System <span>| 泰缇斯枢纽</span>
+        <img class="terminal-brand-icon" src="/tethys-mark.svg" alt="" aria-hidden="true" />
+        <span class="terminal-brand-wordmark">TETHYS</span>
       </div>
       <div class="terminal-system-status"><span></span>SYSTEM.ONLINE</div>
     </nav>

@@ -105,6 +105,24 @@ test('topbar uses a compact accessible TETHYS wordmark without changing the hero
   assert.doesNotMatch(shellStyleSource, /\.wordmark::before \{[^}]+linear-gradient/)
 })
 
+test('homepage and browser tab share the compact TETHYS brand mark', async () => {
+  const loginSource = await readFile(new URL('./features/auth/LoginView.vue', import.meta.url), 'utf8')
+  const authStyleSource = await readFile(new URL('./styles/features/auth.css', import.meta.url), 'utf8')
+  const indexSource = await readFile(new URL('../index.html', import.meta.url), 'utf8')
+
+  assert.match(loginSource, /<img class="terminal-brand-icon" src="\/tethys-mark\.svg" alt="" aria-hidden="true" \/>\s*<span class="terminal-brand-wordmark">TETHYS<\/span>/)
+  assert.doesNotMatch(loginSource, /Tethys System <span>\| 泰缇斯枢纽<\/span>/)
+  assert.match(authStyleSource, /\.terminal-brand-icon \{[^}]+display: block;[^}]+width: 24px;[^}]+height: 24px;/)
+  assert.doesNotMatch(authStyleSource, /\.terminal-brand-icon::after/)
+  assert.match(indexSource, /<link rel="icon" type="image\/svg\+xml" href="\/tethys-mark\.svg" \/>/)
+  assert.match(indexSource, /<title>泰缇斯枢纽<\/title>/)
+
+  const markSource = await readFile(new URL('../public/tethys-mark.svg', import.meta.url), 'utf8')
+  assert.match(markSource, /viewBox="0 0 24 24"/)
+  assert.match(markSource, /<circle cx="10\.5" cy="12\.5" r="9\.5" stroke="#0064e0" stroke-width="1\.75" \/>/)
+  assert.match(markSource, /<circle cx="18\.5" cy="5\.5" r="4\.25" fill="#0064e0" \/>/)
+})
+
 test('topbar centers page navigation between asymmetric side controls', async () => {
   const shellStyleSource = await readFile(new URL('./styles/shell.css', import.meta.url), 'utf8')
 
