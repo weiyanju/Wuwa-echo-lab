@@ -69,6 +69,10 @@
 }
 
 .app-shell.theme-dark .history-filter-chip {
+  --history-filter-active-bg: #51697b;
+  --history-filter-active-ink: #f4f8fb;
+  --history-filter-active-count-bg: #e8f0f5;
+  --history-filter-active-count-ink: #263746;
   border-color: rgba(74, 96, 111, 0.72);
   color: #aebfcb;
   background: rgba(29, 42, 53, 0.72);
@@ -79,63 +83,61 @@
   background: rgba(143, 162, 177, 0.16);
 }
 
-.app-shell.theme-dark .history-filter-chip.all.active {
-  border-color: rgba(143, 162, 177, 0.4);
-  color: var(--ink-deep);
-  background: #263746;
-  box-shadow: 0 0 0 1px rgba(143, 162, 177, 0.16);
-}
-
 .app-shell.theme-dark .history-filter-chip.current {
+  --history-filter-active-bg: #1767bb;
+  --history-filter-active-ink: #f7faff;
+  --history-filter-active-count-bg: #e8f2ff;
+  --history-filter-active-count-ink: #0457cb;
   border-color: rgba(93, 168, 255, 0.28);
   color: var(--primary-deep);
   background: rgba(40, 83, 124, 0.22);
 }
 
-.app-shell.theme-dark .history-filter-chip.current.active {
-  border-color: rgba(93, 168, 255, 0.52);
-  color: var(--ink-deep);
-  background: rgba(48, 98, 143, 0.5);
-  box-shadow: 0 0 0 1px rgba(93, 168, 255, 0.18);
-}
-
 .app-shell.theme-dark .history-filter-chip.pending {
+  --history-filter-active-bg: #d3a337;
+  --history-filter-active-ink: #362300;
+  --history-filter-active-count-bg: #fff1c6;
+  --history-filter-active-count-ink: #513500;
   border-color: rgba(217, 163, 58, 0.32);
   color: #e4c277;
   background: rgba(78, 59, 20, 0.32);
 }
 
-.app-shell.theme-dark .history-filter-chip.pending.active {
-  border-color: rgba(217, 163, 58, 0.58);
-  color: #f1d899;
-  background: rgba(90, 68, 23, 0.58);
-  box-shadow: 0 0 0 1px rgba(217, 163, 58, 0.18);
-}
-
 .app-shell.theme-dark .history-filter-chip.completed {
+  --history-filter-active-bg: #2b7e4b;
+  --history-filter-active-ink: #f5fff7;
+  --history-filter-active-count-bg: #def4e4;
+  --history-filter-active-count-ink: #1f6035;
   border-color: rgba(55, 179, 127, 0.3);
   color: #82d3aa;
   background: rgba(30, 78, 52, 0.28);
 }
 
-.app-shell.theme-dark .history-filter-chip.completed.active {
-  border-color: rgba(55, 179, 127, 0.56);
-  color: #d6f2e3;
-  background: rgba(32, 91, 58, 0.56);
-  box-shadow: 0 0 0 1px rgba(55, 179, 127, 0.18);
-}
-
 .app-shell.theme-dark .history-filter-chip.discarded {
+  --history-filter-active-bg: #b83d55;
+  --history-filter-active-ink: #fff7f8;
+  --history-filter-active-count-bg: #ffe5e9;
+  --history-filter-active-count-ink: #8f1930;
   border-color: rgba(239, 107, 122, 0.3);
   color: #f0a4af;
   background: rgba(84, 36, 45, 0.28);
 }
 
-.app-shell.theme-dark .history-filter-chip.discarded.active {
-  border-color: rgba(239, 107, 122, 0.56);
-  color: #ffdce1;
-  background: rgba(95, 39, 50, 0.56);
-  box-shadow: 0 0 0 1px rgba(239, 107, 122, 0.18);
+.app-shell.theme-dark .history-filter-chip.active {
+  border-color: var(--history-filter-active-bg);
+  color: var(--history-filter-active-ink);
+  background: var(--history-filter-active-bg);
+  box-shadow: none;
+}
+
+.app-shell.theme-dark .history-filter-chip.active strong {
+  color: var(--history-filter-active-count-ink);
+  background: var(--history-filter-active-count-bg);
+}
+
+.app-shell.theme-dark .history-filter-chip.active:hover {
+  border-color: color-mix(in srgb, var(--history-filter-active-bg) 92%, #0a1317);
+  background: color-mix(in srgb, var(--history-filter-active-bg) 92%, #0a1317);
 }
 
 .app-shell.theme-dark .floating-history-actions button:hover {
@@ -390,32 +392,24 @@
 }
 
 .history-filter-chip {
+  --history-filter-active-bg: #324455;
+  --history-filter-active-ink: #f4f8fb;
+  --history-filter-active-count-bg: #e8f0f5;
+  --history-filter-active-count-ink: #263746;
   display: inline-flex;
   align-items: center;
   gap: 6px;
   min-height: 30px;
   border: 1px solid rgba(206, 219, 231, 0.9);
   border-radius: 999px;
-  padding: 5px 9px 5px 10px;
+  padding: 5px 9px 5px 12px;
   color: var(--steel);
   background: rgba(248, 250, 252, 0.86);
   font-size: var(--text-caption);
   font-weight: var(--weight-control);
   line-height: var(--leading-control);
   letter-spacing: var(--tracking-cjk);
-  transition: border-color 160ms ease-out, background-color 160ms ease-out, box-shadow 160ms ease-out, color 160ms ease-out;
-}
-
-.history-filter-selected-icon {
-  width: 14px;
-  height: 14px;
-  flex: 0 0 auto;
-  opacity: 0;
-  transition: opacity 160ms ease-out;
-}
-
-.history-filter-chip.active .history-filter-selected-icon {
-  opacity: 1;
+  transition: border-color 160ms ease-out, background-color 160ms ease-out, color 160ms ease-out;
 }
 
 .history-filter-chip strong {
@@ -423,7 +417,7 @@
   border-radius: 999px;
   padding: 2px 6px;
   color: inherit;
-  background: rgba(255, 255, 255, 0.72);
+  background: color-mix(in srgb, var(--canvas) 72%, transparent);
   font-family: var(--font-data);
   font-size: var(--text-caption);
   font-weight: var(--weight-data);
@@ -431,70 +425,69 @@
   letter-spacing: var(--tracking-data);
   font-variant-numeric: tabular-nums;
   text-align: center;
+  transition: background-color 160ms ease-out, color 160ms ease-out;
 }
 
 .history-filter-chip:hover {
   border-color: rgba(93, 108, 123, 0.42);
-  background: #ffffff;
-}
-
-.history-filter-chip.active {
-  transform: none;
-}
-
-.history-filter-chip.all.active {
-  border-color: rgba(93, 108, 123, 0.34);
-  color: var(--ink-deep);
-  background: #f5f8fb;
-  box-shadow: 0 0 0 1px rgba(93, 108, 123, 0.1);
+  background: var(--canvas);
 }
 
 .history-filter-chip.current {
+  --history-filter-active-bg: #0064e0;
+  --history-filter-active-ink: #f7faff;
+  --history-filter-active-count-bg: #e8f2ff;
+  --history-filter-active-count-ink: #0457cb;
   border-color: rgba(0, 100, 224, 0.18);
   color: var(--primary);
   background: rgba(242, 247, 255, 0.82);
 }
 
-.history-filter-chip.current.active {
-  border-color: rgba(0, 100, 224, 0.42);
-  background: #f2f7ff;
-  box-shadow: 0 0 0 1px rgba(0, 100, 224, 0.12);
-}
-
 .history-filter-chip.pending {
+  --history-filter-active-bg: #f2bd48;
+  --history-filter-active-ink: #4a3100;
+  --history-filter-active-count-bg: #fff1c6;
+  --history-filter-active-count-ink: #513500;
   border-color: rgba(247, 185, 40, 0.28);
   color: #6a4a00;
   background: rgba(255, 249, 231, 0.84);
 }
 
-.history-filter-chip.pending.active {
-  border-color: rgba(247, 185, 40, 0.78);
-  background: #fff9e7;
-  box-shadow: 0 0 0 1px rgba(247, 185, 40, 0.12);
-}
-
 .history-filter-chip.completed {
+  --history-filter-active-bg: #267640;
+  --history-filter-active-ink: #f5fff7;
+  --history-filter-active-count-bg: #def4e4;
+  --history-filter-active-count-ink: #1f6035;
   border-color: rgba(49, 162, 76, 0.24);
   color: #236735;
   background: rgba(241, 251, 244, 0.86);
 }
 
-.history-filter-chip.completed.active {
-  border-color: rgba(49, 162, 76, 0.62);
-  background: #f1fbf4;
-  box-shadow: 0 0 0 1px rgba(49, 162, 76, 0.12);
-}
-
 .history-filter-chip.discarded {
+  --history-filter-active-bg: #b32642;
+  --history-filter-active-ink: #fff7f8;
+  --history-filter-active-count-bg: #ffe5e9;
+  --history-filter-active-count-ink: #8f1930;
   border-color: rgba(228, 30, 63, 0.22);
   color: #9d1730;
   background: rgba(255, 243, 245, 0.86);
 }
 
-.history-filter-chip.discarded.active {
-  border-color: rgba(228, 30, 63, 0.54);
-  background: #fff3f5;
-  box-shadow: 0 0 0 1px rgba(228, 30, 63, 0.1);
+.history-filter-chip.active {
+  border-color: var(--history-filter-active-bg);
+  color: var(--history-filter-active-ink);
+  background: var(--history-filter-active-bg);
+  box-shadow: none;
+}
+
+.history-filter-chip.active strong {
+  color: var(--history-filter-active-count-ink);
+  background: var(--history-filter-active-count-bg);
+}
+
+.history-filter-chip.active:hover {
+  border-color: color-mix(in srgb, var(--history-filter-active-bg) 92%, #0a1317);
+  background: color-mix(in srgb, var(--history-filter-active-bg) 92%, #0a1317);
 }
 
 .floating-history-actions button {
@@ -653,8 +646,10 @@
 
 @media (prefers-reduced-motion: reduce) {
   .floating-history-panel,
-.floating-history-handle,
-.echo-list {
+  .floating-history-handle,
+  .history-filter-chip,
+  .history-filter-chip strong,
+  .echo-list {
     transition: none;
   }
 }

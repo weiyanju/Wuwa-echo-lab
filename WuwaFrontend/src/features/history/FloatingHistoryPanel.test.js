@@ -2,6 +2,36 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 
+function bodyFor(source, target) {
+  return [...source.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+    .filter((match) => match[1].split(',').map((selector) => selector.trim()).includes(target))
+    .map((match) => match[2])
+    .join('\n')
+}
+
+function cssHexValue(body, property) {
+  const match = body.match(new RegExp(`${property}:\\s*(#[0-9a-fA-F]{6})\\b`))
+  assert.ok(match, `${property} should use a six-digit hex value`)
+  return match[1]
+}
+
+function relativeLuminance(hex) {
+  const channels = hex.slice(1).match(/.{2}/g).map((channel) => Number.parseInt(channel, 16) / 255)
+  const [red, green, blue] = channels.map((channel) => (
+    channel <= 0.04045
+      ? channel / 12.92
+      : ((channel + 0.055) / 1.055) ** 2.4
+  ))
+
+  return (0.2126 * red) + (0.7152 * green) + (0.0722 * blue)
+}
+
+function contrastRatio(first, second) {
+  const lighter = Math.max(relativeLuminance(first), relativeLuminance(second))
+  const darker = Math.min(relativeLuminance(first), relativeLuminance(second))
+  return (lighter + 0.05) / (darker + 0.05)
+}
+
 test('floating history owns its filters and panel interaction state', async () => {
   const source = await readFile(new URL('./FloatingHistoryPanel.vue', import.meta.url), 'utf8')
 
@@ -17,6 +47,132 @@ test('floating history owns its filters and panel interaction state', async () =
   assert.match(source, /class="history-action-icon terminal-expand-icon"/)
   assert.match(source, /minimizedHistoryTerminalIcon/)
   assert.match(source, /terminalExpandIconStyle/)
+})
+
+test('floating history filters stay mutually exclusive without a selected icon slot', async () => {
+  const source = await readFile(new URL('./FloatingHistoryPanel.vue', import.meta.url), 'utf8')
+  const style = await readFile(new URL('../../styles/features/history.css', import.meta.url), 'utf8')
+
+  assert.match(source, /:aria-pressed="historyFilter === option\.key"/)
+  assert.match(source, /@click="historyFilter = option\.key"/)
+  assert.match(source, />\s*<span>\{\{ option\.label \}\}<\/span>\s*<strong>\{\{ option\.count \}\}<\/strong>\s*<\/button>/)
+  assert.doesNotMatch(source, /historySelectedIcon|history-filter-selected-icon/)
+  assert.doesNotMatch(style, /history-filter-selected-icon/)
+  assert.match(bodyFor(style, '.history-filter-chip'), /padding:\s*5px 9px 5px 12px;/)
+  assert.match(bodyFor(style, '.history-filter-chip.active'), /box-shadow:\s*none;/)
+})
+
+test('history filter active palettes meet text contrast in light and dark themes', async () => {
+  const style = await readFile(new URL('../../styles/features/history.css', import.meta.url), 'utf8')
+  const expectedPalettes = {
+    '.history-filter-chip': {
+      '--history-filter-active-bg': '#324455',
+      '--history-filter-active-ink': '#f4f8fb',
+      '--history-filter-active-count-bg': '#e8f0f5',
+      '--history-filter-active-count-ink': '#263746',
+    },
+    '.history-filter-chip.current': {
+      '--history-filter-active-bg': '#0064e0',
+      '--history-filter-active-ink': '#f7faff',
+      '--history-filter-active-count-bg': '#e8f2ff',
+      '--history-filter-active-count-ink': '#0457cb',
+    },
+    '.history-filter-chip.pending': {
+      '--history-filter-active-bg': '#f2bd48',
+      '--history-filter-active-ink': '#4a3100',
+      '--history-filter-active-count-bg': '#fff1c6',
+      '--history-filter-active-count-ink': '#513500',
+    },
+    '.history-filter-chip.completed': {
+      '--history-filter-active-bg': '#267640',
+      '--history-filter-active-ink': '#f5fff7',
+      '--history-filter-active-count-bg': '#def4e4',
+      '--history-filter-active-count-ink': '#1f6035',
+    },
+    '.history-filter-chip.discarded': {
+      '--history-filter-active-bg': '#b32642',
+      '--history-filter-active-ink': '#fff7f8',
+      '--history-filter-active-count-bg': '#ffe5e9',
+      '--history-filter-active-count-ink': '#8f1930',
+    },
+    '.app-shell.theme-dark .history-filter-chip': {
+      '--history-filter-active-bg': '#51697b',
+      '--history-filter-active-ink': '#f4f8fb',
+      '--history-filter-active-count-bg': '#e8f0f5',
+      '--history-filter-active-count-ink': '#263746',
+    },
+    '.app-shell.theme-dark .history-filter-chip.current': {
+      '--history-filter-active-bg': '#1767bb',
+      '--history-filter-active-ink': '#f7faff',
+      '--history-filter-active-count-bg': '#e8f2ff',
+      '--history-filter-active-count-ink': '#0457cb',
+    },
+    '.app-shell.theme-dark .history-filter-chip.pending': {
+      '--history-filter-active-bg': '#d3a337',
+      '--history-filter-active-ink': '#362300',
+      '--history-filter-active-count-bg': '#fff1c6',
+      '--history-filter-active-count-ink': '#513500',
+    },
+    '.app-shell.theme-dark .history-filter-chip.completed': {
+      '--history-filter-active-bg': '#2b7e4b',
+      '--history-filter-active-ink': '#f5fff7',
+      '--history-filter-active-count-bg': '#def4e4',
+      '--history-filter-active-count-ink': '#1f6035',
+    },
+    '.app-shell.theme-dark .history-filter-chip.discarded': {
+      '--history-filter-active-bg': '#b83d55',
+      '--history-filter-active-ink': '#fff7f8',
+      '--history-filter-active-count-bg': '#ffe5e9',
+      '--history-filter-active-count-ink': '#8f1930',
+    },
+  }
+
+  for (const [selector, expectedPalette] of Object.entries(expectedPalettes)) {
+    const body = bodyFor(style, selector)
+    const palette = {
+      '--history-filter-active-bg': cssHexValue(body, '--history-filter-active-bg'),
+      '--history-filter-active-ink': cssHexValue(body, '--history-filter-active-ink'),
+      '--history-filter-active-count-bg': cssHexValue(body, '--history-filter-active-count-bg'),
+      '--history-filter-active-count-ink': cssHexValue(body, '--history-filter-active-count-ink'),
+    }
+
+    assert.deepEqual(palette, expectedPalette, `${selector} should keep its approved active palette`)
+
+    assert.ok(
+      contrastRatio(
+        palette['--history-filter-active-ink'],
+        palette['--history-filter-active-bg'],
+      ) >= 4.5,
+      `${selector} active label contrast should meet WCAG AA`,
+    )
+    assert.ok(
+      contrastRatio(
+        palette['--history-filter-active-count-ink'],
+        palette['--history-filter-active-count-bg'],
+      ) >= 4.5,
+      `${selector} active count contrast should meet WCAG AA`,
+    )
+  }
+
+  const darkActive = bodyFor(style, '.app-shell.theme-dark .history-filter-chip.active')
+  assert.match(darkActive, /border-color:\s*var\(--history-filter-active-bg\);/)
+  assert.match(darkActive, /color:\s*var\(--history-filter-active-ink\);/)
+  assert.match(darkActive, /background:\s*var\(--history-filter-active-bg\);/)
+  assert.match(darkActive, /box-shadow:\s*none;/)
+
+  const darkActiveCount = bodyFor(style, '.app-shell.theme-dark .history-filter-chip.active strong')
+  assert.match(darkActiveCount, /color:\s*var\(--history-filter-active-count-ink\);/)
+  assert.match(darkActiveCount, /background:\s*var\(--history-filter-active-count-bg\);/)
+
+  const darkActiveHover = bodyFor(style, '.app-shell.theme-dark .history-filter-chip.active:hover')
+  assert.match(
+    darkActiveHover,
+    /border-color:\s*color-mix\(in srgb, var\(--history-filter-active-bg\) 92%, #0a1317\);/,
+  )
+  assert.match(
+    darkActiveHover,
+    /background:\s*color-mix\(in srgb, var\(--history-filter-active-bg\) 92%, #0a1317\);/,
+  )
 })
 
 test('floating history uses the safe default only when no saved position exists', async () => {

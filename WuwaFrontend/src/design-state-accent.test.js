@@ -123,7 +123,7 @@ test('evaluation cards use restrained perimeters while Bayes paths retain semant
   )
 })
 
-test('selected Sonata and history filters expose a non-color check marker', async () => {
+test('selected Sonata keeps its check while history filters use solid active pills', async () => {
   const [workbench, history, workspaceStyle, historyStyle] = await Promise.all([
     read('./features/workspace/EchoWorkbenchView.vue'),
     read('./features/history/FloatingHistoryPanel.vue'),
@@ -135,11 +135,15 @@ test('selected Sonata and history filters expose a non-color check marker', asyn
   assert.match(workbench, /v-if="config\.sonata === effect\.name" class="ui-line-icon sonata-selected-indicator"/)
   assert.match(workspaceStyle, /\.sonata-selected-indicator \{[\s\S]+width: 18px;[\s\S]+height: 18px;/)
 
-  assert.match(history, /import historySelectedIcon from '\.\.\/\.\.\/assets\/icons\/check\.svg'/)
-  assert.match(history, /class="ui-line-icon history-filter-selected-icon"/)
-  assert.doesNotMatch(history, /v-if="historyFilter === option\.key" class="ui-line-icon history-filter-selected-icon"/)
-  assert.match(historyStyle, /\.history-filter-selected-icon \{[\s\S]+width: 14px;[\s\S]+height: 14px;[\s\S]+opacity: 0;/)
-  assert.match(historyStyle, /\.history-filter-chip\.active \.history-filter-selected-icon \{\s+opacity: 1;/)
+  assert.doesNotMatch(history, /historySelectedIcon|history-filter-selected-icon/)
+  assert.match(history, /:aria-pressed="historyFilter === option\.key"/)
+  assert.doesNotMatch(historyStyle, /\.history-filter-selected-icon/)
+  assert.match(bodiesFor(historyStyle, '.history-filter-chip.active'), /border-color:\s*var\(--history-filter-active-bg\);/)
+  assert.match(bodiesFor(historyStyle, '.history-filter-chip.active'), /color:\s*var\(--history-filter-active-ink\);/)
+  assert.match(bodiesFor(historyStyle, '.history-filter-chip.active'), /background:\s*var\(--history-filter-active-bg\);/)
+  assert.match(bodiesFor(historyStyle, '.history-filter-chip.active'), /box-shadow:\s*none;/)
+  assert.match(bodiesFor(historyStyle, '.history-filter-chip.active strong'), /color:\s*var\(--history-filter-active-count-ink\);/)
+  assert.match(bodiesFor(historyStyle, '.history-filter-chip.active strong'), /background:\s*var\(--history-filter-active-count-bg\);/)
 })
 
 test('polished states stay flat and model summaries use an explicit reading label', async () => {
