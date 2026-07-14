@@ -1,5 +1,7 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+
+import { createTitleAnimation, shouldAnimateTitle } from './titleAnimation.js'
 
 const props = defineProps({
   error: {
@@ -9,6 +11,64 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['submit'])
+
+const terminalTitle = '欢迎回家，漂泊者'
+const reducedMotionQuery = typeof window === 'undefined'
+  ? null
+  : window.matchMedia('(prefers-reduced-motion: reduce)')
+const compactViewportQuery = typeof window === 'undefined'
+  ? null
+  : window.matchMedia('(max-width: 520px)')
+const shouldPlayTitleAnimation = Boolean(reducedMotionQuery && compactViewportQuery)
+  && shouldAnimateTitle({
+    reduceMotion: reducedMotionQuery.matches,
+    compactViewport: compactViewportQuery.matches,
+    documentHidden: document.hidden,
+  })
+const displayedTerminalTitle = ref(shouldPlayTitleAnimation ? '' : terminalTitle)
+const isTerminalTitleComplete = ref(!shouldPlayTitleAnimation)
+let titleAnimation = null
+
+function completeTitleAnimation() {
+  if (titleAnimation) {
+    titleAnimation.complete()
+    return
+  }
+  displayedTerminalTitle.value = terminalTitle
+  isTerminalTitleComplete.value = true
+}
+
+function handleDocumentVisibility() {
+  if (document.hidden) completeTitleAnimation()
+}
+
+function handleStaticTitlePreference(event) {
+  if (event.matches) completeTitleAnimation()
+}
+
+onMounted(() => {
+  if (!shouldPlayTitleAnimation) return
+  titleAnimation = createTitleAnimation({
+    text: terminalTitle,
+    onFrame: (frame) => {
+      displayedTerminalTitle.value = frame
+    },
+    onComplete: () => {
+      isTerminalTitleComplete.value = true
+    },
+  })
+  document.addEventListener('visibilitychange', handleDocumentVisibility)
+  reducedMotionQuery.addEventListener('change', handleStaticTitlePreference)
+  compactViewportQuery.addEventListener('change', handleStaticTitlePreference)
+  titleAnimation.start()
+})
+
+onBeforeUnmount(() => {
+  titleAnimation?.cancel()
+  document.removeEventListener('visibilitychange', handleDocumentVisibility)
+  reducedMotionQuery?.removeEventListener('change', handleStaticTitlePreference)
+  compactViewportQuery?.removeEventListener('change', handleStaticTitlePreference)
+})
 
 const terminalFeatures = [
   { title: '历史调谐记录', path: 'M4 21v-7m0-4V3m8 18v-9m0-4V3m8 18v-5m0-4V3M1 14h6m2-6h6m2 8h6' },
@@ -72,7 +132,12 @@ function submitAuth() {
       <div class="terminal-container">
         <div class="terminal-hero-content">
           <span class="terminal-subtitle">ECHO ANALYSIS PROTOCOL</span>
-          <div class="terminal-title-wrapper"><h1 class="terminal-title">欢迎回家，漂泊者</h1></div>
+          <div class="terminal-title-wrapper">
+            <h1 class="terminal-title" :aria-label="terminalTitle">
+              <span aria-hidden="true">{{ displayedTerminalTitle }}</span>
+              <span class="terminal-title-caret" aria-hidden="true"></span>
+            </h1>
+          </div>
           <div class="terminal-features-grid">
             <div v-for="feature in terminalFeatures" :key="feature.title" class="terminal-feature-item">
               <div class="terminal-feature-icon"><svg viewBox="0 0 24 24"><path :d="feature.path" /></svg></div>
@@ -81,32 +146,34 @@ function submitAuth() {
           </div>
         </div>
 
-        <div class="terminal-auth-wrapper">
-          <div class="terminal-auth-card">
-            <div class="terminal-auth-tabs">
-              <button v-for="tab in authTabs" :key="tab.mode" class="terminal-tab-btn" :class="{ active: authForm.mode === tab.mode }" type="button" @click="selectAuthMode(tab.mode)">{{ tab.label }}</button>
-              <div class="terminal-tab-indicator" :style="{ transform: `translateX(${authModeIndex * 100}%)` }"></div>
-            </div>
+        <Transition name="terminal-auth">
+          <div v-if="isTerminalTitleComplete" class="terminal-auth-wrapper">
+            <div class="terminal-auth-card">
+              <div class="terminal-auth-tabs">
+                <button v-for="tab in authTabs" :key="tab.mode" class="terminal-tab-btn" :class="{ active: authForm.mode === tab.mode }" type="button" @click="selectAuthMode(tab.mode)">{{ tab.label }}</button>
+                <div class="terminal-tab-indicator" :style="{ transform: `translateX(${authModeIndex * 100}%)` }"></div>
+              </div>
 
-            <form class="terminal-form-view" @submit.prevent="submitAuth">
-              <label class="terminal-input-group">
-                {{ isRegister ? '新建操作员账号' : '操作员账号' }}
-                <input v-model="authForm.username" class="terminal-standard-input" autocomplete="username" placeholder="请输入账号" :aria-invalid="Boolean(displayedError)" :aria-errormessage="displayedError ? 'auth-form-error' : undefined" />
-              </label>
-              <label class="terminal-input-group">
-                {{ isRegister ? '设置访问密钥' : '访问密钥' }}
-                <input v-model="authForm.password" class="terminal-standard-input" type="password" :autocomplete="isRegister ? 'new-password' : 'current-password'" placeholder="••••••••" :aria-invalid="Boolean(displayedError)" :aria-errormessage="displayedError ? 'auth-form-error' : undefined" />
-              </label>
-              <label v-if="isRegister" class="terminal-input-group">
-                确认访问密钥
-                <input v-model="confirmPassword" class="terminal-standard-input" type="password" autocomplete="new-password" placeholder="再次输入密钥" :aria-invalid="Boolean(displayedError)" :aria-errormessage="displayedError ? 'auth-form-error' : undefined" />
-              </label>
-              <label v-else class="terminal-form-options"><input v-model="saveLogin" type="checkbox" /> 保持连接状态</label>
-              <p v-if="displayedError" id="auth-form-error" class="error-text" role="alert">{{ displayedError }}</p>
-              <button class="terminal-primary-btn" type="submit">{{ isRegister ? 'INIT_REGISTER()' : 'EXECUTE_LOGIN()' }}</button>
-            </form>
+              <form class="terminal-form-view" @submit.prevent="submitAuth">
+                <label class="terminal-input-group">
+                  {{ isRegister ? '新建操作员账号' : '操作员账号' }}
+                  <input v-model="authForm.username" class="terminal-standard-input" autocomplete="username" placeholder="请输入账号" :aria-invalid="Boolean(displayedError)" :aria-errormessage="displayedError ? 'auth-form-error' : undefined" />
+                </label>
+                <label class="terminal-input-group">
+                  {{ isRegister ? '设置访问密钥' : '访问密钥' }}
+                  <input v-model="authForm.password" class="terminal-standard-input" type="password" :autocomplete="isRegister ? 'new-password' : 'current-password'" placeholder="••••••••" :aria-invalid="Boolean(displayedError)" :aria-errormessage="displayedError ? 'auth-form-error' : undefined" />
+                </label>
+                <label v-if="isRegister" class="terminal-input-group">
+                  确认访问密钥
+                  <input v-model="confirmPassword" class="terminal-standard-input" type="password" autocomplete="new-password" placeholder="再次输入密钥" :aria-invalid="Boolean(displayedError)" :aria-errormessage="displayedError ? 'auth-form-error' : undefined" />
+                </label>
+                <label v-else class="terminal-form-options"><input v-model="saveLogin" type="checkbox" /> 保持连接状态</label>
+                <p v-if="displayedError" id="auth-form-error" class="error-text" role="alert">{{ displayedError }}</p>
+                <button class="terminal-primary-btn" type="submit">{{ isRegister ? 'INIT_REGISTER()' : 'EXECUTE_LOGIN()' }}</button>
+              </form>
+            </div>
           </div>
-        </div>
+        </Transition>
       </div>
     </main>
   </section>
