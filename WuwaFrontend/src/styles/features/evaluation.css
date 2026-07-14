@@ -740,20 +740,6 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-
-  .summary-model-link:hover,
-.summary-model-link:focus-visible,
-.summary-model-link.active,
-.evaluation-summary-copy,
-.model-row-detail-enter-active,
-.model-row-detail-leave-active,
-.fusion-weight-card.summary-linked {
-    animation: none;
-    transition: none;
-  }
-}
-
 .evaluation-head {
   display: flex;
   align-items: start;
@@ -4686,4 +4672,22 @@
   border-radius: inherit;
   background: linear-gradient(90deg, #7fa8ca, #2f83d8);
   box-shadow: 0 0 0 1px rgba(47, 131, 216, 0.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .evaluation-summary-copy,
+  .summary-model-link:hover,
+  .summary-model-link:focus-visible,
+  .summary-model-link.active,
+  .fusion-weight-card.summary-linked {
+    animation: none;
+  }
+
+  .summary-model-link,
+  .fusion-weight-card,
+  .model-expand-chevron,
+  .model-row-detail-enter-active,
+  .model-row-detail-leave-active {
+    transition: none;
+  }
 }

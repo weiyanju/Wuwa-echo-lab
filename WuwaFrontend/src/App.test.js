@@ -489,6 +489,24 @@ test('model detail rows animate when expanded or collapsed', async () => {
   assert.match(styleSource, /\.model-bars article\.expanded \.model-expand-chevron \{\s+transform: rotate\(180deg\);/)
 })
 
+test('evaluation reduced motion overrides are declared after evaluation animations', async () => {
+  const styleSource = await readFile(new URL('./styles/features/evaluation.css', import.meta.url), 'utf8')
+  const reducedMotionIndex = styleSource.lastIndexOf('@media (prefers-reduced-motion: reduce)')
+  const finalAnimationIndex = styleSource.lastIndexOf('@keyframes summary-card-flash')
+
+  assert.ok(reducedMotionIndex > finalAnimationIndex)
+
+  const reducedMotionSource = styleSource.slice(reducedMotionIndex)
+  assert.match(
+    reducedMotionSource,
+    /\.evaluation-summary-copy,[\s\S]+\.summary-model-link:hover,[\s\S]+\.fusion-weight-card\.summary-linked \{[\s\S]+animation: none;/,
+  )
+  assert.match(
+    reducedMotionSource,
+    /\.summary-model-link,[\s\S]+\.model-expand-chevron,[\s\S]+\.model-row-detail-enter-active,[\s\S]+\.model-row-detail-leave-active \{[\s\S]+transition: none;/,
+  )
+})
+
 test('evaluation help markers use the shared Iconoir help icon', async () => {
   const backtestSource = await readFile(new URL('./features/evaluation/EvaluationBacktest.vue', import.meta.url), 'utf8')
   const styleSource = await readFile(new URL('./styles/features/evaluation.css', import.meta.url), 'utf8')
