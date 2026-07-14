@@ -114,6 +114,8 @@ test('homepage and browser tab share the compact TETHYS brand mark', async () =>
   assert.doesNotMatch(loginSource, /Tethys System <span>\| 泰缇斯枢纽<\/span>/)
   assert.match(authStyleSource, /\.terminal-brand-icon \{[^}]+display: block;[^}]+width: 24px;[^}]+height: 24px;/)
   assert.doesNotMatch(authStyleSource, /\.terminal-brand-icon::after/)
+  assert.doesNotMatch(authStyleSource, /\.terminal-brand span:last-child/)
+  assert.doesNotMatch(authStyleSource, /@media \(max-width: 520px\) \{[\s\S]*?\.terminal-brand \{[^}]*flex-wrap: wrap;/)
   assert.match(indexSource, /<link rel="icon" type="image\/svg\+xml" href="\/tethys-mark\.svg" \/>/)
   assert.match(indexSource, /<title>泰缇斯枢纽<\/title>/)
 

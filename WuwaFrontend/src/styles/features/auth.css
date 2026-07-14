@@ -289,8 +289,6 @@
 
 @media (max-width: 520px) {
   .terminal-navbar { align-items: flex-start; gap: 16px; flex-direction: column; }
-  .terminal-brand { flex-wrap: wrap; }
-  .terminal-brand span:last-child { flex-basis: 100%; margin-left: 32px; }
   .terminal-title { width: 100%; overflow: visible; border-right: 0; padding-inline-end: 0; font-size: 36px; white-space: normal; animation: none; }
   .terminal-auth-card { padding: 28px 24px; }
 }
