@@ -71,7 +71,8 @@ function deviationTitle(row, direction) {
       <div class="stats-diagnostic-title-row">
         <div class="stats-diagnostic-title-stack">
           <h2>统计诊断</h2>
-          <p v-if="!stats">等待样本录入后生成统计图表。</p>
+          <p v-if="stats" class="stats-diagnostic-context">{{ statsReliabilityNote(totalSamples) }}</p>
+          <p v-else>等待样本录入后生成统计图表。</p>
         </div>
         <div
           v-if="stats"
@@ -92,20 +93,17 @@ function deviationTitle(row, direction) {
       <article class="stats-diagnostic-primary" :title="`基于 ${totalSamples} 条样本判断当前统计可信度`">
         <span>样本可信度</span>
         <strong>{{ statsReliabilityText(totalSamples) }}</strong>
-        <p class="stats-diagnostic-note">{{ statsReliabilityNote(totalSamples) }}</p>
       </article>
       <div class="stats-diagnostic-deviations">
         <article class="stats-diagnostic-deviation hot" :title="deviationTitle(hottestStatRow, '偏高')">
           <span>当前偏高</span>
-          <strong>{{ hottestStatRow?.label || '暂无' }}</strong>
+          <strong>{{ hottestStatRow?.label || '暂无明显偏高' }}</strong>
           <em v-if="hottestStatRow" class="stats-number">{{ formatSignedPercent(hottestStatRow.deviation) }}</em>
-          <em v-else>暂无</em>
         </article>
         <article class="stats-diagnostic-deviation warn" :title="deviationTitle(coldestStatRow, '偏低')">
           <span>当前偏低</span>
-          <strong>{{ coldestStatRow?.label || '暂无' }}</strong>
+          <strong>{{ coldestStatRow?.label || '暂无明显偏低' }}</strong>
           <em v-if="coldestStatRow" class="stats-number">{{ formatSignedPercent(coldestStatRow.deviation) }}</em>
-          <em v-else>暂无</em>
         </article>
       </div>
     </section>

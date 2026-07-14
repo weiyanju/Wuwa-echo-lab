@@ -12,7 +12,7 @@
 
 .stats-diagnostic-title-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 18px;
   width: 100%;
@@ -21,7 +21,7 @@
 
 .stats-diagnostic-title-stack {
   display: grid;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
 }
 
@@ -189,9 +189,10 @@
   font-variant-numeric: tabular-nums;
 }
 
-.stats-diagnostic-note {
+.stats-diagnostic-context {
+  max-width: 440px;
   margin: 0;
-  color: #526579;
+  color: #6f8293;
   font-size: var(--text-label);
   font-weight: var(--weight-supporting);
   line-height: var(--leading-body);
@@ -762,7 +763,7 @@
 }
 
 .app-shell.theme-dark .stats-diagnostic-head p,
-.app-shell.theme-dark .stats-diagnostic-note,
+.app-shell.theme-dark .stats-diagnostic-context,
 .app-shell.theme-dark .stats-section-heading > span {
   color: var(--charcoal);
 }

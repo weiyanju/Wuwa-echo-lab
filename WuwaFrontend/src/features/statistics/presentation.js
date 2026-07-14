@@ -45,19 +45,22 @@ export function statsReliabilityText(total) {
 }
 
 export function statsReliabilityNote(total) {
-  if (total >= 50000) {
-    return '样本量已足够进入长期权重优化。'
+  const sampleTotal = Math.trunc(normalizeSampleTotal(total))
+  const prefix = `基于 ${sampleTotal} 条样本，`
+
+  if (sampleTotal >= 50000) {
+    return `${prefix}可进入长期权重优化。`
   }
-  if (total >= 10000) {
-    return '偏差趋势较稳定，可作为长期观察依据。'
+  if (sampleTotal >= 10000) {
+    return `${prefix}偏差趋势可作为长期观察依据。`
   }
-  if (total >= 3000) {
-    return '偏差可以辅助判断，极端值仍需保守看待。'
+  if (sampleTotal >= 3000) {
+    return `${prefix}偏差可辅助判断，极端值仍需保守看待。`
   }
-  if (total >= 500) {
-    return '样本初具规模，趋势参考价值开始提高。'
+  if (sampleTotal >= 500) {
+    return `${prefix}偏差可作初步参考。`
   }
-  return '样本仍少，偏差只作早期提示。'
+  return `${prefix}当前偏差仅作趋势提示。`
 }
 
 function clampUnit(value) {

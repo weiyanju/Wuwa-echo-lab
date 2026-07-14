@@ -1,5 +1,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
+import trashIcon from '../../assets/icons/trash.svg'
+import undoActionIcon from '../../assets/icons/undo-action.svg'
 import { sonataEchoesBySetName } from '../../data/sonataEchoes'
 import { sonataEffects } from '../../data/sonataEffects'
 import { mainStatLabels, substatLabels } from '../../data/substats'
@@ -73,6 +75,8 @@ const activePredictionRecommendations = computed(() => activePredictionRankings.
 const activePredictionAlternatives = computed(() => activePredictionRankings.value.filter(
   (prediction) => predictionDisplayBucket(prediction.probability) !== activePredictionTopBucket.value,
 ))
+
+function iconMask(source) { return { '--icon-url': `url("${source}")` } }
 
 function movePreviewEcho(direction) {
   const total = activeEchoesForCost.value.length
@@ -196,17 +200,15 @@ watch([() => previewSonataEffect.value?.name, previewCost, () => props.activeEch
           </div>
           <span v-else class="active-prediction-empty">等待预测</span>
         </div>
-        <div class="active-secondary-actions">
-          <button class="active-action-button undo-action" type="button" :disabled="saving || !activeEchoSubstats.length" aria-label="撤回上一次录入的副词条" title="撤回上一次录入的副词条" @click="emit('undo')">
-            <span>撤销</span>
+        <div class="active-action-dock">
+          <button class="active-action-button active-action-icon-button undo-action" type="button" :disabled="saving || !activeEchoSubstats.length" aria-label="撤回上一次录入的副词条" title="撤回上一次录入的副词条" @click="emit('undo')">
+            <span class="ui-line-icon active-action-icon" :style="iconMask(undoActionIcon)" aria-hidden="true"></span>
           </button>
-          <button class="active-action-button discard-action" type="button" :disabled="saving" aria-label="弃置当前声骸" @click="emit('discard')">
-            <span>弃置</span>
+          <button class="active-action-button active-action-icon-button discard-action" type="button" :disabled="saving" aria-label="弃置当前声骸" title="弃置当前声骸" @click="emit('discard')">
+            <span class="ui-line-icon active-action-icon" :style="iconMask(trashIcon)" aria-hidden="true"></span>
           </button>
+          <button class="active-action-button next-action" type="button" :disabled="saving" aria-label="进入下一个声骸" @click="emit('next')"><span>下一个</span></button>
         </div>
-        <button class="active-action-button next-action" type="button" :disabled="saving" aria-label="进入下一个声骸" @click="emit('next')">
-          <span>下一个</span>
-        </button>
       </aside>
     </section>
   </div>

@@ -28,3 +28,16 @@ test('model detail summary uses one native disclosure button without nested cont
   assert.doesNotMatch(source, /<button\s+class="model-expand-state"/)
   assert.match(style, /\.model-bars article > \.model-bar-summary \{[\s\S]+border: 0;[\s\S]+background: transparent;[\s\S]+font: inherit;[\s\S]+appearance: none;/)
 })
+
+test('dark inline Bayes detail inherits the shared expanded-row surface', async () => {
+  const style = await readFile(new URL('../../styles/features/evaluation.css', import.meta.url), 'utf8')
+
+  assert.match(
+    style,
+    /\.app-shell\.theme-dark \.model-row-detail \.model-chart-bayes \{[^}]*border: 0;[^}]*border-radius: 0;[^}]*padding: 0;[^}]*background: transparent;[^}]*\}/,
+  )
+  assert.match(
+    style,
+    /\.app-shell\.theme-dark \.model-row-detail \.bayes-contribution-chart \{[^}]*background: transparent;[^}]*\}/,
+  )
+})

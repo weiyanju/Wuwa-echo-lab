@@ -30,10 +30,11 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['select', 'add'])
+const emit = defineEmits(['select', 'add', 'sign-out'])
 
 const root = ref(null)
 const chipButton = ref(null)
+const addButton = ref(null)
 const addInput = ref(null)
 const menuOpen = ref(false)
 const adding = ref(false)
@@ -100,6 +101,13 @@ function startAddAccount() {
   validationError.value = ''
   nextTick(() => {
     addInput.value?.focus()
+  })
+}
+
+function cancelAddAccount() {
+  resetAddForm()
+  nextTick(() => {
+    addButton.value?.focus()
   })
 }
 
@@ -194,7 +202,7 @@ onBeforeUnmount(() => {
           </button>
         </div>
 
-        <form v-if="adding" class="uid-switcher-field" @submit.prevent="submitAddAccount">
+        <form v-if="adding" id="uid-switcher-add-form" class="uid-switcher-field" @submit.prevent="submitAddAccount">
           <label for="uid-switcher-add-input">新增 UID</label>
           <input
             id="uid-switcher-add-input"
@@ -208,12 +216,24 @@ onBeforeUnmount(() => {
             aria-describedby="uid-switcher-add-error"
           />
           <p v-if="displayedError" id="uid-switcher-add-error" class="uid-switcher-error" role="alert">{{ displayedError }}</p>
-          <button class="uid-switcher-submit" type="submit" :disabled="busy">确认添加</button>
         </form>
 
-        <button v-else class="uid-switcher-add" type="button" :disabled="addDisabled" @click="startAddAccount">
-          {{ addLimitReached ? '已达上限' : '添加 UID' }}
-        </button>
+        <div class="uid-switcher-actions" role="none">
+          <button v-if="adding" class="uid-switcher-submit" type="submit" form="uid-switcher-add-form" :disabled="busy">确认添加</button>
+          <button
+            v-else
+            ref="addButton"
+            class="uid-switcher-add"
+            type="button"
+            :disabled="addDisabled"
+            @click="startAddAccount"
+          >
+            {{ addLimitReached ? '已达上限' : '添加 UID' }}
+          </button>
+
+          <button v-if="adding" class="uid-switcher-cancel" type="button" @click="cancelAddAccount">取消</button>
+          <button v-else class="uid-switcher-sign-out" type="button" role="menuitem" @click="emit('sign-out')">退出登录</button>
+        </div>
       </div>
     </Transition>
   </div>

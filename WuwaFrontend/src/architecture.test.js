@@ -159,16 +159,21 @@ test('uid setup owns its shell, card, dark theme, and responsive styles', async 
 test('workspace feature owns workbench, matrix, dark, and responsive styles', async () => {
   const entry = await readFile(new URL('./style.css', import.meta.url), 'utf8')
   const workspace = await readFile(new URL('./styles/features/workspace.css', import.meta.url), 'utf8')
+  const workspaceSearch = await readFile(new URL('./styles/features/workspace-search.css', import.meta.url), 'utf8').catch(() => '')
   const workspaceActive = await readFile(new URL('./styles/features/workspace-active.css', import.meta.url), 'utf8')
 
   assert.match(entry, /@import '\.\/styles\/features\/workspace\.css';/)
+  assert.match(workspace, /@import '\.\/workspace-search\.css';/)
   assert.match(entry, /@import '\.\/styles\/features\/workspace-active\.css';/)
   assert.match(workspace, /\.workspace-grid \{/)
   assert.match(workspace, /\.sonata-grid \{/)
   assert.match(workspace, /\.substat-matrix \{/)
+  assert.match(workspaceSearch, /\.sonata-search-field \{/)
+  assert.match(workspaceSearch, /\.app-shell\.theme-dark \.sonata-search-field input/)
   assert.match(workspaceActive, /\.active-summary \{/)
   assert.match(workspace, /@media \(max-width: 860px\)/)
   assert.match(workspace, /@media \(max-width: 520px\)/)
+  assert.doesNotMatch(workspace, /\.sonata-search-field \{/)
   assert.doesNotMatch(entry, /\.workspace-grid \{/)
 })
 

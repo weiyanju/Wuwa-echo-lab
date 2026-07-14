@@ -6,6 +6,7 @@ import { mainStatLabels, mainStatsByCost } from '../../data/substats'
 import { sonataEffects } from '../../data/sonataEffects'
 import { formatPercent, formatSubstatTierNumber, formatSubstatTierUnit, formatSubstatTierValue } from '../../services/formatters'
 import ActiveEchoCapturePanel from './ActiveEchoCapturePanel.vue'
+import SonataSearchField from './SonataSearchField.vue'
 import { filterSonataEffects, useEchoWorkbenchLayout } from './useEchoWorkbenchLayout'
 
 const props = defineProps({
@@ -91,10 +92,7 @@ function iconMask(source) { return { '--icon-url': `url("${source}")` } }
         <form class="echo-form" @submit.prevent>
         <fieldset>
           <legend>套装</legend>
-          <label class="sonata-search-field">
-            <span class="sr-only">搜索套装</span>
-            <input v-model="sonataQuery" type="search" inputmode="search" placeholder="搜索套装" autocomplete="off" />
-          </label>
+          <SonataSearchField v-model="sonataQuery" />
           <p v-if="configChangeCreatesEcho" class="setup-behavior-hint">选择其他配置将新建声骸</p>
           <div ref="sonataGridRef" class="sonata-grid">
             <button

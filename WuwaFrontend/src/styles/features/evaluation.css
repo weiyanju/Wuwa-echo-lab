@@ -494,9 +494,14 @@
 }
 
 .app-shell.theme-dark .model-row-detail .model-chart-bayes {
-  background:
-    linear-gradient(180deg, rgba(18, 30, 40, 0.78), rgba(18, 30, 40, 0.78)),
-    #121e28;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.app-shell.theme-dark .model-row-detail .bayes-contribution-chart {
+  background: transparent;
 }
 
 .app-shell.theme-dark .bayes-contribution-labels .primary,

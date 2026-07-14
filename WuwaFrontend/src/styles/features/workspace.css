@@ -1,3 +1,5 @@
+@import './workspace-search.css';
+
 
 
 .app-shell.theme-dark .gallery-panel {
@@ -150,27 +152,25 @@
 .app-shell.theme-dark .active-prediction-alternative { color: #b5c8bb; }
 
 .app-shell.theme-dark .undo-action {
-  border-color: #31485c;
   color: #c8d5df;
-  background: #101b23;
+  background: transparent;
 }
 
 .app-shell.theme-dark .undo-action:hover:not(:disabled) {
-  border-color: #4b78a1;
+  border-color: rgba(93, 168, 255, 0.2);
   color: #e8f3ff;
-  background: #152839;
+  background: rgba(93, 168, 255, 0.1);
 }
 
 .app-shell.theme-dark .discard-action {
-  border-color: #5c3440;
-  color: #ff9aaa;
-  background: #101b23;
+  color: #c8d5df;
+  background: transparent;
 }
 
 .app-shell.theme-dark .discard-action:hover:not(:disabled) {
-  border-color: #9b4a5b;
+  border-color: rgba(255, 105, 128, 0.24);
   color: #ffd4db;
-  background: #2a1b23;
+  background: rgba(255, 105, 128, 0.12);
 }
 
 .app-shell.theme-dark .next-action {
@@ -191,6 +191,7 @@
 }
 
 .app-shell.theme-dark .active-action-rail { background: #14212b; }
+.app-shell.theme-dark .active-action-dock { border-color: rgba(83, 107, 124, 0.5); }
 
 .app-shell.theme-dark .progress-card {
   color: var(--ink-deep);
@@ -299,10 +300,6 @@
 
 .option-row .active { border: 2px solid #0143b5; }
 
-.sonata-search-field { display: block; margin-bottom: 8px; }
-.sonata-search-field input { width: 100%; min-height: 40px; border: 1px solid var(--hairline); border-radius: 12px; padding: 8px 12px; color: var(--ink-deep); background: var(--canvas); font: inherit; }
-.sonata-search-field input:focus-visible { border-color: rgba(23, 105, 210, 0.46); outline: 3px solid rgba(23, 105, 210, 0.14); outline-offset: 1px; }
-
 .setup-behavior-hint,
 .setup-creation-notice,
 .sonata-empty-state { margin: 0; color: var(--steel); font-size: var(--text-caption); line-height: var(--leading-caption); }
@@ -318,7 +315,6 @@
 .config-notice-enter-from,
 .config-notice-leave-to { opacity: 0; transform: translateY(4px); }
 
-.app-shell.theme-dark .sonata-search-field input { border-color: rgba(100, 123, 141, 0.42); color: #e8eef3; background: #121c24; }
 .app-shell.theme-dark .setup-creation-notice { border-color: rgba(80, 152, 255, 0.26); color: #b8d5ff; background: rgba(43, 105, 184, 0.14); }
 
 .sonata-grid {

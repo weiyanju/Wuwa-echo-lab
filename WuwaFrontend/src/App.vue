@@ -246,11 +246,10 @@ onBeforeUnmount(() => {
           <button :class="{ active: page === 'evaluation' }" @click="page = 'evaluation'">评估</button>
         </nav>
         <div class="account-actions">
-          <UidSwitcher :accounts="gameAccount.boundAccounts.value" :current-account="gameAccount.currentAccount.value" :can-add-account="gameAccount.canAddAccount.value" :busy="appBusy || gameAccount.loading.value" :error="error" @select="selectGameAccount" @add="addGameAccount" />
+          <UidSwitcher :accounts="gameAccount.boundAccounts.value" :current-account="gameAccount.currentAccount.value" :can-add-account="gameAccount.canAddAccount.value" :busy="appBusy || gameAccount.loading.value" :error="error" @select="selectGameAccount" @add="addGameAccount" @sign-out="signOut" />
           <button class="theme-toggle-button" type="button" :aria-pressed="isDarkTheme" :aria-label="themeToggleLabel" :title="themeToggleLabel" @click="toggleTheme">
             <span class="ui-line-icon theme-toggle-icon" :style="iconMask(isDarkTheme ? sunIcon : moonIcon)" aria-hidden="true"></span>
           </button>
-          <button class="button-ghost" @click="signOut">退出</button>
         </div>
       </header>
 

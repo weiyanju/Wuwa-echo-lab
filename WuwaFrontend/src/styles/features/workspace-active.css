@@ -97,7 +97,7 @@
 .active-echo-stage-dots button.active { width: 18px; background: var(--primary); }
 .active-record-panel {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) clamp(192px, 30%, 240px);
+  grid-template-columns: minmax(0, 1fr) clamp(232px, 30%, 248px);
   min-height: 300px;
   height: 300px;
   gap: 0;
@@ -199,7 +199,7 @@
   grid-template-columns: 24px minmax(0, 1fr) 76px;
   align-items: center;
   gap: 10px;
-  min-height: 36px;
+  min-height: 0;
   border-bottom: 1px solid rgba(216, 226, 234, 0.58);
   padding: 0 2px;
   color: var(--ink-deep);
@@ -208,7 +208,6 @@
   line-height: var(--leading-control);
 }
 .roll-strip span:last-of-type { border-bottom: 0; }
-.roll-slot { min-height: 36px; }
 .roll-strip span strong {
   color: var(--ink-deep);
   font-family: var(--font-data);
@@ -250,17 +249,17 @@
 }
 .active-action-rail {
   display: grid;
-  grid-template-rows: auto auto auto;
+  grid-template-rows: minmax(0, 1fr) auto;
   align-items: stretch;
-  align-content: center;
-  gap: 10px;
+  align-content: stretch;
+  gap: 0;
   min-width: 0;
   min-height: 0;
   border-left: 1px solid rgba(216, 226, 234, 0.72);
   padding: 16px;
   background: #f7f9fb;
 }
-.active-prediction-card { display: grid; align-content: center; min-height: 144px; gap: 6px; border: 0; border-radius: 0; padding: 0; background: transparent; }
+.active-prediction-card { display: grid; align-content: center; min-height: 144px; gap: 6px; border: 0; border-radius: 0; padding: 0; padding-bottom: 16px; background: transparent; }
 .active-prediction-table { display: grid; gap: 5px; }
 .active-prediction-line { display: grid; grid-template-columns: minmax(max-content, 1fr) max-content; align-items: center; gap: 6px; min-height: 26px; border: 1px solid transparent; border-radius: 10px; padding: 5px 6px; color: #526675; font-size: var(--text-caption); line-height: var(--leading-label); }
 .active-prediction-line:last-child { border-bottom: 0; }
@@ -271,10 +270,13 @@
 .active-prediction-label { min-width: max-content; font-style: normal; font-weight: var(--weight-label); overflow-wrap: normal; white-space: nowrap; word-break: keep-all; }
 .active-prediction-probability { justify-self: end; min-width: max-content; font-family: var(--font-data); font-size: var(--text-caption); font-weight: var(--weight-data); line-height: var(--leading-data); letter-spacing: var(--tracking-data); font-variant-numeric: tabular-nums; text-align: right; }
 .active-prediction-empty { justify-self: center; color: #8b9aa7; font-size: var(--text-caption); font-weight: var(--weight-label); line-height: var(--leading-label); }
-.active-secondary-actions {
+.active-action-dock {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 44px 44px minmax(0, 1fr);
+  align-items: center;
   gap: 8px;
+  border-top: 1px solid rgba(216, 226, 234, 0.72);
+  padding-top: 12px;
 }
 .active-action-button {
   display: inline-flex;
@@ -283,7 +285,7 @@
   gap: 8px;
   width: 100%;
   min-width: 0;
-  min-height: 40px;
+  min-height: 44px;
   border-radius: 12px;
   padding: 7px 12px;
   font-size: var(--text-control);
@@ -293,27 +295,29 @@
   transition: background-color 140ms ease-out, border-color 140ms ease-out, color 140ms ease-out;
 }
 .active-action-button:disabled { cursor: not-allowed; opacity: 0.48; }
+.active-action-icon-button { width: 44px; padding: 0; }
+.active-action-icon { width: 18px; height: 18px; }
 .undo-action {
-  border: 1px solid rgba(93, 108, 123, 0.28);
-  color: #253648;
-  background: #ffffff;
+  border: 1px solid transparent;
+  color: #526675;
+  background: transparent;
 }
 .undo-action:hover:not(:disabled) {
-  border-color: rgba(0, 100, 224, 0.3);
+  border-color: rgba(23, 105, 210, 0.12);
   color: var(--primary-deep);
-  background: #f4f8ff;
+  background: rgba(23, 105, 210, 0.08);
 }
 .discard-action {
-  border: 1px solid rgba(228, 30, 63, 0.24);
-  color: var(--critical);
-  background: #ffffff;
+  border: 1px solid transparent;
+  color: #526675;
+  background: transparent;
 }
 .discard-action:hover:not(:disabled) {
-  border-color: rgba(228, 30, 63, 0.36);
-  background: #fff0f4;
+  border-color: rgba(228, 30, 63, 0.14);
+  color: var(--critical);
+  background: rgba(228, 30, 63, 0.08);
 }
 .next-action {
-  min-height: 46px;
   border: 1px solid var(--primary);
   color: #ffffff;
   background: var(--primary);
@@ -330,17 +334,15 @@
   .active-echo-stage,
   .active-record-panel { min-height: 264px; height: 264px; }
 
-  .active-record-panel { grid-template-columns: minmax(0, 1fr) 176px; }
+  .active-record-panel { grid-template-columns: minmax(0, 1fr) 232px; }
 
   .active-record-main { gap: 8px; padding: 10px 16px; }
   .active-record-head { gap: 6px 14px; padding-bottom: 8px; }
 
-  .roll-strip span,
-  .roll-slot { min-height: 30px; }
+  .active-action-rail { padding: 10px 12px; }
 
-  .active-action-rail { gap: 8px; padding: 10px; }
-
-  .active-prediction-card { min-height: 112px; }
+  .active-prediction-card { min-height: 112px; padding-bottom: 10px; }
+  .active-action-dock { padding-top: 10px; }
 
   .active-echo-name-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
@@ -368,18 +370,15 @@
   .active-record-title-row { flex-direction: column; align-items: flex-start; gap: 6px; }
   .active-echo-name-title { width: 100%; font-size: 24px; line-height: 1.12; overflow-wrap: anywhere; white-space: normal; }
   .active-record-meta-pills { flex-wrap: wrap; min-width: 0; }
+  .roll-strip span { min-height: 36px; }
   .active-action-rail {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    align-items: center;
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(128px, auto) auto;
     border-top: 1px solid rgba(216, 226, 234, 0.72);
     border-left: 0;
     padding: 12px 18px 18px;
   }
-  .active-prediction-card { display: none; }
-  .active-secondary-actions { display: contents; }
-  .active-actions {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    align-self: stretch;
-  }
+  .active-prediction-card { min-height: 128px; padding-bottom: 12px; }
+  .active-actions { grid-template-columns: 1fr; align-self: stretch; }
 }
