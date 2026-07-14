@@ -123,6 +123,11 @@
   background: rgba(84, 36, 45, 0.28);
 }
 
+.app-shell.theme-dark .history-filter-chip:not(.active):hover {
+  border-color: color-mix(in srgb, var(--history-filter-active-bg) 54%, transparent);
+  background: color-mix(in srgb, var(--history-filter-active-bg) 18%, var(--surface-soft));
+}
+
 .app-shell.theme-dark .history-filter-chip.active {
   border-color: var(--history-filter-active-bg);
   color: var(--history-filter-active-ink);
@@ -428,11 +433,6 @@
   transition: background-color 160ms ease-out, color 160ms ease-out;
 }
 
-.history-filter-chip:hover {
-  border-color: rgba(93, 108, 123, 0.42);
-  background: var(--canvas);
-}
-
 .history-filter-chip.current {
   --history-filter-active-bg: #0064e0;
   --history-filter-active-ink: #f7faff;
@@ -471,6 +471,11 @@
   border-color: rgba(228, 30, 63, 0.22);
   color: #9d1730;
   background: rgba(255, 243, 245, 0.86);
+}
+
+.history-filter-chip:not(.active):hover {
+  border-color: color-mix(in srgb, var(--history-filter-active-bg) 38%, transparent);
+  background: color-mix(in srgb, var(--history-filter-active-bg) 10%, var(--canvas));
 }
 
 .history-filter-chip.active {

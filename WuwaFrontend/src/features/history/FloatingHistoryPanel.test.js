@@ -154,6 +154,26 @@ test('history filter active palettes meet text contrast in light and dark themes
     )
   }
 
+  const lightInactiveHover = bodyFor(style, '.history-filter-chip:not(.active):hover')
+  assert.match(
+    lightInactiveHover,
+    /border-color:\s*color-mix\(in srgb, var\(--history-filter-active-bg\) 38%, transparent\);/,
+  )
+  assert.match(
+    lightInactiveHover,
+    /background:\s*color-mix\(in srgb, var\(--history-filter-active-bg\) 10%, var\(--canvas\)\);/,
+  )
+
+  const darkInactiveHover = bodyFor(style, '.app-shell.theme-dark .history-filter-chip:not(.active):hover')
+  assert.match(
+    darkInactiveHover,
+    /border-color:\s*color-mix\(in srgb, var\(--history-filter-active-bg\) 54%, transparent\);/,
+  )
+  assert.match(
+    darkInactiveHover,
+    /background:\s*color-mix\(in srgb, var\(--history-filter-active-bg\) 18%, var\(--surface-soft\)\);/,
+  )
+
   const darkActive = bodyFor(style, '.app-shell.theme-dark .history-filter-chip.active')
   assert.match(darkActive, /border-color:\s*var\(--history-filter-active-bg\);/)
   assert.match(darkActive, /color:\s*var\(--history-filter-active-ink\);/)
