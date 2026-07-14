@@ -136,7 +136,7 @@ test('auth feature owns login layout, information, dark, and responsive styles',
   assert.match(auth, /@media \(max-width: 860px\)/)
   assert.match(auth, /@media \(max-width: 520px\)/)
   assert.match(auth, /@media \(max-width: 860px\)[\s\S]+\.terminal-container \{[\s\S]+grid-template-columns: 1fr;/)
-  assert.match(auth, /@media \(max-width: 520px\)[\s\S]+\.terminal-title \{[\s\S]+overflow: visible;[\s\S]+animation: none;/)
+  assert.match(auth, /@media \(max-width: 520px\)[\s\S]+\.terminal-title \{[\s\S]+white-space: normal;[\s\S]+\.terminal-title-caret \{ display: none; \}/)
   assert.doesNotMatch(entry, /\.auth-shell \{/)
   assert.doesNotMatch(entry, /\.terminal-home \{/)
 })

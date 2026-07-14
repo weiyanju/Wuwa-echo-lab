@@ -1,74 +1,13 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 
-import { createTitleAnimation, shouldAnimateTitle } from './titleAnimation.js'
-
-const props = defineProps({
-  error: {
-    type: String,
-    default: '',
-  },
-})
+import { useTitleAnimation } from './useTitleAnimation.js'
+const props = defineProps({ error: { type: String, default: '' } })
 
 const emit = defineEmits(['submit'])
 
 const terminalTitle = '欢迎回家，漂泊者'
-const reducedMotionQuery = typeof window === 'undefined'
-  ? null
-  : window.matchMedia('(prefers-reduced-motion: reduce)')
-const compactViewportQuery = typeof window === 'undefined'
-  ? null
-  : window.matchMedia('(max-width: 520px)')
-const shouldPlayTitleAnimation = Boolean(reducedMotionQuery && compactViewportQuery)
-  && shouldAnimateTitle({
-    reduceMotion: reducedMotionQuery.matches,
-    compactViewport: compactViewportQuery.matches,
-    documentHidden: document.hidden,
-  })
-const displayedTerminalTitle = ref(shouldPlayTitleAnimation ? '' : terminalTitle)
-const isTerminalTitleComplete = ref(!shouldPlayTitleAnimation)
-let titleAnimation = null
-
-function completeTitleAnimation() {
-  if (titleAnimation) {
-    titleAnimation.complete()
-    return
-  }
-  displayedTerminalTitle.value = terminalTitle
-  isTerminalTitleComplete.value = true
-}
-
-function handleDocumentVisibility() {
-  if (document.hidden) completeTitleAnimation()
-}
-
-function handleStaticTitlePreference(event) {
-  if (event.matches) completeTitleAnimation()
-}
-
-onMounted(() => {
-  if (!shouldPlayTitleAnimation) return
-  titleAnimation = createTitleAnimation({
-    text: terminalTitle,
-    onFrame: (frame) => {
-      displayedTerminalTitle.value = frame
-    },
-    onComplete: () => {
-      isTerminalTitleComplete.value = true
-    },
-  })
-  document.addEventListener('visibilitychange', handleDocumentVisibility)
-  reducedMotionQuery.addEventListener('change', handleStaticTitlePreference)
-  compactViewportQuery.addEventListener('change', handleStaticTitlePreference)
-  titleAnimation.start()
-})
-
-onBeforeUnmount(() => {
-  titleAnimation?.cancel()
-  document.removeEventListener('visibilitychange', handleDocumentVisibility)
-  reducedMotionQuery?.removeEventListener('change', handleStaticTitlePreference)
-  compactViewportQuery?.removeEventListener('change', handleStaticTitlePreference)
-})
+const { displayedTitle: displayedTerminalTitle, isComplete: isTerminalTitleComplete } = useTitleAnimation(terminalTitle)
 
 const terminalFeatures = [
   { title: '历史调谐记录', path: 'M4 21v-7m0-4V3m8 18v-9m0-4V3m8 18v-5m0-4V3M1 14h6m2-6h6m2 8h6' },

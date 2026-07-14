@@ -61,22 +61,20 @@ test('login view keeps content visible without motion and defines a complete dar
 
   assert.match(style, /\.terminal-subtitle \{[\s\S]+opacity: 1;[\s\S]+animation:[^;]+ both;/)
   assert.match(style, /\.terminal-features-grid \{[\s\S]+opacity: 1;[\s\S]+animation:[^;]+ both;/)
-  assert.match(style, /\.terminal-auth-wrapper \{[^}]+opacity: 1;[^}]+animation:[^;]+ both;/)
+  assert.match(style, /\.terminal-auth-wrapper \{ opacity: 1; \}/)
+  assert.match(style, /\.terminal-auth-enter-active \{[^}]+160ms/)
   assert.match(style, /\.app-shell\.theme-dark \.terminal-home \{[\s\S]+--terminal-page: #0f1720;[\s\S]+--terminal-card: #17232d;[\s\S]+--terminal-text: #e7eef4;/)
   assert.match(style, /\.app-shell\.theme-dark \.terminal-navbar \{[^}]+background: rgba\(15, 23, 32, 0\.85\);/)
-  assert.match(style, /@media \(prefers-reduced-motion: reduce\) \{[\s\S]+\.terminal-subtitle,[\s\S]+\.terminal-features-grid,[\s\S]+\.terminal-auth-wrapper \{[\s\S]+opacity: 1;[\s\S]+transform: none;[\s\S]+animation: none;/)
+  assert.match(style, /@media \(prefers-reduced-motion: reduce\) \{[\s\S]+\.terminal-title-caret \{ display: none; \}[\s\S]+\.terminal-auth-enter-active \{ transition: none; \}/)
 })
 
 test('login view reveals complete title graphemes before mounting the authentication card', async () => {
   const source = await readFile(new URL('./LoginView.vue', import.meta.url), 'utf8')
 
-  assert.match(source, /import \{ createTitleAnimation, shouldAnimateTitle \} from '\.\/titleAnimation\.js'/)
+  assert.match(source, /import \{ useTitleAnimation \} from '\.\/useTitleAnimation\.js'/)
   assert.match(source, /const terminalTitle = '欢迎回家，漂泊者'/)
-  assert.match(source, /const displayedTerminalTitle = ref\(shouldPlayTitleAnimation \? '' : terminalTitle\)/)
-  assert.match(source, /const isTerminalTitleComplete = ref\(!shouldPlayTitleAnimation\)/)
-  assert.match(source, /onComplete: \(\) => \{\s+isTerminalTitleComplete\.value = true/)
+  assert.match(source, /const \{ displayedTitle: displayedTerminalTitle, isComplete: isTerminalTitleComplete \} = useTitleAnimation\(terminalTitle\)/)
   assert.match(source, /<h1 class="terminal-title" :aria-label="terminalTitle">\s*<span aria-hidden="true">\{\{ displayedTerminalTitle \}\}<\/span>\s*<span class="terminal-title-caret" aria-hidden="true"><\/span>\s*<\/h1>/)
   assert.match(source, /<Transition name="terminal-auth">\s*<div v-if="isTerminalTitleComplete" class="terminal-auth-wrapper">/)
-  assert.match(source, /function handleDocumentVisibility\(\) \{\s+if \(document\.hidden\) completeTitleAnimation\(\)/)
-  assert.match(source, /onBeforeUnmount\(\(\) => \{[\s\S]+titleAnimation\?\.cancel\(\)/)
+  assert.doesNotMatch(source, /onMounted|onBeforeUnmount|matchMedia/)
 })

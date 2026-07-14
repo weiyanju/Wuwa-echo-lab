@@ -22,7 +22,7 @@ const styleFiles = [
 ]
 
 const functionalSideLineSelectors = new Set([
-  '.terminal-title',
+  '.terminal-title-caret',
   '.terminal-brand-icon::after',
   '.wordmark-symbol::after',
   '.bayes-path-list article::before',
@@ -156,16 +156,15 @@ test('polished states stay flat and model summaries use an explicit reading labe
   assert.match(evaluationStyle, /\.model-judgement-label \{/)
 })
 
-test('the functional login caret finishes beside the title instead of at the column edge', async () => {
+test('the functional login caret follows complete glyphs without width clipping', async () => {
   const authStyle = await read('./styles/features/auth.css')
 
-  assert.match(authStyle, /\.terminal-title \{[\s\S]+--terminal-title-width: 8em;/)
-  assert.match(authStyle, /\.terminal-title \{[\s\S]+--terminal-caret-gap: 0\.14em;/)
-  assert.match(authStyle, /\.terminal-title \{[\s\S]+box-sizing: content-box;/)
-  assert.match(authStyle, /\.terminal-title \{[\s\S]+padding-inline-end: var\(--terminal-caret-gap\);/)
-  assert.match(authStyle, /@media \(max-width: 520px\) \{[\s\S]+\.terminal-title \{[^}]+padding-inline-end: 0;/)
-  assert.match(authStyle, /@keyframes terminal-typing \{ to \{ width: var\(--terminal-title-width\); \} \}/)
-  assert.doesNotMatch(authStyle, /@keyframes terminal-typing \{ to \{ width: 100%; \} \}/)
+  assert.match(authStyle, /\.terminal-title \{[\s\S]+display: inline-flex;[\s\S]+align-items: baseline;/)
+  assert.match(authStyle, /\.terminal-title-caret \{[\s\S]+width: 4px;[\s\S]+margin-inline-start: 0\.14em;[\s\S]+animation: terminal-blink/)
+  assert.match(authStyle, /\.terminal-auth-enter-active \{[\s\S]+160ms/)
+  assert.match(authStyle, /\.terminal-auth-enter-from \{[\s\S]+opacity: 0;[\s\S]+translateY\(12px\)/)
+  assert.doesNotMatch(authStyle, /@keyframes terminal-typing/)
+  assert.doesNotMatch(authStyle, /\.terminal-title \{[^}]+(?:width: 0|overflow: hidden|border-right:)/)
 })
 
 test('evaluation dark theme consumes existing semantic theme tokens without remapping values', async () => {
