@@ -59,6 +59,6 @@ test('uid setup completes its dark theme for disabled navigation', async () => {
   const style = await readFile(new URL('../../styles/features/uid-setup.css', import.meta.url), 'utf8')
 
   assert.match(style, /\.uid-setup-card \{[\s\S]+background: var\(--canvas\);/)
-  assert.match(style, /\.app-shell\.theme-dark \.uid-setup-shell \.disabled-tabs button \{[^}]+color: #98aab7;[^}]+background: transparent;/)
-  assert.match(style, /\.app-shell\.theme-dark \.uid-setup-shell \.disabled-tabs button\.active \{[^}]+color: #8dc3ff;[^}]+background: rgba\(93, 168, 255, 0\.12\);/)
+  assert.match(style, /\.app-shell\.theme-dark \.uid-setup-shell \.disabled-tabs button \{[^}]+color: var\(--steel\);[^}]+background: transparent;/)
+  assert.match(style, /\.app-shell\.theme-dark \.uid-setup-shell \.disabled-tabs button\.active \{[^}]+color: var\(--primary-deep\);[^}]+background: rgba\(93, 168, 255, 0\.12\);/)
 })

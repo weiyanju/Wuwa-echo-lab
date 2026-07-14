@@ -736,7 +736,7 @@
   border-color: rgba(83, 107, 124, 0.66);
   background:
     linear-gradient(180deg, rgba(25, 39, 50, 0.96), rgba(20, 32, 42, 0.94)),
-    #17232d;
+    var(--surface-soft);
   box-shadow: 0 18px 42px rgba(0, 0, 0, 0.24);
 }
 
@@ -753,18 +753,18 @@
 .app-shell.theme-dark .stats-analytics-panel {
   background:
     linear-gradient(180deg, rgba(24, 38, 49, 0.96), rgba(18, 30, 40, 0.94)),
-    #17232d;
+    var(--surface-soft);
 }
 
 .app-shell.theme-dark .stats-diagnostic-head h2,
 .app-shell.theme-dark .stats-section-heading h3 {
-  color: #e7eef4;
+  color: var(--ink-deep);
 }
 
 .app-shell.theme-dark .stats-diagnostic-head p,
 .app-shell.theme-dark .stats-diagnostic-note,
 .app-shell.theme-dark .stats-section-heading > span {
-  color: #a9bac7;
+  color: var(--charcoal);
 }
 
 .app-shell.theme-dark .stats-diagnostic-stage-chip,
@@ -775,11 +775,11 @@
 }
 
 .app-shell.theme-dark .stats-diagnostic-stage-chip > span {
-  color: #a9bac7;
+  color: var(--charcoal);
 }
 
 .app-shell.theme-dark .stats-diagnostic-stage-chip strong {
-  color: #e7eef4;
+  color: var(--ink-deep);
 }
 
 .app-shell.theme-dark .stats-diagnostic-stage-chip.muted {
@@ -807,7 +807,7 @@
 
 .app-shell.theme-dark .stats-diagnostic-primary span,
 .app-shell.theme-dark .stats-diagnostic-deviation span {
-  color: #a9bac7;
+  color: var(--charcoal);
 }
 
 .app-shell.theme-dark .stats-diagnostic-primary strong {
@@ -819,7 +819,7 @@
 .app-shell.theme-dark .substat-deviation-name strong,
 .app-shell.theme-dark .sample-stage-boundaries span.current strong,
 .app-shell.theme-dark .sample-stage-count strong {
-  color: #e7eef4;
+  color: var(--ink-deep);
 }
 
 .app-shell.theme-dark .substat-deviation-row {
@@ -827,21 +827,21 @@
 }
 
 .app-shell.theme-dark .substat-deviation-name span {
-  color: #98aab7;
+  color: var(--steel);
 }
 
 .app-shell.theme-dark .substat-deviation-row.cool .substat-deviation-value {
-  color: #98aab7;
+  color: var(--steel);
 }
 
 .app-shell.theme-dark .deviation-axis-labels,
 .app-shell.theme-dark .deviation-axis-scale strong {
-  color: #98aab7;
+  color: var(--steel);
 }
 
 .app-shell.theme-dark .deviation-axis-scale span:first-child,
 .app-shell.theme-dark .substat-deviation-row.warn .substat-deviation-value {
-  color: #5da8ff;
+  color: var(--primary);
 }
 
 .app-shell.theme-dark .deviation-axis-scale span:last-child,
@@ -868,7 +868,7 @@
 }
 
 .app-shell.theme-dark .sample-stage-marker {
-  border-color: #17232d;
+  border-color: var(--surface-soft);
 }
 
 .app-shell.theme-dark .sample-stage-track b {
@@ -901,11 +901,11 @@
 }
 
 .app-shell.theme-dark .sample-stage-current-note {
-  color: #a9bac7;
+  color: var(--charcoal);
 }
 
 .app-shell.theme-dark .sample-stage-boundaries span.current strong {
-  color: #e7eef4;
+  color: var(--ink-deep);
 }
 
 .app-shell.theme-dark .deviation-axis-scale strong,
@@ -914,7 +914,7 @@
 .app-shell.theme-dark .sample-stage-count,
 .app-shell.theme-dark .sample-stage-count small,
 .app-shell.theme-dark .sample-stage-segments span {
-  color: #a9bac7;
+  color: var(--charcoal);
 }
 
 .app-shell.theme-dark .substat-deviation-track {

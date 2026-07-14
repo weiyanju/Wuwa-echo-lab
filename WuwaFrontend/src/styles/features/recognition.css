@@ -237,7 +237,7 @@
 }
 
 .app-shell.theme-dark .recognition-live-dot {
-  background: #37b37f;
+  background: var(--success);
   box-shadow:
     0 0 0 5px rgba(55, 179, 127, 0.12),
     0 0 20px rgba(55, 179, 127, 0.34);
@@ -255,13 +255,13 @@
 .app-shell.theme-dark .recognition-state-copy strong,
 .app-shell.theme-dark .recognition-metric-grid strong,
 .app-shell.theme-dark .recognition-review-row strong {
-  color: #e7eef4;
+  color: var(--ink-deep);
 }
 
 .app-shell.theme-dark .recognition-metric-grid span,
 .app-shell.theme-dark .recognition-review-row span,
 .app-shell.theme-dark .recognition-empty-row {
-  color: #a9bac7;
+  color: var(--charcoal);
 }
 
 .app-shell.theme-dark .recognition-refresh-button,
@@ -274,7 +274,7 @@
 .app-shell.theme-dark .recognition-refresh-button:hover,
 .app-shell.theme-dark .recognition-review-row button:hover:not(:disabled) {
   border-color: rgba(93, 168, 255, 0.46);
-  color: #e7eef4;
+  color: var(--ink-deep);
   background: rgba(38, 55, 70, 0.96);
 }
 
