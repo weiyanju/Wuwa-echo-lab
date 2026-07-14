@@ -28,7 +28,7 @@ export const HISTORY_PANEL_MODE = Object.freeze({
 })
 ```
 
-`historyPanelMode` is the only rendered mode. `lastExpandedMode` remembers either `compact` or `showcase`. A pure transition resolver accepts the current state and an intent (`toggle-minimized` or `toggle-showcase`) and returns one target state. It never emits an intermediate mode.
+`historyPanelMode` is the only rendered mode. `lastExpandedMode` remembers either `compact` or `showcase` and is persisted so a terminal that survives a page reload still restores the correct expanded shape. A pure transition resolver accepts the current state and an intent (`toggle-minimized` or `toggle-showcase`) and returns one target state. It never emits an intermediate mode.
 
 Existing `isHistoryMinimized` and `isHistoryShowcase` values become computed projections for readable template conditions and existing drag logic; they are not independently mutable.
 

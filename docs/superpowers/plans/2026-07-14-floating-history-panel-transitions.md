@@ -43,11 +43,11 @@ Expected: FAIL because `floatingHistoryMode.js` does not exist.
 Create the constants and functions with these public signatures:
 
 ```js
-export function initialHistoryPanelState(storedMinimized) {}
+export function initialHistoryPanelState(storedMinimized, storedLastExpandedMode) {}
 export function resolveHistoryPanelTransition(state, intent) {}
 ```
 
-`toggle-minimized` stores the current expanded mode or restores `lastExpandedMode`. `toggle-showcase` switches only between compact and showcase. Return a single state object for each intent.
+`toggle-minimized` stores the current expanded mode or restores `lastExpandedMode`. `toggle-showcase` switches only between compact and showcase. Validate the persisted last mode and fall back to compact. Return a single state object for each intent.
 
 - [ ] **Step 4: Run the focused test and verify GREEN**
 

@@ -8,6 +8,7 @@ import historyTerminalIcon from '../../assets/icons/rovers-terminal-expand.png'
 import { mainStatLabels, substatLabels } from '../../data/substats'
 import { displayEchoName } from '../../services/echoDisplay'
 import { sortVisibleEchoHistory, statusBadge } from '../../services/echoWorkflow'
+import { HISTORY_PANEL_MODE, initialHistoryPanelState, resolveHistoryPanelTransition } from './floatingHistoryMode.js'
 import { readFloatingHistoryPosition } from './floatingHistoryPosition.js'
 
 const props = defineProps({
@@ -27,8 +28,15 @@ const props = defineProps({
 
 const emit = defineEmits(['select'])
 
+const initialPanelState = initialHistoryPanelState(
+  localStorage.getItem('wuwa-floating-history-minimized'),
+  localStorage.getItem('wuwa-floating-history-expanded-mode'),
+)
 const floatingHistoryRef = ref(null)
-const isHistoryMinimized = ref(localStorage.getItem('wuwa-floating-history-minimized') === 'true')
+const historyPanelMode = ref(initialPanelState.mode)
+const lastExpandedMode = ref(initialPanelState.lastExpandedMode)
+const isHistoryMinimized = computed(() => historyPanelMode.value === HISTORY_PANEL_MODE.MINIMIZED)
+const isHistoryShowcase = computed(() => historyPanelMode.value === HISTORY_PANEL_MODE.SHOWCASE)
 const floatingHistoryPosition = ref(readFloatingHistoryPosition({
   storedPosition: localStorage.getItem('wuwa-floating-history-position'),
   viewportWidth: typeof window === 'undefined' ? 1366 : window.innerWidth,
@@ -37,17 +45,20 @@ const floatingHistoryPosition = ref(readFloatingHistoryPosition({
 }))
 const floatingHistoryExpandedSize = ref(readFloatingHistoryExpandedSize())
 const floatingHistoryRestoreMinimizedPosition = ref(null)
+const floatingHistoryRestoreExpandedPosition = ref(null)
 const floatingHistoryRestoreShowcasePosition = ref(null)
 const isHistoryPinned = ref(localStorage.getItem('wuwa-floating-history-pinned') === 'true')
-const isHistoryShowcase = ref(false)
 const historyFilter = ref('all')
 const historyDrag = ref(null)
 const terminalIconRotation = ref(0)
 let historyPanelAnimationTimer = null
+let isHistoryPanelTransitioning = false
 let suppressNextHistoryToggle = false
 let suppressNextHistoryToggleTimer = null
 
 const FLOATING_HISTORY_MINIMIZED_SIZE = 76
+const HISTORY_PANEL_EXIT_DURATION = 120
+const HISTORY_PANEL_ENTER_DURATION = 140
 const TERMINAL_ICON_LIGHT_MOUTH_ANGLE = 350
 const TERMINAL_ICON_DARK_MOUTH_ANGLE = 10
 
@@ -157,16 +168,6 @@ function getFloatingHistoryPositionForCorner(basePosition, baseSize, targetSize,
   )
 }
 
-function getFloatingHistoryPositionForCenter(basePosition, baseSize, targetSize) {
-  return constrainFloatingHistoryPosition(
-    {
-      x: basePosition.x + baseSize.width / 2 - targetSize.width / 2,
-      y: basePosition.y + baseSize.height / 2 - targetSize.height / 2,
-    },
-    targetSize,
-  )
-}
-
 function getFloatingHistoryCornerMotion(corner, distance = 10) {
   const x = corner.horizontal === 'right' ? distance : -distance
   const y = corner.vertical === 'bottom' ? distance : -distance
@@ -252,12 +253,10 @@ function resetFloatingHistoryPanelAnimation(panel) {
   panel.style.transform = ''
   panel.style.transformOrigin = ''
   panel.style.opacity = ''
-  panel.style.filter = ''
-  panel.style.borderRadius = ''
   panel.style.visibility = ''
 }
 
-function animateFloatingHistoryFade(panel, fromStyle, toStyle, duration = 220) {
+function animateFloatingHistoryFade(panel, fromStyle, toStyle, duration) {
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   if (!panel || prefersReducedMotion) {
     resetFloatingHistoryPanelAnimation(panel)
@@ -269,7 +268,7 @@ function animateFloatingHistoryFade(panel, fromStyle, toStyle, duration = 220) {
   Object.assign(panel.style, fromStyle)
   panel.getBoundingClientRect()
   requestAnimationFrame(() => {
-    panel.style.transition = `opacity ${duration}ms ease-out, transform ${duration}ms cubic-bezier(0.2, 0.9, 0.18, 1), filter ${duration}ms ease-out, box-shadow 220ms ease-out`
+    panel.style.transition = `opacity ${duration}ms ease-out, transform ${duration}ms cubic-bezier(0.2, 0.9, 0.18, 1)`
     Object.assign(panel.style, toStyle)
   })
   return new Promise((resolve) => {
@@ -278,122 +277,134 @@ function animateFloatingHistoryFade(panel, fromStyle, toStyle, duration = 220) {
       historyPanelAnimationTimer = null
       resolve()
     }
-    historyPanelAnimationTimer = window.setTimeout(finish, duration + 60)
+    historyPanelAnimationTimer = window.setTimeout(finish, duration + 24)
   })
 }
 
-async function toggleFloatingHistorySize() {
+async function transitionFloatingHistoryPanel(intent) {
+  if (isHistoryPanelTransitioning) {
+    return
+  }
+  const nextState = resolveHistoryPanelTransition({
+    mode: historyPanelMode.value,
+    lastExpandedMode: lastExpandedMode.value,
+  }, intent)
+  if (nextState.mode === historyPanelMode.value) {
+    return
+  }
+
+  isHistoryPanelTransitioning = true
+  const panel = floatingHistoryRef.value
+  const currentMode = historyPanelMode.value
+  const startRect = panel?.getBoundingClientRect()
+  const startPosition = { ...floatingHistoryPosition.value }
+  const historyCorner = getFloatingHistoryCorner(startRect)
+  const targetIsMinimized = nextState.mode === HISTORY_PANEL_MODE.MINIMIZED
+  const currentIsMinimized = currentMode === HISTORY_PANEL_MODE.MINIMIZED
+  const grows = currentIsMinimized
+    || (currentMode === HISTORY_PANEL_MODE.COMPACT && nextState.mode === HISTORY_PANEL_MODE.SHOWCASE)
+  const exitMotion = getFloatingHistoryCornerMotion(historyCorner, grows ? -8 : 8)
+  const enterMotion = getFloatingHistoryCornerMotion(historyCorner, grows ? 6 : -6)
+  const transformOrigin = `${historyCorner.horizontal} ${historyCorner.vertical}`
+  const minimizedSize = { width: FLOATING_HISTORY_MINIMIZED_SIZE, height: FLOATING_HISTORY_MINIMIZED_SIZE }
+  const restoreShowcasePosition = floatingHistoryRestoreShowcasePosition.value
+  let nextMinimizedPosition = null
+
+  try {
+    if (targetIsMinimized && startRect) {
+      floatingHistoryExpandedSize.value = { width: startRect.width, height: startRect.height }
+      floatingHistoryRestoreExpandedPosition.value = startPosition
+      saveFloatingHistoryExpandedSize()
+      nextMinimizedPosition = floatingHistoryRestoreMinimizedPosition.value
+        ? constrainFloatingHistoryPosition(floatingHistoryRestoreMinimizedPosition.value, minimizedSize)
+        : getFloatingHistoryPositionForCorner(
+            startPosition,
+            { width: startRect.width, height: startRect.height },
+            minimizedSize,
+            historyCorner,
+          )
+    }
+    if (currentIsMinimized) {
+      floatingHistoryRestoreMinimizedPosition.value = startPosition
+    }
+    if (currentMode === HISTORY_PANEL_MODE.COMPACT && nextState.mode === HISTORY_PANEL_MODE.SHOWCASE) {
+      floatingHistoryRestoreShowcasePosition.value = startPosition
+    }
+
+    if (panel && startRect) {
+      await animateFloatingHistoryFade(
+        panel,
+        { opacity: '1', transform: 'translate3d(0, 0, 0)', transformOrigin },
+        { opacity: '0', transform: exitMotion, transformOrigin },
+        HISTORY_PANEL_EXIT_DURATION,
+      )
+      panel.style.transition = 'none'
+      panel.style.opacity = '0'
+      panel.style.transform = 'translate3d(0, 0, 0)'
+      panel.style.visibility = 'hidden'
+    }
+
+    historyPanelMode.value = nextState.mode
+    lastExpandedMode.value = nextState.lastExpandedMode
+    localStorage.setItem('wuwa-floating-history-minimized', String(targetIsMinimized))
+    localStorage.setItem('wuwa-floating-history-expanded-mode', nextState.lastExpandedMode)
+    if (nextMinimizedPosition) {
+      floatingHistoryPosition.value = nextMinimizedPosition
+      floatingHistoryRestoreMinimizedPosition.value = null
+      syncTerminalIconRotation(nextMinimizedPosition)
+      saveFloatingHistoryPosition(nextMinimizedPosition)
+    }
+    await nextTick()
+
+    if (!targetIsMinimized && panel) {
+      const targetRect = panel.getBoundingClientRect()
+      const targetSize = { width: targetRect.width, height: targetRect.height }
+      let nextPosition = startPosition
+      if (currentIsMinimized) {
+        nextPosition = floatingHistoryRestoreExpandedPosition.value
+          ? constrainFloatingHistoryPosition(floatingHistoryRestoreExpandedPosition.value, targetSize)
+          : getFloatingHistoryPositionForCorner(
+              startPosition,
+              { width: startRect?.width || FLOATING_HISTORY_MINIMIZED_SIZE, height: startRect?.height || FLOATING_HISTORY_MINIMIZED_SIZE },
+              targetSize,
+              historyCorner,
+            )
+        floatingHistoryRestoreExpandedPosition.value = null
+      } else if (nextState.mode === HISTORY_PANEL_MODE.COMPACT && restoreShowcasePosition) {
+        nextPosition = constrainFloatingHistoryPosition(restoreShowcasePosition, targetSize)
+        floatingHistoryRestoreShowcasePosition.value = null
+      } else {
+        nextPosition = constrainFloatingHistoryPosition(startPosition, targetSize)
+      }
+      floatingHistoryExpandedSize.value = targetSize
+      floatingHistoryPosition.value = nextPosition
+      saveFloatingHistoryExpandedSize(targetSize)
+      saveFloatingHistoryPosition(nextPosition)
+      await nextTick()
+    }
+
+    if (panel) {
+      panel.style.visibility = 'visible'
+      await animateFloatingHistoryFade(
+        panel,
+        { opacity: '0', transform: enterMotion, transformOrigin },
+        { opacity: '1', transform: 'translate3d(0, 0, 0)', transformOrigin },
+        HISTORY_PANEL_ENTER_DURATION,
+      )
+    }
+    constrainSavedFloatingHistoryPosition()
+  } finally {
+    resetFloatingHistoryPanelAnimation(panel)
+    isHistoryPanelTransitioning = false
+  }
+}
+
+function toggleFloatingHistorySize() {
   if (suppressNextHistoryToggle) {
     suppressNextHistoryToggle = false
     return
   }
-  const panel = floatingHistoryRef.value
-  if (historyPanelAnimationTimer && panel) {
-    clearTimeout(historyPanelAnimationTimer)
-    historyPanelAnimationTimer = null
-    resetFloatingHistoryPanelAnimation(panel)
-  }
-  const startRect = panel?.getBoundingClientRect()
-  const startPosition = { ...floatingHistoryPosition.value }
-  const willMinimize = !isHistoryMinimized.value
-  const restoreMinimizedPosition = floatingHistoryRestoreMinimizedPosition.value
-  const historyCorner = getFloatingHistoryCorner(startRect)
-  const cornerMotion = getFloatingHistoryCornerMotion(historyCorner)
-  const inverseCornerMotion = getFloatingHistoryCornerMotion(historyCorner, -8)
-  if (willMinimize && startRect) {
-    floatingHistoryExpandedSize.value = { width: startRect.width, height: startRect.height }
-    saveFloatingHistoryExpandedSize()
-    isHistoryShowcase.value = false
-    floatingHistoryRestoreShowcasePosition.value = null
-  }
-  const nextMinimizedPosition = willMinimize && startRect
-    ? restoreMinimizedPosition
-      ? constrainFloatingHistoryPosition(restoreMinimizedPosition, {
-          width: FLOATING_HISTORY_MINIMIZED_SIZE,
-          height: FLOATING_HISTORY_MINIMIZED_SIZE,
-        })
-      : getFloatingHistoryPositionForCorner(
-          startPosition,
-          { width: startRect.width, height: startRect.height },
-          { width: FLOATING_HISTORY_MINIMIZED_SIZE, height: FLOATING_HISTORY_MINIMIZED_SIZE },
-          historyCorner,
-        )
-    : null
-  if (willMinimize && nextMinimizedPosition) {
-    await animateFloatingHistoryFade(
-      panel,
-      { opacity: '1', transform: 'translate3d(0, 0, 0)', transformOrigin: `${historyCorner.horizontal} ${historyCorner.vertical}`, filter: 'blur(0)' },
-      { opacity: '0', transform: cornerMotion, transformOrigin: `${historyCorner.horizontal} ${historyCorner.vertical}`, filter: 'blur(8px)' },
-      180,
-    )
-    panel.style.transition = 'none'
-    panel.style.opacity = '0'
-    panel.style.transform = 'translate3d(0, 0, 0)'
-    panel.style.filter = 'blur(6px)'
-    isHistoryMinimized.value = true
-    floatingHistoryRestoreMinimizedPosition.value = null
-    localStorage.setItem('wuwa-floating-history-minimized', String(isHistoryMinimized.value))
-    floatingHistoryPosition.value = nextMinimizedPosition
-    syncTerminalIconRotation(nextMinimizedPosition)
-    saveFloatingHistoryPosition(nextMinimizedPosition)
-    await nextTick()
-    await animateFloatingHistoryFade(
-      panel,
-      { opacity: '0', transform: inverseCornerMotion, transformOrigin: `${historyCorner.horizontal} ${historyCorner.vertical}`, filter: 'blur(6px)' },
-      { opacity: '1', transform: 'translate3d(0, 0, 0)', transformOrigin: `${historyCorner.horizontal} ${historyCorner.vertical}`, filter: 'blur(0)' },
-      200,
-    )
-    constrainSavedFloatingHistoryPosition()
-    return
-  }
-  if (!willMinimize && startRect) {
-    floatingHistoryRestoreMinimizedPosition.value = startPosition
-    await animateFloatingHistoryFade(
-      panel,
-      { opacity: '1', transform: 'translate3d(0, 0, 0)', transformOrigin: `${historyCorner.horizontal} ${historyCorner.vertical}`, filter: 'blur(0)' },
-      { opacity: '0', transform: cornerMotion, transformOrigin: `${historyCorner.horizontal} ${historyCorner.vertical}`, filter: 'blur(6px)' },
-      150,
-    )
-    panel.style.transition = 'none'
-    panel.style.opacity = '0'
-    panel.style.transform = 'translate3d(0, 0, 0)'
-    panel.style.filter = 'blur(8px)'
-    panel.style.visibility = 'hidden'
-  }
-  isHistoryMinimized.value = willMinimize
-  localStorage.setItem('wuwa-floating-history-minimized', String(isHistoryMinimized.value))
-  await nextTick()
-  if (nextMinimizedPosition) {
-    floatingHistoryPosition.value = nextMinimizedPosition
-    syncTerminalIconRotation(nextMinimizedPosition)
-    saveFloatingHistoryPosition(nextMinimizedPosition)
-    await nextTick()
-  } else if (!willMinimize && startRect) {
-    const expandedRect = panel?.getBoundingClientRect()
-    if (expandedRect) {
-      floatingHistoryExpandedSize.value = { width: expandedRect.width, height: expandedRect.height }
-      saveFloatingHistoryExpandedSize()
-      const correctedExpandedPosition = getFloatingHistoryPositionForCenter(
-        startPosition,
-        { width: startRect.width, height: startRect.height },
-        { width: expandedRect.width, height: expandedRect.height },
-      )
-      floatingHistoryPosition.value = correctedExpandedPosition
-      syncTerminalIconRotation(correctedExpandedPosition)
-      saveFloatingHistoryPosition(correctedExpandedPosition)
-      await nextTick()
-    }
-  }
-  if (!willMinimize && panel) {
-    panel.style.visibility = 'visible'
-  }
-  await animateFloatingHistoryFade(
-    panel,
-    { opacity: '0', transform: inverseCornerMotion, transformOrigin: `${historyCorner.horizontal} ${historyCorner.vertical}`, filter: 'blur(8px)' },
-    { opacity: '1', transform: 'translate3d(0, 0, 0)', transformOrigin: `${historyCorner.horizontal} ${historyCorner.vertical}`, filter: 'blur(0)' },
-    240,
-  )
-  constrainSavedFloatingHistoryPosition()
+  transitionFloatingHistoryPanel('toggle-minimized')
 }
 
 function toggleFloatingHistoryPin() {
@@ -404,56 +415,8 @@ function toggleFloatingHistoryPin() {
   }
 }
 
-async function toggleFloatingHistoryShowcase() {
-  const panel = floatingHistoryRef.value
-  if (historyPanelAnimationTimer && panel) {
-    clearTimeout(historyPanelAnimationTimer)
-    historyPanelAnimationTimer = null
-    resetFloatingHistoryPanelAnimation(panel)
-  }
-  const willShowcase = !isHistoryShowcase.value
-  const restorePosition = floatingHistoryRestoreShowcasePosition.value
-  const startRect = panel?.getBoundingClientRect()
-  const historyCorner = getFloatingHistoryCorner(startRect)
-  const cornerMotion = getFloatingHistoryCornerMotion(historyCorner, willShowcase ? -6 : 6)
-  const inverseCornerMotion = getFloatingHistoryCornerMotion(historyCorner, willShowcase ? 6 : -6)
-  if (startRect) {
-    await animateFloatingHistoryFade(
-      panel,
-      { opacity: '1', transform: 'translate3d(0, 0, 0)', transformOrigin: `${historyCorner.horizontal} ${historyCorner.vertical}`, filter: 'blur(0)' },
-      { opacity: '0', transform: cornerMotion, transformOrigin: `${historyCorner.horizontal} ${historyCorner.vertical}`, filter: 'blur(6px)' },
-      160,
-    )
-    panel.style.transition = 'none'
-    panel.style.opacity = '0'
-    panel.style.transform = 'translate3d(0, 0, 0)'
-    panel.style.filter = 'blur(6px)'
-    panel.style.visibility = 'hidden'
-  }
-  if (willShowcase) {
-    floatingHistoryRestoreShowcasePosition.value = { ...floatingHistoryPosition.value }
-  }
-  isHistoryShowcase.value = willShowcase
-  await nextTick()
-  if (!willShowcase && restorePosition) {
-    const nextPosition = constrainFloatingHistoryPosition(restorePosition)
-    floatingHistoryPosition.value = nextPosition
-    syncTerminalIconRotation(nextPosition)
-    saveFloatingHistoryPosition(nextPosition)
-    floatingHistoryRestoreShowcasePosition.value = null
-  } else {
-    constrainSavedFloatingHistoryPosition()
-  }
-  if (panel) {
-    panel.style.visibility = 'visible'
-  }
-  await animateFloatingHistoryFade(
-    panel,
-    { opacity: '0', transform: inverseCornerMotion, transformOrigin: `${historyCorner.horizontal} ${historyCorner.vertical}`, filter: 'blur(6px)' },
-    { opacity: '1', transform: 'translate3d(0, 0, 0)', transformOrigin: `${historyCorner.horizontal} ${historyCorner.vertical}`, filter: 'blur(0)' },
-    220,
-  )
-  constrainSavedFloatingHistoryPosition()
+function toggleFloatingHistoryShowcase() {
+  transitionFloatingHistoryPanel('toggle-showcase')
 }
 
 function moveFloatingHistory(event) {
@@ -497,7 +460,7 @@ function endFloatingHistoryDrag() {
 }
 
 function startFloatingHistoryDrag(event) {
-  if (event.button !== 0 || (!isHistoryMinimized.value && isHistoryPinned.value) || window.matchMedia('(max-width: 860px)').matches) {
+  if (isHistoryPanelTransitioning || event.button !== 0 || (!isHistoryMinimized.value && isHistoryPinned.value) || window.matchMedia('(max-width: 860px)').matches) {
     return
   }
   const panel = floatingHistoryRef.value
@@ -554,7 +517,7 @@ onBeforeUnmount(() => {
   <section
     ref="floatingHistoryRef"
     class="product-panel records-panel history-records floating-history-panel"
-    :class="{ minimized: isHistoryMinimized, pinned: isHistoryPinned, showcase: isHistoryShowcase && !isHistoryMinimized }"
+    :class="[historyPanelMode, { pinned: isHistoryPinned }]"
     :style="floatingHistoryStyle"
     @pointerdown="isHistoryMinimized && startFloatingHistoryDrag($event)"
     @click="isHistoryMinimized && toggleFloatingHistorySize()"
