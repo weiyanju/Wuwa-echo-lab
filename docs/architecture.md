@@ -276,7 +276,10 @@ WuwaFrontend/src/
 - `features/workspace/`：声骸工作台视图与 `useEchoWorkspace` 核心工作流。
 - `features/recognition/`：识别复核视图、展示映射与 `useRecognitionReview` 工作流。
 - `features/statistics/`：统计页面与统计展示映射。
-- `features/evaluation/`：评估概览和回测详情。
+- `features/evaluation/EvaluationView.vue`：模型评估页组合 owner，负责页面状态摘要和结果优先的模块顺序。
+- `features/evaluation/EvaluationCoreBacktest.vue`：核心命中范围与概率校准摘要。
+- `features/evaluation/EvaluationOverview.vue`：当前融合权重与融合结论。
+- `features/evaluation/EvaluationBacktest.vue`：子模型列表、展开诊断和模型专属交互。
 - `features/history/`：浮动历史面板及其交互状态。
 - `features/auth/`：登录与注册表单视图。
 - `composables/`：跨 feature 的认证和 `GameAccount` 状态。

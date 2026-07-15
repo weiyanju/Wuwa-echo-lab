@@ -1,18 +1,14 @@
 <script setup>
 import { computed, ref } from 'vue'
 
-import {
-  canonicalModelLabels,
-  evaluationMetricDefinitions,
-} from '../../data/modelPresentation.js'
-import { formatPercent, modelWeightLabel, sampleStageText } from '../../services/formatters.js'
+import { canonicalModelLabels } from '../../data/modelPresentation.js'
+import { formatPercent, modelWeightLabel } from '../../services/formatters.js'
 import { ACTIVE_MODEL_WEIGHT_EPSILON } from '../../services/modelDetails.js'
 
 const props = defineProps({
   evaluation: { type: Object, default: null },
   modelDetails: { type: Array, default: () => [] },
   prediction: { type: Object, default: null },
-  stats: { type: Object, default: null },
 })
 
 const highlightedSummaryModelKey = ref(null)
@@ -38,37 +34,6 @@ const weightRows = computed(() =>
     }
   }),
 )
-const evaluationMetrics = computed(() =>
-  evaluationMetricDefinitions.map((metric) => ({
-    ...metric,
-    value: props.evaluation?.[metric.key],
-  })),
-)
-
-function evaluationMetricText(metric) {
-  if (metric?.value == null) {
-    return '样本不足'
-  }
-  if (metric.label.includes('命中率')) {
-    return formatPercent(metric.value)
-  }
-  return metric.value.toFixed(2)
-}
-
-function evaluationStatusText() {
-  if (props.evaluation && props.evaluation.status !== 'ready') {
-    return '样本不足'
-  }
-  const total = props.stats?.total_rolls || 0
-  if (total >= 3000) {
-    return '稳定'
-  }
-  if (total >= 500) {
-    return '可参考'
-  }
-  return '观察中'
-}
-
 function percentPosition(value) {
   return `${Math.min(Math.max((value ?? 0) * 100, 0), 100)}%`
 }
@@ -118,7 +83,7 @@ const evaluationSummaryParts = computed(() => {
     motionKey: [
       dominantKey || 'none',
       ...auxiliaries.map((model) => model.key || model.label),
-      evaluationStatusText(),
+      props.evaluation?.status || 'waiting',
     ].join(':'),
   }
 })
@@ -159,37 +124,20 @@ function weightDiagnosticText(row) {
 </script>
 
 <template>
-  <div class="evaluation-status-bar">
-    <h2>模型评估</h2>
-    <div class="evaluation-status-chips" aria-label="评估摘要">
-      <span class="evaluation-status-chip state">
-        <i aria-hidden="true"></i>
-        {{ evaluationStatusText() }}
-      </span>
-      <span class="evaluation-status-chip">
-        <small>阶段</small>
-        {{ stats ? sampleStageText(stats.sample_stage).split('：')[0] : '等待样本' }}
-      </span>
-      <span class="evaluation-status-chip">
-        <small>前三命中</small>
-        {{ evaluationMetricText(evaluationMetrics[3]) }}
-      </span>
-    </div>
-  </div>
-
-  <div class="evaluation-section-title">
-    <div>
-      <h3>当前融合权重</h3>
-    </div>
-    <div class="fusion-title-tools">
-      <div class="fusion-shared-legend" aria-label="融合权重图例">
-        <small>标记说明</small>
-        <span title="当前权重：当前融合后用于最终概率的模型贡献"><i class="legend-current-line"></i>当前权重</span>
-        <span title="基础权重：低样本阶段的默认初始权重"><i class="legend-base-line"></i>基础权重</span>
+  <section class="evaluation-card evaluation-module evaluation-fusion-module">
+    <header class="evaluation-module-header">
+      <div>
+        <h3>当前融合权重</h3>
       </div>
-      <span class="fusion-live-pill">{{ prediction ? '实时' : '预览' }}</span>
-    </div>
-  </div>
+      <div class="fusion-title-tools">
+        <div class="fusion-shared-legend" aria-label="融合权重图例">
+          <small>标记说明</small>
+          <span title="当前权重：当前融合后用于最终概率的模型贡献"><i class="legend-current-line"></i>当前权重</span>
+          <span title="基础权重：低样本阶段的默认初始权重"><i class="legend-base-line"></i>基础权重</span>
+        </div>
+        <span class="fusion-live-pill">{{ prediction ? '实时' : '预览' }}</span>
+      </div>
+    </header>
 
   <div class="fusion-weight-grid">
     <article
@@ -217,7 +165,7 @@ function weightDiagnosticText(row) {
     </article>
   </div>
 
-  <section
+  <div
     class="evaluation-summary-line"
     :class="evaluationSummaryParts.dominant.key ? `summary-dominant-${evaluationSummaryParts.dominant.key}` : ''"
   >
@@ -243,5 +191,6 @@ function weightDiagnosticText(row) {
           @blur="clearSummaryModelHighlight"
         >{{ model.label }}</span><template v-if="index < evaluationSummaryParts.auxiliaries.length - 1"> / </template></template>作为辅助。
     </strong>
+  </div>
   </section>
 </template>

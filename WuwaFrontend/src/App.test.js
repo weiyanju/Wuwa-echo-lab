@@ -493,9 +493,9 @@ test('model detail rows animate when expanded or collapsed', async () => {
   ].join('\n')
 
   assert.match(backtestSource, /import chevronDownIcon from '\.\.\/\.\.\/assets\/icons\/chevron-down\.svg'/)
-  assert.match(backtestSource, /const hasManualModelDetailInteraction = ref\(false\)/)
-  assert.match(backtestSource, /if \(hasManualModelDetailInteraction\.value\) \{\s+return null/)
-  assert.match(backtestSource, /function toggleModelDetail\(key\) \{\s+hasManualModelDetailInteraction\.value = true/)
+  assert.match(backtestSource, /const selectedModelDetailKey = ref\(null\)/)
+  assert.match(backtestSource, /return selectedRow \? selectedKey : null/)
+  assert.match(backtestSource, /selectedModelDetailKey\.value = expandedModelDetailKey\.value === key \? null : key/)
   assert.match(backtestSource, /<Transition name="model-row-detail">/)
   assert.match(backtestSource, /class="ui-line-icon model-expand-chevron"/)
   assert.match(backtestSource, /iconMask\(chevronDownIcon\)/)
@@ -553,8 +553,9 @@ test('disabled backtest models are de-emphasized and sorted last', async () => {
 
   assert.match(backtestSource, /const disabled = row\.status === 'disabled' \|\| weight <= ACTIVE_MODEL_WEIGHT_EPSILON/)
   assert.match(backtestSource, /if \(a\.disabled !== b\.disabled\) \{\s+return a\.disabled \? 1 : -1/)
-  assert.match(backtestSource, /const defaultExpandedModelDetailKey = computed\(\(\) => modelEvaluationRows\.value\.find\(\(row\) => !row\.disabled\)\?\.key \|\| null\)/)
-  assert.match(backtestSource, /if \(selectedKey && selectedRow && !collapsedModelDetailKeys\.value\.has\(selectedKey\)\) \{/)
+  assert.match(backtestSource, /const expandedModelDetailKey = computed\(\(\) => \{/)
+  assert.match(backtestSource, /return selectedRow \? selectedKey : null/)
+  assert.doesNotMatch(backtestSource, /defaultExpandedModelDetailKey|collapsedModelDetailKeys/)
   assert.doesNotMatch(backtestSource, /selectedRow && !selectedRow\.disabled/)
   assert.match(backtestSource, /disabled: row\.disabled/)
   assert.match(backtestSource, /class="disabled-model-badge"/)
@@ -603,11 +604,15 @@ test('rule model detail keeps only evidence and does not duplicate statistics ch
 })
 
 test('evaluation metrics use backend values instead of preview fallbacks', async () => {
+  const coreBacktestSource = await readFile(
+    new URL('./features/evaluation/EvaluationCoreBacktest.vue', import.meta.url),
+    'utf8',
+  )
   const backtestSource = await readFile(new URL('./features/evaluation/EvaluationBacktest.vue', import.meta.url), 'utf8')
   const detailSource = await readFile(new URL('./services/modelDetails.js', import.meta.url), 'utf8')
 
-  assert.doesNotMatch(backtestSource, /preview:\s*(2\.16|0\.86|0\.11|0\.34|0\.52)/)
-  assert.match(backtestSource, /if \(metric\?\.value == null\) \{\s+return '样本不足'/)
+  assert.doesNotMatch(coreBacktestSource, /preview:\s*(2\.16|0\.86|0\.11|0\.34|0\.52)/)
+  assert.match(coreBacktestSource, /if \(metric\?\.value == null\) return '样本不足'/)
   assert.match(backtestSource, /const evaluationReady = computed\(\(\) => props\.evaluation\?\.status === 'ready'/)
   assert.doesNotMatch(detailSource, /MODEL_BACKTEST_PREVIEW/)
   assert.ok(detailSource.includes('hitRate: evaluation?.model_scores?.[key]?.hit_rate ?? null'))
@@ -616,7 +621,7 @@ test('evaluation metrics use backend values instead of preview fallbacks', async
 
 test('evaluation page exposes evaluated sample counts and gates confidence labels', async () => {
   const backtestSource = await readFile(new URL('./features/evaluation/EvaluationBacktest.vue', import.meta.url), 'utf8')
-  const overviewSource = await readFile(new URL('./features/evaluation/EvaluationOverview.vue', import.meta.url), 'utf8')
+  const viewSource = await readFile(new URL('./features/evaluation/EvaluationView.vue', import.meta.url), 'utf8')
   const detailSource = await readFile(new URL('./services/modelDetails.js', import.meta.url), 'utf8')
 
   assert.ok(detailSource.includes('evaluated: evaluation?.model_scores?.[key]?.evaluated ?? 0'))
@@ -625,20 +630,23 @@ test('evaluation page exposes evaluated sample counts and gates confidence label
   assert.match(backtestSource, /:title="row\.evaluated \? `\$\{row\.label\}基于 \$\{row\.evaluated\} 条样本回测` : `\$\{row\.label\}等待回测样本`"/)
   assert.doesNotMatch(backtestSource, /function modelEvaluatedText/)
   assert.match(backtestSource, /isBest: !disabled && evaluationReady\.value && bestHitRate != null && row\.hitRate === bestHitRate/)
-  assert.match(overviewSource, /if \(props\.evaluation && props\.evaluation\.status !== 'ready'\) \{\s+return '样本不足'/)
+  assert.match(viewSource, /if \(props\.evaluation && props\.evaluation\.status !== 'ready'\) return '样本不足'/)
   assert.doesNotMatch(backtestSource, /<span>\{\{ modelEvaluatedText\(row\) \}\}<\/span>/)
 })
 
 test('coverage band nodes keep colored fills in dark mode', async () => {
-  const backtestSource = await readFile(new URL('./features/evaluation/EvaluationBacktest.vue', import.meta.url), 'utf8')
+  const coreBacktestSource = await readFile(
+    new URL('./features/evaluation/EvaluationCoreBacktest.vue', import.meta.url),
+    'utf8',
+  )
   const styleSource = [
     await readFile(new URL('./style.css', import.meta.url), 'utf8'),
     await readFile(new URL('./styles/features/evaluation.css', import.meta.url), 'utf8'),
     await readFile(new URL('./styles/controls.css', import.meta.url), 'utf8'),
   ].join('\n')
 
-  assert.match(backtestSource, /class="coverage-band-node"/)
-  assert.match(backtestSource, /:class="coverageNodeClass\(index\)"/)
+  assert.match(coreBacktestSource, /class="coverage-band-node"/)
+  assert.match(coreBacktestSource, /:class="coverageNodeClass\(index\)"/)
   assert.match(styleSource, /--coverage-node-color: #1769d2;/)
   assert.match(styleSource, /--coverage-node-glow: rgba\(23, 105, 210, 0\.24\);/)
   assert.match(styleSource, /\.coverage-band-node\.middle \{\s+--coverage-node-color: #218b93;/)

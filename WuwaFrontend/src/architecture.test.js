@@ -10,7 +10,10 @@ async function lineCount(relativePath) {
 test('frontend high-attraction entry files do not grow beyond the refactor baseline', async () => {
   assert.ok(await lineCount('./App.vue') <= 320, 'App.vue must not grow beyond 320 lines')
   assert.ok(await lineCount('./features/auth/LoginView.vue') <= 120, 'LoginView.vue must not grow beyond 120 lines')
-  assert.ok(await lineCount('./features/evaluation/EvaluationBacktest.vue') <= 705, 'EvaluationBacktest.vue must not grow beyond 705 lines')
+  assert.ok(await lineCount('./features/evaluation/EvaluationView.vue') <= 110, 'EvaluationView.vue must not grow beyond 110 lines')
+  assert.ok(await lineCount('./features/evaluation/EvaluationCoreBacktest.vue') <= 130, 'EvaluationCoreBacktest.vue must not grow beyond 130 lines')
+  assert.ok(await lineCount('./features/evaluation/EvaluationOverview.vue') <= 250, 'EvaluationOverview.vue must not grow beyond 250 lines')
+  assert.ok(await lineCount('./features/evaluation/EvaluationBacktest.vue') <= 620, 'EvaluationBacktest.vue must not grow beyond 620 lines')
   assert.ok(await lineCount('./features/history/FloatingHistoryPanel.vue') <= 650, 'FloatingHistoryPanel.vue must not grow beyond 650 lines')
   assert.ok(await lineCount('./features/workspace/UidSetupView.vue') <= 130, 'UidSetupView.vue must not grow beyond 130 lines')
   assert.ok(await lineCount('./components/controls/UidSwitcher.vue') <= 250, 'UidSwitcher.vue must not grow beyond 250 lines')

@@ -5,8 +5,7 @@ import { useGameAccount } from './composables/useGameAccount'
 import { confidenceText } from './services/formatters'
 import UidSwitcher from './components/controls/UidSwitcher.vue'
 import LoginView from './features/auth/LoginView.vue'
-import EvaluationBacktest from './features/evaluation/EvaluationBacktest.vue'
-import EvaluationOverview from './features/evaluation/EvaluationOverview.vue'
+import EvaluationView from './features/evaluation/EvaluationView.vue'
 import FloatingHistoryPanel from './features/history/FloatingHistoryPanel.vue'
 import RecognitionReviewPanel from './features/recognition/RecognitionReviewPanel.vue'
 import { useRecognitionReview } from './features/recognition/useRecognitionReview'
@@ -305,11 +304,13 @@ onBeforeUnmount(() => {
 
       <StatisticsView v-if="!gameAccount.workspaceLocked.value && page === 'stats'" :stats="stats" />
 
-      <section v-if="!gameAccount.workspaceLocked.value && page === 'evaluation'" class="product-panel full-panel evaluation-panel">
-        <EvaluationOverview :evaluation="evaluation" :model-details="modelDetailCards" :prediction="prediction" :stats="stats" />
-
-        <EvaluationBacktest :evaluation="evaluation" :model-details="modelDetailCards" :prediction="prediction" />
-      </section>
+      <EvaluationView
+        v-if="!gameAccount.workspaceLocked.value && page === 'evaluation'"
+        :evaluation="evaluation"
+        :model-details="modelDetailCards"
+        :prediction="prediction"
+        :stats="stats"
+      />
     </section>
   </main>
 </template>
