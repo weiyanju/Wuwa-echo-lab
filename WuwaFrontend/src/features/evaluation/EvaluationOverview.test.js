@@ -31,3 +31,11 @@ test('fusion weight overview excludes first-choice markers while backtest keeps 
   assert.match(coreSource, /aria-label="首选到前五预测范围命中率"/)
   assert.match(backtestSource, /model\.adjustment\?\.hit_rate/)
 })
+
+test('fusion weight module uses one shell with flat metric cells', async () => {
+  const style = await readFile(new URL('../../styles/features/evaluation-layout.css', import.meta.url), 'utf8')
+
+  assert.match(style, /\.evaluation-fusion-module \.fusion-weight-grid \{[^}]*gap: 0;[^}]*overflow: hidden;/)
+  assert.match(style, /\.evaluation-fusion-module \.fusion-weight-card \{[^}]*border: 0;[^}]*border-radius: 0;[^}]*background: transparent;/)
+  assert.match(style, /\.evaluation-fusion-module \.evaluation-summary-line \{[^}]*border-right: 0;[^}]*border-bottom: 0;[^}]*border-left: 0;/)
+})

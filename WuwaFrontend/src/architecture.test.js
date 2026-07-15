@@ -29,6 +29,7 @@ test('frontend high-attraction entry files do not grow beyond the refactor basel
   assert.ok(await lineCount('./styles/features/workspace.css') <= 710, 'workspace.css must not grow beyond 710 lines')
   assert.ok(await lineCount('./styles/features/workspace-active.css') <= 390, 'workspace-active.css must not grow beyond 390 lines')
   assert.ok(await lineCount('./styles/features/evaluation.css') <= 4700, 'evaluation.css must not grow beyond 4700 lines')
+  assert.ok(await lineCount('./styles/features/evaluation-layout.css') <= 260, 'evaluation-layout.css must not grow beyond 260 lines')
 })
 
 test('global styles import shared tokens and base rules', async () => {
@@ -183,8 +184,13 @@ test('workspace feature owns workbench, matrix, dark, and responsive styles', as
 test('evaluation feature owns overview, diagnostics, dark, and responsive styles', async () => {
   const entry = await readFile(new URL('./style.css', import.meta.url), 'utf8')
   const evaluation = await readFile(new URL('./styles/features/evaluation.css', import.meta.url), 'utf8')
+  const evaluationLayout = await readFile(new URL('./styles/features/evaluation-layout.css', import.meta.url), 'utf8')
 
   assert.match(entry, /@import '\.\/styles\/features\/evaluation\.css';/)
+  assert.match(evaluation, /@import '\.\/evaluation-layout\.css';/)
+  assert.match(evaluationLayout, /\.product-panel\.evaluation-panel \{/)
+  assert.match(evaluationLayout, /\.evaluation-module-stack \{/)
+  assert.match(evaluationLayout, /\.evaluation-module \{/)
   assert.match(evaluation, /\.evaluation-panel \{/)
   assert.match(evaluation, /\.evaluation-status-bar \{/)
   assert.match(evaluation, /\.model-bars \{/)

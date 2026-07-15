@@ -52,3 +52,10 @@ test('dark inline Bayes detail inherits the shared expanded-row surface', async 
     /\.app-shell\.theme-dark \.model-row-detail \.bayes-contribution-chart \{[^}]*background: transparent;[^}]*\}/,
   )
 })
+
+test('submodel module uses flat disclosure rows inside one shell', async () => {
+  const layoutStyle = await readFile(new URL('../../styles/features/evaluation-layout.css', import.meta.url), 'utf8')
+
+  assert.match(layoutStyle, /\.model-backtest-card \.model-bars \{[^}]*gap: 0;[^}]*overflow: hidden;/)
+  assert.match(layoutStyle, /\.model-backtest-card \.model-bars article[^}]*\{[^}]*border: 0;[^}]*border-radius: 0;[^}]*background: transparent;/)
+})
