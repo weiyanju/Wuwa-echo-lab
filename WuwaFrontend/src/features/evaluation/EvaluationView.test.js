@@ -2,6 +2,39 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 
+test('evaluation uses shared maturity and keeps readiness inside the page', async () => {
+  const source = await readFile(new URL('./EvaluationView.vue', import.meta.url), 'utf8')
+  assert.match(source, /sampleMaturityState\(totalSamples\.value\)/)
+  assert.match(source, /sampleStageState\(totalSamples\.value\)/)
+  assert.match(source, /evaluationReadinessState\(props\.evaluation\)/)
+  assert.match(source, /\{\{ maturity\.label \}\}/)
+  assert.match(source, /<i v-if="maturity\.hasSamples" aria-hidden="true"><\/i>/)
+  assert.doesNotMatch(source, /function evaluationStatusText/)
+  assert.doesNotMatch(source, /'观察中'|'可参考'|'稳定'/)
+})
+
+test('evaluation hides result modules until the backend marks evaluation ready', async () => {
+  const source = await readFile(new URL('./EvaluationView.vue', import.meta.url), 'utf8')
+  const stackIndex = source.indexOf('v-else-if="readiness.ready" class="evaluation-module-stack"')
+  const readinessIndex = source.indexOf('v-else-if="evaluation"')
+  assert.ok(stackIndex >= 0 && readinessIndex > stackIndex)
+  assert.match(source, /<SampleReadinessPanel/)
+  assert.match(source, /模型评估将在积累有效历史后开启/)
+  assert.match(source, /回测准备中/)
+  assert.match(source, /:current="readiness\.evaluated"/)
+  assert.match(source, /:target="readiness\.target"/)
+  assert.match(source, /前 20 条用于建立上下文/)
+})
+
+test('unavailable evaluation metrics use a numeric placeholder instead of a semantic error', async () => {
+  const source = await readFile(new URL('./EvaluationView.vue', import.meta.url), 'utf8')
+  assert.match(source, /EMPTY_METRIC_TEXT/)
+  assert.match(source, /formatOptionalMetric/)
+  assert.match(source, /page-summary-chip__value--empty/)
+  assert.match(source, /前三命中率尚未形成/)
+  assert.doesNotMatch(source, /return metric\?\.value == null \? '样本不足'/)
+})
+
 test('evaluation view owns the result-first task order and app wiring', async () => {
   const source = await readFile(new URL('./EvaluationView.vue', import.meta.url), 'utf8')
   const appSource = await readFile(new URL('../../App.vue', import.meta.url), 'utf8')
@@ -34,4 +67,12 @@ test('evaluation task modules use one sibling card boundary each', async () => {
   assert.match(models, /class="evaluation-card evaluation-module model-backtest-card"/)
   assert.doesNotMatch(core, /class="evaluation-card chart-card"/)
   assert.doesNotMatch(models, /class="evaluation-grid compact-evaluation-grid evaluation-chart-strip"/)
+})
+
+test('evaluation header exposes the shared accessible summary group', async () => {
+  const source = await readFile(new URL('./EvaluationView.vue', import.meta.url), 'utf8')
+
+  assert.match(source, /class="page-summary-chips" role="group" aria-label="评估摘要"/)
+  assert.equal((source.match(/class="page-summary-chip(?: page-summary-chip--state)?"/g) || []).length, 3)
+  assert.equal((source.match(/class="page-summary-chip__value"/g) || []).length, 2)
 })

@@ -2,23 +2,94 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 
+test('zero-sample statistics shows readiness and never renders fake deviation results', async () => {
+  const source = await readFile(new URL('./StatisticsView.vue', import.meta.url), 'utf8')
+  assert.match(source, /sampleMaturityState\(totalSamples\.value\)/)
+  assert.match(source, /sampleStageState\(totalSamples\.value\)/)
+  assert.match(source, /v-if="!stats"/)
+  assert.match(source, /v-else-if="!hasSamples"/)
+  assert.match(source, /<SampleReadinessPanel/)
+  assert.match(source, /从第一条样本开始建立统计诊断/)
+  assert.match(source, /:current="0"/)
+  assert.match(source, /:target="500"/)
+  assert.match(source, /规则基线主导/)
+  assert.match(source, /<SampleStageAxis/)
+  assert.match(source, /v-else class="stats-task-stack"/)
+  assert.ok(source.indexOf('v-else class="stats-task-stack"') < source.indexOf('class="stats-task-card substat-deviation-card"'))
+})
+
+test('statistics zero state uses a neutral maturity chip without a green dot', async () => {
+  const source = await readFile(new URL('./StatisticsView.vue', import.meta.url), 'utf8')
+  assert.match(source, /page-summary-chip--neutral/)
+  assert.match(source, /<i v-if="maturity\.hasSamples" aria-hidden="true"><\/i>/)
+  assert.match(source, /\{\{ maturity\.label \}\}/)
+  assert.match(source, /\{\{ stage\.rangeLabel \}\}/)
+})
+
 async function readStatisticsStyles() {
   return readFile(new URL('../../styles/features/statistics.css', import.meta.url), 'utf8')
+}
+
+async function readPageSummaryStyles() {
+  return readFile(new URL('../../styles/page-summary.css', import.meta.url), 'utf8')
+}
+
+function findElementsByClassToken(source, classToken) {
+  const elements = []
+  const openingTagPattern = /<([a-z][\w-]*)\b(?=[^>]*\sclass\s*=\s*"([^"]*)")[^>]*>/gi
+
+  for (const match of source.matchAll(openingTagPattern)) {
+    const classTokens = match[2].split(/\s+/).filter(Boolean)
+    if (!classTokens.includes(classToken)) continue
+
+    const closingTag = `</${match[1]}>`
+    const closingStart = source.indexOf(closingTag, match.index + match[0].length)
+    elements.push({
+      tagName: match[1].toLowerCase(),
+      classTokens,
+      start: match.index,
+      end: closingStart,
+      section: closingStart >= 0 ? source.slice(match.index, closingStart + closingTag.length) : '',
+    })
+  }
+
+  return elements
 }
 
 test('statistics view owns analytics presentation', async () => {
   const source = await readFile(new URL('./StatisticsView.vue', import.meta.url), 'utf8')
 
   assert.match(source, /defineProps\(\{[\s\S]+stats:/)
-  assert.match(source, /class="product-panel full-panel stats-analytics-panel"/)
+  assert.match(source, /class="stats-analytics-panel"/)
+  assert.doesNotMatch(source, /class="product-panel full-panel stats-analytics-panel"/)
+  assert.match(source, /class="stats-task-stack"/)
+  assert.match(source, /class="stats-task-card sample-reliability-card"/)
+  assert.match(source, /class="stats-task-card substat-deviation-card"/)
   assert.match(source, /v-for="row in sortedStatFrequency"/)
-  assert.match(source, /v-for="stage in sampleStageAxisRows"/)
+  assert.match(source, /<SampleStageAxis/)
+})
+
+test('statistics task cards keep stage and deviation content with their owners', async () => {
+  const source = await readFile(new URL('./StatisticsView.vue', import.meta.url), 'utf8')
+  const reliabilityStart = source.indexOf('class="stats-task-card sample-reliability-card"')
+  const deviationStart = source.indexOf('class="stats-task-card substat-deviation-card"')
+
+  assert.ok(reliabilityStart >= 0 && reliabilityStart < deviationStart)
+  const reliabilitySection = source.slice(reliabilityStart, deviationStart)
+  const deviationSection = source.slice(deviationStart)
+  assert.match(reliabilitySection, /<h3>样本可信度<\/h3>/)
+  assert.match(reliabilitySection, /<SampleStageAxis/)
+  assert.match(deviationSection, /<h3>副词条分布偏差<\/h3>/)
+  assert.match(deviationSection, /class="stats-diagnostic-deviations"/)
+  assert.match(deviationSection, /class="substat-deviation-chart"/)
+  assert.match(source, /formatSignedPercentagePoints\(row\.deviation\)/)
+  assert.match(source, /sortedStatFrequency\.value\.find\(\(row\) => row\.deviation < 0\)/)
 })
 
 test('statistics diagnosis keeps context at section level and avoids duplicate empty values', async () => {
   const source = await readFile(new URL('./StatisticsView.vue', import.meta.url), 'utf8')
 
-  assert.match(source, /<h2>统计诊断<\/h2>\s*<p v-if="stats" class="stats-diagnostic-context">\{\{ statsReliabilityNote\(totalSamples\) \}\}<\/p>/)
+  assert.match(source, /<h2>统计诊断<\/h2>\s*<p v-if="stats" class="stats-diagnostic-context">\{\{ statisticsContextText \}\}<\/p>/)
   assert.doesNotMatch(source, /class="stats-diagnostic-note"/)
   assert.match(source, /hottestStatRow\?\.label \|\| '暂无明显偏高'/)
   assert.match(source, /coldestStatRow\?\.label \|\| '暂无明显偏低'/)
@@ -40,6 +111,108 @@ test('statistics diagnostic context uses quiet section-level typography', async 
   assert.match(contextRule, /font-weight: var\(--weight-supporting\)/)
   assert.match(contextRule, /line-height: var\(--leading-body\)/)
   assert.doesNotMatch(contextRule, /border|background/)
-  assert.match(styles, /\.app-shell\.theme-dark \.stats-diagnostic-head p,\s*\.app-shell\.theme-dark \.stats-diagnostic-context,\s*\.app-shell\.theme-dark \.stats-section-heading > span\s*\{[^}]*color: var\(--charcoal\)/m)
+  assert.match(styles, /\.app-shell\.theme-dark \.stats-diagnostic-head p,\s*\.app-shell\.theme-dark \.stats-diagnostic-context,\s*\.app-shell\.theme-dark \.stats-task-meta\s*\{[^}]*color: var\(--charcoal\)/m)
   assert.doesNotMatch(styles, /\.stats-diagnostic-note/)
+})
+
+test('shared page summary labels keep accessible light-theme contrast', async () => {
+  const styles = await readPageSummaryStyles()
+  const summaryLabelRule = styles.match(/^\.page-summary-chip small \{([^}]+)\}/m)?.[1] || ''
+
+  assert.match(summaryLabelRule, /color: #5f7183/)
+})
+
+test('statistics task cards use a transparent page owner and responsive sibling cards', async () => {
+  const styles = await readStatisticsStyles()
+  const ownerRule = styles.match(/^\.stats-analytics-panel \{([^}]+)\}/m)?.[1] || ''
+  const stackRule = styles.match(/^\.stats-task-stack \{([^}]+)\}/m)?.[1] || ''
+  const cardRule = styles.match(/^\.stats-task-card \{([^}]+)\}/m)?.[1] || ''
+
+  assert.match(ownerRule, /display: grid/)
+  assert.doesNotMatch(ownerRule, /border|box-shadow|background/)
+  assert.match(stackRule, /display: grid/)
+  assert.match(cardRule, /border: 1px solid/)
+  assert.match(cardRule, /border-radius: 12px/)
+  assert.match(styles, /@media \(max-width: 860px\)[\s\S]+\.stats-task-header[\s\S]+flex-direction: column/)
+  assert.match(styles, /\.app-shell\.theme-dark \.stats-task-card/)
+})
+
+test('statistics charts enable internal scrolling before their minimum width can overflow the page', async () => {
+  const styles = await readStatisticsStyles()
+
+  assert.match(
+    styles,
+    /@media \(max-width: 680px\) \{[\s\S]*?\.sample-stage-axis,\s*\.substat-deviation-chart \{[\s\S]*?overflow-x: auto;/,
+  )
+})
+
+test('statistics diagnosis header owns exactly two non-duplicated summary chips', async () => {
+  const source = await readFile(new URL('./StatisticsView.vue', import.meta.url), 'utf8')
+  const headerElements = findElementsByClassToken(source, 'stats-diagnostic-head')
+
+  assert.equal(headerElements.length, 1)
+  assert.equal(headerElements[0].tagName, 'header')
+  assert.ok(headerElements[0].start >= 0 && headerElements[0].start < headerElements[0].end)
+  const headerSection = headerElements[0].section
+  const summaryElements = findElementsByClassToken(headerSection, 'page-summary-chips')
+  const headerChipElements = findElementsByClassToken(headerSection, 'page-summary-chip')
+
+  assert.doesNotMatch(headerSection, /最大偏差|formatSignedPercentagePoints/)
+  assert.equal(headerChipElements.length, 2)
+  assert.equal(summaryElements.length, 1)
+  assert.ok(summaryElements[0].start >= 0 && summaryElements[0].start < summaryElements[0].end)
+  const summarySection = summaryElements[0].section
+  const summaryOpeningTag = summarySection.match(/^<div\b[^>]*>/)?.[0] || ''
+  const chipElements = findElementsByClassToken(summarySection, 'page-summary-chip')
+  const stateChipElements = chipElements.filter(({ section }) => section.includes('maturity.label'))
+  const stageChipElements = chipElements.filter(({ section }) => section.includes('<small>阶段</small>'))
+
+  assert.match(summaryOpeningTag, /\brole\s*=\s*"group"/)
+  assert.match(summaryOpeningTag, /\baria-label\s*=\s*"统计摘要"/)
+  assert.equal(chipElements.length, 2)
+  assert.ok(chipElements.every(({ start, end }) => start >= 0 && start < end))
+  assert.equal(stateChipElements.length, 1)
+  assert.equal(stageChipElements.length, 1)
+  const stateChipSection = stateChipElements[0].section
+  assert.match(stateChipSection, /<i v-if="maturity\.hasSamples" aria-hidden="true"><\/i>/)
+  assert.match(stateChipSection, /\{\{ maturity\.label \}\}/)
+  const stageChipSection = stageChipElements[0].section
+  assert.match(stageChipSection, /<small>阶段<\/small>/)
+  assert.match(stageChipSection, /class="page-summary-chip__value"/)
+  assert.match(stageChipSection, /stage\.rangeLabel/)
+})
+
+test('sample reliability card compacts basis and progress into its task header', async () => {
+  const source = await readFile(new URL('./StatisticsView.vue', import.meta.url), 'utf8')
+  const styles = await readStatisticsStyles()
+  const reliabilityStart = source.indexOf('class="stats-task-card sample-reliability-card"')
+  const deviationStart = source.indexOf('class="stats-task-card substat-deviation-card"')
+
+  assert.ok(reliabilityStart >= 0 && reliabilityStart < deviationStart)
+  const reliabilitySection = source.slice(reliabilityStart, deviationStart)
+  assert.match(reliabilitySection, /class="stats-task-header sample-reliability-header"/)
+  assert.match(reliabilitySection, /class="sample-reliability-title"/)
+  assert.match(reliabilitySection, /class="sample-reliability-basis-tag"/)
+  assert.doesNotMatch(reliabilitySection, />判断依据<\/small>/)
+  assert.match(reliabilitySection, /\{\{ sampleStageDriverText \}\}/)
+  assert.match(reliabilitySection, /class="sample-stage-summary"/)
+  assert.match(reliabilitySection, /class="sample-stage-count-value"/)
+  assert.match(reliabilitySection, /sampleStageStatus\.total/)
+  assert.match(reliabilitySection, /sampleStageTargetLabel/)
+  assert.match(reliabilitySection, /sampleStageSummaryText/)
+  assert.doesNotMatch(reliabilitySection, /sample-reliability-overview|阶段进度|当前阶段的主要解释来源/)
+  assert.doesNotMatch(reliabilitySection, /当前结论|statsReliabilityText\s*\(\s*totalSamples\s*\)|sampleStageRangeText|stats-diagnostic-stage-meta|stats-diagnostic-stage-chip/)
+
+  const headerRule = styles.match(/^\.sample-reliability-header \{([^}]+)\}/m)?.[1] || ''
+  const tagRule = styles.match(/^\.sample-reliability-basis-tag \{([^}]+)\}/m)?.[1] || ''
+  const summaryRule = styles.match(/^\.sample-stage-summary \{([^}]+)\}/m)?.[1] || ''
+  assert.match(headerRule, /align-items: flex-start/)
+  assert.match(headerRule, /border-bottom: 1px solid/)
+  assert.match(headerRule, /padding-bottom: 18px/)
+  assert.match(tagRule, /min-height: 28px/)
+  assert.match(summaryRule, /justify-items: end/)
+  assert.match(summaryRule, /margin-left: auto/)
+  assert.match(styles, /@media \(max-width: 860px\)[\s\S]*?\.sample-stage-summary \{[^}]*justify-items: start;[^}]*margin-left: 0;/)
+  assert.doesNotMatch(styles, /\.sample-reliability-basis-tag small/)
+  assert.doesNotMatch(styles, /^\.sample-reliability-overview \{/m)
 })

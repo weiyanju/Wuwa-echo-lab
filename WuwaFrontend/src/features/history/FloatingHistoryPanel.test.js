@@ -44,6 +44,7 @@ test('floating history owns its filters and panel interaction state', async () =
   assert.match(source, /const historyPanelMode = ref\(initialPanelState\.mode\)/)
   assert.match(source, /const lastExpandedMode = ref\(initialPanelState\.lastExpandedMode\)/)
   assert.match(source, /initialHistoryPanelState\([\s\S]+localStorage\.getItem\('wuwa-floating-history-minimized'\),[\s\S]+localStorage\.getItem\('wuwa-floating-history-expanded-mode'\),[\s\S]+\)/)
+  assert.match(source, /emptyHistory: sortVisibleEchoHistory\(props\.echoes\)\.length === 0/)
   assert.match(source, /const isHistoryMinimized = computed\(\(\) => historyPanelMode\.value === HISTORY_PANEL_MODE\.MINIMIZED\)/)
   assert.match(source, /const isHistoryShowcase = computed\(\(\) => historyPanelMode\.value === HISTORY_PANEL_MODE\.SHOWCASE\)/)
   assert.match(source, /const floatingHistoryPosition = ref\(readFloatingHistoryPosition\(\{/)

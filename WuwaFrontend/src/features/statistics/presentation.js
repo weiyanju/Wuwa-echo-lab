@@ -28,22 +28,6 @@ export function buildSortedStatFrequency(stats) {
     .sort((left, right) => right.absDeviation - left.absDeviation)
 }
 
-export function statsReliabilityText(total) {
-  if (total >= 50000) {
-    return '可优化权重'
-  }
-  if (total >= 10000) {
-    return '稳定观察'
-  }
-  if (total >= 3000) {
-    return '可作参考'
-  }
-  if (total >= 500) {
-    return '初步观察'
-  }
-  return '起步观察'
-}
-
 export function statsReliabilityNote(total) {
   const sampleTotal = Math.trunc(normalizeSampleTotal(total))
   const prefix = `基于 ${sampleTotal} 条样本，`

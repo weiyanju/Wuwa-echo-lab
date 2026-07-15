@@ -9,6 +9,12 @@ export function formatSignedPercent(value, digits = 2) {
   return `${sign}${formatPercent(numericValue, digits)}`
 }
 
+export function formatSignedPercentagePoints(value, digits = 2) {
+  const numericValue = Number.isFinite(value) ? value : 0
+  const sign = numericValue >= 0 ? '+' : ''
+  return `${sign}${(numericValue * 100).toFixed(digits)}pp`
+}
+
 const flatSubstatTypes = new Set(['flat_atk', 'flat_hp', 'flat_def'])
 
 export function formatSubstatTierNumber(substatType, value) {

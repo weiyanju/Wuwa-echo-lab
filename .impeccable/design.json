@@ -525,6 +525,14 @@
       "css": ".ds-bayes-card { display: grid; grid-template-columns: 4px auto 1fr; align-items: center; gap: 16px; border: 1px solid var(--border-soft, #dee3e9); border-radius: 14px; padding: 16px; color: var(--ink-strong, #0a1317); background: #fff; font-family: var(--font-cjk, system-ui, sans-serif); } .ds-bayes-path { width: 4px; height: 68px; border-radius: 999px; background: var(--prediction, #2c9f70); } .ds-bayes-nodes { display: flex; align-items: center; gap: 10px; color: var(--primary-deep, #0457cb); } .ds-bayes-nodes b { display: grid; width: 40px; height: 40px; place-items: center; border: 1px solid rgba(0, 100, 224, 0.22); border-radius: 999px; background: var(--primary-soft, #f4f8ff); } .ds-bayes-nodes i { color: var(--text-muted, #5d6c7b); font-style: normal; } .ds-bayes-card p { margin: 6px 0 0; color: var(--text-muted, #5d6c7b); font-size: 13px; line-height: 1.4; }"
     },
     {
+      "name": "Sample Readiness Panel",
+      "kind": "custom",
+      "refersTo": "sample-readiness-panel",
+      "description": "统计与评估在结果形成前使用的单边界准备面板，展示真实进度、来源说明和返回工作台动作。",
+      "html": "<section class=\"ds-readiness\"><div><span>数据准备</span><h3>从第一条样本开始建立统计诊断</h3><p>录入一条副词条后即可查看实际分布。</p></div><div><strong>0</strong><span>/ 500</span><progress value=\"0\" max=\"500\"></progress></div><button type=\"button\">去工作台录入第一条</button></section>",
+      "css": ".ds-readiness { display: grid; grid-template-columns: minmax(0, 1fr) minmax(180px, 260px) auto; align-items: center; gap: 20px; border: 1px solid var(--border-soft, #dee3e9); border-radius: 12px; padding: 20px; color: var(--ink-strong, #0a1317); background: var(--canvas, #fff); } .ds-readiness h3, .ds-readiness p { margin: 0; } .ds-readiness progress { width: 100%; accent-color: var(--primary, #0064e0); } .ds-readiness button { min-height: 44px; border: 1px solid var(--primary, #0064e0); border-radius: 12px; padding: 10px 18px; color: #fff; background: var(--primary, #0064e0); }"
+    },
+    {
       "name": "Floating History Panel",
       "kind": "custom",
       "refersTo": "floating-history-panel",
@@ -619,6 +627,16 @@
         "name": "The Minimum Size Rule",
         "body": "交互文字不得小于 12px；禁止 10px、半像素字号和为了塞入容器而缩小文字。",
         "section": "typography"
+      },
+      {
+        "name": "The Empty Metric Rule",
+        "body": "真实计数显示 0，尚未形成的指标显示半角 --，语义状态显示文字；-- 不承担 loading、error 或单位。",
+        "section": "components"
+      },
+      {
+        "name": "The Readiness Gate Rule",
+        "body": "无真实数据的分析模块整体隐藏并由可操作的准备状态替代；统计和评估共享样本成熟度，评估准备度独立呈现。",
+        "section": "components"
       },
       {
         "name": "The Flat-by-Default Rule",

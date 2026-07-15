@@ -1,6 +1,7 @@
 @import './styles/tokens.css';
 @import './styles/base.css';
 @import './styles/shell.css';
+@import './styles/page-summary.css';
 @import './styles/features/recognition.css';
 @import './styles/features/statistics.css';
 @import './styles/features/history.css';

@@ -276,6 +276,9 @@
 .echo-form { display: grid; gap: 16px; }
 
 .create-panel .section-heading p { font-size: var(--text-body); font-weight: var(--weight-body); line-height: var(--leading-body); white-space: nowrap; }
+.first-entry-guide { display: flex; flex-wrap: wrap; gap: 4px 8px; margin: 0; color: var(--steel); white-space: normal !important; }
+.first-entry-guide strong { color: var(--primary-deep); font-size: var(--text-label); }
+.first-entry-guide span { font-size: var(--text-label); line-height: var(--leading-body); }
 
 .option-row button {
   flex: 1 1 136px;

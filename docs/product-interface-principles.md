@@ -251,6 +251,9 @@ Web 字体以 `docs/superpowers/specs/2026-07-13-wuwa-typography-system-design.m
 - error。
 - disabled。
 
+- 真实零值、尚未形成的指标、语义状态、loading 和 error 必须分别表达：计数使用 `0`，未计算指标使用 `--`，状态使用可理解文字，loading 使用骨架，error 提供恢复动作。
+- 同一业务成熟度在不同页面必须使用同一文案；页面专属准备度放在页面正文，不另造一套全局状态词。
+
 识别和 OCR 相关流程还应有：
 
 - waiting。

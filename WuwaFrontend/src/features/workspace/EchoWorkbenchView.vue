@@ -34,6 +34,7 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  firstEntry: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['config-change', 'undo', 'discard', 'next', 'select-tier', 'preview-change'])
@@ -86,7 +87,8 @@ function iconMask(source) { return { '--icon-url': `url("${source}")` } }
         <div class="section-heading">
           <span class="eyebrow">ECHO SETUP</span>
           <h2>初始化声骸</h2>
-          <p>选择套装、COST、主词条后开始录入。</p>
+          <p v-if="firstEntry" class="first-entry-guide"><strong>首次录入</strong><span>检查套装、COST 和主词条，然后点击实际出现的第一条副词条数值。</span></p>
+          <p v-else>选择套装、COST、主词条后开始录入。</p>
         </div>
 
         <form class="echo-form" @submit.prevent>
@@ -159,6 +161,7 @@ function iconMask(source) { return { '--icon-url': `url("${source}")` } }
       :config="config"
       :active-echo="activeEcho"
       :prediction-rankings="predictionRankings"
+      :first-entry="firstEntry"
       :saving="saving || Boolean(pendingTierKey)"
       @undo="emit('undo')"
       @discard="emit('discard')"

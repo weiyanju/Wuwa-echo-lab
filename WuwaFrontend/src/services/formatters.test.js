@@ -7,6 +7,7 @@ import { sonataEffects, sonataEffectsSource } from '../data/sonataEffects.js'
 import {
   confidenceText,
   formatPercent,
+  formatSignedPercentagePoints,
   formatSignedPercent,
   formatSubstatTierNumber,
   formatSubstatTierUnit,
@@ -26,6 +27,12 @@ test('formats signed baseline deviations', () => {
   assert.equal(formatSignedPercent(0.0123), '+1.23%')
   assert.equal(formatSignedPercent(-0.004), '-0.40%')
   assert.equal(formatSignedPercent(0), '+0.00%')
+})
+
+test('formats signed percentage-point differences', () => {
+  assert.equal(formatSignedPercentagePoints(0.1818), '+18.18pp')
+  assert.equal(formatSignedPercentagePoints(-0.0664), '-6.64pp')
+  assert.equal(formatSignedPercentagePoints(0), '+0.00pp')
 })
 
 test('formats substat tier values by stat unit type', () => {

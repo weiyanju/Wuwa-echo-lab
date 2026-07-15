@@ -20,6 +20,7 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  firstEntry: { type: Boolean, default: false },
   saving: {
     type: Boolean,
     default: false,
@@ -178,6 +179,7 @@ watch([() => previewSonataEffect.value?.name, previewCost, () => props.activeEch
       </div>
       <aside v-if="activeEcho" class="active-actions record-actions active-action-bar active-action-rail" aria-label="声骸操作">
         <div class="active-prediction-card" aria-label="下一个副词条预测">
+          <small v-if="firstEntry && predictionRankings.length" class="active-prediction-source">规则基线 · 尚未使用个人样本</small>
           <div v-if="activePredictionRecommendations.length" class="active-prediction-table">
             <span class="active-prediction-subheading active-prediction-suggestion-heading">预测</span>
             <span

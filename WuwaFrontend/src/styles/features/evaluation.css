@@ -63,7 +63,6 @@
 .app-shell.theme-dark .model-insight-head p,
 .app-shell.theme-dark .model-chart-title small,
 .app-shell.theme-dark .evaluation-technical-meta,
-.app-shell.theme-dark .evaluation-status-chip small,
 .app-shell.theme-dark .evaluation-command-card span,
 .app-shell.theme-dark .evaluation-command-card small,
 .app-shell.theme-dark .evaluation-focus-grid span,
@@ -86,7 +85,6 @@
 }
 
 .app-shell.theme-dark .evaluation-card,
-.app-shell.theme-dark .evaluation-status-chip,
 .app-shell.theme-dark .evaluation-command-card,
 .app-shell.theme-dark .evaluation-compact-stats article,
 .app-shell.theme-dark .evaluation-focus-grid article,
@@ -103,7 +101,6 @@
   box-shadow: none;
 }
 
-.app-shell.theme-dark .evaluation-status-chip.state,
 .app-shell.theme-dark .evaluation-coverage-metrics article.emphasized {
   border-color: rgba(55, 179, 127, 0.42);
   background:
@@ -111,7 +108,6 @@
     #1d2a35;
 }
 
-.app-shell.theme-dark .evaluation-status-chip,
 .app-shell.theme-dark .evaluation-command-card strong,
 .app-shell.theme-dark .evaluation-compact-stats strong,
 .app-shell.theme-dark .evaluation-focus-grid strong,
@@ -3592,6 +3588,9 @@
   padding: 2px 2px 14px;
 }
 
+.evaluation-panel > .sample-readiness-panel,
+.evaluation-panel > .insight-request-state { margin-top: 18px; }
+
 .evaluation-status-bar h2 {
   margin: 0;
   color: #0b151a;
@@ -3599,56 +3598,6 @@
   font-size: var(--text-section-title);
   font-weight: var(--weight-title);
   line-height: var(--leading-title);
-}
-
-.evaluation-status-chips {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  min-width: 0;
-}
-
-.evaluation-status-chip {
-  display: inline-flex;
-  min-height: 32px;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid rgba(216, 226, 234, 0.82);
-  border-radius: 999px;
-  padding: 6px 10px;
-  color: #243747;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(248, 251, 253, 0.92)),
-    #ffffff;
-  font-size: var(--text-label);
-  font-weight: var(--weight-label);
-  line-height: var(--leading-label);
-  white-space: nowrap;
-}
-
-.evaluation-status-chip small {
-  color: #6d7d8c;
-  font-size: var(--text-micro);
-  font-weight: var(--weight-supporting);
-  line-height: var(--leading-caption);
-}
-
-.evaluation-status-chip.state {
-  border-color: rgba(44, 159, 112, 0.24);
-  color: #1f704d;
-  background:
-    linear-gradient(180deg, rgba(44, 159, 112, 0.09), rgba(255, 255, 255, 0.88)),
-    #ffffff;
-}
-
-.evaluation-status-chip.state i {
-  width: 7px;
-  height: 7px;
-  border-radius: 999px;
-  background: #2c9f70;
-  box-shadow: 0 0 0 3px rgba(44, 159, 112, 0.12);
 }
 
 .evaluation-brief {
@@ -4247,10 +4196,6 @@
     flex-direction: column;
   }
 
-  .evaluation-status-chips {
-    justify-content: flex-start;
-  }
-
   .evaluation-compact-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     min-width: 0;
@@ -4365,11 +4310,6 @@
 
   .evaluation-status-bar h2 {
     font-size: var(--text-section-title);
-  }
-
-  .evaluation-status-chip {
-    min-height: 30px;
-    padding: 5px 9px;
   }
 
   .evaluation-summary-line {

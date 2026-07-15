@@ -2153,6 +2153,15 @@ test('tier entry refreshes next prediction without starting stats or model evalu
   }
 })
 
+test('page insight refresh is exposed without re-entering the tier save path', async () => {
+  const source = await readFile(new URL('./useEchoWorkspace.js', import.meta.url), 'utf8')
+  const clickTierSection = source.slice(source.indexOf('async function clickTier'), source.indexOf('async function undoActiveSubstat'))
+  assert.match(source, /createWorkspaceInsightRefresh/)
+  assert.match(source, /refreshStats/)
+  assert.match(source, /refreshEvaluation/)
+  assert.doesNotMatch(clickTierSection, /refreshStats|refreshEvaluation|getStats|getModelEvaluation/)
+})
+
 test('echo image selection does not cancel a pending prediction refresh', async () => {
   const originalDocument = globalThis.document
   const originalFetch = globalThis.fetch

@@ -2,6 +2,40 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 
+test('app delegates sample summary and page refresh without owning zero-state copy', async () => {
+  const source = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
+  assert.match(source, /import WorkspaceSummary from '\.\/components\/shell\/WorkspaceSummary\.vue'/)
+  assert.match(source, /useDashboardNavigation\(\{ refreshStats, refreshEvaluation \}\)/)
+  assert.match(source, /<WorkspaceSummary/)
+  assert.match(source, /:first-entry="stats !== null && !stats\.total_rolls"/)
+  assert.match(source, /@start-recording="openPage\('workspace'\)"/)
+  assert.match(source, /:request-status="evaluationRequestStatus"/)
+  assert.match(source, /@retry="refreshEvaluation"/)
+  assert.doesNotMatch(source, /prediction \? confidenceText/)
+})
+
+function findElementsByClassToken(source, classToken) {
+  const elements = []
+  const openingTagPattern = /<([a-z][\w-]*)\b(?=[^>]*\sclass\s*=\s*"([^"]*)")[^>]*>/gi
+
+  for (const match of source.matchAll(openingTagPattern)) {
+    const classTokens = match[2].split(/\s+/).filter(Boolean)
+    if (!classTokens.includes(classToken)) continue
+
+    const closingTag = `</${match[1]}>`
+    const closingStart = source.indexOf(closingTag, match.index + match[0].length)
+    elements.push({
+      tagName: match[1].toLowerCase(),
+      classTokens,
+      start: match.index,
+      end: closingStart,
+      section: closingStart >= 0 ? source.slice(match.index, closingStart + closingTag.length) : '',
+    })
+  }
+
+  return elements
+}
+
 test('context detail progress uses the local clamp helper', async () => {
   const source = await readFile(new URL('./features/evaluation/EvaluationBacktest.vue', import.meta.url), 'utf8')
 
@@ -32,6 +66,7 @@ test('topbar exposes an accessible theme toggle that resets to system color sche
   const appSource = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
   const styleSource = [
     await readFile(new URL('./style.css', import.meta.url), 'utf8'),
+    await readFile(new URL('./styles/page-summary.css', import.meta.url), 'utf8'),
     await readFile(new URL('./styles/features/evaluation.css', import.meta.url), 'utf8'),
     await readFile(new URL('./styles/controls.css', import.meta.url), 'utf8'),
     await readFile(new URL('./styles/features/statistics.css', import.meta.url), 'utf8'),
@@ -73,8 +108,8 @@ test('topbar exposes an accessible theme toggle that resets to system color sche
   assert.match(authStyleSource, /\.app-shell\.theme-dark \.terminal-auth-card \{/)
   assert.match(styleSource, /\.app-shell\.theme-dark \.button-buy \{/)
   assert.match(styleSource, /\.app-shell\.theme-dark \.error-text \{/)
-  assert.match(styleSource, /\.app-shell\.theme-dark \.stats-diagnostic-panel,/) 
-  assert.match(styleSource, /\.app-shell\.theme-dark \.evaluation-status-chip,/) 
+  assert.match(styleSource, /\.app-shell\.theme-dark \.stats-task-card \{/)
+  assert.match(styleSource, /\.app-shell\.theme-dark \.page-summary-chip \{/)
   assert.match(styleSource, /\.app-shell\.theme-dark \.model-bars article,/) 
   assert.match(styleSource, /\.app-shell\.theme-dark \.evaluation-summary-kicker \{/)
   assert.match(styleSource, /\.app-shell\.theme-dark \.model-bars-head \{/)
@@ -91,12 +126,14 @@ test('topbar exposes an accessible theme toggle that resets to system color sche
 
 test('topbar uses a compact accessible TETHYS wordmark without changing the hero', async () => {
   const appSource = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
+  const summarySource = await readFile(new URL('./components/shell/WorkspaceSummary.vue', import.meta.url), 'utf8')
   const shellStyleSource = await readFile(new URL('./styles/shell.css', import.meta.url), 'utf8')
 
-  assert.match(appSource, /<a class="wordmark" href="#" aria-label="返回 Tethys System 工作台" @click\.prevent="page = 'workspace'"><span class="wordmark-symbol" aria-hidden="true"><\/span>TETHYS<\/a>/)
+  assert.match(appSource, /<a class="wordmark" href="#" aria-label="返回 Tethys System 工作台" @click\.prevent="openPage\('workspace'\)"><span class="wordmark-symbol" aria-hidden="true"><\/span>TETHYS<\/a>/)
   assert.doesNotMatch(appSource, /<a class="wordmark"[^>]*>Tethys System<\/a>/)
-  assert.match(appSource, /<section class="hero-band compact">[\s\S]+<h1>你好，漂泊者<\/h1>/)
-  assert.match(appSource, /<span>历史声骸<\/span>[\s\S]+<span>总样本<\/span>[\s\S]+<span>置信度<\/span>/)
+  assert.match(appSource, /<WorkspaceSummary/)
+  assert.match(summarySource, /<section class="hero-band compact">[\s\S]+<h1>你好，漂泊者<\/h1>/)
+  assert.match(summarySource, /<span>历史声骸<\/span>[\s\S]+<span>总样本<\/span>[\s\S]+<span>置信度<\/span>/)
   assert.match(shellStyleSource, /\.wordmark \{[\s\S]+gap: 10px;[\s\S]+font-family: var\(--font-latin\);[\s\S]+font-size: 16px;[\s\S]+font-weight: var\(--weight-control\);[\s\S]+letter-spacing: var\(--tracking-brand\);/)
   assert.match(shellStyleSource, /\.wordmark-symbol \{[^}]+position: relative;[^}]+flex: 0 0 auto;[^}]+width: 20px;[^}]+height: 20px;/)
   assert.match(shellStyleSource, /\.wordmark-symbol::before \{[^}]+border: 1\.5px solid var\(--primary\);/)
@@ -208,16 +245,19 @@ test('floating history controls use the shared line icon system', async () => {
 
 test('workspace hero owns a visible history count after the history panel extraction', async () => {
   const appSource = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
+  const summarySource = await readFile(new URL('./components/shell/WorkspaceSummary.vue', import.meta.url), 'utf8')
   const workspaceSource = await readFile(new URL('./features/workspace/useEchoWorkspace.js', import.meta.url), 'utf8')
 
   assert.match(workspaceSource, /import \{ buildNextEchoConfig, isReusableDraft, sortVisibleEchoHistory \} from '\.\.\/\.\.\/services\/echoWorkflow\.js'/)
   assert.match(workspaceSource, /const visibleEchoCount = computed\(\(\) => sortVisibleEchoHistory\(echoes\.value\)\.length\)/)
-  assert.match(appSource, /<div class="hero-stat hero-stat-with-delta"><strong>\{\{ visibleEchoCount \}\}<\/strong>[\s\S]+<span>历史声骸<\/span><\/div>/)
+  assert.match(appSource, /:history-count="visibleEchoCount"/)
+  assert.match(summarySource, /<strong>\{\{ historyCount \}\}<\/strong>[\s\S]+<span>历史声骸<\/span>/)
   assert.doesNotMatch(appSource, /\{\{ sortedEchoes\.length \}\}/)
 })
 
 test('workspace hero centers metrics and shows separate corner deltas', async () => {
   const appSource = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
+  const summarySource = await readFile(new URL('./components/shell/WorkspaceSummary.vue', import.meta.url), 'utf8')
   const workspaceSource = await readFile(new URL('./features/workspace/useEchoWorkspace.js', import.meta.url), 'utf8')
   const sessionDeltaSource = await readFile(new URL('./features/workspace/echoSessionDeltas.js', import.meta.url), 'utf8')
   const shellStyleSource = await readFile(new URL('./styles/shell.css', import.meta.url), 'utf8')
@@ -235,9 +275,11 @@ test('workspace hero centers metrics and shows separate corner deltas', async ()
   assert.match(appSource, /sessionSampleDelta,/)
   assert.match(appSource, /visibleSessionEchoDelta,/)
   assert.match(appSource, /visibleSessionSampleDelta,/)
-  assert.match(appSource, /class="hero-stat hero-stat-with-delta"[\s\S]+v-if="visibleSessionEchoDelta"[\s\S]+本次新增 \$\{visibleSessionEchoDelta\} 个声骸[\s\S]+>\+\{\{ visibleSessionEchoDelta \}\}/)
-  assert.match(appSource, /class="hero-stat hero-stat-with-delta"[\s\S]+v-if="visibleSessionSampleDelta"[\s\S]+本次录入新增 \$\{visibleSessionSampleDelta\} 条样本[\s\S]+>\+\{\{ visibleSessionSampleDelta \}\}/)
-  assert.match(appSource, /<Transition name="metric-delta">/)
+  assert.match(appSource, /:history-delta="visibleSessionEchoDelta"/)
+  assert.match(appSource, /:sample-delta="visibleSessionSampleDelta"/)
+  assert.match(summarySource, /class="hero-stat hero-stat-with-delta"[\s\S]+v-if="historyDelta"[\s\S]+>\+\{\{ historyDelta \}\}/)
+  assert.match(summarySource, /class="hero-stat hero-stat-with-delta"[\s\S]+v-if="sampleDelta"[\s\S]+>\+\{\{ sampleDelta \}\}/)
+  assert.match(summarySource, /<Transition name="metric-delta">/)
   assert.match(shellStyleSource, /\.metric-delta-badge \{/)
   assert.match(shellStyleSource, /\.metric-delta-enter-active,\s+\.metric-delta-leave-active \{[\s\S]+transition: opacity 180ms/)
   assert.match(shellStyleSource, /\.metric-delta-enter-from \{[\s\S]+transform: translateY\(4px\) scale\(0\.92\);/)
@@ -333,6 +375,7 @@ test('milestone 3 scopes frontend data calls to the selected game account', asyn
   const appSource = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
   const workspaceSource = await readFile(new URL('./features/workspace/useEchoWorkspace.js', import.meta.url), 'utf8')
   const workspaceDraftSource = await readFile(new URL('./features/workspace/echoWorkspaceDrafts.js', import.meta.url), 'utf8')
+  const insightSource = await readFile(new URL('./features/workspace/workspaceInsightRefresh.js', import.meta.url), 'utf8')
 
   assert.match(appSource, /selectedGameAccountId,/)
   assert.match(workspaceSource, /const accountId = selectedGameAccountId\.value/)
@@ -340,8 +383,8 @@ test('milestone 3 scopes frontend data calls to the selected game account', asyn
   assert.match(workspaceSource, /await createEcho\(createEchoPayload\(nextConfig, echoAssetIdentity\), accountId\)/)
   assert.match(workspaceDraftSource, /export function createEchoPayload[\s\S]+display_name: '',/)
   assert.match(workspaceDraftSource, /createEcho\(buildPayload\(nextConfig\), accountId\)/)
-  assert.match(workspaceSource, /const nextStats = await getStats\(accountId\)/)
-  assert.match(workspaceSource, /const nextEvaluation = await getModelEvaluation\(accountId\)/)
+  assert.match(insightSource, /await getStats\(accountId\)/)
+  assert.match(insightSource, /await getModelEvaluation\(accountId\)/)
 })
 
 test('milestone 6 shows recognition summary, review list, and revert action', async () => {
@@ -630,7 +673,8 @@ test('evaluation page exposes evaluated sample counts and gates confidence label
   assert.match(backtestSource, /:title="row\.evaluated \? `\$\{row\.label\}基于 \$\{row\.evaluated\} 条样本回测` : `\$\{row\.label\}等待回测样本`"/)
   assert.doesNotMatch(backtestSource, /function modelEvaluatedText/)
   assert.match(backtestSource, /isBest: !disabled && evaluationReady\.value && bestHitRate != null && row\.hitRate === bestHitRate/)
-  assert.match(viewSource, /if \(props\.evaluation && props\.evaluation\.status !== 'ready'\) return '样本不足'/)
+  assert.match(viewSource, /evaluationReadinessState\(props\.evaluation\)/)
+  assert.match(viewSource, /v-else-if="readiness\.ready" class="evaluation-module-stack"/)
   assert.doesNotMatch(backtestSource, /<span>\{\{ modelEvaluatedText\(row\) \}\}<\/span>/)
 })
 
@@ -660,80 +704,129 @@ test('coverage band nodes keep colored fills in dark mode', async () => {
 test('stats page focuses on analytics charts instead of prediction diagnostics', async () => {
   const appSource = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
   const viewSource = await readFile(new URL('./features/statistics/StatisticsView.vue', import.meta.url), 'utf8')
+  const axisSource = await readFile(new URL('./features/statistics/SampleStageAxis.vue', import.meta.url), 'utf8')
   const statisticsStyleSource = await readFile(new URL('./styles/features/statistics.css', import.meta.url), 'utf8')
+  const pageSummaryStyleSource = await readFile(new URL('./styles/page-summary.css', import.meta.url), 'utf8')
+  const headerElements = findElementsByClassToken(viewSource, 'stats-diagnostic-head')
+  const statsOwnerRule = statisticsStyleSource.match(/^\.stats-analytics-panel \{([^}]+)\}/m)?.[1] || ''
 
   assert.match(appSource, /import StatisticsView from '\.\/features\/statistics\/StatisticsView\.vue'/)
   assert.match(appSource, /<StatisticsView[\s\S]+:stats="stats"/)
-  assert.doesNotMatch(viewSource, /class="product-panel prediction-strip stats-prediction-strip"/)
   assert.doesNotMatch(viewSource, /<h2>预测依据<\/h2>/)
   assert.match(viewSource, /class="stats-diagnostic-title-row"/)
   assert.match(viewSource, /class="stats-diagnostic-title-stack"/)
-  assert.match(viewSource, /class="stats-diagnostic-tags stats-diagnostic-stage-meta"/)
-  assert.match(viewSource, /class="stats-diagnostic-stage-chip"/)
-  assert.doesNotMatch(viewSource, /class="stats-diagnostic-sample-pill"/)
+  assert.equal(headerElements.length, 1)
+  assert.equal(headerElements[0].tagName, 'header')
+  assert.ok(headerElements[0].start >= 0 && headerElements[0].start < headerElements[0].end)
+  const headerSection = headerElements[0].section
+  const summaryElements = findElementsByClassToken(headerSection, 'page-summary-chips')
+  const headerChipElements = findElementsByClassToken(headerSection, 'page-summary-chip')
+
+  assert.doesNotMatch(headerSection, /最大偏差/)
+  assert.equal(headerChipElements.length, 2)
+  assert.equal(summaryElements.length, 1)
+  assert.ok(summaryElements[0].start >= 0 && summaryElements[0].start < summaryElements[0].end)
+  const summarySection = summaryElements[0].section
+  const chipElements = findElementsByClassToken(summarySection, 'page-summary-chip')
+  const stateChipElements = chipElements.filter(({ section }) => section.includes('maturity.label'))
+  const stageChipElements = chipElements.filter(({ section }) => section.includes('<small>阶段</small>'))
+
+  assert.equal(chipElements.length, 2)
+  assert.ok(chipElements.every(({ start, end }) => start >= 0 && start < end))
+  assert.equal(stateChipElements.length, 1)
+  assert.equal(stageChipElements.length, 1)
+  for (const obsoleteClassToken of [
+    'stats-prediction-strip',
+    'stats-diagnostic-tags',
+    'stats-diagnostic-stage-meta',
+    'stats-diagnostic-stage-chip',
+    'stats-diagnostic-sample-pill',
+    'sample-reliability-value',
+    'sample-stage-current',
+    'sample-stage-current-name',
+    'sample-stage-current-note',
+    'stats-diagnostic-panel',
+    'stats-diagnostic-note',
+    'stats-summary-bar',
+    'stats-diagnostic-pill',
+    'sample-stage-node',
+    'sample-stage-tick',
+    'context-progress-list',
+  ]) {
+    assert.equal(
+      findElementsByClassToken(viewSource, obsoleteClassToken).length,
+      0,
+      `obsolete class token remains: ${obsoleteClassToken}`,
+    )
+  }
+  assert.match(viewSource, /class="sample-reliability-title"/)
+  assert.match(viewSource, /class="sample-reliability-basis-tag"/)
+  assert.match(viewSource, /class="sample-stage-summary"/)
+  assert.match(viewSource, /class="sample-stage-count-value"/)
   assert.doesNotMatch(viewSource, /<span>样本<\/span>/)
   assert.doesNotMatch(viewSource, /sampleStageText\(stats\.sample_stage\)/)
-  assert.match(viewSource, /sampleStageRangeText/)
-  assert.match(viewSource, /sampleStageDriverText/)
-  assert.match(viewSource, /class="stats-diagnostic-panel"/)
-  assert.match(viewSource, /class="stats-diagnostic-primary"/)
+  assert.match(viewSource, /class="stats-task-stack"/)
+  assert.match(viewSource, /class="stats-task-card sample-reliability-card"/)
+  assert.match(viewSource, /class="stats-task-card substat-deviation-card"/)
   assert.match(viewSource, /class="stats-diagnostic-context"/)
-  assert.doesNotMatch(viewSource, /class="stats-diagnostic-note"/)
-  assert.match(viewSource, /statsReliabilityNote\(totalSamples\)/)
+  assert.match(viewSource, /statsReliabilityNote\(totalSamples\.value\)/)
   assert.match(viewSource, /class="stats-diagnostic-deviations"/)
   assert.match(viewSource, /class="stats-diagnostic-deviation hot"/)
   assert.match(viewSource, /class="stats-diagnostic-deviation warn"/)
-  assert.doesNotMatch(viewSource, /class="stats-summary-bar"/)
   assert.doesNotMatch(viewSource, /statsSummaryItems/)
-  assert.doesNotMatch(viewSource, /class="stats-diagnostic-pill"/)
   assert.match(viewSource, /基于 \$\{stats\.total_rolls \|\| 0\} 条样本/)
-  assert.match(viewSource, /class="stats-empty-state"/)
+  assert.doesNotMatch(viewSource, /class="stats-empty-state"/)
   assert.match(viewSource, /class="substat-deviation-chart"/)
   assert.match(viewSource, /class="deviation-axis-scale"/)
-  assert.match(viewSource, /class="sample-stage-axis"/)
-  assert.match(viewSource, /class="sample-stage-marker"/)
-  assert.match(viewSource, /class="sample-stage-boundary-tick"/)
-  assert.match(viewSource, /class="sample-stage-boundaries"/)
-  assert.match(viewSource, /class="sample-stage-segments"/)
-  assert.doesNotMatch(viewSource, /class="sample-stage-node"/)
-  assert.match(viewSource, /class="sample-stage-current"/)
-  assert.match(viewSource, /class="sample-stage-current-name"/)
-  assert.match(viewSource, /class="sample-stage-current-note"/)
+  assert.match(viewSource, /<SampleStageAxis/)
+  assert.match(axisSource, /class="sample-stage-axis"/)
+  assert.match(axisSource, /class="sample-stage-marker"/)
+  assert.match(axisSource, /class="sample-stage-boundary-tick"/)
+  assert.match(axisSource, /class="sample-stage-boundaries"/)
+  assert.match(axisSource, /class="sample-stage-segments"/)
   assert.match(viewSource, /sampleStageGoalText/)
   assert.match(viewSource, /距「\$\{sampleStageStatus\.value\.nextStage\.caption\}」还差/)
   assert.doesNotMatch(viewSource, /<em>当前<\/em>/)
   assert.match(viewSource, /buildSampleStageProgress/)
   assert.match(viewSource, /sampleStagePercentText/)
   assert.match(viewSource, /sampleStageSegmentRows/)
-  assert.match(viewSource, /:style="\{ left: formatPercent\(stage\.axisProgress\) \}"/)
-  assert.match(viewSource, /:style="\{ left: formatPercent\(stage\.captionProgress\) \}"/)
-  assert.match(viewSource, /stage\.displayLabel/)
-  assert.doesNotMatch(viewSource, /class="sample-stage-tick"/)
-  assert.match(viewSource, /stage\.current/)
-  assert.match(viewSource, /class="stats-chart-card sample-stage-card"/)
-  assert.doesNotMatch(viewSource, /context-progress-list/)
+  assert.match(axisSource, /:style="\{ left: formatPercent\(stage\.axisProgress\) \}"/)
+  assert.match(axisSource, /:style="\{ left: formatPercent\(stage\.captionProgress\) \}"/)
+  assert.match(axisSource, /stage\.displayLabel/)
+  assert.match(axisSource, /stage\.current/)
+  assert.match(viewSource, /class="stats-task-card sample-reliability-card"/)
   assert.doesNotMatch(viewSource, /最大偏高/)
   assert.doesNotMatch(viewSource, /最大偏低/)
   assert.match(viewSource, /当前偏高/)
   assert.match(viewSource, /当前偏低/)
   assert.doesNotMatch(viewSource, /上下文监控/)
   assert.match(viewSource, /v-for="row in sortedStatFrequency"/)
-  assert.match(viewSource, /v-for="stage in sampleStageAxisRows"/)
-  assert.match(viewSource, /v-for="stage in sampleStageSegmentRows"/)
+  assert.match(axisSource, /v-for="stage in rows"/)
+  assert.match(axisSource, /v-for="stage in segments"/)
   assert.doesNotMatch(viewSource, /contextProgressRows/)
   assert.match(statisticsStyleSource, /\.substat-deviation-row \{/)
   assert.match(statisticsStyleSource, /\.stats-diagnostic-title-row \{/)
   assert.match(statisticsStyleSource, /\.stats-diagnostic-title-stack \{/)
-  assert.match(statisticsStyleSource, /\.stats-diagnostic-stage-meta \{/)
-  assert.match(statisticsStyleSource, /\.stats-diagnostic-stage-chip \{/)
-  assert.doesNotMatch(statisticsStyleSource, /\.stats-diagnostic-sample-pill \{/)
+  assert.match(pageSummaryStyleSource, /\.page-summary-chips \{/)
+  assert.match(pageSummaryStyleSource, /\.page-summary-chip \{/)
+  assert.match(pageSummaryStyleSource, /\.page-summary-chip--state i \{/)
+  assert.match(statisticsStyleSource, /\.sample-reliability-header \{/)
+  assert.match(statisticsStyleSource, /\.sample-reliability-basis-tag \{/)
+  assert.match(statisticsStyleSource, /\.sample-stage-count-value \{/)
+  assert.doesNotMatch(statisticsStyleSource, /\.stats-diagnostic-tags(?![\w-])/)
+  assert.doesNotMatch(statisticsStyleSource, /\.stats-diagnostic-stage-meta(?![\w-])/)
+  assert.doesNotMatch(statisticsStyleSource, /\.stats-diagnostic-stage-chip(?![\w-])/)
+  assert.doesNotMatch(statisticsStyleSource, /\.sample-reliability-value(?![\w-])/)
+  assert.doesNotMatch(statisticsStyleSource, /\.sample-stage-current(?:-name|-note)?(?![\w-])/)
+  assert.doesNotMatch(statisticsStyleSource, /\.stats-diagnostic-sample-pill(?![\w-])/)
   assert.match(statisticsStyleSource, /\.stats-diagnostic-context \{[\s\S]+font-weight: var\(--weight-supporting\);/)
-  assert.doesNotMatch(statisticsStyleSource, /\.stats-diagnostic-note/)
-  assert.doesNotMatch(statisticsStyleSource, /\.stats-diagnostic-meta \{/)
-  assert.match(statisticsStyleSource, /\.stats-diagnostic-panel \{/)
-  assert.match(statisticsStyleSource, /\.stats-diagnostic-primary \{/)
+  assert.doesNotMatch(statisticsStyleSource, /\.stats-diagnostic-note(?![\w-])/)
+  assert.doesNotMatch(statisticsStyleSource, /\.stats-diagnostic-meta(?![\w-])/)
+  assert.match(statsOwnerRule, /display: grid/)
+  assert.doesNotMatch(statsOwnerRule, /border|box-shadow|background/)
+  assert.match(statisticsStyleSource, /\.stats-task-stack \{/)
   assert.match(statisticsStyleSource, /\.stats-diagnostic-deviation \{/)
-  assert.doesNotMatch(statisticsStyleSource, /\.stats-summary-bar \{/)
+  assert.doesNotMatch(statisticsStyleSource, /\.stats-summary-bar(?![\w-])/)
   assert.match(statisticsStyleSource, /\.deviation-axis-scale \{/)
   assert.match(statisticsStyleSource, /\.sample-stage-marker \{/)
   assert.match(statisticsStyleSource, /--sample-stage-axis-inset: 32px;/)
@@ -741,18 +834,15 @@ test('stats page focuses on analytics charts instead of prediction diagnostics',
   assert.match(statisticsStyleSource, /\.sample-stage-boundary-tick \{/)
   assert.match(statisticsStyleSource, /\.sample-stage-boundaries span \{[\s\S]+position: absolute;/)
   assert.match(statisticsStyleSource, /\.sample-stage-segments span \{[\s\S]+position: absolute;/)
-  assert.doesNotMatch(statisticsStyleSource, /\.sample-stage-node \{/)
-  assert.doesNotMatch(statisticsStyleSource, /\.sample-stage-milestones/)
-  assert.match(statisticsStyleSource, /\.stats-empty-state \{/)
-  assert.match(statisticsStyleSource, /\.sample-stage-current-name \{/)
-  assert.match(statisticsStyleSource, /\.sample-stage-current-note \{/)
-  assert.doesNotMatch(statisticsStyleSource, /\.sample-stage-current em \{/)
+  assert.doesNotMatch(statisticsStyleSource, /\.sample-stage-node(?![\w-])/)
+  assert.doesNotMatch(statisticsStyleSource, /\.sample-stage-milestones(?![\w-])/)
+  assert.doesNotMatch(statisticsStyleSource, /\.stats-empty-state \{/)
   assert.match(statisticsStyleSource, /\.sample-stage-boundaries span\.current strong \{/)
   assert.match(statisticsStyleSource, /\.sample-stage-axis \{/)
-  assert.match(statisticsStyleSource, /\.sample-stage-card \{/)
+  assert.match(statisticsStyleSource, /\.sample-stage-summary \{/)
   assert.match(statisticsStyleSource, /\.stats-analytics-panel \{[^}]+min-width: 0;/)
-  assert.match(statisticsStyleSource, /\.stats-chart-card \{[^}]+min-width: 0;/)
-  assert.match(statisticsStyleSource, /\.stats-chart-grid \{[^}]+min-width: 0;/)
-  assert.match(statisticsStyleSource, /grid-template-columns: minmax\(0, 1fr\);/)
-  assert.doesNotMatch(statisticsStyleSource, /\.context-progress-row \{/)
+  assert.match(statisticsStyleSource, /\.stats-task-card \{[^}]+min-width: 0;/)
+  assert.match(statisticsStyleSource, /\.stats-task-stack \{[^}]+min-width: 0;/)
+  assert.match(statisticsStyleSource, /@media \(max-width: 860px\)[\s\S]+\.sample-stage-summary \{[^}]+justify-items: start;/)
+  assert.doesNotMatch(statisticsStyleSource, /\.context-progress-row(?![\w-])/)
 })

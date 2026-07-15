@@ -10,11 +10,11 @@ function validExpandedMode(mode) {
     : HISTORY_PANEL_MODE.COMPACT
 }
 
-export function initialHistoryPanelState(storedMinimized, storedLastExpandedMode) {
+export function initialHistoryPanelState(storedMinimized, storedLastExpandedMode, { emptyHistory = false } = {}) {
+  const hasSavedPreference = storedMinimized === 'true' || storedMinimized === 'false'
+  const minimized = storedMinimized === 'true' || (!hasSavedPreference && emptyHistory)
   return {
-    mode: storedMinimized === 'true'
-      ? HISTORY_PANEL_MODE.MINIMIZED
-      : HISTORY_PANEL_MODE.COMPACT,
+    mode: minimized ? HISTORY_PANEL_MODE.MINIMIZED : HISTORY_PANEL_MODE.COMPACT,
     lastExpandedMode: validExpandedMode(storedLastExpandedMode),
   }
 }

@@ -86,3 +86,10 @@ test('the showcase control cannot change a minimized panel behind the terminal',
   const state = { mode: HISTORY_PANEL_MODE.MINIMIZED, lastExpandedMode: HISTORY_PANEL_MODE.SHOWCASE }
   assert.deepEqual(resolveHistoryPanelTransition(state, 'toggle-showcase'), state)
 })
+
+test('empty history defaults to minimized only when the user has no saved preference', () => {
+  assert.equal(initialHistoryPanelState(null, null, { emptyHistory: true }).mode, HISTORY_PANEL_MODE.MINIMIZED)
+  assert.equal(initialHistoryPanelState('false', null, { emptyHistory: true }).mode, HISTORY_PANEL_MODE.COMPACT)
+  assert.equal(initialHistoryPanelState('true', null, { emptyHistory: false }).mode, HISTORY_PANEL_MODE.MINIMIZED)
+  assert.equal(initialHistoryPanelState(null, null, { emptyHistory: false }).mode, HISTORY_PANEL_MODE.COMPACT)
+})

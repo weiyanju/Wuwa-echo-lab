@@ -260,6 +260,7 @@
   background: #f7f9fb;
 }
 .active-prediction-card { display: grid; align-content: center; min-height: 144px; gap: 6px; border: 0; border-radius: 0; padding: 0; padding-bottom: 16px; background: transparent; }
+.active-prediction-source { color: var(--steel); font-size: var(--text-caption); font-weight: var(--weight-supporting); }
 .active-prediction-table { display: grid; gap: 5px; }
 .active-prediction-line { display: grid; grid-template-columns: minmax(max-content, 1fr) max-content; align-items: center; gap: 6px; min-height: 26px; border: 1px solid transparent; border-radius: 10px; padding: 5px 6px; color: #526675; font-size: var(--text-caption); line-height: var(--leading-label); }
 .active-prediction-line:last-child { border-bottom: 0; }

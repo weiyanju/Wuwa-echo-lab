@@ -31,6 +31,7 @@ const emit = defineEmits(['select'])
 const initialPanelState = initialHistoryPanelState(
   localStorage.getItem('wuwa-floating-history-minimized'),
   localStorage.getItem('wuwa-floating-history-expanded-mode'),
+  { emptyHistory: sortVisibleEchoHistory(props.echoes).length === 0 },
 )
 const floatingHistoryRef = ref(null)
 const historyPanelMode = ref(initialPanelState.mode)
