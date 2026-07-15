@@ -261,16 +261,24 @@ test('shared sample experience owns cross-page maturity and empty metric semanti
   assert.ok(await lineCount('./shared/sampleExperience.js') <= 90)
 })
 
-test('sample readiness has one shared component and style owner', async () => {
+test('sample readiness shares state and layout primitives without forcing one page component', async () => {
   const sharedEntry = await readFile(new URL('./styles/page-summary.css', import.meta.url), 'utf8')
   const style = await readFile(new URL('./styles/sample-readiness.css', import.meta.url), 'utf8')
+  const statisticsStyle = await readFile(new URL('./styles/features/statistics.css', import.meta.url), 'utf8')
+  const evaluationStyle = await readFile(new URL('./styles/features/evaluation.css', import.meta.url), 'utf8')
+  const statisticsView = await readFile(new URL('./features/statistics/StatisticsView.vue', import.meta.url), 'utf8')
+  const evaluationView = await readFile(new URL('./features/evaluation/EvaluationView.vue', import.meta.url), 'utf8')
 
   assert.match(sharedEntry, /@import '\.\/sample-readiness\.css';/)
-  assert.match(style, /^\.sample-readiness-panel/m)
+  assert.match(style, /^\.sample-activation-state/m)
   assert.match(style, /^\.insight-request-state/m)
   assert.match(style, /^\.metric-placeholder/m)
-  assert.ok(await lineCount('./components/states/SampleReadinessPanel.vue') <= 70)
+  assert.doesNotMatch(statisticsView, /SampleReadinessPanel/)
+  assert.doesNotMatch(evaluationView, /SampleReadinessPanel/)
+  assert.doesNotMatch(statisticsStyle, /statistics-empty-milestone/)
+  assert.doesNotMatch(evaluationStyle, /evaluation-readiness-(?:step|steps|index|status)/)
   assert.ok(await lineCount('./components/states/InsightRequestState.vue') <= 45)
+  assert.ok(await lineCount('./features/evaluation/EvaluationReadinessState.vue').catch(() => Infinity) <= 90)
   assert.ok(await lineCount('./styles/sample-readiness.css') <= 120)
 })
 

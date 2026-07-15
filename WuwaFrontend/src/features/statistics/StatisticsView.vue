@@ -2,7 +2,6 @@
 import { computed } from 'vue'
 
 import InsightRequestState from '../../components/states/InsightRequestState.vue'
-import SampleReadinessPanel from '../../components/states/SampleReadinessPanel.vue'
 import { formatPercent, formatSignedPercentagePoints, sampleStageText } from '../../services/formatters.js'
 import { hasRecordedSamples, sampleMaturityState, sampleStageState } from '../../shared/sampleExperience.js'
 import {
@@ -28,11 +27,7 @@ const totalSamples = computed(() => props.stats?.total_rolls || 0)
 const hasSamples = computed(() => hasRecordedSamples(props.stats))
 const maturity = computed(() => sampleMaturityState(totalSamples.value))
 const stage = computed(() => sampleStageState(totalSamples.value))
-const statisticsContextText = computed(() => (
-  hasSamples.value
-    ? statsReliabilityNote(totalSamples.value)
-    : '尚无样本。录入第一条副词条后开始生成个人分布。'
-))
+const statisticsContextText = computed(() => statsReliabilityNote(totalSamples.value))
 const sampleStageStatus = computed(() => buildSampleStageProgress(totalSamples.value))
 const sampleStageProgress = computed(() => sampleStageStatus.value.axisProgress)
 const sampleStageAxisRows = computed(() => buildSampleStageAxisRows(totalSamples.value))
@@ -70,13 +65,16 @@ function deviationTitle(row, direction) {
 </script>
 
 <template>
-  <section class="stats-analytics-panel">
+  <section
+    class="stats-analytics-panel"
+    :class="{ 'stats-analytics-panel--empty': stats && !hasSamples }"
+  >
     <header class="stats-diagnostic-head">
       <div class="stats-diagnostic-title-row">
         <div class="stats-diagnostic-title-stack">
           <h2>统计诊断</h2>
-          <p v-if="stats" class="stats-diagnostic-context">{{ statisticsContextText }}</p>
-          <p v-else class="stats-diagnostic-context">正在读取统计数据。</p>
+          <p v-if="hasSamples" class="stats-diagnostic-context">{{ statisticsContextText }}</p>
+          <p v-else-if="!stats" class="stats-diagnostic-context">正在读取统计数据。</p>
         </div>
         <div v-if="stats" class="page-summary-chips" role="group" aria-label="统计摘要">
           <span
@@ -87,7 +85,7 @@ function deviationTitle(row, direction) {
             <i v-if="maturity.hasSamples" aria-hidden="true"></i>
             {{ maturity.label }}
           </span>
-          <span class="page-summary-chip" :title="`当前阶段 ${stage.rangeLabel}`">
+          <span v-if="maturity.hasSamples" class="page-summary-chip" :title="`当前阶段 ${stage.rangeLabel}`">
             <small>阶段</small>
             <span class="page-summary-chip__value">{{ stage.rangeLabel }}</span>
           </span>
@@ -103,26 +101,21 @@ function deviationTitle(row, direction) {
       @retry="emit('retry')"
     />
 
-    <SampleReadinessPanel
+    <section
       v-else-if="!hasSamples"
-      title="从第一条样本开始建立统计诊断"
-      description="录入一条副词条后即可查看实际分布；达到 500 条后进入总体偏差阶段。"
-      :current="0"
-      :target="500"
-      progress-label="距离总体偏差阶段还差 500 条"
-      strategy-text="当前由规则基线主导"
-      action-label="去工作台录入第一条"
-      @action="emit('start-recording')"
+      class="sample-activation-state statistics-empty-state"
+      aria-label="统计诊断数据准备"
     >
-      <template #detail>
-        <SampleStageAxis
-          :progress="sampleStageProgress"
-          :rows="sampleStageAxisRows"
-          :segments="sampleStageSegmentRows"
-          :aria-label="sampleStageAriaLabel"
-        />
-      </template>
-    </SampleReadinessPanel>
+      <div class="sample-activation-copy">
+        <h3>这里将显示你的个人副词条分布</h3>
+        <p>录入第一条副词条即可开始。</p>
+      </div>
+      <button
+        class="button-primary sample-activation-action"
+        type="button"
+        @click="emit('start-recording')"
+      >去工作台录入</button>
+    </section>
 
     <div v-else class="stats-task-stack">
       <section

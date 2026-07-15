@@ -9,10 +9,21 @@
   background: transparent;
 }
 
+.product-panel.evaluation-panel--empty {
+  min-height: 490px;
+  border: 1px solid rgba(216, 226, 234, 0.9);
+  border-radius: 16px;
+  padding: 26px 28px;
+  background: #fbfcfe;
+}
+
 .product-panel.evaluation-panel > .evaluation-status-bar {
   margin: 0 0 20px;
   padding: 0 2px 14px;
 }
+
+.product-panel.evaluation-panel--empty > .evaluation-status-bar { margin-bottom: 0; }
+.evaluation-panel--empty > .evaluation-readiness-state { margin-top: 0; }
 
 .evaluation-module-stack {
   display: grid;

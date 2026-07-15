@@ -3588,8 +3588,12 @@
   padding: 2px 2px 14px;
 }
 
-.evaluation-panel > .sample-readiness-panel,
 .evaluation-panel > .insight-request-state { margin-top: 18px; }
+
+.app-shell.theme-dark .product-panel.evaluation-panel--empty {
+  border-color: rgba(63, 86, 102, 0.72);
+  background: #1d2a35;
+}
 
 .evaluation-status-bar h2 {
   margin: 0;
@@ -4227,6 +4231,8 @@
 }
 
 @media (max-width: 520px) {
+
+  .product-panel.evaluation-panel--empty { padding: 22px 20px; }
 
   .evaluation-metrics,
 .evaluation-focus-grid,

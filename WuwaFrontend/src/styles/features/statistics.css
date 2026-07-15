@@ -4,6 +4,15 @@
   min-width: 0;
 }
 
+.stats-analytics-panel--empty {
+  min-height: 490px;
+  gap: 0;
+  border: 1px solid rgba(216, 226, 234, 0.9);
+  border-radius: 16px;
+  padding: 26px 28px;
+  background: #fbfcfe;
+}
+
 .stats-diagnostic-head {
   display: flex;
   align-items: flex-start;
@@ -179,9 +188,6 @@
   line-height: var(--leading-caption);
   text-align: right;
 }
-
-.sample-readiness-detail .sample-stage-axis { margin-top: 0; }
-.sample-readiness-detail .sample-stage-track { margin-top: 4px; }
 
 .sample-stage-axis {
   --sample-stage-axis-inset: 32px;
@@ -626,6 +632,13 @@
   .stats-task-card {
     padding: 16px;
   }
+
+  .stats-analytics-panel--empty { padding: 22px 20px; }
+}
+
+.app-shell.theme-dark .stats-analytics-panel--empty {
+  border-color: rgba(63, 86, 102, 0.72);
+  background: #1d2a35;
 }
 
 .app-shell.theme-dark .stats-diagnostic-head {

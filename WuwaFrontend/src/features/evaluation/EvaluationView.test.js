@@ -15,15 +15,32 @@ test('evaluation uses shared maturity and keeps readiness inside the page', asyn
 
 test('evaluation hides result modules until the backend marks evaluation ready', async () => {
   const source = await readFile(new URL('./EvaluationView.vue', import.meta.url), 'utf8')
+  const readinessSource = await readFile(new URL('./EvaluationReadinessState.vue', import.meta.url), 'utf8').catch(() => '')
   const stackIndex = source.indexOf('v-else-if="readiness.ready" class="evaluation-module-stack"')
-  const readinessIndex = source.indexOf('v-else-if="evaluation"')
+  const readinessIndex = source.indexOf('<EvaluationReadinessState')
   assert.ok(stackIndex >= 0 && readinessIndex > stackIndex)
-  assert.match(source, /<SampleReadinessPanel/)
-  assert.match(source, /模型评估将在积累有效历史后开启/)
-  assert.match(source, /回测准备中/)
-  assert.match(source, /:current="readiness\.evaluated"/)
-  assert.match(source, /:target="readiness\.target"/)
-  assert.match(source, /前 20 条用于建立上下文/)
+  assert.match(source, /import EvaluationReadinessState from '\.\/EvaluationReadinessState\.vue'/)
+  assert.match(source, /<EvaluationReadinessState[\s\S]+@start-recording="emit\('start-recording'\)"/)
+  const readinessElement = source.match(/<EvaluationReadinessState[\s\S]*?\/>/)?.[0] || ''
+  assert.doesNotMatch(readinessElement, /:evaluation=/)
+  assert.match(readinessSource, /class="sample-activation-state evaluation-readiness-state"/)
+  assert.match(readinessSource, /积累历史后自动开启模型评估/)
+  assert.match(readinessSource, /先建立 20 条上下文，再积累 20 条有效回测。/)
+  assert.match(readinessSource, /class="button-primary sample-activation-action"/)
+  assert.doesNotMatch(readinessSource, /评估准备|evaluation-readiness-steps|当前预测仍由规则基线提供|进行中|等待中/)
+  assert.doesNotMatch(source, /<SampleReadinessPanel/)
+})
+
+test('evaluation zero state uses one centered blue action on a quiet task surface', async () => {
+  const sharedStyles = await readFile(new URL('../../styles/sample-readiness.css', import.meta.url), 'utf8')
+  const styles = await readFile(new URL('../../styles/features/evaluation.css', import.meta.url), 'utf8')
+  const layoutStyles = await readFile(new URL('../../styles/features/evaluation-layout.css', import.meta.url), 'utf8')
+  const emptyOwnerRule = layoutStyles.match(/^\.product-panel\.evaluation-panel--empty \{([^}]+)\}/m)?.[1] || ''
+
+  assert.match(sharedStyles, /\.sample-activation-action\s*\{[^}]*background: var\(--primary\);/s)
+  assert.match(emptyOwnerRule, /border: 1px solid/)
+  assert.match(emptyOwnerRule, /background: #fbfcfe/)
+  assert.doesNotMatch(styles, /evaluation-readiness-(?:step|steps|index|status)/)
 })
 
 test('unavailable evaluation metrics use a numeric placeholder instead of a semantic error', async () => {
@@ -75,4 +92,5 @@ test('evaluation header exposes the shared accessible summary group', async () =
   assert.match(source, /class="page-summary-chips" role="group" aria-label="评估摘要"/)
   assert.equal((source.match(/class="page-summary-chip(?: page-summary-chip--state)?"/g) || []).length, 3)
   assert.equal((source.match(/class="page-summary-chip__value"/g) || []).length, 2)
+  assert.equal((source.match(/v-if="maturity\.hasSamples" class="page-summary-chip"/g) || []).length, 2)
 })

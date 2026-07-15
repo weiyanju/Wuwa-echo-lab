@@ -2,18 +2,19 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 
-test('zero-sample statistics shows readiness and never renders fake deviation results', async () => {
+test('zero-sample statistics uses the approved minimal entry and never renders fake deviation results', async () => {
   const source = await readFile(new URL('./StatisticsView.vue', import.meta.url), 'utf8')
   assert.match(source, /sampleMaturityState\(totalSamples\.value\)/)
   assert.match(source, /sampleStageState\(totalSamples\.value\)/)
   assert.match(source, /v-if="!stats"/)
   assert.match(source, /v-else-if="!hasSamples"/)
-  assert.match(source, /<SampleReadinessPanel/)
-  assert.match(source, /从第一条样本开始建立统计诊断/)
-  assert.match(source, /:current="0"/)
-  assert.match(source, /:target="500"/)
-  assert.match(source, /规则基线主导/)
-  assert.match(source, /<SampleStageAxis/)
+  assert.match(source, /class="sample-activation-state statistics-empty-state"/)
+  assert.match(source, /这里将显示你的个人副词条分布/)
+  assert.match(source, /录入第一条副词条即可开始。/)
+  assert.match(source, /class="button-primary sample-activation-action"/)
+  assert.doesNotMatch(source, /下一步|statistics-empty-milestones|当前预测仍由规则基线提供|500 条后/)
+  assert.equal((source.match(/<SampleStageAxis/g) || []).length, 1)
+  assert.doesNotMatch(source, /<SampleReadinessPanel/)
   assert.match(source, /v-else class="stats-task-stack"/)
   assert.ok(source.indexOf('v-else class="stats-task-stack"') < source.indexOf('class="stats-task-card substat-deviation-card"'))
 })
@@ -23,6 +24,7 @@ test('statistics zero state uses a neutral maturity chip without a green dot', a
   assert.match(source, /page-summary-chip--neutral/)
   assert.match(source, /<i v-if="maturity\.hasSamples" aria-hidden="true"><\/i>/)
   assert.match(source, /\{\{ maturity\.label \}\}/)
+  assert.match(source, /<span v-if="maturity\.hasSamples" class="page-summary-chip"/)
   assert.match(source, /\{\{ stage\.rangeLabel \}\}/)
 })
 
@@ -86,10 +88,11 @@ test('statistics task cards keep stage and deviation content with their owners',
   assert.match(source, /sortedStatFrequency\.value\.find\(\(row\) => row\.deviation < 0\)/)
 })
 
-test('statistics diagnosis keeps context at section level and avoids duplicate empty values', async () => {
+test('statistics diagnosis keeps populated context at section level and avoids duplicate empty values', async () => {
   const source = await readFile(new URL('./StatisticsView.vue', import.meta.url), 'utf8')
 
-  assert.match(source, /<h2>统计诊断<\/h2>\s*<p v-if="stats" class="stats-diagnostic-context">\{\{ statisticsContextText \}\}<\/p>/)
+  assert.match(source, /<h2>统计诊断<\/h2>\s*<p v-if="hasSamples" class="stats-diagnostic-context">\{\{ statisticsContextText \}\}<\/p>/)
+  assert.match(source, /<p v-else-if="!stats" class="stats-diagnostic-context">正在读取统计数据。<\/p>/)
   assert.doesNotMatch(source, /class="stats-diagnostic-note"/)
   assert.match(source, /hottestStatRow\?\.label \|\| '暂无明显偏高'/)
   assert.match(source, /coldestStatRow\?\.label \|\| '暂无明显偏低'/)
@@ -137,6 +140,21 @@ test('statistics task cards use a transparent page owner and responsive sibling 
   assert.match(styles, /\.app-shell\.theme-dark \.stats-task-card/)
 })
 
+test('statistics zero state uses one centered blue action on a quiet task surface', async () => {
+  const sharedStyles = await readFile(new URL('../../styles/sample-readiness.css', import.meta.url), 'utf8')
+  const styles = await readStatisticsStyles()
+  const stateRule = sharedStyles.match(/^\.sample-activation-state \{([^}]+)\}/m)?.[1] || ''
+  const emptyOwnerRule = styles.match(/^\.stats-analytics-panel--empty \{([^}]+)\}/m)?.[1] || ''
+
+  assert.match(stateRule, /place-items: center/)
+  assert.match(stateRule, /text-align: center/)
+  assert.doesNotMatch(stateRule, /border|background|box-shadow/)
+  assert.match(sharedStyles, /\.sample-activation-action\s*\{[^}]*background: var\(--primary\);/s)
+  assert.match(emptyOwnerRule, /border: 1px solid/)
+  assert.match(emptyOwnerRule, /background: #fbfcfe/)
+  assert.doesNotMatch(styles, /statistics-empty-milestone/)
+})
+
 test('statistics charts enable internal scrolling before their minimum width can overflow the page', async () => {
   const styles = await readStatisticsStyles()
 
@@ -177,6 +195,7 @@ test('statistics diagnosis header owns exactly two non-duplicated summary chips'
   assert.match(stateChipSection, /<i v-if="maturity\.hasSamples" aria-hidden="true"><\/i>/)
   assert.match(stateChipSection, /\{\{ maturity\.label \}\}/)
   const stageChipSection = stageChipElements[0].section
+  assert.match(stageChipSection, /v-if="maturity\.hasSamples"/)
   assert.match(stageChipSection, /<small>阶段<\/small>/)
   assert.match(stageChipSection, /class="page-summary-chip__value"/)
   assert.match(stageChipSection, /stage\.rangeLabel/)
