@@ -59,3 +59,9 @@ test('submodel module uses flat disclosure rows inside one shell', async () => {
   assert.match(layoutStyle, /\.model-backtest-card \.model-bars \{[^}]*gap: 0;[^}]*overflow: hidden;/)
   assert.match(layoutStyle, /\.model-backtest-card \.model-bars article[^}]*\{[^}]*border: 0;[^}]*border-radius: 0;[^}]*background: transparent;/)
 })
+
+test('submodel disclosure focus ring stays inside the clipped list shell', async () => {
+  const layoutStyle = await readFile(new URL('../../styles/features/evaluation-layout.css', import.meta.url), 'utf8')
+
+  assert.match(layoutStyle, /\.model-backtest-card \.model-bar-summary:focus-visible \{[^}]*outline-offset: -3px;/)
+})

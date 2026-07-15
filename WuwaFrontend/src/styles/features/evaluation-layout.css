@@ -114,6 +114,10 @@
   border-radius: 10px;
 }
 
+.evaluation-panel .model-backtest-card .model-bar-summary:focus-visible {
+  outline-offset: -3px;
+}
+
 .evaluation-panel .model-backtest-card .model-bars article,
 .evaluation-panel .model-backtest-card .model-bars article.best,
 .evaluation-panel .model-backtest-card .model-bars article.expanded,
