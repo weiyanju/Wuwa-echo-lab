@@ -33,11 +33,21 @@ test('model detail summary uses one native disclosure button without nested cont
   const source = await readFile(new URL('./EvaluationBacktest.vue', import.meta.url), 'utf8')
   const style = await readFile(new URL('../../styles/features/evaluation.css', import.meta.url), 'utf8')
 
-  assert.match(source, /<button\s+class="model-bar-summary"\s+type="button"\s+:aria-expanded="expandedModelDetailKey === row\.key"\s+@click="toggleModelDetail\(row\.key\)"/)
+  assert.match(source, /<button\s+class="model-bar-summary"\s+type="button"\s+:aria-expanded="expandedModelDetailKey === row\.key"\s+@click="toggleModelDetail\(row\.key, \$event\)"/)
   assert.match(source, /<span class="model-expand-state" aria-hidden="true">/)
   assert.doesNotMatch(source, /class="model-bar-summary"\s+role="button"/)
   assert.doesNotMatch(source, /<button\s+class="model-expand-state"/)
   assert.match(style, /\.model-bars article > \.model-bar-summary \{[\s\S]+border: 0;[\s\S]+background: transparent;[\s\S]+font: inherit;[\s\S]+appearance: none;/)
+})
+
+test('submodel disclosure preserves the clicked summary viewport position', async () => {
+  const source = await readFile(new URL('./EvaluationBacktest.vue', import.meta.url), 'utf8')
+
+  assert.match(source, /import \{ createModelDetailViewportAnchor \} from '\.\/modelDetailViewportAnchor\.js'/)
+  assert.match(source, /createModelDetailViewportAnchor\(\{\s+waitForUpdate: nextTick,\s+\}\)/)
+  assert.match(source, /function toggleModelDetail\(key, event\)/)
+  assert.match(source, /preserveModelDetailViewportAnchor\(event\?\.currentTarget, \(\) => \{/)
+  assert.match(source, /@click="toggleModelDetail\(row\.key, \$event\)"/)
 })
 
 test('dark inline Bayes detail inherits the shared expanded-row surface', async () => {

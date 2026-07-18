@@ -1,11 +1,12 @@
 <script setup>
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref } from 'vue'
 
 import chevronDownIcon from '../../assets/icons/chevron-down.svg'
 import helpCircleIcon from '../../assets/icons/help-circle.svg'
 import { modelBacktestNotes, modelOrder } from '../../data/modelPresentation.js'
 import { formatPercent, formatSignedPercent } from '../../services/formatters.js'
 import { ACTIVE_MODEL_WEIGHT_EPSILON } from '../../services/modelDetails.js'
+import { createModelDetailViewportAnchor } from './modelDetailViewportAnchor.js'
 
 const props = defineProps({
   evaluation: { type: Object, default: null },
@@ -16,6 +17,9 @@ const props = defineProps({
 const modelInsightViews = ref({})
 const selectedModelDetailKey = ref(null)
 const markovAxisDrag = ref(null)
+const preserveModelDetailViewportAnchor = createModelDetailViewportAnchor({
+  waitForUpdate: nextTick,
+})
 
 const modelDetailByKey = computed(() => new Map(props.modelDetails.map((model) => [model.key, model])))
 const evaluationReady = computed(() => props.evaluation?.status === 'ready')
@@ -163,8 +167,10 @@ function modelInsightClass(model) {
   return [weightDiagnosticClass(model), `model-${model.key}`, model.status]
 }
 
-function toggleModelDetail(key) {
-  selectedModelDetailKey.value = expandedModelDetailKey.value === key ? null : key
+function toggleModelDetail(key, event) {
+  void preserveModelDetailViewportAnchor(event?.currentTarget, () => {
+    selectedModelDetailKey.value = expandedModelDetailKey.value === key ? null : key
+  })
 }
 
 function modelDetailListForKey(key) {
@@ -346,7 +352,7 @@ onBeforeUnmount(() => {
             class="model-bar-summary"
             type="button"
             :aria-expanded="expandedModelDetailKey === row.key"
-            @click="toggleModelDetail(row.key)"
+            @click="toggleModelDetail(row.key, $event)"
             :aria-label="expandedModelDetailKey === row.key ? `收起${row.label}详情` : `展开${row.label}详情`"
           >
             <strong>
