@@ -199,7 +199,7 @@ test('evaluation feature owns overview, diagnostics, dark, and responsive styles
   assert.match(evaluation, /\.evaluation-status-bar \{/)
   assert.match(evaluation, /\.model-bars \{/)
   assert.match(evaluation, /\.fusion-weight-grid \{/)
-  assert.match(evaluation, /\.coverage-band-chart \{/)
+  assert.match(evaluation, /\.coverage-comparison \{/)
   assert.match(evaluation, /\.app-shell\.theme-dark \.model-bars article/)
   assert.match(evaluation, /@media \(max-width: 860px\)/)
   assert.match(evaluation, /@media \(max-width: 520px\)/)

@@ -28,7 +28,8 @@ test('fusion weight overview excludes first-choice markers while backtest keeps 
 
   assert.doesNotMatch(overviewSource, /legend-hit-triangle|hit-marker|首选回测|首选命中率/)
   assert.doesNotMatch(evaluationStyles, /\.legend-hit-triangle|\.hit-marker/)
-  assert.match(coreSource, /aria-label="首选到前五预测范围命中率"/)
+  assert.match(coreSource, /const coverageAriaLabel = computed/)
+  assert.match(coreSource, /:aria-label="coverageAriaLabel"/)
   assert.match(backtestSource, /model\.adjustment\?\.hit_rate/)
 })
 
@@ -38,4 +39,34 @@ test('fusion weight module uses one shell with flat metric cells', async () => {
   assert.match(style, /\.evaluation-fusion-module \.fusion-weight-grid \{[^}]*gap: 0;[^}]*overflow: hidden;/)
   assert.match(style, /\.evaluation-fusion-module \.fusion-weight-card \{[^}]*border: 0;[^}]*border-radius: 0;[^}]*background: transparent;/)
   assert.match(style, /\.evaluation-fusion-module \.evaluation-summary-line \{[^}]*border-right: 0;[^}]*border-bottom: 0;[^}]*border-left: 0;/)
+})
+
+test('fusion weights use semantic blue with a neutral baseline and no 3 plus 2 layout', async () => {
+  const styles = await readFile(
+    new URL('../../styles/features/evaluation.css', import.meta.url),
+    'utf8',
+  )
+  const layout = await readFile(
+    new URL('../../styles/features/evaluation-layout.css', import.meta.url),
+    'utf8',
+  )
+
+  assert.match(
+    styles,
+    /\.fusion-weight-grid article b \{[^}]*background: var\(--primary\);/s,
+  )
+  assert.match(styles, /\.base-marker \{[^}]*background: var\(--steel\);/s)
+  assert.doesNotMatch(styles, /\.base-marker \{[^}]*box-shadow:/s)
+  assert.match(
+    styles,
+    /\.fusion-weight-card\.disabled b \{[^}]*background: var\(--stone\);/s,
+  )
+  assert.match(
+    layout,
+    /@media \(max-width: 1000px\)[\s\S]*\.evaluation-panel \.evaluation-fusion-module \.fusion-weight-grid \{[^}]*grid-template-columns: 1fr;/s,
+  )
+  assert.doesNotMatch(
+    layout,
+    /@media \(max-width: 1180px\)[\s\S]{0,500}\.evaluation-panel \.evaluation-fusion-module \.fusion-weight-grid/s,
+  )
 })

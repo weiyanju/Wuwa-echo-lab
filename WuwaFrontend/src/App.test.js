@@ -655,7 +655,7 @@ test('evaluation metrics use backend values instead of preview fallbacks', async
   const detailSource = await readFile(new URL('./services/modelDetails.js', import.meta.url), 'utf8')
 
   assert.doesNotMatch(coreBacktestSource, /preview:\s*(2\.16|0\.86|0\.11|0\.34|0\.52)/)
-  assert.match(coreBacktestSource, /if \(metric\?\.value == null\) return '样本不足'/)
+  assert.match(coreBacktestSource, /Number\.isFinite\(value\) \? formatPercent\(value\) : '--'/)
   assert.match(backtestSource, /const evaluationReady = computed\(\(\) => props\.evaluation\?\.status === 'ready'/)
   assert.doesNotMatch(detailSource, /MODEL_BACKTEST_PREVIEW/)
   assert.ok(detailSource.includes('hitRate: evaluation?.model_scores?.[key]?.hit_rate ?? null'))
@@ -678,27 +678,20 @@ test('evaluation page exposes evaluated sample counts and gates confidence label
   assert.doesNotMatch(backtestSource, /<span>\{\{ modelEvaluatedText\(row\) \}\}<\/span>/)
 })
 
-test('coverage band nodes keep colored fills in dark mode', async () => {
+test('core coverage chart uses one semantic fill in both themes', async () => {
   const coreBacktestSource = await readFile(
     new URL('./features/evaluation/EvaluationCoreBacktest.vue', import.meta.url),
     'utf8',
   )
-  const styleSource = [
-    await readFile(new URL('./style.css', import.meta.url), 'utf8'),
-    await readFile(new URL('./styles/features/evaluation.css', import.meta.url), 'utf8'),
-    await readFile(new URL('./styles/controls.css', import.meta.url), 'utf8'),
-  ].join('\n')
+  const styleSource = await readFile(
+    new URL('./styles/features/evaluation.css', import.meta.url),
+    'utf8',
+  )
 
-  assert.match(coreBacktestSource, /class="coverage-band-node"/)
-  assert.match(coreBacktestSource, /:class="coverageNodeClass\(index\)"/)
-  assert.match(styleSource, /--coverage-node-color: #1769d2;/)
-  assert.match(styleSource, /--coverage-node-glow: rgba\(23, 105, 210, 0\.24\);/)
-  assert.match(styleSource, /\.coverage-band-node\.middle \{\s+--coverage-node-color: #218b93;/)
-  assert.match(styleSource, /\.coverage-band-node\.end \{\s+--coverage-node-color: #2c9f70;/)
-  assert.match(styleSource, /border: 1px solid rgba\(255, 255, 255, 0\.86\);/)
-  assert.match(styleSource, /\.app-shell\.theme-dark \.coverage-band-node \{\s+border-color: rgba\(237, 244, 248, 0\.32\);/)
-  assert.match(styleSource, /inset 0 1px 0 rgba\(255, 255, 255, 0\.24\);/)
-  assert.doesNotMatch(styleSource, /\.app-shell\.theme-dark \.sample-stage-marker,\s+\.app-shell\.theme-dark \.coverage-band-node/)
+  assert.match(coreBacktestSource, /class="coverage-bar-fill"/)
+  assert.match(styleSource, /\.coverage-bar-fill \{[\s\S]+background: var\(--primary\);/)
+  assert.doesNotMatch(coreBacktestSource, /coverage-band-node/)
+  assert.doesNotMatch(styleSource, /\.coverage-band-node/)
 })
 
 test('stats page focuses on analytics charts instead of prediction diagnostics', async () => {

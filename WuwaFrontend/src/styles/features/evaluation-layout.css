@@ -59,26 +59,6 @@
   line-height: var(--leading-body);
 }
 
-.evaluation-core-content {
-  min-width: 0;
-}
-
-.evaluation-core-module .chart-heading-stacked {
-  margin-bottom: 24px;
-}
-
-.evaluation-core-module .chart-heading h4 {
-  margin: 0;
-  color: #0b151a;
-  font-size: var(--text-card-title);
-  font-weight: var(--weight-control);
-  line-height: var(--leading-control);
-}
-
-.evaluation-core-module .coverage-band-chart {
-  padding: 14px 22px 0;
-}
-
 .evaluation-panel .evaluation-fusion-module .fusion-weight-grid {
   gap: 0;
   overflow: hidden;
@@ -164,10 +144,6 @@
   background: linear-gradient(180deg, rgba(30, 45, 57, 0.94), rgba(25, 39, 50, 0.92)), #1d2a35;
 }
 
-.app-shell.theme-dark .evaluation-core-module .chart-heading h4 {
-  color: var(--ink-deep);
-}
-
 .app-shell.theme-dark .evaluation-module-header > span {
   color: var(--charcoal);
 }
@@ -197,20 +173,20 @@
   background: rgba(55, 179, 127, 0.07);
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 1000px) {
   .evaluation-panel .evaluation-fusion-module .fusion-weight-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: 1fr;
   }
 
   .evaluation-panel .evaluation-fusion-module .fusion-weight-card {
-    border-bottom: 1px solid #e1e9ef;
-  }
-
-  .evaluation-panel .evaluation-fusion-module .fusion-weight-card:nth-child(3n) {
+    grid-template-columns: minmax(180px, 0.55fr) minmax(280px, 1fr);
+    align-items: center;
     border-right: 0;
+    border-bottom: 1px solid #e1e9ef;
+    padding: 14px 16px;
   }
 
-  .evaluation-panel .evaluation-fusion-module .fusion-weight-card:nth-last-child(-n + 2) {
+  .evaluation-panel .evaluation-fusion-module .fusion-weight-card:last-child {
     border-bottom: 0;
   }
 
@@ -242,9 +218,8 @@
     grid-template-columns: 1fr;
   }
 
-  .evaluation-panel .evaluation-fusion-module .fusion-weight-card,
-  .evaluation-panel .evaluation-fusion-module .fusion-weight-card:nth-child(3n),
-  .evaluation-panel .evaluation-fusion-module .fusion-weight-card:nth-last-child(-n + 2) {
+  .evaluation-panel .evaluation-fusion-module .fusion-weight-card {
+    grid-template-columns: 1fr;
     border-right: 0;
     border-bottom: 1px solid #e1e9ef;
   }
