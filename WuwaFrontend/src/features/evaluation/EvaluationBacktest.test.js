@@ -2,6 +2,20 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 
+function cssRuleBodies(source, selector) {
+  const bodies = []
+  const rulePattern = /([^{}]+)\{([^{}]*)\}/g
+
+  for (const match of source.matchAll(rulePattern)) {
+    const selectors = match[1].split(',').map((item) => item.trim())
+    if (selectors.includes(selector)) {
+      bodies.push(match[2])
+    }
+  }
+
+  return bodies
+}
+
 test('evaluation backtest owns model detail interactions and cleanup', async () => {
   const source = await readFile(new URL('./EvaluationBacktest.vue', import.meta.url), 'utf8')
 
@@ -14,7 +28,7 @@ test('evaluation backtest owns model detail interactions and cleanup', async () 
   assert.match(source, /class="evaluation-card evaluation-module model-backtest-card"/)
   assert.doesNotMatch(source, /<h3>核心回测<\/h3>/)
   assert.doesNotMatch(source, /class="evaluation-grid compact-evaluation-grid evaluation-chart-strip"/)
-  assert.match(source, /<Transition name="model-row-detail">/)
+  assert.match(source, /<Transition name="model-row-detail"/)
 })
 
 test('submodel diagnostics start collapsed and keep one selected row', async () => {
@@ -40,14 +54,17 @@ test('model detail summary uses one native disclosure button without nested cont
   assert.match(style, /\.model-bars article > \.model-bar-summary \{[\s\S]+border: 0;[\s\S]+background: transparent;[\s\S]+font: inherit;[\s\S]+appearance: none;/)
 })
 
-test('submodel disclosure preserves the clicked summary viewport position', async () => {
+test('submodel disclosure reveals expansion and preserves collapse position', async () => {
   const source = await readFile(new URL('./EvaluationBacktest.vue', import.meta.url), 'utf8')
 
   assert.match(source, /import \{ createModelDetailViewportAnchor \} from '\.\/modelDetailViewportAnchor\.js'/)
   assert.match(source, /createModelDetailViewportAnchor\(\{\s+waitForUpdate: nextTick,\s+\}\)/)
   assert.match(source, /function toggleModelDetail\(key, event\)/)
-  assert.match(source, /preserveModelDetailViewportAnchor\(event\?\.currentTarget, \(\) => \{/)
+  assert.match(source, /const action = expandedModelDetailKey\.value === key \? 'collapse' : 'expand'/)
+  assert.match(source, /preserveModelDetailViewportAnchor\(event\?\.currentTarget, \(\) => \{[\s\S]+selectedModelDetailKey\.value = expandedModelDetailKey\.value === key \? null : key[\s\S]+\}, \{ action \}\)/)
   assert.match(source, /@click="toggleModelDetail\(row\.key, \$event\)"/)
+  assert.doesNotMatch(source, /scrollIntoView/)
+  assert.doesNotMatch(source, /behavior:\s*['"]smooth['"]/)
 })
 
 test('dark inline Bayes detail inherits the shared expanded-row surface', async () => {
@@ -67,11 +84,59 @@ test('submodel module uses flat disclosure rows inside one shell', async () => {
   const layoutStyle = await readFile(new URL('../../styles/features/evaluation-layout.css', import.meta.url), 'utf8')
 
   assert.match(layoutStyle, /\.model-backtest-card \.model-bars \{[^}]*gap: 0;[^}]*overflow: hidden;/)
-  assert.match(layoutStyle, /\.model-backtest-card \.model-bars article[^}]*\{[^}]*border: 0;[^}]*border-radius: 0;[^}]*background: transparent;/)
+  assert.match(layoutStyle, /\.model-backtest-card \.model-bars > article[^}]*\{[^}]*border: 0;[^}]*border-radius: 0;[^}]*background: transparent;/)
 })
 
 test('submodel disclosure focus ring stays inside the clipped list shell', async () => {
   const layoutStyle = await readFile(new URL('../../styles/features/evaluation-layout.css', import.meta.url), 'utf8')
 
   assert.match(layoutStyle, /\.model-backtest-card \.model-bar-summary:focus-visible \{[^}]*outline-offset: -3px;/)
+})
+
+test('submodel hover stays on the summary row and never masks nested detail articles', async () => {
+  const layoutStyle = await readFile(new URL('../../styles/features/evaluation-layout.css', import.meta.url), 'utf8')
+
+  assert.doesNotMatch(
+    layoutStyle,
+    /\.model-backtest-card \.model-bars article(?=[.:,\s{])/,
+  )
+  assert.doesNotMatch(
+    layoutStyle,
+    /\.model-backtest-card \.model-bars > article:hover/,
+  )
+  assert.match(
+    layoutStyle,
+    /\.model-backtest-card \.model-bars > article > \.model-bar-summary:hover[^}]*\{[^}]*background:/,
+  )
+  assert.match(
+    layoutStyle,
+    /\.theme-dark \.evaluation-panel \.model-backtest-card \.model-bars > article > \.model-bar-summary:hover[^}]*\{[^}]*background:/,
+  )
+})
+
+test('submodel detail close avoids layout animation and keeps light and dark clipping', async () => {
+  const source = await readFile(new URL('./EvaluationBacktest.vue', import.meta.url), 'utf8')
+  const style = await readFile(new URL('../../styles/features/evaluation.css', import.meta.url), 'utf8')
+  const detailBodies = cssRuleBodies(style, '.model-row-detail')
+  const darkDetailBodies = cssRuleBodies(style, '.app-shell.theme-dark .model-row-detail')
+  const enterBodies = cssRuleBodies(style, '.model-row-detail-enter-active')
+  const leaveBodies = cssRuleBodies(style, '.model-row-detail-leave-active')
+  const leaveTargetBodies = cssRuleBodies(style, '.model-row-detail-leave-to')
+
+  assert.ok(detailBodies.length > 0, 'expected the shared model detail surface rule')
+  assert.match(detailBodies[0], /overflow:\s*hidden;/)
+  assert.doesNotMatch(detailBodies.join('\n'), /max-height\s*:/)
+
+  assert.equal(darkDetailBodies.length, 1)
+  assert.match(darkDetailBodies[0], /overflow:\s*hidden;/)
+
+  assert.ok(enterBodies.length > 0, 'expected an enter-only detail transition')
+  assert.match(enterBodies[0], /opacity 140ms ease/)
+  assert.match(enterBodies[0], /transform 140ms ease/)
+  assert.doesNotMatch(enterBodies[0], /(?:max-height|height|margin|padding|position)\s+\d+ms/)
+
+  assert.deepEqual(leaveBodies, [], 'close must immediately update document flow instead of animating layout')
+  assert.deepEqual(leaveTargetBodies, [], 'close must not retain a delayed collapsed target state')
+  assert.match(source, /function finishModelDetailLeave\(_element, done\) \{\s+done\(\)\s+\}/)
+  assert.match(source, /<Transition name="model-row-detail" @leave="finishModelDetailLeave">/)
 })

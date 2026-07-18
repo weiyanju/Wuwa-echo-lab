@@ -39,6 +39,10 @@ test('fusion weight module uses one shell with flat metric cells', async () => {
   assert.match(style, /\.evaluation-fusion-module \.fusion-weight-grid \{[^}]*gap: 0;[^}]*overflow: hidden;/)
   assert.match(style, /\.evaluation-fusion-module \.fusion-weight-card \{[^}]*border: 0;[^}]*border-radius: 0;[^}]*background: transparent;/)
   assert.match(style, /\.evaluation-fusion-module \.evaluation-summary-line \{[^}]*border-right: 0;[^}]*border-bottom: 0;[^}]*border-left: 0;/)
+  assert.match(
+    style,
+    /\.app-shell\.theme-dark \.evaluation-panel \.evaluation-fusion-module \.evaluation-summary-line \{[^}]*background: transparent;/,
+  )
 })
 
 test('fusion weights use semantic blue with a neutral baseline and no 3 plus 2 layout', async () => {

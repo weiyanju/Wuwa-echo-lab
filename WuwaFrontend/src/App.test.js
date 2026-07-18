@@ -527,7 +527,7 @@ test('evaluation summary keeps original copy while styling dominant and auxiliar
   assert.match(source, /summary-model-link summary-model-link-auxiliary/)
 })
 
-test('model detail rows animate when expanded or collapsed', async () => {
+test('model detail rows keep disclosure semantics with bounded enter motion', async () => {
   const backtestSource = await readFile(new URL('./features/evaluation/EvaluationBacktest.vue', import.meta.url), 'utf8')
   const styleSource = [
     await readFile(new URL('./style.css', import.meta.url), 'utf8'),
@@ -539,17 +539,17 @@ test('model detail rows animate when expanded or collapsed', async () => {
   assert.match(backtestSource, /const selectedModelDetailKey = ref\(null\)/)
   assert.match(backtestSource, /return selectedRow \? selectedKey : null/)
   assert.match(backtestSource, /selectedModelDetailKey\.value = expandedModelDetailKey\.value === key \? null : key/)
-  assert.match(backtestSource, /<Transition name="model-row-detail">/)
+  assert.match(backtestSource, /<Transition name="model-row-detail" @leave="finishModelDetailLeave">/)
   assert.match(backtestSource, /class="ui-line-icon model-expand-chevron"/)
   assert.match(backtestSource, /iconMask\(chevronDownIcon\)/)
   assert.match(backtestSource, /v-if="expandedModelDetailKey === row\.key" class="model-row-detail"/)
-  assert.match(styleSource, /\.model-row-detail-enter-active,\s+\.model-row-detail-leave-active \{/)
+  assert.match(styleSource, /\.model-row-detail-enter-active \{/)
   assert.match(styleSource, /\.model-row-detail-enter-from \{/)
-  assert.match(styleSource, /\.model-row-detail-leave-to \{/)
-  assert.match(styleSource, /opacity 220ms ease/)
+  assert.match(styleSource, /opacity 140ms ease/)
+  assert.match(styleSource, /transform 140ms ease/)
   assert.match(styleSource, /\.model-row-detail-enter-from \{[\s\S]+transform: translateY\(6px\);/)
-  assert.match(styleSource, /\.model-row-detail-leave-to \{[\s\S]+transform: translateY\(0\);/)
-  assert.doesNotMatch(styleSource, /\.model-row-detail-enter-from,\s+\.model-row-detail-leave-to \{[\s\S]+translateY\(-6px\)/)
+  assert.doesNotMatch(styleSource, /\.model-row-detail-leave-active/)
+  assert.doesNotMatch(styleSource, /\.model-row-detail-leave-to/)
   assert.match(styleSource, /\.model-bars article\.expanded \.model-expand-chevron \{\s+transform: rotate\(180deg\);/)
 })
 
@@ -567,7 +567,7 @@ test('evaluation reduced motion overrides are declared after evaluation animatio
   )
   assert.match(
     reducedMotionSource,
-    /\.summary-model-link,[\s\S]+\.model-expand-chevron,[\s\S]+\.model-row-detail-enter-active,[\s\S]+\.model-row-detail-leave-active \{[\s\S]+transition: none;/,
+    /\.summary-model-link,[\s\S]+\.model-expand-chevron,[\s\S]+\.model-row-detail-enter-active \{[\s\S]+transition: none;/,
   )
 })
 

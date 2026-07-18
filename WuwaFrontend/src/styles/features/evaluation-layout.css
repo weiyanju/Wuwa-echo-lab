@@ -30,6 +30,12 @@
   gap: 18px;
 }
 
+.evaluation-detail-viewport-tail {
+  width: 100%;
+  height: 0;
+  pointer-events: none;
+}
+
 .evaluation-panel .evaluation-module {
   min-width: 0;
   border: 1px solid #dce5ec;
@@ -109,12 +115,12 @@
   outline-offset: -3px;
 }
 
-.evaluation-panel .model-backtest-card .model-bars article,
-.evaluation-panel .model-backtest-card .model-bars article.best,
-.evaluation-panel .model-backtest-card .model-bars article.expanded,
-.evaluation-panel .model-backtest-card .model-bars article.best.expanded,
-.evaluation-panel .model-backtest-card .model-bars article.disabled,
-.evaluation-panel .model-backtest-card .model-bars article.disabled.expanded {
+.evaluation-panel .model-backtest-card .model-bars > article,
+.evaluation-panel .model-backtest-card .model-bars > article.best,
+.evaluation-panel .model-backtest-card .model-bars > article.expanded,
+.evaluation-panel .model-backtest-card .model-bars > article.best.expanded,
+.evaluation-panel .model-backtest-card .model-bars > article.disabled,
+.evaluation-panel .model-backtest-card .model-bars > article.disabled.expanded {
   border: 0;
   border-bottom: 1px solid #e1e9ef;
   border-radius: 0;
@@ -122,16 +128,16 @@
   box-shadow: none;
 }
 
-.evaluation-panel .model-backtest-card .model-bars article:last-child {
+.evaluation-panel .model-backtest-card .model-bars > article:last-child {
   border-bottom: 0;
 }
 
-.evaluation-panel .model-backtest-card .model-bars article:hover,
-.evaluation-panel .model-backtest-card .model-bars article.expanded {
+.evaluation-panel .model-backtest-card .model-bars > article > .model-bar-summary:hover,
+.evaluation-panel .model-backtest-card .model-bars > article.expanded > .model-bar-summary {
   background: rgba(23, 105, 210, 0.035);
 }
 
-.evaluation-panel .model-backtest-card .model-bars article.best {
+.evaluation-panel .model-backtest-card .model-bars > article.best > .model-bar-summary {
   background: rgba(44, 159, 112, 0.035);
 }
 
@@ -154,7 +160,7 @@
 }
 
 .app-shell.theme-dark .evaluation-panel .evaluation-fusion-module .fusion-weight-card,
-.app-shell.theme-dark .evaluation-panel .model-backtest-card .model-bars article {
+.app-shell.theme-dark .evaluation-panel .model-backtest-card .model-bars > article {
   border-color: rgba(63, 86, 102, 0.72);
   background: transparent;
 }
@@ -164,12 +170,16 @@
   box-shadow: inset 0 0 0 1px rgba(217, 154, 27, 0.2);
 }
 
-.app-shell.theme-dark .evaluation-panel .model-backtest-card .model-bars article:hover,
-.app-shell.theme-dark .evaluation-panel .model-backtest-card .model-bars article.expanded {
+.app-shell.theme-dark .evaluation-panel .evaluation-fusion-module .evaluation-summary-line {
+  background: transparent;
+}
+
+.app-shell.theme-dark .evaluation-panel .model-backtest-card .model-bars > article > .model-bar-summary:hover,
+.app-shell.theme-dark .evaluation-panel .model-backtest-card .model-bars > article.expanded > .model-bar-summary {
   background: rgba(52, 113, 164, 0.1);
 }
 
-.app-shell.theme-dark .evaluation-panel .model-backtest-card .model-bars article.best {
+.app-shell.theme-dark .evaluation-panel .model-backtest-card .model-bars > article.best > .model-bar-summary {
   background: rgba(55, 179, 127, 0.07);
 }
 

@@ -322,7 +322,7 @@
 }
 
 .app-shell.theme-dark .model-row-detail {
-  overflow: visible;
+  overflow: hidden;
   border-top-color: rgba(55, 179, 127, 0.2);
   border-bottom-color: rgba(55, 179, 127, 0.14);
   background:
@@ -3403,7 +3403,6 @@
 
 .model-row-detail {
   box-sizing: border-box;
-  max-height: 980px;
   overflow: hidden;
   border-top: 1px solid rgba(44, 159, 112, 0.16);
   margin: 7px 0 0;
@@ -3412,44 +3411,19 @@
   background: linear-gradient(180deg, rgba(247, 251, 249, 0.44), rgba(247, 251, 249, 0));
 }
 
-.model-row-detail-enter-active,
-.model-row-detail-leave-active {
+.model-row-detail-enter-active {
   transform-origin: top center;
   transition:
-    opacity 220ms ease,
-    transform 220ms ease,
-    max-height 260ms ease,
-    margin-top 220ms ease,
-    padding-top 220ms ease,
-    padding-bottom 220ms ease,
-    border-color 220ms ease;
+    opacity 140ms ease,
+    transform 140ms ease;
 }
 
 .model-row-detail-enter-from {
-  max-height: 0;
-  margin-top: 0;
-  border-top-color: transparent;
-  border-bottom-color: transparent;
-  padding-top: 0;
-  padding-bottom: 0;
   opacity: 0;
   transform: translateY(6px);
 }
 
-.model-row-detail-leave-to {
-  max-height: 0;
-  margin-top: 0;
-  border-top-color: transparent;
-  border-bottom-color: transparent;
-  padding-top: 0;
-  padding-bottom: 0;
-  opacity: 0;
-  transform: translateY(0);
-}
-
-.model-row-detail-enter-to,
-.model-row-detail-leave-from {
-  max-height: 980px;
+.model-row-detail-enter-to {
   opacity: 1;
   transform: translateY(0);
 }
@@ -4577,8 +4551,7 @@
   .summary-model-link,
   .fusion-weight-card,
   .model-expand-chevron,
-  .model-row-detail-enter-active,
-  .model-row-detail-leave-active {
+  .model-row-detail-enter-active {
     transition: none;
   }
 }

@@ -168,9 +168,14 @@ function modelInsightClass(model) {
 }
 
 function toggleModelDetail(key, event) {
+  const action = expandedModelDetailKey.value === key ? 'collapse' : 'expand'
   void preserveModelDetailViewportAnchor(event?.currentTarget, () => {
     selectedModelDetailKey.value = expandedModelDetailKey.value === key ? null : key
-  })
+  }, { action })
+}
+
+function finishModelDetailLeave(_element, done) {
+  done()
 }
 
 function modelDetailListForKey(key) {
@@ -326,6 +331,7 @@ function modelEvidenceNote(model, index) {
 
 onBeforeUnmount(() => {
   endMarkovAxisDrag()
+  preserveModelDetailViewportAnchor.dispose()
 })
 </script>
 
@@ -370,7 +376,7 @@ onBeforeUnmount(() => {
           <i class="model-row-progress" :title="modelProgressTitle(row)">
             <b :style="{ width: row.hitRate == null ? '0%' : `${Math.max(row.relativeHitRate * 92, 8)}%` }"></b>
           </i>
-          <Transition name="model-row-detail">
+          <Transition name="model-row-detail" @leave="finishModelDetailLeave">
             <div v-if="expandedModelDetailKey === row.key" class="model-row-detail" @click.stop>
               <article
                 v-for="model in modelDetailListForKey(row.key)"
