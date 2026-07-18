@@ -209,6 +209,7 @@ test('sample stage weight guide uses the approved semantic matrix styling', asyn
   const chevronRule = styles.match(/^\.sample-stage-guide-chevron \{([^}]+)\}/m)?.[1] || ''
   const currentRailRule = styles.match(/^\.sample-stage-current-rail \{([^}]+)\}/m)?.[1] || ''
   const valueRule = styles.match(/^\.sample-stage-weight-value \{([^}]+)\}/m)?.[1] || ''
+  const noteRule = styles.match(/^\.sample-stage-weight-note \{([^}]+)\}/m)?.[1] || ''
   const stageTrackFillRule = styles.match(/^\.sample-stage-track b \{([^}]+)\}/m)?.[1] || ''
 
   assert.match(guideRule, /position: relative/)
@@ -241,13 +242,10 @@ test('sample stage weight guide uses the approved semantic matrix styling', asyn
   assert.match(valueRule, /font-variant-numeric: tabular-nums/)
   assert.match(valueRule, /font-feature-settings: "tnum"/)
   assert.match(valueRule, /text-align: center/)
+  assert.match(noteRule, /font-size: var\(--text-caption\)/)
   assert.match(styles, /\.sample-stage-weight-model-column \{[^}]*width: 96px;/s)
   assert.match(styles, /\.sample-stage-weight-table \{[^}]*table-layout: fixed;/s)
 
-  assert.match(
-    styles,
-    /@media \(max-width: 680px\) \{[\s\S]*?\.sample-stage-weight-scroll \{[^}]*overflow-x: auto;[^}]*\}[\s\S]*?\.sample-stage-weight-table \{[^}]*min-width: 688px;/,
-  )
   assert.match(
     styles,
     /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.sample-stage-guide-enter-active,\s*\.sample-stage-guide-leave-active \{[^}]*transition: none;/,
@@ -258,6 +256,15 @@ test('sample stage weight guide uses the approved semantic matrix styling', asyn
   assert.match(styles, /\.app-shell\.theme-dark \.sample-stage-current-rail \{[^}]*background: #38b37f;/s)
   assert.match(styles, /\.app-shell\.theme-dark \.sample-stage-track b \{[^}]*background: #38b37f;/s)
   assert.match(styles, /\.app-shell\.theme-dark \.sample-stage-guide-trigger\[aria-expanded="true"\] \{[^}]*color: var\(--charcoal\);[^}]*background: transparent;/s)
+})
+
+test('sample stage weight matrix scrolls as soon as the popover clamps to the viewport', async () => {
+  const styles = await readStatisticsStyles()
+
+  assert.match(
+    styles,
+    /@media \(max-width: 743px\) \{[\s\S]*?\.sample-stage-weight-scroll \{[^}]*overflow-x: auto;[^}]*\}[\s\S]*?\.sample-stage-weight-table \{[^}]*min-width: 688px;/,
+  )
 })
 
 test('sample reliability card integrates the stage-weight guide with its existing progress summary', async () => {
