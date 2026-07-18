@@ -25,7 +25,10 @@ export function resolveSampleStageGuidePosition({
   )
   const rightLeft = triggerRect.right + ANCHOR_GAP
 
-  if (rightLeft + panelWidth <= viewportWidth - VIEWPORT_MARGIN) {
+  if (
+    rightLeft >= VIEWPORT_MARGIN
+    && rightLeft + panelWidth <= viewportWidth - VIEWPORT_MARGIN
+  ) {
     return {
       placement: 'right',
       left: rightLeft,
@@ -35,7 +38,10 @@ export function resolveSampleStageGuidePosition({
   }
 
   const leftLeft = triggerRect.left - ANCHOR_GAP - panelWidth
-  if (leftLeft >= VIEWPORT_MARGIN) {
+  if (
+    leftLeft >= VIEWPORT_MARGIN
+    && leftLeft + panelWidth <= viewportWidth - VIEWPORT_MARGIN
+  ) {
     return {
       placement: 'left',
       left: leftLeft,
