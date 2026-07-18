@@ -201,6 +201,65 @@ test('statistics diagnosis header owns exactly two non-duplicated summary chips'
   assert.match(stageChipSection, /stage\.rangeLabel/)
 })
 
+test('sample stage weight guide uses the approved semantic matrix styling', async () => {
+  const styles = await readStatisticsStyles()
+  const guideRule = styles.match(/^\.sample-stage-guide \{([^}]+)\}/m)?.[1] || ''
+  const triggerRule = styles.match(/^\.sample-stage-guide-trigger \{([^}]+)\}/m)?.[1] || ''
+  const popoverRule = styles.match(/^\.sample-stage-weight-popover \{([^}]+)\}/m)?.[1] || ''
+  const chevronRule = styles.match(/^\.sample-stage-guide-chevron \{([^}]+)\}/m)?.[1] || ''
+  const currentRailRule = styles.match(/^\.sample-stage-current-rail \{([^}]+)\}/m)?.[1] || ''
+  const valueRule = styles.match(/^\.sample-stage-weight-value \{([^}]+)\}/m)?.[1] || ''
+  const stageTrackFillRule = styles.match(/^\.sample-stage-track b \{([^}]+)\}/m)?.[1] || ''
+
+  assert.match(guideRule, /position: relative/)
+  assert.match(guideRule, /display: inline-flex/)
+  assert.match(triggerRule, /color: #5d6c7b/)
+  assert.match(triggerRule, /background: transparent/)
+  assert.match(styles, /\.sample-stage-guide-trigger:hover \{[^}]*color: var\(--primary\);[^}]*background: #f4f8ff;/s)
+  assert.match(styles, /\.sample-stage-guide-trigger:active \{[^}]*color: var\(--primary-deep\);/s)
+  assert.match(styles, /\.sample-stage-guide-trigger\[aria-expanded="true"\] \{[^}]*color: #5d6c7b;[^}]*background: transparent;/s)
+  assert.match(chevronRule, /width: 16px/)
+  assert.match(chevronRule, /height: 16px/)
+  assert.match(chevronRule, /transform: rotate\(-90deg\)/)
+
+  assert.match(popoverRule, /position: fixed/)
+  assert.match(popoverRule, /width: 720px/)
+  assert.match(popoverRule, /max-height: calc\(100vh - 24px\)/)
+  assert.match(popoverRule, /border: 1px solid var\(--hairline-soft\)/)
+  assert.match(popoverRule, /border-radius: 12px/)
+  assert.match(popoverRule, /background: var\(--canvas\)/)
+  assert.doesNotMatch(popoverRule, /box-shadow|linear-gradient|radial-gradient/)
+
+  assert.match(stageTrackFillRule, /background: #2c9f70/)
+  assert.doesNotMatch(stageTrackFillRule, /gradient/)
+  assert.match(currentRailRule, /width: 2px/)
+  assert.match(currentRailRule, /background: #2c9f70/)
+  assert.match(styles, /\.sample-stage-weight-table tbody tr\.current \{[^}]*background: #f7f9fb;/s)
+  assert.match(styles, /\.sample-stage-weight-table tbody tr\.current th strong \{[^}]*font-weight: var\(--weight-title\);/s)
+
+  assert.match(valueRule, /font-family: var\(--font-data\)/)
+  assert.match(valueRule, /font-variant-numeric: tabular-nums/)
+  assert.match(valueRule, /font-feature-settings: "tnum"/)
+  assert.match(valueRule, /text-align: center/)
+  assert.match(styles, /\.sample-stage-weight-model-column \{[^}]*width: 96px;/s)
+  assert.match(styles, /\.sample-stage-weight-table \{[^}]*table-layout: fixed;/s)
+
+  assert.match(
+    styles,
+    /@media \(max-width: 680px\) \{[\s\S]*?\.sample-stage-weight-scroll \{[^}]*overflow-x: auto;[^}]*\}[\s\S]*?\.sample-stage-weight-table \{[^}]*min-width: 688px;/,
+  )
+  assert.match(
+    styles,
+    /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.sample-stage-guide-enter-active,\s*\.sample-stage-guide-leave-active \{[^}]*transition: none;/,
+  )
+  assert.doesNotMatch(styles, /sample-reliability-basis-tag/)
+  assert.match(styles, /\.app-shell\.theme-dark \.sample-stage-weight-popover \{[^}]*border-color: var\(--hairline-soft\);[^}]*background: var\(--surface-soft\);/s)
+  assert.match(styles, /\.app-shell\.theme-dark \.sample-stage-weight-table tbody tr\.current \{[^}]*background: #1b2a35;/s)
+  assert.match(styles, /\.app-shell\.theme-dark \.sample-stage-current-rail \{[^}]*background: #38b37f;/s)
+  assert.match(styles, /\.app-shell\.theme-dark \.sample-stage-track b \{[^}]*background: #38b37f;/s)
+  assert.match(styles, /\.app-shell\.theme-dark \.sample-stage-guide-trigger\[aria-expanded="true"\] \{[^}]*color: var\(--charcoal\);[^}]*background: transparent;/s)
+})
+
 test('sample reliability card integrates the stage-weight guide with its existing progress summary', async () => {
   const source = await readFile(new URL('./StatisticsView.vue', import.meta.url), 'utf8')
   const reliabilityStart = source.indexOf('class="stats-task-card sample-reliability-card"')
