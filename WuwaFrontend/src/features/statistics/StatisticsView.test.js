@@ -201,19 +201,21 @@ test('statistics diagnosis header owns exactly two non-duplicated summary chips'
   assert.match(stageChipSection, /stage\.rangeLabel/)
 })
 
-test('sample reliability card compacts basis and progress into its task header', async () => {
+test('sample reliability card integrates the stage-weight guide with its existing progress summary', async () => {
   const source = await readFile(new URL('./StatisticsView.vue', import.meta.url), 'utf8')
-  const styles = await readStatisticsStyles()
   const reliabilityStart = source.indexOf('class="stats-task-card sample-reliability-card"')
   const deviationStart = source.indexOf('class="stats-task-card substat-deviation-card"')
 
   assert.ok(reliabilityStart >= 0 && reliabilityStart < deviationStart)
   const reliabilitySection = source.slice(reliabilityStart, deviationStart)
+  assert.match(source, /import SampleStageWeightGuide from '\.\/SampleStageWeightGuide\.vue'/)
   assert.match(reliabilitySection, /class="stats-task-header sample-reliability-header"/)
   assert.match(reliabilitySection, /class="sample-reliability-title"/)
-  assert.match(reliabilitySection, /class="sample-reliability-basis-tag"/)
-  assert.doesNotMatch(reliabilitySection, />判断依据<\/small>/)
-  assert.match(reliabilitySection, /\{\{ sampleStageDriverText \}\}/)
+  assert.match(reliabilitySection, /<SampleStageWeightGuide/)
+  assert.match(reliabilitySection, /:stages="sampleStageAxisRows"/)
+  assert.match(reliabilitySection, /:total="sampleStageStatus\.total"/)
+  assert.doesNotMatch(reliabilitySection, /sample-reliability-basis-tag/)
+  assert.doesNotMatch(source, /sampleStageText|sampleStageDriverText/)
   assert.match(reliabilitySection, /class="sample-stage-summary"/)
   assert.match(reliabilitySection, /class="sample-stage-count-value"/)
   assert.match(reliabilitySection, /sampleStageStatus\.total/)
@@ -221,17 +223,4 @@ test('sample reliability card compacts basis and progress into its task header',
   assert.match(reliabilitySection, /sampleStageSummaryText/)
   assert.doesNotMatch(reliabilitySection, /sample-reliability-overview|阶段进度|当前阶段的主要解释来源/)
   assert.doesNotMatch(reliabilitySection, /当前结论|statsReliabilityText\s*\(\s*totalSamples\s*\)|sampleStageRangeText|stats-diagnostic-stage-meta|stats-diagnostic-stage-chip/)
-
-  const headerRule = styles.match(/^\.sample-reliability-header \{([^}]+)\}/m)?.[1] || ''
-  const tagRule = styles.match(/^\.sample-reliability-basis-tag \{([^}]+)\}/m)?.[1] || ''
-  const summaryRule = styles.match(/^\.sample-stage-summary \{([^}]+)\}/m)?.[1] || ''
-  assert.match(headerRule, /align-items: flex-start/)
-  assert.match(headerRule, /border-bottom: 1px solid/)
-  assert.match(headerRule, /padding-bottom: 18px/)
-  assert.match(tagRule, /min-height: 28px/)
-  assert.match(summaryRule, /justify-items: end/)
-  assert.match(summaryRule, /margin-left: auto/)
-  assert.match(styles, /@media \(max-width: 860px\)[\s\S]*?\.sample-stage-summary \{[^}]*justify-items: start;[^}]*margin-left: 0;/)
-  assert.doesNotMatch(styles, /\.sample-reliability-basis-tag small/)
-  assert.doesNotMatch(styles, /^\.sample-reliability-overview \{/m)
 })

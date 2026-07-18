@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 
 import InsightRequestState from '../../components/states/InsightRequestState.vue'
-import { formatPercent, formatSignedPercentagePoints, sampleStageText } from '../../services/formatters.js'
+import { formatPercent, formatSignedPercentagePoints } from '../../services/formatters.js'
 import { hasRecordedSamples, sampleMaturityState, sampleStageState } from '../../shared/sampleExperience.js'
 import {
   buildSampleStageProgress,
@@ -12,6 +12,7 @@ import {
   statsReliabilityNote,
 } from './presentation.js'
 import SampleStageAxis from './SampleStageAxis.vue'
+import SampleStageWeightGuide from './SampleStageWeightGuide.vue'
 
 const props = defineProps({
   stats: { type: Object, default: null },
@@ -32,11 +33,6 @@ const sampleStageStatus = computed(() => buildSampleStageProgress(totalSamples.v
 const sampleStageProgress = computed(() => sampleStageStatus.value.axisProgress)
 const sampleStageAxisRows = computed(() => buildSampleStageAxisRows(totalSamples.value))
 const sampleStageSegmentRows = computed(() => sampleStageAxisRows.value.filter((stage) => stage.showCaption))
-const sampleStageDriverText = computed(() => {
-  const text = sampleStageText(props.stats?.sample_stage)
-  const [, driverPart = ''] = text.split('：')
-  return driverPart.trim() || `${sampleStageStatus.value.currentStage.caption}主导`
-})
 const sampleStageTargetLabel = computed(() => String(
   sampleStageStatus.value.nextStage?.threshold ?? sampleStageStatus.value.currentStage.threshold,
 ))
@@ -120,14 +116,12 @@ function deviationTitle(row, direction) {
     <div v-else class="stats-task-stack">
       <section
         class="stats-task-card sample-reliability-card"
-        :aria-label="`样本可信度：${sampleStageDriverText}，${totalSamples} 条样本`"
+        :aria-label="`样本可信度：${sampleStageStatus.currentStage.caption}，${totalSamples} 条样本`"
       >
         <header class="stats-task-header sample-reliability-header">
           <div class="sample-reliability-title">
             <h3>样本可信度</h3>
-            <span class="sample-reliability-basis-tag" :title="`当前判断依据：${sampleStageDriverText}`">
-              <strong>{{ sampleStageDriverText }}</strong>
-            </span>
+            <SampleStageWeightGuide :stages="sampleStageAxisRows" :total="sampleStageStatus.total" />
           </div>
           <div class="sample-stage-summary" :title="sampleStageAriaLabel">
             <p class="sample-stage-count-value">
