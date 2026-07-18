@@ -939,7 +939,7 @@
 }
 
 .app-shell.theme-dark .sample-stage-weight-popover {
-  border-color: var(--hairline-soft);
+  border-color: var(--hairline);
   background: var(--surface-soft);
 }
 

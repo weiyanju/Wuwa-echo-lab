@@ -253,7 +253,7 @@ test('sample stage weight guide uses the approved semantic matrix styling', asyn
     /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.sample-stage-guide-enter-active,\s*\.sample-stage-guide-leave-active \{[^}]*transition: none;/,
   )
   assert.doesNotMatch(styles, /sample-reliability-basis-tag/)
-  assert.match(styles, /\.app-shell\.theme-dark \.sample-stage-weight-popover \{[^}]*border-color: var\(--hairline-soft\);[^}]*background: var\(--surface-soft\);/s)
+  assert.match(styles, /\.app-shell\.theme-dark \.sample-stage-weight-popover \{[^}]*border-color: var\(--hairline\);[^}]*background: var\(--surface-soft\);/s)
   assert.match(styles, /\.app-shell\.theme-dark \.sample-stage-weight-table tbody tr\.current \{[^}]*background: #1b2a35;/s)
   assert.match(styles, /\.app-shell\.theme-dark \.sample-stage-current-rail \{[^}]*background: #38b37f;/s)
   assert.match(styles, /\.app-shell\.theme-dark \.sample-stage-track b \{[^}]*background: #38b37f;/s)
