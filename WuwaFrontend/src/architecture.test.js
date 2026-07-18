@@ -15,6 +15,10 @@ test('frontend high-attraction entry files do not grow beyond the refactor basel
   assert.ok(await lineCount('./features/evaluation/EvaluationOverview.vue') <= 250, 'EvaluationOverview.vue must not grow beyond 250 lines')
   assert.ok(await lineCount('./features/evaluation/EvaluationBacktest.vue') <= 620, 'EvaluationBacktest.vue must not grow beyond 620 lines')
   assert.ok(await lineCount('./features/history/FloatingHistoryPanel.vue') <= 650, 'FloatingHistoryPanel.vue must not grow beyond 650 lines')
+  assert.ok(
+    await lineCount('./features/statistics/SampleStageWeightGuide.vue') <= 220,
+    'SampleStageWeightGuide.vue must remain a focused disclosure and matrix component',
+  )
   assert.ok(await lineCount('./features/workspace/UidSetupView.vue') <= 130, 'UidSetupView.vue must not grow beyond 130 lines')
   assert.ok(await lineCount('./components/controls/UidSwitcher.vue') <= 250, 'UidSwitcher.vue must not grow beyond 250 lines')
   assert.ok(await lineCount('./features/workspace/EchoWorkbenchView.vue') <= 210, 'EchoWorkbenchView.vue must not grow beyond 210 lines')
