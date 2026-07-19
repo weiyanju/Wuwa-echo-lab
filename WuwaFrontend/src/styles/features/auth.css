@@ -273,42 +273,7 @@
 .terminal-uid-page { min-height: 358px; }
 
 .terminal-uid-header {
-  display: grid;
-  grid-template-columns: 44px minmax(0, 1fr);
-  gap: 14px;
-  align-items: start;
   margin-bottom: 30px;
-}
-
-.terminal-uid-back {
-  display: inline-grid;
-  width: 44px;
-  height: 44px;
-  place-items: center;
-  border: 1px solid var(--terminal-border);
-  border-radius: var(--terminal-radius-sm);
-  padding: 0;
-  color: var(--terminal-secondary);
-  background: transparent;
-  transition: border-color 150ms ease, color 150ms ease, background-color 150ms ease;
-}
-
-.terminal-uid-back svg {
-  width: 24px;
-  height: 24px;
-  fill: none;
-  stroke: currentColor;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 1.5;
-}
-
-.terminal-uid-back:hover:not(:disabled),
-.terminal-uid-back:focus-visible {
-  border-color: var(--terminal-primary);
-  outline: none;
-  color: var(--terminal-primary);
-  background: var(--terminal-primary-light);
 }
 
 .terminal-uid-title h2 {
@@ -342,7 +307,40 @@
 .terminal-uid-hint { margin-bottom: 24px; }
 .terminal-uid-page .error-text { margin: 0 0 8px; }
 
-.terminal-uid-back:disabled,
+.terminal-uid-actions {
+  display: grid;
+  gap: 4px;
+  margin-top: auto;
+}
+
+.terminal-uid-actions .terminal-primary-btn {
+  margin-top: 0;
+}
+
+.terminal-uid-return {
+  justify-self: center;
+  min-width: 104px;
+  min-height: 44px;
+  border: 0;
+  border-radius: var(--terminal-radius-sm);
+  padding: 0 12px;
+  color: var(--terminal-secondary);
+  background: transparent;
+  font-family: var(--font-ui);
+  font-size: var(--text-control);
+  font-weight: var(--weight-control);
+  line-height: var(--leading-control);
+  letter-spacing: var(--tracking-cjk);
+  transition: color 120ms ease-out;
+}
+
+.terminal-uid-return:hover:not(:disabled),
+.terminal-uid-return:focus-visible,
+.terminal-uid-return:active {
+  color: var(--terminal-text);
+}
+
+.terminal-uid-return:disabled,
 .terminal-primary-btn:disabled {
   cursor: not-allowed;
   opacity: 0.56;
@@ -388,6 +386,7 @@
   .terminal-card-back-leave-active { transition: none; }
   .terminal-feature-item { transition: none; }
   .terminal-feature-item:hover { transform: none; }
+  .terminal-uid-return { transition: none; }
 }
 @media (max-width: 860px) {
   .terminal-main-wrapper { align-items: flex-start; padding: 0; }
@@ -401,6 +400,7 @@
   .terminal-credentials-page,
   .terminal-uid-page { min-height: 0; }
   .terminal-primary-btn { margin-top: 24px; }
+  .terminal-uid-actions { margin-top: 24px; }
 }
 
 @media (max-width: 520px) {
@@ -408,5 +408,5 @@
   .terminal-title { max-width: 100%; font-size: 36px; white-space: normal; }
   .terminal-title-caret { display: none; }
   .terminal-auth-card { padding: 28px 24px; }
-  .terminal-uid-header { gap: 12px; margin-bottom: 24px; }
+  .terminal-uid-header { margin-bottom: 24px; }
 }

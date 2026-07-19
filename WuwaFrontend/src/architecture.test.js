@@ -146,7 +146,20 @@ test('auth feature owns login layout, information, dark, and responsive styles',
   assert.match(auth, /\.terminal-auth-card \{/)
   assert.match(auth, /\.terminal-tab-indicator \{/)
   assert.match(auth, /\.terminal-card-page \{/)
-  assert.match(auth, /\.terminal-uid-back \{[\s\S]+width: 44px;[\s\S]+height: 44px;/)
+  assert.match(auth, /\.terminal-uid-actions \{[^}]*margin-top: auto;/)
+  assert.match(
+    auth,
+    /\.terminal-uid-return \{[^}]*justify-self: center;[^}]*min-height: 44px;[^}]*border: 0;[^}]*color: var\(--terminal-secondary\);[^}]*background: transparent;/,
+  )
+  assert.match(
+    auth,
+    /\.terminal-uid-return:hover:not\(:disabled\),\s*\.terminal-uid-return:focus-visible,\s*\.terminal-uid-return:active \{[^}]*color: var\(--terminal-text\);/,
+  )
+  assert.match(
+    auth,
+    /@media \(prefers-reduced-motion: reduce\) \{[\s\S]+\.terminal-uid-return \{ transition: none; \}/,
+  )
+  assert.doesNotMatch(auth, /\.terminal-uid-back/)
   assert.match(auth, /\.terminal-uid-input \{[\s\S]+font-family: var\(--font-data\);[\s\S]+font-variant-numeric: tabular-nums;/)
   assert.match(auth, /\.terminal-card-forward-enter-from \{[^}]+translateX\(16px\)/)
   assert.match(auth, /\.terminal-card-back-enter-from \{[^}]+translateX\(-16px\)/)
