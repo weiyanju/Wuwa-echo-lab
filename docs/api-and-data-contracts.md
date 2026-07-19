@@ -82,6 +82,15 @@ POST /api/recognition/snapshots/
 POST /api/recognition/snapshots/{id}/revert/
 ```
 
+`POST /api/auth/register/` 同时承担创建与恢复未完成开户：
+
+- 新用户返回 `201` 和 `registration_outcome: "created"`。
+- 凭据正确、账户启用且不存在任何已绑定 UID 的既有用户返回 `200` 和 `registration_outcome: "resumed"`。
+- 凭据不正确或账户停用返回 `400` 和 `code: "registration_credentials_invalid"`。
+- 已有任意非空绑定 UID 的账户返回 `409` 和 `code: "registration_complete"`。
+
+只有 `created` 与 `resumed` 建立 session。恢复判断由后端依据密码校验、账户状态和 `GameAccount` UID 状态完成，客户端不得根据错误文案或本地缓存推断。
+
 规则：
 
 - Web 和 WPF 都必须通过 API 访问后端。
