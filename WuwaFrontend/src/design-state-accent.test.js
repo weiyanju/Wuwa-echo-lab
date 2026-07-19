@@ -166,12 +166,12 @@ test('model judgement surfaces inherit the visible disclosure row state', async 
 
   assert.match(expandedSummary, /var\(--model-surface-accent,\s*#1769d2\)/)
   assert.match(bestSummary, /var\(--model-surface-accent,\s*#2c9f70\)/)
-  assert.match(summary, /var\(--model-surface-accent,\s*#1769d2\) 10%, #d8e2ea/)
-  assert.match(summary, /var\(--model-surface-accent,\s*#1769d2\) 4%, #f7f9fb/)
-  assert.match(label, /var\(--model-surface-accent,\s*#1769d2\) 46%, #1e2b34/)
-  assert.match(darkSummary, /var\(--model-surface-accent,\s*#5da8ff\) 16%, var\(--hairline-soft\)/)
-  assert.match(darkSummary, /var\(--model-surface-accent,\s*#5da8ff\) 6%, var\(--surface-soft\)/)
-  assert.match(darkLabel, /var\(--model-surface-accent,\s*#5da8ff\) 46%, var\(--ink-deep\)/)
+  assert.match(summary, /var\(--model-surface-accent,\s*#1769d2\)\s+10%,\s*#d8e2ea/)
+  assert.match(summary, /var\(--model-surface-accent,\s*#1769d2\)\s+4%,\s*#f7f9fb/)
+  assert.match(label, /var\(--model-surface-accent,\s*#1769d2\)\s+46%,\s*#1e2b34/)
+  assert.match(darkSummary, /var\(--model-surface-accent,\s*#5da8ff\)\s+16%,\s*var\(--hairline-soft\)/)
+  assert.match(darkSummary, /var\(--model-surface-accent,\s*#5da8ff\)\s+6%,\s*var\(--surface-soft\)/)
+  assert.match(darkLabel, /var\(--model-surface-accent,\s*#5da8ff\)\s+46%,\s*var\(--ink-deep\)/)
 
   assert.match(bodiesFor(evaluationStyle, '.model-bars-large b'), /var\(--model-accent\)/)
 })

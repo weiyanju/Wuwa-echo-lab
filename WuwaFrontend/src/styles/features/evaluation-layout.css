@@ -134,11 +134,19 @@
 
 .evaluation-panel .model-backtest-card .model-bars > article > .model-bar-summary:hover,
 .evaluation-panel .model-backtest-card .model-bars > article.expanded > .model-bar-summary {
-  background: rgba(23, 105, 210, 0.035);
+  background: color-mix(
+    in srgb,
+    var(--model-surface-accent, #1769d2) 3.5%,
+    transparent
+  );
 }
 
 .evaluation-panel .model-backtest-card .model-bars > article.best > .model-bar-summary {
-  background: rgba(44, 159, 112, 0.035);
+  background: color-mix(
+    in srgb,
+    var(--model-surface-accent, #2c9f70) 3.5%,
+    transparent
+  );
 }
 
 .app-shell.theme-dark .product-panel.evaluation-panel {
@@ -176,11 +184,19 @@
 
 .app-shell.theme-dark .evaluation-panel .model-backtest-card .model-bars > article > .model-bar-summary:hover,
 .app-shell.theme-dark .evaluation-panel .model-backtest-card .model-bars > article.expanded > .model-bar-summary {
-  background: rgba(52, 113, 164, 0.1);
+  background: color-mix(
+    in srgb,
+    var(--model-surface-accent, #5da8ff) 10%,
+    transparent
+  );
 }
 
 .app-shell.theme-dark .evaluation-panel .model-backtest-card .model-bars > article.best > .model-bar-summary {
-  background: rgba(55, 179, 127, 0.07);
+  background: color-mix(
+    in srgb,
+    var(--model-surface-accent, #35ad7b) 10%,
+    transparent
+  );
 }
 
 @media (max-width: 1000px) {
