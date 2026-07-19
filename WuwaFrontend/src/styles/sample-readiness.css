@@ -1,0 +1,71 @@
+.sample-activation-state {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  min-height: 360px;
+  place-items: center;
+  align-content: center;
+  gap: 22px;
+  padding: 54px 20px 62px;
+  text-align: center;
+}
+
+.sample-activation-copy {
+  display: grid;
+  width: min(600px, 100%);
+  justify-items: center;
+}
+
+.sample-activation-copy h3,
+.sample-activation-copy p { margin: 0; }
+.sample-activation-copy h3 {
+  color: var(--ink-deep);
+  font-size: var(--text-section-title);
+  font-weight: var(--weight-title);
+  line-height: var(--leading-title);
+}
+.sample-activation-copy p {
+  margin-top: 12px;
+  color: var(--steel);
+  font-size: var(--text-body);
+  font-weight: var(--weight-body);
+  line-height: var(--leading-body);
+}
+.sample-activation-action { min-width: 156px; color: var(--canvas); background: var(--primary); }
+.button-primary.sample-activation-action { color: var(--canvas); background: var(--primary); }
+.button-primary.sample-activation-action:hover:not(:disabled),
+.button-primary.sample-activation-action:active { background: var(--primary-deep); }
+
+.insight-request-state {
+  display: grid;
+  min-width: 0;
+  gap: 10px;
+  border: 1px solid rgba(216, 226, 234, 0.9);
+  border-radius: 12px;
+  padding: 20px;
+  background: #fbfcfe;
+}
+
+.insight-request-state strong,
+.insight-request-state p { margin: 0; }
+.insight-request-state p { color: var(--steel); }
+.insight-request-state .button-secondary { justify-self: start; }
+.insight-skeleton { display: block; width: min(560px, 100%); height: 14px; border-radius: 8px; background: var(--surface-soft); }
+.insight-skeleton--title { width: min(260px, 70%); height: 21px; }
+.insight-skeleton--short { width: min(360px, 82%); }
+
+.metric-placeholder {
+  color: var(--steel);
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+.app-shell.theme-dark .insight-request-state { border-color: rgba(63, 86, 102, 0.72); background: #1d2a35; }
+.app-shell.theme-dark .insight-skeleton { background: rgba(92, 113, 128, 0.24); }
+
+@media (max-width: 520px) {
+  .sample-activation-state { min-height: 320px; padding: 42px 0 48px; }
+  .sample-activation-action { width: 100%; max-width: 320px; }
+  .insight-request-state { padding: 16px; }
+}

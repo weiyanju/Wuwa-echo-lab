@@ -15,10 +15,15 @@ obj/
 
 # Local tooling and secrets
 .tools/
+.superpowers/
+.worktrees/
 .env
 backups/
+docs/local-development.private.md
+tmp/
 
 # Logs and local IDE files
 *.log
 .idea/
 .vs/
+.gstack/

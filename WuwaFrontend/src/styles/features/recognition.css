@@ -1,0 +1,329 @@
+.product-panel.recognition-panel {
+  display: grid;
+  grid-template-columns: minmax(240px, auto) minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 10px 12px;
+}
+
+.recognition-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+
+.recognition-title-lockup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.recognition-live-dot {
+  width: 9px;
+  height: 9px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #2c9f70;
+  box-shadow:
+    0 0 0 5px rgba(44, 159, 112, 0.1),
+    0 0 18px rgba(44, 159, 112, 0.28);
+}
+
+.recognition-panel h2 {
+  margin: 3px 0 0;
+  font-family: var(--font-title);
+  font-size: var(--text-card-title);
+  font-weight: var(--weight-title);
+  line-height: var(--leading-title);
+  letter-spacing: var(--tracking-cjk);
+}
+
+.recognition-panel p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-body);
+  line-height: var(--leading-caption);
+}
+
+.recognition-refresh-button,
+.recognition-review-row button {
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  font-weight: var(--weight-control);
+  cursor: pointer;
+}
+
+.recognition-refresh-button {
+  width: 40px;
+  height: 40px;
+  min-height: 40px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  box-shadow: 0 8px 18px rgba(39, 55, 71, 0.05);
+}
+
+.recognition-refresh-button .ui-line-icon {
+  transition:
+    transform 180ms ease,
+    opacity 160ms ease;
+}
+
+.recognition-refresh-button:hover:not(:disabled) .ui-line-icon {
+  transform: rotate(22deg);
+}
+
+.recognition-refresh-button.refreshing .ui-line-icon {
+  animation: recognition-refresh-spin 820ms linear infinite;
+}
+
+.recognition-refresh-button.success {
+  border-color: rgba(44, 159, 112, 0.42);
+  color: #23835b;
+  background: rgba(236, 249, 244, 0.92);
+}
+
+.recognition-refresh-button.error {
+  border-color: rgba(228, 30, 63, 0.36);
+  color: #d9304c;
+  background: rgba(255, 241, 244, 0.94);
+}
+
+.recognition-refresh-button.success:disabled,
+.recognition-refresh-button.error:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+@keyframes recognition-refresh-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.recognition-summary-strip {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  border-left: 1px solid rgba(216, 226, 234, 0.86);
+  padding-left: 16px;
+}
+
+.recognition-state-copy {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.recognition-state-copy strong {
+  display: block;
+  color: var(--ink);
+  font-size: var(--text-control);
+  font-weight: var(--weight-control);
+  line-height: var(--leading-control);
+}
+
+.recognition-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  flex: 0 0 min(360px, 42%);
+}
+
+.recognition-metric-grid article {
+  min-width: 0;
+  border: 0;
+  border-left: 1px solid rgba(216, 226, 234, 0.86);
+  border-radius: 0;
+  padding: 3px 11px;
+  background: transparent;
+}
+
+.recognition-metric-grid strong {
+  display: block;
+  color: var(--ink);
+  font-family: var(--font-data);
+  font-size: var(--text-data-md);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-data);
+  line-height: var(--leading-data);
+  letter-spacing: var(--tracking-data);
+}
+
+.recognition-metric-grid span {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-label);
+  line-height: var(--leading-label);
+}
+
+.recognition-review-list {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 7px;
+  padding-top: 2px;
+}
+
+.recognition-review-row,
+.recognition-empty-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 42px;
+  border: 1px solid #e4ebf2;
+  border-radius: 14px;
+  padding: 9px 10px 9px 13px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.recognition-review-row {
+  position: relative;
+}
+
+.recognition-review-row strong {
+  display: block;
+  color: var(--ink);
+  font-size: var(--text-control);
+  font-weight: var(--weight-control);
+  line-height: var(--leading-control);
+}
+
+.recognition-review-row span,
+.recognition-empty-row {
+  color: var(--muted);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-label);
+  line-height: var(--leading-label);
+}
+
+.recognition-review-row button {
+  min-width: 76px;
+  min-height: 34px;
+  padding: 0 14px;
+  color: #d9304c;
+  font-size: var(--text-control);
+  line-height: var(--leading-control);
+}
+
+.recognition-status-conflict,
+.recognition-status-rejected,
+.recognition-status-ignored_duplicate {
+  border-color: #f2d08c;
+  background: #fffaf0;
+}
+
+.recognition-status-saved {
+  border-color: #cfe4ff;
+  background: #f7fbff;
+}
+
+.app-shell.theme-dark .recognition-summary-strip {
+  border-left-color: rgba(63, 86, 102, 0.74);
+  background: transparent;
+}
+
+.app-shell.theme-dark .recognition-live-dot {
+  background: var(--success);
+  box-shadow:
+    0 0 0 5px rgba(55, 179, 127, 0.12),
+    0 0 20px rgba(55, 179, 127, 0.34);
+}
+
+.app-shell.theme-dark .recognition-state-copy {
+  background: transparent;
+}
+
+.app-shell.theme-dark .recognition-metric-grid article {
+  border-color: rgba(63, 86, 102, 0.7);
+  background: transparent;
+}
+
+.app-shell.theme-dark .recognition-state-copy strong,
+.app-shell.theme-dark .recognition-metric-grid strong,
+.app-shell.theme-dark .recognition-review-row strong {
+  color: var(--ink-deep);
+}
+
+.app-shell.theme-dark .recognition-metric-grid span,
+.app-shell.theme-dark .recognition-review-row span,
+.app-shell.theme-dark .recognition-empty-row {
+  color: var(--charcoal);
+}
+
+.app-shell.theme-dark .recognition-refresh-button,
+.app-shell.theme-dark .recognition-review-row button {
+  border-color: rgba(83, 107, 124, 0.72);
+  color: #dce8ef;
+  background: rgba(29, 42, 53, 0.92);
+}
+
+.app-shell.theme-dark .recognition-refresh-button:hover,
+.app-shell.theme-dark .recognition-review-row button:hover:not(:disabled) {
+  border-color: rgba(93, 168, 255, 0.46);
+  color: var(--ink-deep);
+  background: rgba(38, 55, 70, 0.96);
+}
+
+.app-shell.theme-dark .recognition-refresh-button.success {
+  border-color: rgba(55, 179, 127, 0.48);
+  color: #8be0bd;
+  background: rgba(32, 64, 55, 0.72);
+}
+
+.app-shell.theme-dark .recognition-refresh-button.error {
+  border-color: rgba(239, 107, 122, 0.48);
+  color: #ff9ca7;
+  background: rgba(62, 28, 37, 0.72);
+}
+
+.app-shell.theme-dark .recognition-review-row,
+.app-shell.theme-dark .recognition-empty-row {
+  border-color: rgba(63, 86, 102, 0.68);
+  background: rgba(17, 27, 36, 0.58);
+}
+
+.app-shell.theme-dark .recognition-status-conflict,
+.app-shell.theme-dark .recognition-status-rejected,
+.app-shell.theme-dark .recognition-status-ignored_duplicate {
+  border-color: rgba(217, 163, 58, 0.38);
+  background: rgba(42, 36, 23, 0.72);
+}
+
+.app-shell.theme-dark .recognition-status-saved {
+  border-color: rgba(93, 168, 255, 0.3);
+  background: rgba(23, 39, 53, 0.82);
+}
+
+.app-shell.theme-dark .recognition-review-row button {
+  color: #ff8d9a;
+}
+
+@media (max-width: 860px) {
+  .recognition-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .recognition-summary-strip {
+    grid-template-columns: 1fr;
+    border-left: 0;
+    padding-left: 0;
+  }
+
+  .recognition-metric-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

@@ -9,6 +9,21 @@ export function formatSignedPercent(value, digits = 2) {
   return `${sign}${formatPercent(numericValue, digits)}`
 }
 
+const flatSubstatTypes = new Set(['flat_atk', 'flat_hp', 'flat_def'])
+
+export function formatSubstatTierNumber(substatType, value) {
+  const numericValue = Number.isFinite(value) ? value : 0
+  return String(numericValue)
+}
+
+export function formatSubstatTierUnit(substatType) {
+  return flatSubstatTypes.has(substatType) ? '' : '%'
+}
+
+export function formatSubstatTierValue(substatType, value) {
+  return `${formatSubstatTierNumber(substatType, value)}${formatSubstatTierUnit(substatType)}`
+}
+
 export function sampleStageText(stage) {
   return stage?.label || '暂无样本阶段'
 }

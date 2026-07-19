@@ -1,0 +1,399 @@
+import { computed, ref } from 'vue'
+import { addSubstat, createEcho, getModelEvaluation, getStats, listEchoes, undoLastSubstat, updateEcho } from '../../services/api.js'
+import { buildNextEchoConfig, isReusableDraft, sortVisibleEchoHistory } from '../../services/echoWorkflow.js'
+import { buildModelDetailCards } from '../../services/modelDetails.js'
+import { substatLabels, substatOrder, tierTables } from '../../data/substats.js'
+import { createEchoAssetIdentity } from './echoAssetIdentity.js'
+import { createConfigCreationNoticeController, echoConfigMatches } from './echoConfigCreation.js'
+import { createActivePredictionRefreshController } from './echoPredictionRefresh.js'
+import { createEchoSessionDeltaController } from './echoSessionDeltas.js'
+import { createWorkspaceInsightRefresh } from './workspaceInsightRefresh.js'
+import { createDefaultEchoForm, createEchoPayload, createPreparedNextEchoController, normalizeEchoConfig } from './echoWorkspaceDrafts.js'
+import { appendRollToEchoList, buildOptimisticRollDraft, removeOptimisticRollFromEchoList, replaceOptimisticRollInEchoList } from './echoWorkspaceMutations.js'
+import { adjustWorkspaceStatsForSubstat } from './echoWorkspaceStats.js'
+export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, workspaceLocked, onError }) {
+  const saving = ref(false), configCreationNotice = ref('')
+  const pendingTierKey = ref('')
+  const echoes = ref([])
+  const activeEchoId = ref(null)
+  const prediction = ref(null)
+  const stats = ref(null)
+  const evaluation = ref(null)
+  const echoForm = ref(createDefaultEchoForm())
+  let lifecycleGeneration = 0, refreshRequestId = 0
+  const { announce: announceConfigCreation, clear: clearConfigCreationNotice } = createConfigCreationNoticeController(configCreationNotice)
+  const sessionDeltas = createEchoSessionDeltaController()
+  const { sessionEchoDelta, sessionSampleDelta, visibleSessionEchoDelta, visibleSessionSampleDelta } = sessionDeltas
+
+  const activeEcho = computed(() => echoes.value.find((echo) => echo.id === activeEchoId.value) || null)
+  const visibleEchoCount = computed(() => sortVisibleEchoHistory(echoes.value).length)
+  const candidateByType = computed(() => new Map(
+    (prediction.value?.candidates || []).map((candidate) => [candidate.substat_type, candidate]),
+  ))
+  const topCandidate = computed(() => prediction.value?.candidates?.[0] || null)
+  const matrixRows = computed(() => substatOrder.map((substatType) => ({
+    substat_type: substatType,
+    label: substatLabels[substatType],
+    candidate: candidateByType.value.get(substatType) || null,
+    tier_table: tierTables[substatType],
+    recorded: activeEcho.value?.substats.find((roll) => roll.substat_type === substatType) || null,
+    topPredicted: topCandidate.value?.substat_type === substatType,
+  })))
+  const modelDetailCards = computed(() => buildModelDetailCards({
+    prediction: prediction.value,
+    stats: stats.value,
+    evaluation: evaluation.value,
+    echoes: echoes.value,
+    labels: substatLabels,
+  }))
+
+  function reportError(err) { onError(err?.message || String(err)) }
+  const insightRefresh = createWorkspaceInsightRefresh({
+    selectedGameAccountId, workspaceLocked, stats, evaluation, getStats, getModelEvaluation,
+    lifecycleGeneration: () => lifecycleGeneration, reportError,
+  })
+  const { evaluationRequestStatus, refreshEvaluation, refreshStats, statsRequestStatus } = insightRefresh
+  const activePredictionRefresh = createActivePredictionRefreshController({
+    activeEchoId, selectedGameAccountId,
+    lifecycleGeneration: () => lifecycleGeneration,
+    setPrediction: (nextPrediction) => { prediction.value = nextPrediction },
+    reportError,
+  })
+
+  function cancelActivePredictionRefresh() { activePredictionRefresh.cancel() }
+
+  function insertEcho(echo) {
+    echoes.value = echoes.value.some((item) => item.id === echo.id)
+      ? echoes.value.map((item) => (item.id === echo.id ? echo : item))
+      : [echo, ...echoes.value]
+  }
+
+  function syncFormFromEcho(echo) {
+    if (!echo) {
+      return
+    }
+    echoForm.value.sonata = echo.set_name
+    echoForm.value.cost = echo.cost
+    echoForm.value.main_stat = echo.main_stat
+    echoForm.value.is_continuous_tuning = true
+  }
+
+  function activateEcho(echo) {
+    cancelActivePredictionRefresh()
+    activeEchoId.value = echo.id
+    syncFormFromEcho(echo)
+    prediction.value = null
+  }
+
+  function reset() {
+    lifecycleGeneration += 1
+    refreshRequestId += 1
+    cancelActivePredictionRefresh()
+    clearConfigCreationNotice()
+    nextDraft.clear()
+    saving.value = false
+    pendingTierKey.value = ''
+    echoes.value = []
+    activeEchoId.value = null
+    prediction.value = null
+    insightRefresh.reset()
+    stats.value = null
+    sessionDeltas.reset()
+    evaluation.value = null
+    echoForm.value = createDefaultEchoForm()
+    echoAssetIdentity.resetEchoAsset()
+  }
+
+  async function refresh() {
+    const accountId = selectedGameAccountId.value
+    if (workspaceLocked.value || !accountId) {
+      reset()
+      return
+    }
+    sessionDeltas.reset()
+    const generation = lifecycleGeneration
+    const requestId = ++refreshRequestId
+    const isCurrent = () => (
+      generation === lifecycleGeneration
+      && requestId === refreshRequestId
+      && accountId === selectedGameAccountId.value
+    )
+    const echoData = await listEchoes(accountId)
+    if (!isCurrent()) return
+    echoes.value = echoData.results || []
+    if (!echoes.value.length && boundPlayerUid.value) {
+      const draftEcho = await createEchoWithConfig()
+      if (draftEcho) {
+        echoes.value = [draftEcho]
+      }
+    }
+    if (!activeEchoId.value && echoes.value.length) {
+      activeEchoId.value = echoes.value.find((echo) => echo.status !== 'archived' && echo.substats.length < 5)?.id || echoes.value[0].id
+    }
+    if (activeEchoId.value && !echoes.value.some((echo) => echo.id === activeEchoId.value)) {
+      activeEchoId.value = echoes.value[0]?.id || null
+    }
+    syncFormFromEcho(activeEcho.value)
+    refreshActiveInBackground()
+    if (!isCurrent()) return
+    await refreshStats()
+    if (!isCurrent()) return
+    await refreshEvaluation()
+  }
+
+  function replaceEcho(nextEcho) {
+    echoes.value = echoes.value.map((echo) => (echo.id === nextEcho.id ? nextEcho : echo))
+  }
+
+  async function selectEchoAsset(asset) {
+    nextDraft.clear()
+    await echoAssetIdentity.selectEchoAsset(asset)
+  }
+
+  const echoAssetIdentity = createEchoAssetIdentity({
+    activeEcho,
+    activeEchoId,
+    selectedGameAccountId,
+    lifecycleGeneration: () => lifecycleGeneration,
+    replaceEcho,
+    reportError,
+  })
+
+  const nextDraft = createPreparedNextEchoController({
+    activeEcho,
+    activeEchoId,
+    selectedGameAccountId,
+    workspaceLocked,
+    lifecycleGeneration: () => lifecycleGeneration,
+    buildPayload: (config) => createEchoPayload(config, echoAssetIdentity),
+    insertEcho,
+  })
+
+  function appendRollToEcho(echoId, roll) {
+    echoes.value = appendRollToEchoList(echoes.value, echoId, roll)
+  }
+
+  function replaceOptimisticRollInEcho(echoId, optimisticRollId, roll) {
+    echoes.value = replaceOptimisticRollInEchoList(echoes.value, echoId, optimisticRollId, roll)
+  }
+  function removeOptimisticRollFromEcho(echoId, optimisticRollId) {
+    echoes.value = removeOptimisticRollFromEchoList(echoes.value, echoId, optimisticRollId)
+  }
+  function adjustLoadedStatsForSubstat(substatType, delta) { stats.value = adjustWorkspaceStatsForSubstat(stats.value, substatType, delta) }
+  function recordSessionEchoHistory(echo) { sessionDeltas.recordEchoHistory(echo) }
+  function adjustSessionSampleDelta(delta) { sessionDeltas.adjustSampleDelta(delta) }
+  function buildOptimisticRoll(row, tier) { return buildOptimisticRollDraft(activeEcho.value, row, tier) }
+
+  async function activatePreparedNextEcho(config, sourceEchoId) {
+    const preparedEcho = await nextDraft.consume(config, sourceEchoId)
+    if (!preparedEcho) return null
+    activateEcho(preparedEcho)
+    return preparedEcho
+  }
+
+  function refreshActiveInBackground() { activePredictionRefresh.refreshInBackground() }
+
+  function tierButtonKey(row, tier) { return `${row.substat_type}:${tier.value}` }
+
+  async function createEchoWithConfig(config = echoForm.value, { showEchoCreatedDelta = false } = {}) {
+    const accountId = selectedGameAccountId.value
+    if (workspaceLocked.value || !accountId) {
+      onError('请先填写你的游戏 UID。')
+      return null
+    }
+    const generation = lifecycleGeneration
+    const previousForm = { ...echoForm.value }
+    const nextConfig = normalizeEchoConfig(config)
+    echoForm.value = {
+      sonata: nextConfig.sonata,
+      cost: nextConfig.cost,
+      main_stat: nextConfig.main_stat,
+      is_continuous_tuning: true,
+    }
+    try {
+      const echo = await createEcho(createEchoPayload(nextConfig, echoAssetIdentity), accountId)
+      if (generation !== lifecycleGeneration || accountId !== selectedGameAccountId.value) return null
+      const isNewEcho = !echoes.value.some((item) => item.id === echo.id)
+      insertEcho(echo)
+      activateEcho(echo)
+      if (showEchoCreatedDelta && isNewEcho) recordSessionEchoHistory(echo)
+      return echo
+    } catch (err) {
+      if (generation !== lifecycleGeneration || accountId !== selectedGameAccountId.value) return null
+      echoForm.value = previousForm
+      reportError(err)
+      return null
+    }
+  }
+
+  async function ensureActiveEcho() {
+    if (activeEcho.value && activeEcho.value.status !== 'archived' && activeEcho.value.substats.length < 5) return activeEcho.value
+    if (activeEcho.value) {
+      const preparedEcho = await activatePreparedNextEcho(buildNextEchoConfig(activeEcho.value), activeEcho.value.id)
+      if (preparedEcho) return preparedEcho
+    }
+    const echo = await createEchoWithConfig()
+    return echo
+  }
+
+  async function createNextEchoFromActive() {
+    if (!activeEcho.value || saving.value || pendingTierKey.value) return
+    onError('')
+    saving.value = true
+    try {
+      const sourceEcho = activeEcho.value
+      const nextConfig = buildNextEchoConfig(sourceEcho)
+      const preparedEcho = await activatePreparedNextEcho(nextConfig, sourceEcho.id)
+      const echo = preparedEcho || await createEchoWithConfig(nextConfig, { showEchoCreatedDelta: true })
+      if (echo) {
+        refreshActiveInBackground()
+      }
+    } finally { saving.value = false }
+  }
+
+  async function applyEchoConfig(partialConfig) {
+    onError('')
+    nextDraft.clear()
+    const nextConfig = normalizeEchoConfig({ ...echoForm.value, ...partialConfig })
+    if (echoConfigMatches(activeEcho.value, nextConfig)) return activeEcho.value
+    echoForm.value = nextConfig
+    if (!activeEcho.value) {
+      await createEchoWithConfig(nextConfig)
+      await refresh()
+      return activeEcho.value
+    }
+    if (isReusableDraft(activeEcho.value)) {
+      try {
+        const updated = await updateEcho(activeEcho.value.id, {
+          cost: nextConfig.cost,
+          set_name: nextConfig.sonata,
+          main_stat: nextConfig.main_stat,
+          is_continuous_tuning: true,
+          ...echoAssetIdentity.selectedEchoAssetFieldsForConfig(nextConfig),
+        })
+        replaceEcho(updated)
+        activateEcho(updated)
+        refreshActiveInBackground()
+        return updated
+      } catch (err) {
+        reportError(err)
+        return null
+      }
+    }
+    const created = await createEchoWithConfig(nextConfig)
+    if (created) {
+      announceConfigCreation(nextConfig)
+      await refresh()
+    }
+    return created
+  }
+
+  async function discardActiveEcho() {
+    if (!activeEcho.value || saving.value) return
+    onError('')
+    nextDraft.clear()
+    saving.value = true
+    const discardedEchoId = activeEcho.value.id
+    const nextConfig = buildNextEchoConfig(activeEcho.value)
+    try {
+      const archivedEcho = await updateEcho(discardedEchoId, { status: 'archived' })
+      replaceEcho(archivedEcho)
+      const nextEcho = await createEchoWithConfig(nextConfig, { showEchoCreatedDelta: true })
+      if (nextEcho) refreshActiveInBackground()
+    } catch (err) {
+      reportError(err)
+    } finally {
+      saving.value = false
+    }
+  }
+
+  async function selectEcho(echoId) {
+    nextDraft.clear()
+    cancelActivePredictionRefresh()
+    activeEchoId.value = echoId
+    syncFormFromEcho(activeEcho.value)
+    refreshActiveInBackground()
+  }
+
+  async function clickTier(row, tier) {
+    if (saving.value || row.recorded || pendingTierKey.value) return
+    onError('')
+    cancelActivePredictionRefresh()
+    pendingTierKey.value = tierButtonKey(row, tier)
+    let optimisticRoll = null
+    let optimisticEchoId = null
+    try {
+      const echo = await ensureActiveEcho()
+      if (!echo) return
+      optimisticEchoId = echo.id
+      optimisticRoll = buildOptimisticRoll(row, tier)
+      appendRollToEcho(echo.id, optimisticRoll)
+      const roll = await addSubstat(echo.id, { substat_type: row.substat_type, tier_value: tier.value })
+      replaceOptimisticRollInEcho(echo.id, optimisticRoll.id, roll)
+      adjustLoadedStatsForSubstat(roll.substat_type || row.substat_type, 1)
+      adjustSessionSampleDelta(1)
+      nextDraft.prepare()
+      refreshActiveInBackground()
+    } catch (err) {
+      if (optimisticEchoId && optimisticRoll) removeOptimisticRollFromEcho(optimisticEchoId, optimisticRoll.id)
+      reportError(err)
+    } finally {
+      pendingTierKey.value = ''
+    }
+  }
+
+  async function undoActiveSubstat() {
+    if (!activeEcho.value || !activeEcho.value.substats.length || saving.value || pendingTierKey.value) return
+    onError('')
+    nextDraft.clear()
+    saving.value = true
+    const removedRoll = activeEcho.value.substats.at(-1) || null
+    try {
+      const result = await undoLastSubstat(activeEcho.value.id)
+      replaceEcho(result.echo)
+      adjustLoadedStatsForSubstat(removedRoll?.substat_type, -1)
+      adjustSessionSampleDelta(-1)
+      refreshActiveInBackground()
+    } catch (err) {
+      reportError(err)
+    } finally {
+      saving.value = false
+    }
+  }
+
+  function dispose() { reset() }
+
+  return {
+    activeEcho,
+    activeEchoId,
+    applyEchoConfig,
+    clickTier,
+    configCreationNotice,
+    createNextEchoFromActive,
+    discardActiveEcho,
+    dispose,
+    echoForm,
+    echoes,
+    evaluation,
+    evaluationRequestStatus,
+    matrixRows,
+    modelDetailCards,
+    pendingTierKey,
+    prediction,
+    refresh,
+    refreshEvaluation,
+    refreshStats,
+    reset,
+    saving,
+    selectEcho,
+    selectEchoAsset,
+    sessionEchoDelta,
+    sessionSampleDelta,
+    stats,
+    statsRequestStatus,
+    undoActiveSubstat,
+    visibleEchoCount,
+    visibleSessionEchoDelta,
+    visibleSessionSampleDelta,
+  }
+}

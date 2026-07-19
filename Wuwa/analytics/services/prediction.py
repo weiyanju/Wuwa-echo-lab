@@ -2,6 +2,7 @@ from collections import Counter
 from math import exp
 
 from echoes.constants import MODEL_LABELS, MODEL_WEIGHT_SCHEDULE, SUBSTAT_LABELS, SUBSTAT_TYPES, TIER_TABLES
+from .roll_summary import build_roll_summary
 
 
 BAYES_ALPHA_MIN = 1.0
@@ -55,42 +56,12 @@ def _uniform_distribution(candidates):
 
 
 def _historical_substat_counts(owner):
-    counts = Counter()
-    total = 0
-    rolls = owner.echo_records.values_list("substat_rolls__substat_type", flat=True)
-    for substat_type in rolls:
-        if substat_type in SUBSTAT_TYPES:
-            counts[substat_type] += 1
-            total += 1
-    return counts, total
+    summary = build_roll_summary(owner)
+    return Counter(summary.counts), summary.total_rolls
 
 
 def _historical_roll_events(owner):
-    from echoes.models import SubstatRoll
-
-    if owner.__class__.__name__ == "GameAccount":
-        queryset = SubstatRoll.objects.filter(echo__game_account=owner)
-    else:
-        queryset = SubstatRoll.objects.filter(echo__user=owner)
-
-    rows = queryset.values_list(
-        "substat_type",
-        "tuned_at",
-        "id",
-        "echo_id",
-    )
-    events = [
-        {
-            "substat_type": substat_type,
-            "tuned_at": tuned_at,
-            "id": roll_id,
-            "echo_id": echo_id,
-        }
-        for substat_type, tuned_at, roll_id, echo_id in rows
-        if substat_type in SUBSTAT_TYPES and tuned_at is not None
-    ]
-    events.sort(key=lambda row: (row["tuned_at"], row["id"]))
-    return events
+    return [dict(event) for event in build_roll_summary(owner).events]
 
 
 def _model_weights(total_rolls):
@@ -110,7 +81,7 @@ def _weight_stage(total_rolls):
 
 
 def _historical_substat_sequence(owner):
-    return [event["substat_type"] for event in _historical_roll_events(owner)]
+    return list(build_roll_summary(owner).sequence)
 
 
 def _rule_distribution_from_counts(counts, total, candidates):
@@ -726,13 +697,14 @@ def _serializable_tier_table(substat_type):
     return [dict(row) for row in TIER_TABLES[substat_type]]
 
 
-def predict_next_substat(echo):
+def predict_next_substat(echo, include_diagnostics=True):
     candidates = _legal_candidates(echo)
     owner = echo.game_account
-    events = _historical_roll_events(owner)
-    sequence = [event["substat_type"] for event in events]
-    counts = Counter(sequence)
-    total_rolls = len(sequence)
+    summary = build_roll_summary(owner)
+    events = [dict(event) for event in summary.events]
+    sequence = list(summary.sequence)
+    counts = Counter(summary.counts)
+    total_rolls = summary.total_rolls
     base_weights = _model_weights(total_rolls)
     weights, weight_adjustments = _dynamic_weight_result_from_events(events, base_weights)
     distributions = {
@@ -743,7 +715,7 @@ def predict_next_substat(echo):
         "context": _context_distribution_for_candidates(candidates),
     }
     final = _weighted_distribution(distributions, weights)
-    diagnostics = _model_diagnostics(sequence, candidates, total_rolls, weights, distributions)
+    diagnostics = _model_diagnostics(sequence, candidates, total_rolls, weights, distributions) if include_diagnostics else None
 
     rows = []
     for substat_type in candidates:

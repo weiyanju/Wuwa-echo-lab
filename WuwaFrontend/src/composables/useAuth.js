@@ -43,7 +43,6 @@ export function useAuth() {
     error.value = ''
     try {
       await register(payload)
-      await login(payload)
       user.value = await getMe()
       return user.value
     } catch (err) {
@@ -79,4 +78,3 @@ export function useAuth() {
     user,
   }
 }
-

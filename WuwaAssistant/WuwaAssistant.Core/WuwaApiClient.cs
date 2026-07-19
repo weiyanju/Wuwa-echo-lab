@@ -33,6 +33,17 @@ public sealed class WuwaApiClient
             cancellationToken);
     }
 
+    public async Task<ApiUser> RegisterAsync(string username, string password, CancellationToken cancellationToken = default)
+    {
+        session.Clear();
+        await EnsureCsrfCookieAsync(cancellationToken);
+        return await SendAsync<ApiUser>(
+            HttpMethod.Post,
+            "auth/register/",
+            new { username, password },
+            cancellationToken);
+    }
+
     public async Task<IReadOnlyList<GameAccount>> GetGameAccountsAsync(CancellationToken cancellationToken = default)
     {
         var envelope = await SendAsync<ResultsEnvelope<GameAccount>>(
@@ -41,6 +52,36 @@ public sealed class WuwaApiClient
             body: null,
             cancellationToken);
         return envelope.Results;
+    }
+
+    public Task<GameAccount> CreateGameAccountAsync(string uid, string server = "", string nickname = "", bool isDefault = false, CancellationToken cancellationToken = default)
+    {
+        return SendAsync<GameAccount>(
+            HttpMethod.Post,
+            "game-accounts/",
+            new
+            {
+                uid,
+                server,
+                nickname,
+                is_default = isDefault,
+            },
+            cancellationToken);
+    }
+
+    public Task<GameAccount> UpdateGameAccountAsync(int accountId, string uid, string server = "", string nickname = "", bool isDefault = true, CancellationToken cancellationToken = default)
+    {
+        return SendAsync<GameAccount>(
+            HttpMethod.Patch,
+            $"game-accounts/{accountId}/",
+            new
+            {
+                uid,
+                server,
+                nickname,
+                is_default = isDefault,
+            },
+            cancellationToken);
     }
 
     public Task<RecognitionSessionResult> CreateRecognitionSessionAsync(int gameAccountId, CancellationToken cancellationToken = default)
@@ -135,13 +176,13 @@ public sealed class WuwaApiClient
         catch (HttpRequestException ex)
         {
             throw new InvalidOperationException(
-                $"无法连接后端：请确认后端已启动，并且地址填写正确。当前地址：{settings.BackendBaseUrl}",
+                "无法连接服务：请确认本地服务已启动，然后重试。",
                 ex);
         }
         catch (TaskCanceledException ex) when (!cancellationToken.IsCancellationRequested)
         {
             throw new InvalidOperationException(
-                $"连接后端超时：请确认后端已启动，并且地址填写正确。当前地址：{settings.BackendBaseUrl}",
+                "连接服务超时：请确认本地服务正在运行，然后重试。",
                 ex);
         }
     }
@@ -172,7 +213,7 @@ public sealed class WuwaApiClient
 
             if (status == 403)
             {
-                return "后端拒绝了登录请求 (HTTP 403)。请确认后端地址正确、服务已启动，然后重新点击登录。";
+                return "服务拒绝了登录请求 (HTTP 403)。请重新打开助手后再试。";
             }
         }
 
@@ -184,8 +225,8 @@ public sealed class WuwaApiClient
         return status switch
         {
             401 => "尚未登录或登录已过期，请重新登录后再试。",
-            403 => $"后端拒绝了请求 (HTTP 403)：请重新登录，或确认后端地址是否正确。",
-            404 => $"接口不存在 (HTTP 404)：请确认后端地址是否填写为服务根地址，例如 http://127.0.0.1:8000。",
+            403 => "服务拒绝了请求 (HTTP 403)：请重新登录后再试。",
+            404 => "服务接口不可用 (HTTP 404)：请确认本地服务版本正确。",
             >= 500 => $"后端内部错误 (HTTP {status})：请查看 Django 后端控制台日志。",
             _ => string.IsNullOrWhiteSpace(body)
                 ? $"后端请求失败 (HTTP {status})：响应内容为空。"

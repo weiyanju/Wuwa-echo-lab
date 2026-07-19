@@ -1,4 +1,5 @@
 import json
+from unittest.mock import patch
 
 from django.contrib.auth.models import User
 from django.db import connection
@@ -6,14 +7,16 @@ from django.test import Client, TestCase
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 
-from api.models import EchoRecord, GameAccount, RecognitionSession, RecognitionSnapshot, SubstatRoll
+from accounts.models import GameAccount
+from echoes.models import EchoRecord, SubstatRoll
+from recognition.models import RecognitionSession, RecognitionSnapshot
 
 
 class ApiViewTests(TestCase):
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create_user(username="tester", password="pw12345")
-        self.user.game_accounts.update(uid="123456789")
+        self.user.game_accounts.update(uid="123456789", server="legacy-server", nickname="legacy-name")
 
     def test_register_login_and_me(self):
         response = self.client.post(
@@ -23,21 +26,130 @@ class ApiViewTests(TestCase):
         )
         self.assertEqual(response.status_code, 201)
         body = response.json()
+        self.assertEqual(body["registration_outcome"], "created")
         self.assertEqual(body["default_game_account"]["uid"], "")
         self.assertTrue(body["default_game_account"]["workspace_locked"])
-
-        response = self.client.post(
-            reverse("login"),
-            data=json.dumps({"username": "new-user", "password": "pw12345"}),
-            content_type="application/json",
-        )
-        self.assertEqual(response.status_code, 200)
 
         response = self.client.get(reverse("me"))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["username"], "new-user")
         self.assertEqual(response.json()["default_game_account"]["uid"], "")
         self.assertTrue(response.json()["workspace_locked"])
+
+    def test_register_resumes_unfinished_account_with_matching_credentials(self):
+        unfinished_user = User.objects.create_user(username="unfinished", password="pw12345")
+        unfinished_account = unfinished_user.game_accounts.get()
+
+        response = self.client.post(
+            reverse("register"),
+            data=json.dumps({"username": "unfinished", "password": "pw12345"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["id"], unfinished_user.id)
+        self.assertEqual(body["registration_outcome"], "resumed")
+        self.assertEqual(body["default_game_account"]["id"], unfinished_account.id)
+        self.assertEqual(User.objects.filter(username="unfinished").count(), 1)
+        self.assertEqual(unfinished_user.game_accounts.count(), 1)
+
+        response = self.client.get(reverse("me"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["id"], unfinished_user.id)
+
+    def test_register_rejects_unfinished_account_with_wrong_credentials(self):
+        unfinished_user = User.objects.create_user(username="unfinished", password="pw12345")
+        unfinished_account = unfinished_user.game_accounts.get()
+
+        response = self.client.post(
+            reverse("register"),
+            data=json.dumps({"username": "unfinished", "password": "wrong-password"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["code"], "registration_credentials_invalid")
+        self.assertEqual(User.objects.filter(username="unfinished").count(), 1)
+        self.assertEqual(unfinished_user.game_accounts.count(), 1)
+        self.assertEqual(unfinished_user.game_accounts.get().id, unfinished_account.id)
+        self.assertEqual(self.client.get(reverse("me")).status_code, 401)
+
+    def test_register_rejects_inactive_unfinished_account(self):
+        unfinished_user = User.objects.create_user(
+            username="inactive-unfinished",
+            password="pw12345",
+            is_active=False,
+        )
+
+        response = self.client.post(
+            reverse("register"),
+            data=json.dumps({"username": "inactive-unfinished", "password": "pw12345"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["code"], "registration_credentials_invalid")
+        self.assertEqual(User.objects.filter(username="inactive-unfinished").count(), 1)
+        self.assertEqual(unfinished_user.game_accounts.count(), 1)
+        self.assertEqual(self.client.get(reverse("me")).status_code, 401)
+
+    def test_register_rejects_completed_account_even_with_matching_credentials(self):
+        self.user.game_accounts.update(uid="")
+        GameAccount.objects.create(user=self.user, uid="987654321")
+
+        response = self.client.post(
+            reverse("register"),
+            data=json.dumps({"username": "tester", "password": "pw12345"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(response.json()["code"], "registration_complete")
+        self.assertEqual(User.objects.filter(username="tester").count(), 1)
+        self.assertEqual(self.user.game_accounts.count(), 2)
+        self.assertEqual(self.client.get(reverse("me")).status_code, 401)
+
+    def test_register_rejects_completed_account_with_wrong_credentials_before_completion(self):
+        self.assertTrue(self.user.game_accounts.exclude(uid="").exists())
+
+        response = self.client.post(
+            reverse("register"),
+            data=json.dumps({"username": "tester", "password": "wrong-password"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["code"], "registration_credentials_invalid")
+        self.assertEqual(self.client.get(reverse("me")).status_code, 401)
+
+    def test_register_rejects_inactive_completed_account_before_completion(self):
+        self.assertTrue(self.user.game_accounts.exclude(uid="").exists())
+        self.user.is_active = False
+        self.user.save(update_fields=["is_active"])
+
+        response = self.client.post(
+            reverse("register"),
+            data=json.dumps({"username": "tester", "password": "pw12345"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["code"], "registration_credentials_invalid")
+        self.assertEqual(self.client.get(reverse("me")).status_code, 401)
+
+    def test_register_does_not_login_before_success_payload_is_serialized(self):
+        with patch("accounts.views.default_game_account", side_effect=GameAccount.DoesNotExist):
+            with self.assertRaises(GameAccount.DoesNotExist):
+                self.client.post(
+                    reverse("register"),
+                    data=json.dumps({"username": "broken-default", "password": "pw12345"}),
+                    content_type="application/json",
+                )
+
+        created_user = User.objects.get(username="broken-default")
+        self.assertIsNone(created_user.last_login)
+        self.assertEqual(self.client.get(reverse("me")).status_code, 401)
 
     def test_game_account_list_create_and_bind_default(self):
         self.client.login(username="tester", password="pw12345")
@@ -47,6 +159,8 @@ class ApiViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json()["results"]), 1)
         self.assertEqual(response.json()["results"][0]["uid"], "123456789")
+        self.assertEqual(response.json()["results"][0]["server"], "")
+        self.assertEqual(response.json()["results"][0]["nickname"], "")
 
         response = self.client.post(
             reverse("game_account_list"),
@@ -57,6 +171,8 @@ class ApiViewTests(TestCase):
         self.assertEqual(response.status_code, 201)
         created = response.json()
         self.assertEqual(created["uid"], "987654321")
+        self.assertEqual(created["nickname"], "")
+        self.assertEqual(created["server"], "")
         self.assertFalse(created["is_default"])
 
         response = self.client.patch(
@@ -67,7 +183,7 @@ class ApiViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.json()["is_default"])
-        self.assertEqual(response.json()["nickname"], "main alt")
+        self.assertEqual(response.json()["nickname"], "")
         self.assertEqual(self.user.game_accounts.filter(is_default=True).get().id, created["id"])
 
     def test_game_account_rejects_duplicate_uid_for_same_user(self):
@@ -81,6 +197,158 @@ class ApiViewTests(TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertIn("error", response.json())
+        self.assertEqual(self.user.game_accounts.count(), 1)
+
+        response = self.client.post(
+            reverse("game_account_list"),
+            data=json.dumps({"uid": "123456789", "server": "alternate"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(self.user.game_accounts.count(), 1)
+
+    def test_game_account_create_rejects_eight_digit_uid(self):
+        self.client.login(username="tester", password="pw12345")
+
+        response = self.client.post(
+            reverse("game_account_list"),
+            data=json.dumps({"uid": "12345678"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("error", response.json())
+        self.assertEqual(self.user.game_accounts.count(), 1)
+
+    def test_game_account_create_rejects_ten_digit_uid(self):
+        self.client.login(username="tester", password="pw12345")
+
+        response = self.client.post(
+            reverse("game_account_list"),
+            data=json.dumps({"uid": "1234567890"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("error", response.json())
+        self.assertEqual(self.user.game_accounts.count(), 1)
+
+    def test_game_account_create_rejects_fullwidth_digit_uid(self):
+        self.client.login(username="tester", password="pw12345")
+
+        response = self.client.post(
+            reverse("game_account_list"),
+            data=json.dumps({"uid": "１２３４５６７８９"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("error", response.json())
+        self.assertEqual(self.user.game_accounts.count(), 1)
+
+    def test_game_account_create_rejects_arabic_indic_digit_uid(self):
+        self.client.login(username="tester", password="pw12345")
+
+        response = self.client.post(
+            reverse("game_account_list"),
+            data=json.dumps({"uid": "١٢٣٤٥٦٧٨٩"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("error", response.json())
+        self.assertEqual(self.user.game_accounts.count(), 1)
+
+    def test_game_account_create_rejects_uid_containing_letters(self):
+        self.client.login(username="tester", password="pw12345")
+
+        response = self.client.post(
+            reverse("game_account_list"),
+            data=json.dumps({"uid": "12345678a"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("error", response.json())
+        self.assertEqual(self.user.game_accounts.count(), 1)
+
+    def test_game_account_create_rejects_empty_uid(self):
+        self.client.login(username="tester", password="pw12345")
+
+        response = self.client.post(
+            reverse("game_account_list"),
+            data=json.dumps({"uid": ""}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("error", response.json())
+        self.assertEqual(self.user.game_accounts.count(), 1)
+
+    def test_game_account_can_bind_initial_empty_account_and_make_it_default(self):
+        account = self.user.game_accounts.get()
+        account.uid = ""
+        account.is_default = False
+        account.save()
+        self.client.login(username="tester", password="pw12345")
+
+        response = self.client.patch(
+            reverse("game_account_detail", args=[account.id]),
+            data=json.dumps({"uid": "987654321", "is_default": True}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["uid"], "987654321")
+        self.assertTrue(response.json()["is_default"])
+
+    def test_game_account_create_rejects_sixth_bound_account(self):
+        for index in range(4):
+            GameAccount.objects.create(user=self.user, uid=f"{200000000 + index}")
+        self.client.login(username="tester", password="pw12345")
+
+        response = self.client.post(
+            reverse("game_account_list"),
+            data=json.dumps({"uid": "987654321"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("error", response.json())
+        self.assertEqual(self.user.game_accounts.exclude(uid="").count(), 5)
+
+    def test_game_account_patch_rejects_changing_bound_uid(self):
+        account = self.user.game_accounts.get()
+        self.client.login(username="tester", password="pw12345")
+
+        response = self.client.patch(
+            reverse("game_account_detail", args=[account.id]),
+            data=json.dumps({"uid": "987654321"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("error", response.json())
+        account.refresh_from_db()
+        self.assertEqual(account.uid, "123456789")
+        self.assertTrue(account.is_default)
+
+    def test_game_account_patch_rejects_clearing_bound_uid(self):
+        account = self.user.game_accounts.get()
+        self.client.login(username="tester", password="pw12345")
+
+        response = self.client.patch(
+            reverse("game_account_detail", args=[account.id]),
+            data=json.dumps({"uid": ""}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("error", response.json())
+        account.refresh_from_db()
+        self.assertEqual(account.uid, "123456789")
+        self.assertTrue(account.is_default)
 
     def test_game_account_requires_ownership(self):
         other = User.objects.create_user(username="other-account", password="pw12345")
@@ -118,6 +386,9 @@ class ApiViewTests(TestCase):
                 {
                     "echo_uid": "e-1",
                     "display_name": "测试声骸",
+                    "echo_asset_id": "60001839",
+                    "echo_name": "重工铁蹄",
+                    "echo_image": "/echo-images/images/31_剪心辑梦之影/cost3_60001839_重工铁蹄.png",
                     "cost": 1,
                     "set_name": "啸谷长风",
                     "main_stat": "atk_percent",
@@ -127,6 +398,9 @@ class ApiViewTests(TestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()["echo_asset_id"], "60001839")
+        self.assertEqual(response.json()["echo_name"], "重工铁蹄")
+        self.assertEqual(response.json()["echo_image"], "/echo-images/images/31_剪心辑梦之影/cost3_60001839_重工铁蹄.png")
         echo_id = response.json()["id"]
 
         response = self.client.post(
@@ -284,6 +558,24 @@ class ApiViewTests(TestCase):
 
         self.assertEqual(response.status_code, 404)
 
+    def test_prediction_fast_mode_omits_model_diagnostics(self):
+        self.client.force_login(self.user)
+        echo = EchoRecord.objects.create(
+            user=self.user,
+            echo_uid="fast-prediction",
+            cost=1,
+            set_name="Set",
+            main_stat="atk_percent",
+        )
+        SubstatRoll.objects.create(echo=echo, position=1, substat_type="crit_rate", tier_value=6.3)
+
+        response = self.client.get(f"{reverse('echo_prediction', args=[echo.id])}?mode=fast")
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertIn("candidates", body)
+        self.assertIsNone(body["model_diagnostics"])
+
     def test_echo_list_returns_history_with_existing_rolls(self):
         self.client.login(username="tester", password="pw12345")
         echo = EchoRecord.objects.create(
@@ -300,6 +592,9 @@ class ApiViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["results"][0]["substats"][0]["substat_type"], "crit_rate")
         self.assertIn("created_at", response.json()["results"][0])
+        self.assertIn("echo_name", response.json()["results"][0])
+        self.assertIn("echo_asset_id", response.json()["results"][0])
+        self.assertIn("echo_image", response.json()["results"][0])
 
     def test_patch_owned_echo_updates_allowed_fields(self):
         self.client.login(username="tester", password="pw12345")
@@ -318,6 +613,9 @@ class ApiViewTests(TestCase):
             data=json.dumps(
                 {
                     "display_name": "New name",
+                    "echo_asset_id": "60001839",
+                    "echo_name": "重工铁蹄",
+                    "echo_image": "/echo-images/images/31_剪心辑梦之影/cost3_60001839_重工铁蹄.png",
                     "set_name": "New set",
                     "source": "New source",
                     "is_continuous_tuning": True,
@@ -329,12 +627,18 @@ class ApiViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         body = response.json()
         self.assertEqual(body["display_name"], "New name")
+        self.assertEqual(body["echo_asset_id"], "60001839")
+        self.assertEqual(body["echo_name"], "重工铁蹄")
+        self.assertEqual(body["echo_image"], "/echo-images/images/31_剪心辑梦之影/cost3_60001839_重工铁蹄.png")
         self.assertEqual(body["set_name"], "New set")
         self.assertEqual(body["source"], "New source")
         self.assertIs(body["is_continuous_tuning"], True)
 
         echo.refresh_from_db()
         self.assertEqual(echo.display_name, "New name")
+        self.assertEqual(echo.echo_asset_id, "60001839")
+        self.assertEqual(echo.echo_name, "重工铁蹄")
+        self.assertEqual(echo.echo_image, "/echo-images/images/31_剪心辑梦之影/cost3_60001839_重工铁蹄.png")
         self.assertEqual(echo.set_name, "New set")
         self.assertEqual(echo.source, "New source")
         self.assertIs(echo.is_continuous_tuning, True)
@@ -358,6 +662,41 @@ class ApiViewTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 404)
+
+    def test_delete_owned_echo_removes_record_and_substats(self):
+        self.client.login(username="tester", password="pw12345")
+        echo = EchoRecord.objects.create(
+            user=self.user,
+            echo_uid="e-delete",
+            cost=1,
+            set_name="Set",
+            main_stat="atk_percent",
+        )
+        SubstatRoll.objects.create(echo=echo, position=1, substat_type="crit_rate", tier_value=6.3)
+
+        response = self.client.delete(reverse("echo_detail", args=[echo.id]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["deleted_echo_id"], echo.id)
+        self.assertFalse(EchoRecord.objects.filter(id=echo.id).exists())
+        self.assertFalse(SubstatRoll.objects.filter(echo_id=echo.id).exists())
+
+    def test_delete_echo_requires_ownership(self):
+        other = User.objects.create_user(username="other-delete", password="pw12345")
+        other.game_accounts.update(uid="987654321")
+        echo = EchoRecord.objects.create(
+            user=other,
+            echo_uid="other-delete-1",
+            cost=1,
+            set_name="Other set",
+            main_stat="atk_percent",
+        )
+        self.client.login(username="tester", password="pw12345")
+
+        response = self.client.delete(reverse("echo_detail", args=[echo.id]))
+
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue(EchoRecord.objects.filter(id=echo.id).exists())
 
     def test_get_only_endpoints_reject_post(self):
         self.client.login(username="tester", password="pw12345")
@@ -577,6 +916,41 @@ class RecognitionApiViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["id"], session["id"])
 
+    def test_patch_recognition_session_can_end_owned_session(self):
+        session = self._create_session()
+
+        response = self.client.patch(
+            reverse("recognition_session_detail", args=[session["id"]]),
+            data=json.dumps({"status": "ended"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["status"], "ended")
+        self.assertIsNotNone(body["ended_at"])
+
+        db_session = RecognitionSession.objects.get(id=session["id"])
+        self.assertEqual(db_session.status, RecognitionSession.Status.ENDED)
+        self.assertIsNotNone(db_session.ended_at)
+
+    def test_patch_recognition_session_requires_ownership(self):
+        other = User.objects.create_user(username="other-session-patch", password="pw12345")
+        other_account = other.game_accounts.get()
+        other_account.uid = "987654321"
+        other_account.save()
+        other_session = RecognitionSession.objects.create(user=other, game_account=other_account)
+
+        response = self.client.patch(
+            reverse("recognition_session_detail", args=[other_session.id]),
+            data=json.dumps({"status": "ended"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 404)
+        other_session.refresh_from_db()
+        self.assertEqual(other_session.status, RecognitionSession.Status.ACTIVE)
+
     def test_sample_snapshot_import_creates_formal_echo_and_roll(self):
         session = self._create_session()
 
@@ -597,6 +971,7 @@ class RecognitionApiViewTests(TestCase):
         echo = EchoRecord.objects.get(id=body["created_echo_id"])
         roll = SubstatRoll.objects.get(echo=echo)
         self.assertEqual(snapshot.created_echo_id, echo.id)
+        self.assertEqual(echo.echo_name, "Sample Echo")
         self.assertEqual(roll.recognition_snapshot_id, snapshot.id)
         self.assertEqual(roll.substat_type, "crit_rate")
         self.assertEqual(roll.tier_value, 6.3)

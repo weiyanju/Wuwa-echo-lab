@@ -1,0 +1,17 @@
+.hero-metric-skeleton {
+  display: inline-block;
+  width: 64px;
+  height: var(--text-data-xl);
+  border-radius: 8px;
+  background: var(--surface-soft);
+}
+
+.hero-metric-error {
+  color: var(--critical-deep);
+  font-family: var(--font-ui);
+  font-size: var(--text-label);
+  font-weight: var(--weight-label);
+}
+
+.hero-confidence-value.metric-placeholder { min-width: 2ch; color: var(--steel); }
+.app-shell.theme-dark .hero-metric-skeleton { background: rgba(92, 113, 128, 0.24); }

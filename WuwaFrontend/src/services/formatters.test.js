@@ -4,7 +4,17 @@ import test from 'node:test'
 
 import { mainStatsByCost, substatLabels, substatOrder, tierTables } from '../data/substats.js'
 import { sonataEffects, sonataEffectsSource } from '../data/sonataEffects.js'
-import { confidenceText, formatPercent, formatSignedPercent, modelWeightLabel, sampleStageText, statusText } from './formatters.js'
+import {
+  confidenceText,
+  formatPercent,
+  formatSignedPercent,
+  formatSubstatTierNumber,
+  formatSubstatTierUnit,
+  formatSubstatTierValue,
+  modelWeightLabel,
+  sampleStageText,
+  statusText,
+} from './formatters.js'
 
 test('formats probabilities as readable percentages', () => {
   assert.equal(formatPercent(0.1234), '12.34%')
@@ -12,10 +22,28 @@ test('formats probabilities as readable percentages', () => {
   assert.equal(formatPercent(null), '0.00%')
 })
 
-test('formats signed baseline deviations', () => {
+test('formats signed percentages for deviations and deltas', () => {
   assert.equal(formatSignedPercent(0.0123), '+1.23%')
   assert.equal(formatSignedPercent(-0.004), '-0.40%')
+  assert.equal(formatSignedPercent(0.1818), '+18.18%')
+  assert.equal(formatSignedPercent(-0.0664), '-6.64%')
   assert.equal(formatSignedPercent(0), '+0.00%')
+})
+
+test('formats substat tier values by stat unit type', () => {
+  assert.equal(formatSubstatTierValue('crit_rate', 6.3), '6.3%')
+  assert.equal(formatSubstatTierValue('skill_damage', 6.4), '6.4%')
+  assert.equal(formatSubstatTierValue('energy_regen', 6.8), '6.8%')
+  assert.equal(formatSubstatTierValue('flat_atk', 30), '30')
+  assert.equal(formatSubstatTierValue('flat_hp', 320), '320')
+  assert.equal(formatSubstatTierValue('flat_def', 40), '40')
+})
+
+test('separates substat tier number and unit for visual hierarchy', () => {
+  assert.equal(formatSubstatTierNumber('crit_rate', 6.3), '6.3')
+  assert.equal(formatSubstatTierUnit('crit_rate'), '%')
+  assert.equal(formatSubstatTierNumber('flat_atk', 30), '30')
+  assert.equal(formatSubstatTierUnit('flat_atk'), '')
 })
 
 test('maps model status and confidence to Chinese labels', () => {
@@ -56,6 +84,31 @@ test('contains 13 independent substat types with clickable tier tables', () => {
   }
 })
 
+test('stores reference sheet tier probabilities for the workbench matrix', () => {
+  assert.deepEqual(tierTables.crit_rate, [
+    { value: 6.3, probability: 0.2333 },
+    { value: 6.9, probability: 0.2333 },
+    { value: 7.5, probability: 0.2333 },
+    { value: 8.1, probability: 0.0800 },
+    { value: 8.7, probability: 0.0800 },
+    { value: 9.3, probability: 0.0800 },
+    { value: 9.9, probability: 0.0300 },
+    { value: 10.5, probability: 0.0300 },
+  ])
+  assert.deepEqual(tierTables.flat_atk, [
+    { value: 30, probability: 0.0680 },
+    { value: 40, probability: 0.5243 },
+    { value: 50, probability: 0.3786 },
+    { value: 60, probability: 0.0291 },
+  ])
+  assert.deepEqual(tierTables.flat_def, [
+    { value: 40, probability: 0.1456 },
+    { value: 50, probability: 0.4466 },
+    { value: 60, probability: 0.3204 },
+    { value: 70, probability: 0.0874 },
+  ])
+})
+
 test('allows hp percent as a 3 cost main stat', () => {
   assert.ok(mainStatsByCost[3].includes('hp_percent'))
 })
@@ -64,14 +117,16 @@ test('preserves manual rounded probability sums instead of forcing one', () => {
   const flatHpTotal = tierTables.flat_hp.reduce((sum, tier) => sum + tier.probability, 0)
   const energyTotal = tierTables.energy_regen.reduce((sum, tier) => sum + tier.probability, 0)
 
-  assert.equal(Math.round(flatHpTotal * 1000) / 1000, 1.002)
-  assert.equal(Math.round(energyTotal * 1000) / 1000, 1.001)
+  assert.equal(Math.round(flatHpTotal * 1000) / 1000, 1.000)
+  assert.equal(Math.round(energyTotal * 1000) / 1000, 1.000)
 })
 
 test('stores current visible sonata effects with local icons', () => {
   assert.equal(sonataEffectsSource.url, 'https://wuwa.wiki/zh-hans/codex/sonataeffects')
-  assert.equal(sonataEffects.length, 30)
-  assert.equal(sonataEffects[0].name, '剪心辑梦之影')
+  assert.equal(sonataEffects.length, 31)
+  assert.equal(sonataEffects[0].id, 32)
+  assert.equal(sonataEffects[0].name, '碎梦亡鬼之魇')
+  assert.equal(sonataEffects[0].sourceIcon, 'Common/Image/IconElementAttri/T_IconElementAttriAdam')
   assert.equal(sonataEffects.at(-1).name, '凝夜白霜')
   assert.ok(sonataEffects.some((effect) => effect.name === '啸谷长风'))
   assert.ok(sonataEffects.every((effect) => existsSync(`public${effect.icon}`)))

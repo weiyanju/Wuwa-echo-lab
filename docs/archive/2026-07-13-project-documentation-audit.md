@@ -1,0 +1,125 @@
+# 项目全局文档审查记录
+
+## 审查目标
+
+在继续修改界面前，对 Web 前端、Django 后端、WPF 客户端、开发脚本、长期设计规范、专项文档和历史归档进行一次全局对照，优先修正文档缺口，并把仍需代码处理的问题显式记录下来。
+
+## 审查范围
+
+- 根目录开发入口、产品与设计规范
+- `WuwaFrontend/` 的依赖、目录、路由壳层、工作台交互、响应式样式与测试
+- `Wuwa/` 的 Django 配置、API 路由、数据契约与测试
+- `WuwaAssistant/` 的 WPF 项目结构、构建与测试
+- `start-dev.bat` 与对应脚本测试
+- `.impeccable/design.json`、`docs/`、`docs/superpowers/`、`docs/archive/` 和 `memory/`
+
+## 已确认一致的内容
+
+- Web、Django 与 WPF 的主要目录职责和代码所有权文档与当前仓库结构一致。
+- API 与数据契约文档列出的主要路由、账号与 UID 边界与当前后端实现一致。
+- README 和开发入门文档中的前端、后端、WPF 启动入口与当前项目结构一致。
+- Web 当前使用 Vue 3、Vite 8、IBM Plex 字体包；后端使用 Django 6 和 PostgreSQL；WPF 使用 .NET 10，均已在开发文档中保持准确。
+- 当前工作台的吸顶初始化区、配置新建逻辑、预测摘要、保存锁定、响应式断点和历史面板默认状态已同步到长期或专项规范。
+
+## 本次文档更新
+
+- 新增根目录 `AGENTS.md`，明确开发前必读文档、冲突处理、验证与归档要求。
+- 新增 `.github/pull_request_template.md`，将设计阅读、测试、文档同步和安全检查纳入 PR 清单。
+- 更新 `README.md` 和 `docs/developer-onboarding.md`，建立统一开发入口与文档阅读顺序。
+- 更新 `PRODUCT.md`，移除与当前产品不符的 IDE、命令面板优先和极简终端式方向。
+- 更新 `DESIGN.md` 与 `.impeccable/design.json`，校正品牌、字体和工作台当前规则。
+- 更新产品原则、工程质量、安全边界、首页、Web V2.1 与工作台专项文档。
+- 补齐顶部品牌、字体系统和工作台细节优化的实施归档。
+
+## 验证结果
+
+- `cd WuwaFrontend; ..\.tools\node\npm.cmd test`：211 项通过。
+- `cd WuwaFrontend; ..\.tools\node\npm.cmd run build`：通过。
+- `dotnet run --project WuwaAssistant\WuwaAssistant.Tests\WuwaAssistant.Tests.csproj`：WPF 12 项通过。
+- `dotnet build WuwaAssistant\WuwaAssistant.slnx`：0 warning、0 error。
+- 声骸套装资源测试：6 项通过。
+- `scripts/test-start-dev-script.ps1`：通过。
+- Django 测试：131 项中 130 项通过，1 项失败；失败项是数据库密码默认值策略冲突，详见下方遗留问题。
+- 文档修改完成后重新检查 79 个 Markdown 文件，相对链接无断链；`.impeccable/design.json` 可正常解析，`git diff --check` 通过。
+
+配置收口复验（2026-07-13）：Django 全量 131 项通过；启动器静态测试与 `start-dev.bat --check` 通过；旧 SSH/远端 token 和用户绝对路径扫描无结果；`git diff --check` 无空白错误。首次全量测试因已有测试库触发非交互确认而未进入测试，随后以 `--keepdb` 安全复用专用测试库完成验证。
+
+## 审查发现与处理结果
+
+| 优先级 | 问题 | 主要影响 | 状态 |
+| --- | --- | --- | --- |
+| P0 | 数据库密码默认值与测试策略冲突 | Django 测试无法全绿，凭据边界不明确 | 按当前阶段策略解决 |
+| P0 | 开发与部署配置未完全外置 | 存在凭据泄露和错误部署风险 | 按当前阶段策略解决 |
+| P1 | 彩色粗侧边强调违反设计规范 | Web 视觉语言不统一，后续页面容易继续复制 | 二次复核后已解决 |
+| P2 | 根目录存在未归属图片 | 仓库卫生与资产来源不清楚 | 已删除 |
+
+### 1. P0：数据库密码策略与测试互相矛盾
+
+`Wuwa/wuwa/settings.py` 为本地数据库密码提供默认值；一个较早的结构测试禁止该行为，另一个较新的设置测试要求该默认值，导致策略互相冲突。用户确认当前项目仍是 pre-release 本地开发，并要求保留本机 PostgreSQL 默认值，避免后续协作者反复询问或改用其他数据库路径。
+
+主要涉及：
+
+- `Wuwa/wuwa/settings.py`
+- `Wuwa/api/tests/test_backend_structure.py`
+- `Wuwa/wuwa/tests/test_database_settings.py`
+
+处理结果（2026-07-13）：将 `root` 定义为仅限 development、仅用于本机回环 PostgreSQL 的命名默认值；结构测试和设置测试统一验证这一约定。`WUWA_ENV=production` 时不会使用该默认值，并要求显式提供 `DB_PASSWORD`。这是一项有范围、有退出条件的临时开发决策，不是生产安全例外。
+
+### 2. P0：开发与部署配置仍包含应外置的信息
+
+Django 设置原先包含可复用密钥与固定开发模式值；开发启动脚本还保留了旧的真实远端信息、本机绝对密钥路径和 SSH 隧道能力。当前本地开发不需要这条远端路径。
+
+主要涉及：
+
+- `Wuwa/wuwa/settings.py`
+- `start-dev.bat`
+- `README.md` 与本地启动示例
+
+处理结果（2026-07-13）：
+
+- 从 `start-dev.bat` 删除真实远端地址、SSH 用户、本机私钥路径和完整隧道分支，启动器只接受 `127.0.0.1` 或 `localhost`。
+- Django `SECRET_KEY`、`DEBUG`、`ALLOWED_HOSTS`、CORS 和 CSRF 设置改为环境感知；development 保留清楚命名的本地占位值。
+- `WUWA_ENV=production` 成为显式生产门槛：必须提供 `DJANGO_SECRET_KEY`、`DB_PASSWORD` 和 `DJANGO_ALLOWED_HOSTS`，禁止开启调试，不继承 localhost 来源默认值。
+- README、开发入门、AGENTS 和安全边界规范已同步。真实服务器配置仍必须留在环境或不入库配置中。
+
+### 3. P1：部分彩色粗侧边强调违反当前设计规范（二次复核后已解决）
+
+登录、历史记录、工作台和评估样式中仍能找到超过 1px 的彩色左侧或右侧强调。`DESIGN.md` 明确禁止这种装饰方式。后续应逐项判断状态语义，改用完整 1px 边框、背景、图标或文字，不应修改规范去迁就旧样式。
+
+主要涉及：
+
+- `WuwaFrontend/src/styles/features/auth.css`
+- `WuwaFrontend/src/styles/features/history.css`
+- `WuwaFrontend/src/styles/features/workspace.css`
+- `WuwaFrontend/src/styles/features/evaluation.css`
+
+验收标准：
+
+- 不再使用超过 1px 的彩色左右边框或模拟侧边条的 inset shadow。
+- 成功、警告、错误、选中和预测状态不只依赖颜色表达。
+- 前端测试、生产构建和桌面/窄屏浏览器检查通过。
+
+处理结果（2026-07-13，二次复核）：保留 `DESIGN.md` 与 Impeccable 的禁止项，不修改规范迁就旧实现。首轮“已解决”结论在用户指出顶部边缘后重新打开；复核发现原守卫只覆盖四个 feature CSS，并遗漏 `.model-detail-thumb::before` 的 3px 伪元素左侧条。现已删除该装饰性侧条，将守卫扩展到 12 个 Web CSS 入口，并增加伪元素识别与评估页选择器专项断言。
+
+顶部边缘不属于 Impeccable“超过 1px 的彩色左右侧边强调”这一绝对禁止项，因此按语义逐项审查：删除周期窗口、分组权重、大型模型条、Markov 惩罚卡和模型展开/最佳行中没有独立数据含义的粗顶部强调；保留进度条、坐标轴、箭头和时间线。Bayes 卡片内部的 3px 实线/虚线路径标记按用户确认保留，它用于区分 Exact/Wildcard 路径，是具名的功能编码，不构成卡片彩色侧边装饰的通用例外。
+
+二次复核后，前端定向测试 48 项与全量测试 216 项全部通过，Vite 生产构建通过，Impeccable 对 `evaluation.css` 的 `side-tab` 与 `border-accent-on-rounded` 相关发现均为 0。应用内浏览器可打开本地预览，但没有可复用的已认证评估会话，因此未通过输入凭据或伪造 PostgreSQL 数据制造登录后截图；该视觉证据限制已在实施记录中明确说明。详细证据见 `docs/archive/2026-07-13-web-state-accent-polish-implementation.md`。
+
+### 4. P2：根目录存在未归属的图片文件
+
+根目录有两张未被当前文档或源码引用的 PNG 图片。用户确认可以删除。
+
+已删除文件：
+
+- `_crop_check.png`
+- `translated_probability_formula_cn.png`
+
+处理结果（2026-07-13）：删除两张临时图片；删除前确认除审查和实施计划外没有产品、源码或文档引用。
+
+## 本轮边界
+
+最初审查轮只更新文档、设计系统元数据和开发治理入口。用户确认处理方向后，已另行修改 Django 配置、测试与本地启动脚本；没有修改业务数据模型、API 契约或数据库内容。
+
+## 下一步
+
+本审查列出的四项问题均已按用户确认的当前阶段策略处理。未来服务器部署前仍需执行独立的生产安全清单、提供真实环境配置并删除本地密码默认值；当前生产门槛不等同于已经完成部署验收。

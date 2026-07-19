@@ -4,7 +4,50 @@ export const sonataEffectsSource = Object.freeze({
   capturedAt: '2026-05-20',
 })
 
-export const sonataEffects = Object.freeze([
+const allAvailableCosts = Object.freeze([1, 3, 4])
+
+const sonataAvailableCostsById = Object.freeze({
+  32: Object.freeze([4]),
+  31: allAvailableCosts,
+  30: allAvailableCosts,
+  29: allAvailableCosts,
+  28: allAvailableCosts,
+  27: allAvailableCosts,
+  26: allAvailableCosts,
+  25: allAvailableCosts,
+  24: allAvailableCosts,
+  23: allAvailableCosts,
+  22: allAvailableCosts,
+  21: allAvailableCosts,
+  20: allAvailableCosts,
+  19: allAvailableCosts,
+  18: allAvailableCosts,
+  17: allAvailableCosts,
+  16: allAvailableCosts,
+  14: allAvailableCosts,
+  13: allAvailableCosts,
+  12: allAvailableCosts,
+  11: allAvailableCosts,
+  10: allAvailableCosts,
+  9: allAvailableCosts,
+  8: allAvailableCosts,
+  7: allAvailableCosts,
+  6: allAvailableCosts,
+  5: allAvailableCosts,
+  4: allAvailableCosts,
+  3: allAvailableCosts,
+  2: allAvailableCosts,
+  1: allAvailableCosts,
+})
+
+const sonataEffectRecords = Object.freeze([
+  {
+    id: 32,
+    name: '碎梦亡鬼之魇',
+    slug: 'dreamless-nightmare',
+    icon: '/sonata-effects/dreamless-nightmare.avif',
+    sourceIcon: 'Common/Image/IconElementAttri/T_IconElementAttriAdam',
+  },
   {
     id: 31,
     name: '剪心辑梦之影',
@@ -216,5 +259,10 @@ export const sonataEffects = Object.freeze([
     sourceIcon: 'Common/Image/IconElementAttri/T_IconElementAttriIce',
   },
 ])
+
+export const sonataEffects = Object.freeze(sonataEffectRecords.map((effect) => Object.freeze({
+  ...effect,
+  availableCosts: sonataAvailableCostsById[effect.id] || allAvailableCosts,
+})))
 
 export const sonataEffectNames = Object.freeze(sonataEffects.map((effect) => effect.name))

@@ -43,6 +43,22 @@ test('game-account-scoped reads append query parameters', async () => {
   assert.equal(calls[2].url, '/api/model-evaluation/?game_account_id=3')
 })
 
+test('prediction helper requests fast mode by default', async () => {
+  calls.length = 0
+
+  await api.getPrediction(1)
+
+  assert.equal(calls[0].url, '/api/echoes/1/prediction/?mode=fast')
+})
+
+test('prediction helper can request detailed diagnostics mode', async () => {
+  calls.length = 0
+
+  await api.getPrediction(7, { mode: 'detail' })
+
+  assert.equal(calls[0].url, '/api/echoes/7/prediction/?mode=detail')
+})
+
 test('create echo includes game account id when provided separately', async () => {
   calls.length = 0
 

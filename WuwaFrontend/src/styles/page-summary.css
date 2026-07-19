@@ -1,0 +1,114 @@
+@import './sample-readiness.css';
+
+.page-summary-chips {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+
+.page-summary-chip {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(216, 226, 234, 0.82);
+  border-radius: 999px;
+  padding: 6px 10px;
+  color: #243747;
+  background:
+    linear-gradient(180deg, rgba(251, 252, 254, 0.88), rgba(248, 251, 253, 0.92)),
+    #fbfcfe;
+  font-size: var(--text-label);
+  font-weight: var(--weight-label);
+  line-height: var(--leading-label);
+  white-space: nowrap;
+}
+
+.page-summary-chip small {
+  color: #5f7183;
+  font-size: var(--text-micro);
+  font-weight: var(--weight-supporting);
+  line-height: var(--leading-caption);
+}
+
+.page-summary-chip__value {
+  color: inherit;
+  font-family: var(--font-data);
+  font-size: var(--text-label);
+  font-weight: var(--weight-label);
+  line-height: var(--leading-label);
+  letter-spacing: var(--tracking-data);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+.page-summary-chip--state {
+  border-color: rgba(44, 159, 112, 0.24);
+  color: #1f704d;
+  background:
+    linear-gradient(180deg, rgba(44, 159, 112, 0.09), rgba(251, 252, 254, 0.88)),
+    #fbfcfe;
+}
+
+.page-summary-chip--state i {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #2c9f70;
+  box-shadow: 0 0 0 3px rgba(44, 159, 112, 0.12);
+}
+
+.page-summary-chip--neutral {
+  border-color: rgba(216, 226, 234, 0.9);
+  color: #536779;
+  background: var(--surface-soft);
+}
+
+.page-summary-chip__value--empty { min-width: 2ch; color: var(--steel); }
+
+@media (max-width: 860px) {
+  .page-summary-chips {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 520px) {
+  .page-summary-chip {
+    min-height: 30px;
+    padding: 5px 9px;
+  }
+}
+
+.app-shell.theme-dark .page-summary-chip {
+  border-color: rgba(63, 86, 102, 0.72);
+  color: var(--ink-deep);
+  background:
+    linear-gradient(180deg, rgba(30, 45, 57, 0.94), rgba(25, 39, 50, 0.92)),
+    #1d2a35;
+}
+
+.app-shell.theme-dark .page-summary-chip small {
+  color: var(--charcoal);
+}
+
+.app-shell.theme-dark .page-summary-chip__value {
+  color: var(--ink-deep);
+}
+
+.app-shell.theme-dark .page-summary-chip--state {
+  border-color: rgba(55, 179, 127, 0.42);
+  color: #38b37f;
+  background:
+    linear-gradient(180deg, rgba(37, 72, 55, 0.5), rgba(25, 39, 50, 0.92)),
+    #1d2a35;
+}
+
+.app-shell.theme-dark .page-summary-chip--neutral {
+  border-color: rgba(63, 86, 102, 0.72);
+  color: var(--charcoal);
+  background: rgba(45, 61, 73, 0.76);
+}

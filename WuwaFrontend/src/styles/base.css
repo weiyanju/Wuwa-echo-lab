@@ -1,0 +1,43 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  margin: 0;
+  background: var(--canvas);
+}
+
+.data-number,
+.metric-value,
+.rank-value,
+.score-value,
+.percent-value {
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  letter-spacing: var(--tracking-data);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+#app,
+.app-shell {
+  min-height: 100vh;
+}
+
+.app-shell {
+  background: var(--canvas);
+}

@@ -3,8 +3,7 @@ from django.test import TestCase
 from django.utils import timezone
 from datetime import timedelta
 
-from api.models import EchoRecord, SubstatRoll
-from api.services.prediction import (
+from analytics.services.prediction import (
     _bayes_component_weights,
     _bayes_distribution_from_sequence,
     _bayes_exact_distribution_from_sequence,
@@ -15,6 +14,7 @@ from api.services.prediction import (
     _markov_distribution_from_sequence,
     predict_next_substat,
 )
+from echoes.models import EchoRecord, SubstatRoll
 
 
 class PredictionServiceTests(TestCase):
@@ -39,6 +39,15 @@ class PredictionServiceTests(TestCase):
         self.assertEqual(len(candidates), 12)
         self.assertAlmostEqual(sum(row["p_rule"] for row in candidates), 1.0, places=6)
         self.assertTrue(all(abs(row["p_rule"] - 1 / 12) < 0.000001 for row in candidates))
+
+    def test_fast_prediction_keeps_candidates_without_model_diagnostics(self):
+        SubstatRoll.objects.create(echo=self.echo, position=1, substat_type="crit_rate", tier_value=6.3)
+
+        result = predict_next_substat(self.echo, include_diagnostics=False)
+
+        self.assertIn("candidates", result)
+        self.assertGreater(len(result["candidates"]), 0)
+        self.assertIsNone(result["model_diagnostics"])
 
     def test_rule_baseline_balances_overrepresented_cross_echo_substats(self):
         for index in range(10):
