@@ -229,10 +229,10 @@
   color: #899aa8;
 }
 
-.app-shell.theme-dark .model-bar-summary strong em {
-  border-color: rgba(55, 179, 127, 0.28);
-  color: #38b37f;
-  background: rgba(55, 179, 127, 0.09);
+.app-shell.theme-dark .model-bar-summary strong .disabled-model-badge {
+  border-color: rgba(137, 154, 168, 0.34);
+  color: #aebfcb;
+  background: rgba(137, 154, 168, 0.12);
 }
 
 .app-shell.theme-dark .model-bars article.best .model-row-progress b {
@@ -3406,22 +3406,16 @@
   color: #85929f;
 }
 
-.model-bar-summary strong em {
-  border: 1px solid rgba(44, 159, 112, 0.24);
+.model-bar-summary strong .disabled-model-badge {
+  border: 1px solid rgba(160, 170, 180, 0.34);
   border-radius: 999px;
   padding: 1px 5px;
-  color: #2c7357;
-  background: rgba(44, 159, 112, 0.04);
+  color: #6f7c88;
+  background: rgba(236, 240, 244, 0.72);
   font-size: var(--text-micro);
   font-style: normal;
   font-weight: var(--weight-label);
   line-height: var(--leading-label);
-}
-
-.model-bar-summary strong .disabled-model-badge {
-  border-color: rgba(160, 170, 180, 0.34);
-  color: #6f7c88;
-  background: rgba(236, 240, 244, 0.72);
 }
 
 .model-bars article.best .model-row-progress b {

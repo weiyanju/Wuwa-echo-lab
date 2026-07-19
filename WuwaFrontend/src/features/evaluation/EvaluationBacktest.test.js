@@ -69,6 +69,22 @@ test('visible disclosure rows own state while inline model cards only identify d
   assert.doesNotMatch(source, /--model-surface-accent/)
 })
 
+test('best submodel removes the visual badge while retaining accessible context', async () => {
+  const source = await readFile(new URL('./EvaluationBacktest.vue', import.meta.url), 'utf8')
+  const style = await readFile(new URL('../../styles/features/evaluation.css', import.meta.url), 'utf8')
+
+  assert.doesNotMatch(source, /<em v-if="row\.isBest">最高命中<\/em>/)
+  assert.match(
+    source,
+    /:aria-label="`\$\{expandedModelDetailKey === row\.key \? '收起' : '展开'\}\$\{row\.label\}详情\$\{row\.isBest \? '，本组最高命中率' : ''\}`"/,
+  )
+  assert.doesNotMatch(style, /\.model-bar-summary strong em\s*\{/)
+  assert.match(
+    style,
+    /\.model-bar-summary strong \.disabled-model-badge \{[^}]*border: 1px solid/,
+  )
+})
+
 test('submodel disclosure reveals expansion and preserves collapse position', async () => {
   const source = await readFile(new URL('./EvaluationBacktest.vue', import.meta.url), 'utf8')
 

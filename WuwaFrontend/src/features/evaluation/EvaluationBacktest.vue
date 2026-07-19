@@ -359,12 +359,11 @@ onBeforeUnmount(() => {
             type="button"
             :aria-expanded="expandedModelDetailKey === row.key"
             @click="toggleModelDetail(row.key, $event)"
-            :aria-label="expandedModelDetailKey === row.key ? `收起${row.label}详情` : `展开${row.label}详情`"
+            :aria-label="`${expandedModelDetailKey === row.key ? '收起' : '展开'}${row.label}详情${row.isBest ? '，本组最高命中率' : ''}`"
           >
             <strong>
               {{ row.label }}
-              <em v-if="row.isBest">最高命中</em>
-              <em v-else-if="row.disabled" class="disabled-model-badge">{{ row.statusLabel || '未启用' }}</em>
+              <em v-if="row.disabled" class="disabled-model-badge">{{ row.statusLabel || '未启用' }}</em>
             </strong>
             <small><span>{{ row.note }}</span></small>
             <span class="model-hit-rate">{{ modelHitRateText(row) }}</span>
