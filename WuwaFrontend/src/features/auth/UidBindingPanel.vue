@@ -47,11 +47,9 @@ function submitUidBinding() {
 <template>
   <form class="terminal-card-page terminal-uid-page" @submit.prevent="submitUidBinding">
     <header class="terminal-uid-header">
-      <div class="terminal-uid-title">
-        <h2>绑定游戏 UID</h2>
-        <p>首次进入需要绑定一个游戏账号。</p>
-      </div>
+      <h2>绑定 UID</h2>
     </header>
+    <p class="terminal-uid-intro">首次进入需要绑定一个游戏账号。</p>
 
     <label class="terminal-input-group terminal-uid-field" for="uid-binding-input">
       游戏 UID

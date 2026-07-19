@@ -47,7 +47,7 @@
   backdrop-filter: blur(12px);
 }
 
-.terminal-brand, .terminal-system-status, .terminal-feature-item, .terminal-auth-tabs, .terminal-form-options {
+.terminal-brand, .terminal-system-status, .terminal-feature-item, .terminal-auth-tabs, .terminal-uid-header, .terminal-form-options {
   display: flex;
   align-items: center;
 }
@@ -273,19 +273,24 @@
 .terminal-uid-page { min-height: 358px; }
 
 .terminal-uid-header {
-  margin-bottom: 30px;
+  flex: 0 0 auto;
+  border-bottom: 1px solid var(--terminal-text);
+  margin-bottom: clamp(24px, 2vw, 32px);
 }
 
-.terminal-uid-title h2 {
-  margin: 0 0 6px;
+.terminal-uid-header h2 {
+  width: 100%;
+  margin: 0;
+  padding: 0 0 12px;
   color: var(--terminal-text);
-  font-size: var(--text-section-title);
-  font-weight: var(--weight-emphasis);
-  line-height: var(--leading-heading);
+  font-size: var(--text-control);
+  font-weight: var(--weight-control);
+  line-height: var(--leading-control);
   letter-spacing: var(--tracking-cjk);
+  text-align: center;
 }
 
-.terminal-uid-title p,
+.terminal-uid-intro,
 .terminal-uid-hint {
   margin: 0;
   color: var(--terminal-secondary);
@@ -295,6 +300,7 @@
   letter-spacing: var(--tracking-cjk);
 }
 
+.terminal-uid-intro { margin-bottom: clamp(24px, 2vw, 32px); }
 .terminal-uid-field { margin-bottom: 8px; }
 
 .terminal-uid-input {
