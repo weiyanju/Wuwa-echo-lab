@@ -594,8 +594,8 @@
         "section": "colors"
       },
       {
-        "name": "The Model Surface Derivation Rule",
-        "body": "评估子模型卡片使用 feature-local --model-surface-accent 作为卡片与内部判断摘要的共同表面色来源；不同模型保留不同色相，但背景、边框和标签必须使用同一派生公式与视觉强度。--model-accent 继续只承担数据图形语义，不能与卡片表面色混为同一颜色表。",
+        "name": "The Visible Model Surface Rule",
+        "body": "评估子模型回测的 feature-local --model-surface-accent 由用户实际看到的外层 disclosure 行状态拥有：普通展开为蓝色、最高命中为绿色、未启用为灰色；展开详情与内部判断摘要继承同一表面色。--model-accent 继续只承担模型数据图形语义，模型身份色不得覆盖可见父卡片的状态表面。",
         "section": "components"
       },
       {
