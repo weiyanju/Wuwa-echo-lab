@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 
 import InsightRequestState from '../../components/states/InsightRequestState.vue'
-import { formatPercent, formatSignedPercentagePoints } from '../../services/formatters.js'
+import { formatPercent, formatSignedPercent } from '../../services/formatters.js'
 import { hasRecordedSamples, sampleMaturityState, sampleStageState } from '../../shared/sampleExperience.js'
 import {
   buildSampleStageProgress,
@@ -56,7 +56,7 @@ function deviationTitle(row, direction) {
     return `基于 ${totalSamples.value} 条样本，暂无${direction}项`
   }
   const relation = direction === '偏高' ? '高于' : '低于'
-  return `基于 ${totalSamples.value} 条样本，${row.label} 当前观察值${relation}基线 ${formatSignedPercentagePoints(row.deviation)}`
+  return `基于 ${totalSamples.value} 条样本，${row.label} 当前观察值${relation}基线 ${formatSignedPercent(row.deviation)}`
 }
 </script>
 
@@ -151,12 +151,12 @@ function deviationTitle(row, direction) {
           <article class="stats-diagnostic-deviation hot" :title="deviationTitle(hottestStatRow, '偏高')">
             <span>当前偏高</span>
             <strong>{{ hottestStatRow?.label || '暂无明显偏高' }}</strong>
-            <em v-if="hottestStatRow" class="stats-number">{{ formatSignedPercentagePoints(hottestStatRow.deviation) }}</em>
+            <em v-if="hottestStatRow" class="stats-number">{{ formatSignedPercent(hottestStatRow.deviation) }}</em>
           </article>
           <article class="stats-diagnostic-deviation warn" :title="deviationTitle(coldestStatRow, '偏低')">
             <span>当前偏低</span>
             <strong>{{ coldestStatRow?.label || '暂无明显偏低' }}</strong>
-            <em v-if="coldestStatRow" class="stats-number">{{ formatSignedPercentagePoints(coldestStatRow.deviation) }}</em>
+            <em v-if="coldestStatRow" class="stats-number">{{ formatSignedPercent(coldestStatRow.deviation) }}</em>
           </article>
         </div>
 
@@ -185,7 +185,7 @@ function deviationTitle(row, direction) {
               <i aria-hidden="true"></i>
               <b :style="{ width: `${Math.max(row.absDeviation / maxAbsStatDeviation * 48, row.absDeviation ? 5 : 0)}%`, left: row.deviation >= 0 ? '50%' : 'auto', right: row.deviation < 0 ? '50%' : 'auto' }"></b>
             </div>
-            <strong class="substat-deviation-value">{{ formatSignedPercentagePoints(row.deviation) }}</strong>
+            <strong class="substat-deviation-value">{{ formatSignedPercent(row.deviation) }}</strong>
           </article>
         </div>
       </section>

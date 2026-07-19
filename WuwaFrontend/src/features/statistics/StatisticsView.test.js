@@ -84,7 +84,7 @@ test('statistics task cards keep stage and deviation content with their owners',
   assert.match(deviationSection, /<h3>副词条分布偏差<\/h3>/)
   assert.match(deviationSection, /class="stats-diagnostic-deviations"/)
   assert.match(deviationSection, /class="substat-deviation-chart"/)
-  assert.match(source, /formatSignedPercentagePoints\(row\.deviation\)/)
+  assert.match(source, /formatSignedPercent\(row\.deviation\)/)
   assert.match(source, /sortedStatFrequency\.value\.find\(\(row\) => row\.deviation < 0\)/)
 })
 
@@ -175,7 +175,7 @@ test('statistics diagnosis header owns exactly two non-duplicated summary chips'
   const summaryElements = findElementsByClassToken(headerSection, 'page-summary-chips')
   const headerChipElements = findElementsByClassToken(headerSection, 'page-summary-chip')
 
-  assert.doesNotMatch(headerSection, /最大偏差|formatSignedPercentagePoints/)
+  assert.doesNotMatch(headerSection, /最大偏差|hottestStatRow|coldestStatRow/)
   assert.equal(headerChipElements.length, 2)
   assert.equal(summaryElements.length, 1)
   assert.ok(summaryElements[0].start >= 0 && summaryElements[0].start < summaryElements[0].end)
