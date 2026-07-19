@@ -15,13 +15,17 @@ test('uid binding panel validates normalized input before emitting bind', async 
   assert.match(source, /if \(error\) \{\s+validationError\.value = error\s+return\s+\}\s+emit\('bind', uid\)/)
 })
 
-test('uid binding panel exposes an in-card sign-out return action', async () => {
+test('uid binding panel exposes a bottom sign-out return action', async () => {
   const source = await readPanel()
 
+  assert.match(source, /class="terminal-uid-actions"/)
+  assert.match(source, /class="terminal-uid-return"/)
   assert.match(source, /aria-label="退出当前账号并返回登录"/)
   assert.match(source, /title="退出当前账号并返回登录"/)
   assert.match(source, /@click="emit\('cancel'\)"/)
+  assert.match(source, />\s*返回登录\s*<\/button>/)
   assert.match(source, /<h2>绑定游戏 UID<\/h2>/)
+  assert.doesNotMatch(source, /terminal-uid-back|<svg/)
   assert.doesNotMatch(source, /uid-setup-shell|uid-setup-topbar|disabled-tabs/)
 })
 

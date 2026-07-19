@@ -47,18 +47,6 @@ function submitUidBinding() {
 <template>
   <form class="terminal-card-page terminal-uid-page" @submit.prevent="submitUidBinding">
     <header class="terminal-uid-header">
-      <button
-        class="terminal-uid-back"
-        type="button"
-        aria-label="退出当前账号并返回登录"
-        title="退出当前账号并返回登录"
-        :disabled="busy"
-        @click="emit('cancel')"
-      >
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M19 12H5m7 7-7-7 7-7" />
-        </svg>
-      </button>
       <div class="terminal-uid-title">
         <h2>绑定游戏 UID</h2>
         <p>首次进入需要绑定一个游戏账号。</p>
@@ -85,8 +73,20 @@ function submitUidBinding() {
     <p v-if="displayedError" id="uid-binding-error" class="error-text" role="alert">{{ displayedError }}</p>
     <p id="uid-binding-hint" class="terminal-uid-hint">可在游戏个人信息页查看 UID</p>
 
-    <button class="terminal-primary-btn" type="submit" :disabled="busy">
-      {{ busy ? 'BINDING()' : 'BIND_AND_ENTER()' }}
-    </button>
+    <div class="terminal-uid-actions">
+      <button class="terminal-primary-btn" type="submit" :disabled="busy">
+        {{ busy ? 'BINDING()' : 'BIND_AND_ENTER()' }}
+      </button>
+      <button
+        class="terminal-uid-return"
+        type="button"
+        aria-label="退出当前账号并返回登录"
+        title="退出当前账号并返回登录"
+        :disabled="busy"
+        @click="emit('cancel')"
+      >
+        返回登录
+      </button>
+    </div>
   </form>
 </template>
