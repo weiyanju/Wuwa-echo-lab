@@ -9,7 +9,13 @@ from api.views import api_login_required
 
 from .ownership import default_game_account, owned_game_account
 from .serializers import serialize_game_account
-from .services import UsernameAlreadyExists, create_game_account, register_user, update_game_account
+from .services import (
+    RegistrationAlreadyComplete,
+    RegistrationCredentialsInvalid,
+    create_game_account,
+    start_registration,
+    update_game_account,
+)
 
 
 @require_POST
@@ -23,17 +29,29 @@ def register(request):
     if not username or not password:
         return error_response("用户名和密码不能为空。", status=400)
     try:
-        user = register_user(username, password)
-    except UsernameAlreadyExists:
-        return error_response("用户名已存在。", status=400)
-    default_account = default_game_account(user)
+        result = start_registration(username, password)
+    except RegistrationCredentialsInvalid:
+        return error_response(
+            "无法继续创建档案，请检查账号与访问密钥。",
+            status=400,
+            code="registration_credentials_invalid",
+        )
+    except RegistrationAlreadyComplete:
+        return error_response(
+            "档案已完成，请使用终端登录。",
+            status=409,
+            code="registration_complete",
+        )
+    login(request, result.user)
+    default_account = default_game_account(result.user)
     return success_response(
         {
-            "id": user.id,
-            "username": user.username,
+            "id": result.user.id,
+            "username": result.user.username,
+            "registration_outcome": result.outcome,
             "default_game_account": serialize_game_account(default_account),
         },
-        status=201,
+        status=201 if result.outcome == "created" else 200,
     )
 
 

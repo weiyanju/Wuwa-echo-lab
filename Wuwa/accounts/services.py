@@ -1,7 +1,8 @@
 import re
+from dataclasses import dataclass
 
 from django.contrib.auth.models import User
-from django.db import transaction
+from django.db import IntegrityError, transaction
 
 from api.serializers import clean_string, parse_bool
 
@@ -14,6 +15,20 @@ GAME_UID_PATTERN = re.compile(r"^[0-9]{9}$")
 
 class UsernameAlreadyExists(Exception):
     pass
+
+
+class RegistrationCredentialsInvalid(Exception):
+    pass
+
+
+class RegistrationAlreadyComplete(Exception):
+    pass
+
+
+@dataclass(frozen=True)
+class RegistrationResult:
+    user: User
+    outcome: str
 
 
 def _validate_game_uid(uid):
@@ -31,6 +46,26 @@ def register_user(username, password):
     if User.objects.filter(username=username).exists():
         raise UsernameAlreadyExists
     return User.objects.create_user(username=username, password=password)
+
+
+def _resume_registration(user, password):
+    if not user.check_password(password):
+        raise RegistrationCredentialsInvalid
+    if not user.is_active:
+        raise RegistrationCredentialsInvalid
+    if user.game_accounts.exclude(uid="").exists():
+        raise RegistrationAlreadyComplete
+    return RegistrationResult(user=user, outcome="resumed")
+
+
+def start_registration(username, password):
+    try:
+        with transaction.atomic():
+            user = register_user(username, password)
+    except (UsernameAlreadyExists, IntegrityError):
+        user = User.objects.get(username=username)
+        return _resume_registration(user, password)
+    return RegistrationResult(user=user, outcome="created")
 
 
 @transaction.atomic

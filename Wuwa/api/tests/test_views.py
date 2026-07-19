@@ -25,21 +25,89 @@ class ApiViewTests(TestCase):
         )
         self.assertEqual(response.status_code, 201)
         body = response.json()
+        self.assertEqual(body["registration_outcome"], "created")
         self.assertEqual(body["default_game_account"]["uid"], "")
         self.assertTrue(body["default_game_account"]["workspace_locked"])
-
-        response = self.client.post(
-            reverse("login"),
-            data=json.dumps({"username": "new-user", "password": "pw12345"}),
-            content_type="application/json",
-        )
-        self.assertEqual(response.status_code, 200)
 
         response = self.client.get(reverse("me"))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["username"], "new-user")
         self.assertEqual(response.json()["default_game_account"]["uid"], "")
         self.assertTrue(response.json()["workspace_locked"])
+
+    def test_register_resumes_unfinished_account_with_matching_credentials(self):
+        unfinished_user = User.objects.create_user(username="unfinished", password="pw12345")
+        unfinished_account = unfinished_user.game_accounts.get()
+
+        response = self.client.post(
+            reverse("register"),
+            data=json.dumps({"username": "unfinished", "password": "pw12345"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["id"], unfinished_user.id)
+        self.assertEqual(body["registration_outcome"], "resumed")
+        self.assertEqual(body["default_game_account"]["id"], unfinished_account.id)
+        self.assertEqual(User.objects.filter(username="unfinished").count(), 1)
+        self.assertEqual(unfinished_user.game_accounts.count(), 1)
+
+        response = self.client.get(reverse("me"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["id"], unfinished_user.id)
+
+    def test_register_rejects_unfinished_account_with_wrong_credentials(self):
+        unfinished_user = User.objects.create_user(username="unfinished", password="pw12345")
+        unfinished_account = unfinished_user.game_accounts.get()
+
+        response = self.client.post(
+            reverse("register"),
+            data=json.dumps({"username": "unfinished", "password": "wrong-password"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["code"], "registration_credentials_invalid")
+        self.assertEqual(User.objects.filter(username="unfinished").count(), 1)
+        self.assertEqual(unfinished_user.game_accounts.count(), 1)
+        self.assertEqual(unfinished_user.game_accounts.get().id, unfinished_account.id)
+        self.assertEqual(self.client.get(reverse("me")).status_code, 401)
+
+    def test_register_rejects_inactive_unfinished_account(self):
+        unfinished_user = User.objects.create_user(
+            username="inactive-unfinished",
+            password="pw12345",
+            is_active=False,
+        )
+
+        response = self.client.post(
+            reverse("register"),
+            data=json.dumps({"username": "inactive-unfinished", "password": "pw12345"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["code"], "registration_credentials_invalid")
+        self.assertEqual(User.objects.filter(username="inactive-unfinished").count(), 1)
+        self.assertEqual(unfinished_user.game_accounts.count(), 1)
+        self.assertEqual(self.client.get(reverse("me")).status_code, 401)
+
+    def test_register_rejects_completed_account_even_with_matching_credentials(self):
+        self.user.game_accounts.update(uid="")
+        GameAccount.objects.create(user=self.user, uid="987654321")
+
+        response = self.client.post(
+            reverse("register"),
+            data=json.dumps({"username": "tester", "password": "pw12345"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(response.json()["code"], "registration_complete")
+        self.assertEqual(User.objects.filter(username="tester").count(), 1)
+        self.assertEqual(self.user.game_accounts.count(), 2)
+        self.assertEqual(self.client.get(reverse("me")).status_code, 401)
 
     def test_game_account_list_create_and_bind_default(self):
         self.client.login(username="tester", password="pw12345")

@@ -51,11 +51,17 @@ class BackendStructureTests(SimpleTestCase):
 
         success = responses.success_response({"result": "ok"}, status=201)
         error = responses.error_response("invalid", status=400)
+        coded_error = responses.error_response("invalid", status=409, code="registration_complete")
 
         self.assertEqual(success.status_code, 201)
         self.assertEqual(json.loads(success.content), {"result": "ok"})
         self.assertEqual(error.status_code, 400)
         self.assertEqual(json.loads(error.content), {"error": "invalid"})
+        self.assertEqual(coded_error.status_code, 409)
+        self.assertEqual(
+            json.loads(coded_error.content),
+            {"error": "invalid", "code": "registration_complete"},
+        )
 
     def test_recognition_views_use_shared_response_helpers(self):
         source = (Path(__file__).resolve().parents[2] / "recognition" / "views.py").read_text(encoding="utf-8")
@@ -111,7 +117,7 @@ class BackendStructureTests(SimpleTestCase):
         account_serializers = (backend_root / "accounts" / "serializers.py").read_text(encoding="utf-8")
         echo_serializers = (backend_root / "echoes" / "serializers.py").read_text(encoding="utf-8")
 
-        for name in ("register_user", "create_game_account", "update_game_account"):
+        for name in ("register_user", "start_registration", "create_game_account", "update_game_account"):
             self.assertTrue(callable(getattr(accounts_services, name)))
         for name in ("create_echo", "update_echo", "delete_echo"):
             self.assertTrue(callable(getattr(echoes_services, name)))
