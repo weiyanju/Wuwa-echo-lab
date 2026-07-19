@@ -44,14 +44,14 @@
 
 ### 4.2 比例差
 
-比例差使用独立的 `formatSignedPercentDelta`：
+比例差复用现有的 `formatSignedPercent`：
 
 - 输入 `0.1818`，输出 `+18.18%`。
 - 输入 `-0.0664`，输出 `-6.64%`。
 - 输入 `0`，输出 `+0.00%`。
 - 非有限值保持现有共享格式化行为，以 `0` 作为格式化兜底；业务层尚未形成的指标仍显示 `--`，不调用该格式化函数。
 
-独立函数仍有必要，因为比例差需要正号，而普通比例不需要。函数名使用 `Delta` 明确它是差值，避免把它误解成普通比例或相对增长率。
+比例差与项目中其他带符号百分比具有完全相同的格式化行为，不新增同义函数。差值语义由调用方的“偏差”“新增覆盖”等业务标签负责，格式化函数只负责数值呈现。
 
 ### 4.3 上下文消歧
 
@@ -74,21 +74,21 @@
 `WuwaFrontend/src/services/formatters.js` 拥有比例展示规则：
 
 - 保留 `formatPercent` 和 `formatSignedPercent`。
-- 将 `formatSignedPercentagePoints` 替换为 `formatSignedPercentDelta`。
-- 不保留旧函数别名，避免新代码继续传播旧单位语义。
+- 删除 `formatSignedPercentagePoints`。
+- 不保留旧函数别名，避免新代码继续传播旧单位语义；比例差统一调用现有 `formatSignedPercent`。
 
 ### 5.2 统计诊断
 
 `WuwaFrontend/src/features/statistics/StatisticsView.vue` 继续拥有统计页组合：
 
-- 偏高摘要、偏低摘要、逐行偏差值和标题说明统一调用 `formatSignedPercentDelta`。
+- 偏高摘要、偏低摘要、逐行偏差值和标题说明统一调用 `formatSignedPercent`。
 - 排序、偏差方向、绝对值比例和图表宽度计算不变。
 
 ### 5.3 模型评估
 
 `WuwaFrontend/src/features/evaluation/EvaluationCoreBacktest.vue` 继续拥有核心回测展示：
 
-- Top3、Top5 的相邻累计命中率差值统一调用 `formatSignedPercentDelta`。
+- Top3、Top5 的相邻累计命中率差值统一调用 `formatSignedPercent`。
 - 可访问名称改为百分号展示，但继续明确比较对象。
 - 累计命中率、横轴和柱长计算不变。
 
@@ -97,7 +97,7 @@
 ```text
 后端返回 0..1 比例
   -> 页面计算两个比例的绝对差
-  -> formatSignedPercentDelta
+  -> formatSignedPercent
   -> 乘以 100、保留指定小数位、添加正负号和 %
   -> 统计偏差或评估新增覆盖
 ```
