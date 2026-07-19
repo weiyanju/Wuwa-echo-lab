@@ -9,7 +9,8 @@ async function lineCount(relativePath) {
 
 test('frontend high-attraction entry files do not grow beyond the refactor baseline', async () => {
   assert.ok(await lineCount('./App.vue') <= 320, 'App.vue must not grow beyond 320 lines')
-  assert.ok(await lineCount('./features/auth/LoginView.vue') <= 120, 'LoginView.vue must not grow beyond 120 lines')
+  assert.ok(await lineCount('./features/auth/LoginView.vue') <= 145, 'LoginView.vue must remain a focused terminal shell and card-stage owner')
+  assert.ok(await lineCount('./features/auth/UidBindingPanel.vue') <= 115, 'UidBindingPanel.vue must remain a focused first-bind form')
   assert.ok(await lineCount('./features/evaluation/EvaluationView.vue') <= 110, 'EvaluationView.vue must not grow beyond 110 lines')
   assert.ok(await lineCount('./features/evaluation/EvaluationCoreBacktest.vue') <= 130, 'EvaluationCoreBacktest.vue must not grow beyond 130 lines')
   assert.ok(await lineCount('./features/evaluation/EvaluationOverview.vue') <= 250, 'EvaluationOverview.vue must not grow beyond 250 lines')
@@ -19,17 +20,15 @@ test('frontend high-attraction entry files do not grow beyond the refactor basel
     await lineCount('./features/statistics/SampleStageWeightGuide.vue') <= 220,
     'SampleStageWeightGuide.vue must remain a focused disclosure and matrix component',
   )
-  assert.ok(await lineCount('./features/workspace/UidSetupView.vue') <= 130, 'UidSetupView.vue must not grow beyond 130 lines')
   assert.ok(await lineCount('./components/controls/UidSwitcher.vue') <= 250, 'UidSwitcher.vue must not grow beyond 250 lines')
   assert.ok(await lineCount('./features/workspace/EchoWorkbenchView.vue') <= 210, 'EchoWorkbenchView.vue must not grow beyond 210 lines')
   assert.ok(await lineCount('./features/workspace/useEchoWorkspace.js') <= 400, 'useEchoWorkspace.js must not grow beyond 400 lines')
   assert.ok(await lineCount('./features/recognition/useRecognitionReview.js') <= 145, 'useRecognitionReview.js must not grow beyond 145 lines')
-  assert.ok(await lineCount('./style.css') <= 14, 'style.css must remain an import-only entry')
+  assert.ok(await lineCount('./style.css') <= 22, 'style.css must remain a fingerprinted import-only entry')
   assert.ok(await lineCount('./styles/controls.css') <= 400, 'controls.css must not grow beyond 400 lines')
   assert.ok(await lineCount('./styles/shell.css') <= 920, 'shell.css must not grow beyond 920 lines')
   assert.ok(await lineCount('./styles/features/history.css') <= 940, 'history.css must not grow beyond 940 lines')
-  assert.ok(await lineCount('./styles/features/auth.css') <= 310, 'auth.css must not grow beyond 310 lines')
-  assert.ok(await lineCount('./styles/features/uid-setup.css') <= 220, 'uid-setup.css must not grow beyond 220 lines')
+  assert.ok(await lineCount('./styles/features/auth.css') <= 420, 'auth.css must keep the terminal entry and uid card flow bounded')
   assert.ok(await lineCount('./styles/features/workspace.css') <= 710, 'workspace.css must not grow beyond 710 lines')
   assert.ok(await lineCount('./styles/features/workspace-active.css') <= 390, 'workspace-active.css must not grow beyond 390 lines')
   assert.ok(await lineCount('./styles/features/evaluation.css') <= 4700, 'evaluation.css must not grow beyond 4700 lines')
@@ -48,6 +47,11 @@ test('global styles import shared tokens and base rules', async () => {
 
   assert.match(entry, /@import '\.\/styles\/tokens\.css';/)
   assert.match(entry, /@import '\.\/styles\/base\.css';/)
+  assert.match(entry, /^\/\*\s*\n \* Hallmark/)
+  assert.match(entry, /Genre: modern minimal data workbench/)
+  assert.match(entry, /Tone: restrained terminal entry, calm analytical workspace/)
+  assert.match(entry, /Palette anchor: Tethys blue/)
+  assert.match(entry, /Structural fingerprint: split terminal entry → task-focused workbench/)
   assert.equal(packageJson.dependencies['@ibm/plex-sans-sc'], '^1.1.0')
   assert.equal(packageJson.dependencies['@ibm/plex-mono'], '^2.5.0')
   assert.equal(packageJson.dependencies['@fontsource/noto-sans-sc'], undefined)
@@ -141,6 +145,11 @@ test('auth feature owns login layout, information, dark, and responsive styles',
   assert.match(auth, /\.terminal-features-grid \{/)
   assert.match(auth, /\.terminal-auth-card \{/)
   assert.match(auth, /\.terminal-tab-indicator \{/)
+  assert.match(auth, /\.terminal-card-page \{/)
+  assert.match(auth, /\.terminal-uid-back \{[\s\S]+width: 44px;[\s\S]+height: 44px;/)
+  assert.match(auth, /\.terminal-uid-input \{[\s\S]+font-family: var\(--font-data\);[\s\S]+font-variant-numeric: tabular-nums;/)
+  assert.match(auth, /\.terminal-card-forward-enter-from \{[^}]+translateX\(16px\)/)
+  assert.match(auth, /\.terminal-card-back-enter-from \{[^}]+translateX\(-16px\)/)
   assert.match(auth, /@media \(max-width: 860px\)/)
   assert.match(auth, /@media \(max-width: 520px\)/)
   assert.match(auth, /@media \(max-width: 860px\)[\s\S]+\.terminal-container \{[\s\S]+grid-template-columns: 1fr;/)
@@ -149,19 +158,17 @@ test('auth feature owns login layout, information, dark, and responsive styles',
   assert.doesNotMatch(entry, /\.terminal-home \{/)
 })
 
-test('uid setup owns its shell, card, dark theme, and responsive styles', async () => {
+test('auth feature owns first uid binding without a standalone setup stylesheet', async () => {
   const entry = await readFile(new URL('./style.css', import.meta.url), 'utf8')
-  const workspace = await readFile(new URL('./styles/features/workspace.css', import.meta.url), 'utf8')
+  const auth = await readFile(new URL('./styles/features/auth.css', import.meta.url), 'utf8')
 
-  assert.match(entry, /@import '\.\/styles\/features\/uid-setup\.css';/)
-  const uidSetup = await readFile(new URL('./styles/features/uid-setup.css', import.meta.url), 'utf8')
-  assert.match(uidSetup, /\.uid-setup-shell \{/)
-  assert.match(uidSetup, /\.uid-binding-form \{/)
-  assert.match(uidSetup, /\.app-shell\.theme-dark \.uid-setup-media/)
-  assert.match(uidSetup, /@media \(max-width: 860px\)/)
-  assert.match(uidSetup, /@media \(max-width: 520px\)/)
-  assert.doesNotMatch(workspace, /\.uid-setup-shell \{|\.uid-binding-form \{|\.disabled-tabs button/)
-  assert.doesNotMatch(entry, /\.uid-setup-shell \{/)
+  assert.doesNotMatch(entry, /uid-setup\.css/)
+  assert.match(auth, /\.terminal-uid-page \{/)
+  assert.match(auth, /\.terminal-uid-header \{/)
+  assert.match(auth, /\.terminal-card-forward-enter-active/)
+  assert.match(auth, /\.terminal-card-back-enter-active/)
+  assert.match(auth, /@media \(prefers-reduced-motion: reduce\) \{[\s\S]+\.terminal-card-forward-enter-active/)
+  assert.doesNotMatch(auth, /\.uid-setup-shell|\.uid-setup-card|\.uid-setup-media|\.disabled-tabs/)
 })
 
 test('workspace feature owns workbench, matrix, dark, and responsive styles', async () => {
@@ -220,7 +227,7 @@ test('shared controls own reusable themes, buttons, forms, cards, and headings',
   assert.match(controls, /\.section-heading \{/)
   assert.match(controls, /@media \(max-width: 520px\)/)
   assert.doesNotMatch(entry, /\{/)
-  assert.ok(await lineCount('./style.css') <= 14, 'style.css must remain an import-only entry')
+  assert.ok(await lineCount('./style.css') <= 22, 'style.css must remain a fingerprinted import-only entry')
 })
 
 test('features own their remaining styles and removed views leave no legacy css', async () => {

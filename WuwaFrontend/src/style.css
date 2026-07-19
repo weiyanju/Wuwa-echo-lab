@@ -1,3 +1,10 @@
+/*
+ * Hallmark
+ * Genre: modern minimal data workbench
+ * Tone: restrained terminal entry, calm analytical workspace
+ * Palette anchor: Tethys blue
+ * Structural fingerprint: split terminal entry → task-focused workbench
+ */
 @import './styles/tokens.css';
 @import './styles/base.css';
 @import './styles/shell.css';
@@ -6,7 +13,6 @@
 @import './styles/features/statistics.css';
 @import './styles/features/history.css';
 @import './styles/features/auth.css';
-@import './styles/features/uid-setup.css';
 @import './styles/features/workspace.css';
 @import './styles/features/workspace-active.css';
 @import './styles/features/evaluation.css';

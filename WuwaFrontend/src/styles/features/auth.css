@@ -188,6 +188,23 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.03);
 }
 
+.terminal-card-page { display: flex; width: 100%; min-height: 0; flex: 1; flex-direction: column; }
+.terminal-credentials-page { min-height: 358px; }
+
+.terminal-card-forward-enter-active,
+.terminal-card-forward-leave-active,
+.terminal-card-back-enter-active,
+.terminal-card-back-leave-active {
+  transition:
+    opacity 180ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.terminal-card-forward-enter-from { opacity: 0; transform: translateX(16px); }
+.terminal-card-forward-leave-to { opacity: 0; transform: translateX(-16px); }
+.terminal-card-back-enter-from { opacity: 0; transform: translateX(-16px); }
+.terminal-card-back-leave-to { opacity: 0; transform: translateX(16px); }
+
 .terminal-auth-tabs {
   position: relative;
   flex: 0 0 auto;
@@ -253,6 +270,84 @@
 .terminal-form-options { gap: 6px; margin-bottom: 24px; color: var(--terminal-secondary); font-size: var(--text-label); font-weight: var(--weight-supporting); line-height: var(--leading-label); letter-spacing: var(--tracking-cjk); }
 .terminal-form-options input { width: 18px; height: 18px; accent-color: var(--terminal-primary); }
 
+.terminal-uid-page { min-height: 358px; }
+
+.terminal-uid-header {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  margin-bottom: 30px;
+}
+
+.terminal-uid-back {
+  display: inline-grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 1px solid var(--terminal-border);
+  border-radius: var(--terminal-radius-sm);
+  padding: 0;
+  color: var(--terminal-secondary);
+  background: transparent;
+  transition: border-color 150ms ease, color 150ms ease, background-color 150ms ease;
+}
+
+.terminal-uid-back svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.5;
+}
+
+.terminal-uid-back:hover:not(:disabled),
+.terminal-uid-back:focus-visible {
+  border-color: var(--terminal-primary);
+  outline: none;
+  color: var(--terminal-primary);
+  background: var(--terminal-primary-light);
+}
+
+.terminal-uid-title h2 {
+  margin: 0 0 6px;
+  color: var(--terminal-text);
+  font-size: var(--text-section-title);
+  font-weight: var(--weight-emphasis);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-cjk);
+}
+
+.terminal-uid-title p,
+.terminal-uid-hint {
+  margin: 0;
+  color: var(--terminal-secondary);
+  font-size: var(--text-supporting);
+  font-weight: var(--weight-body);
+  line-height: var(--leading-body);
+  letter-spacing: var(--tracking-cjk);
+}
+
+.terminal-uid-field { margin-bottom: 8px; }
+
+.terminal-uid-input {
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  letter-spacing: var(--tracking-data);
+}
+
+.terminal-uid-hint { margin-bottom: 24px; }
+.terminal-uid-page .error-text { margin: 0 0 8px; }
+
+.terminal-uid-back:disabled,
+.terminal-primary-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.56;
+}
+
 .terminal-primary-btn {
   width: 100%;
   border: 0;
@@ -274,12 +369,26 @@
 .app-shell.theme-dark .terminal-home { --terminal-primary: #5da8ff; --terminal-primary-hover: #7cbcff; --terminal-primary-light: rgba(93, 168, 255, 0.14); --terminal-page: #0f1720; --terminal-card: #17232d; --terminal-text: #e7eef4; --terminal-secondary: #a9bac7; --terminal-muted: #98aab7; --terminal-border: rgba(83, 107, 124, 0.72); --terminal-border-light: rgba(83, 107, 124, 0.32); --terminal-success: #37b37f; color-scheme: dark; color: var(--terminal-text); background-color: var(--terminal-page); }
 .app-shell.theme-dark .terminal-navbar { background: rgba(15, 23, 32, 0.85); }
 .app-shell.theme-dark .terminal-auth-card { border-color: var(--terminal-border); background: var(--terminal-card); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24); }
+.app-shell.theme-dark .terminal-uid-input { background: #13202a; }
 .app-shell.theme-dark .terminal-standard-input:focus { border-color: var(--terminal-primary); background: #1d2a35; box-shadow: 0 0 0 1px var(--terminal-primary); }
 @keyframes terminal-dot-move { to { background-position: 24px 24px; } }
 @keyframes terminal-status-blink { 50% { opacity: 0.5; } }
 @keyframes terminal-fade-slide-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes terminal-blink { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
-@media (prefers-reduced-motion: reduce) { .terminal-home::before, .terminal-system-status span { animation: none; } .terminal-subtitle, .terminal-features-grid { opacity: 1; transform: none; animation: none; } .terminal-title-caret { display: none; } .terminal-auth-enter-active { transition: none; } .terminal-feature-item { transition: none; } .terminal-feature-item:hover { transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .terminal-home::before,
+  .terminal-system-status span { animation: none; }
+  .terminal-subtitle,
+  .terminal-features-grid { opacity: 1; transform: none; animation: none; }
+  .terminal-title-caret { display: none; }
+  .terminal-auth-enter-active { transition: none; }
+  .terminal-card-forward-enter-active,
+  .terminal-card-forward-leave-active,
+  .terminal-card-back-enter-active,
+  .terminal-card-back-leave-active { transition: none; }
+  .terminal-feature-item { transition: none; }
+  .terminal-feature-item:hover { transform: none; }
+}
 @media (max-width: 860px) {
   .terminal-main-wrapper { align-items: flex-start; padding: 0; }
   .terminal-container { grid-template-columns: 1fr; gap: 48px; padding: 40px 24px; }
@@ -289,6 +398,8 @@
   .terminal-features-grid { grid-template-columns: 1fr; gap: 24px; }
   .terminal-feature-text h4 { white-space: normal; }
   .terminal-auth-card { min-height: auto; }
+  .terminal-credentials-page,
+  .terminal-uid-page { min-height: 0; }
   .terminal-primary-btn { margin-top: 24px; }
 }
 
@@ -297,4 +408,5 @@
   .terminal-title { max-width: 100%; font-size: 36px; white-space: normal; }
   .terminal-title-caret { display: none; }
   .terminal-auth-card { padding: 28px 24px; }
+  .terminal-uid-header { gap: 12px; margin-bottom: 24px; }
 }
