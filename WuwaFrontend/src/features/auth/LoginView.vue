@@ -1,10 +1,19 @@
 <script setup>
 import { computed, ref } from 'vue'
 
+import UidBindingPanel from './UidBindingPanel.vue'
 import { useTitleAnimation } from './useTitleAnimation.js'
-const props = defineProps({ error: { type: String, default: '' } })
+const props = defineProps({
+  error: { type: String, default: '' },
+  uidBusy: { type: Boolean, default: false },
+  view: {
+    type: String,
+    default: 'auth',
+    validator: (value) => ['auth', 'uid'].includes(value),
+  },
+})
 
-const emit = defineEmits(['submit'])
+const emit = defineEmits(['submit', 'bind', 'clear-error', 'sign-out'])
 
 const terminalTitle = '欢迎回家，漂泊者'
 const { displayedTitle: displayedTerminalTitle, isComplete: isTerminalTitleComplete } = useTitleAnimation(terminalTitle)
@@ -30,6 +39,7 @@ const validationError = ref('')
 const displayedError = computed(() => validationError.value || props.error)
 const isRegister = computed(() => authForm.value.mode === 'register')
 const authModeIndex = computed(() => (isRegister.value ? 1 : 0))
+const cardTransitionName = computed(() => (props.view === 'uid' ? 'terminal-card-forward' : 'terminal-card-back'))
 
 function selectAuthMode(mode) {
   authForm.value.mode = mode
@@ -88,28 +98,41 @@ function submitAuth() {
         <Transition name="terminal-auth">
           <div v-if="isTerminalTitleComplete" class="terminal-auth-wrapper">
             <div class="terminal-auth-card">
-              <div class="terminal-auth-tabs">
-                <button v-for="tab in authTabs" :key="tab.mode" class="terminal-tab-btn" :class="{ active: authForm.mode === tab.mode }" type="button" @click="selectAuthMode(tab.mode)">{{ tab.label }}</button>
-                <div class="terminal-tab-indicator" :style="{ transform: `translateX(${authModeIndex * 100}%)` }"></div>
-              </div>
+              <Transition :name="cardTransitionName" mode="out-in">
+                <div v-if="view === 'auth'" key="auth" class="terminal-card-page terminal-credentials-page">
+                  <div class="terminal-auth-tabs">
+                    <button v-for="tab in authTabs" :key="tab.mode" class="terminal-tab-btn" :class="{ active: authForm.mode === tab.mode }" type="button" @click="selectAuthMode(tab.mode)">{{ tab.label }}</button>
+                    <div class="terminal-tab-indicator" :style="{ transform: `translateX(${authModeIndex * 100}%)` }"></div>
+                  </div>
 
-              <form class="terminal-form-view" @submit.prevent="submitAuth">
-                <label class="terminal-input-group">
-                  {{ isRegister ? '新建操作员账号' : '操作员账号' }}
-                  <input v-model="authForm.username" class="terminal-standard-input" autocomplete="username" placeholder="请输入账号" :aria-invalid="Boolean(displayedError)" :aria-errormessage="displayedError ? 'auth-form-error' : undefined" />
-                </label>
-                <label class="terminal-input-group">
-                  {{ isRegister ? '设置访问密钥' : '访问密钥' }}
-                  <input v-model="authForm.password" class="terminal-standard-input" type="password" :autocomplete="isRegister ? 'new-password' : 'current-password'" placeholder="••••••••" :aria-invalid="Boolean(displayedError)" :aria-errormessage="displayedError ? 'auth-form-error' : undefined" />
-                </label>
-                <label v-if="isRegister" class="terminal-input-group">
-                  确认访问密钥
-                  <input v-model="confirmPassword" class="terminal-standard-input" type="password" autocomplete="new-password" placeholder="再次输入密钥" :aria-invalid="Boolean(displayedError)" :aria-errormessage="displayedError ? 'auth-form-error' : undefined" />
-                </label>
-                <label v-else class="terminal-form-options"><input v-model="saveLogin" type="checkbox" /> 保持连接状态</label>
-                <p v-if="displayedError" id="auth-form-error" class="error-text" role="alert">{{ displayedError }}</p>
-                <button class="terminal-primary-btn" type="submit">{{ isRegister ? 'INIT_REGISTER()' : 'EXECUTE_LOGIN()' }}</button>
-              </form>
+                  <form class="terminal-form-view" @submit.prevent="submitAuth">
+                    <label class="terminal-input-group">
+                      {{ isRegister ? '新建操作员账号' : '操作员账号' }}
+                      <input v-model="authForm.username" class="terminal-standard-input" autocomplete="username" placeholder="请输入账号" :aria-invalid="Boolean(displayedError)" :aria-errormessage="displayedError ? 'auth-form-error' : undefined" />
+                    </label>
+                    <label class="terminal-input-group">
+                      {{ isRegister ? '设置访问密钥' : '访问密钥' }}
+                      <input v-model="authForm.password" class="terminal-standard-input" type="password" :autocomplete="isRegister ? 'new-password' : 'current-password'" placeholder="••••••••" :aria-invalid="Boolean(displayedError)" :aria-errormessage="displayedError ? 'auth-form-error' : undefined" />
+                    </label>
+                    <label v-if="isRegister" class="terminal-input-group">
+                      确认访问密钥
+                      <input v-model="confirmPassword" class="terminal-standard-input" type="password" autocomplete="new-password" placeholder="再次输入密钥" :aria-invalid="Boolean(displayedError)" :aria-errormessage="displayedError ? 'auth-form-error' : undefined" />
+                    </label>
+                    <label v-else class="terminal-form-options"><input v-model="saveLogin" type="checkbox" /> 保持连接状态</label>
+                    <p v-if="displayedError" id="auth-form-error" class="error-text" role="alert">{{ displayedError }}</p>
+                    <button class="terminal-primary-btn" type="submit">{{ isRegister ? 'INIT_REGISTER()' : 'EXECUTE_LOGIN()' }}</button>
+                  </form>
+                </div>
+                <UidBindingPanel
+                  v-else
+                  key="uid"
+                  :busy="uidBusy"
+                  :error="error"
+                  @bind="emit('bind', $event)"
+                  @clear-error="emit('clear-error')"
+                  @cancel="emit('sign-out')"
+                />
+              </Transition>
             </div>
           </div>
         </Transition>

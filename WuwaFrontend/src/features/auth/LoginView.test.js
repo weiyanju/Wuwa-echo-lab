@@ -14,7 +14,7 @@ test('login view owns account form state and validation', async () => {
 test('login view emits a normalized authentication command', async () => {
   const source = await readFile(new URL('./LoginView.vue', import.meta.url), 'utf8')
 
-  assert.match(source, /const emit = defineEmits\(\['submit'\]\)/)
+  assert.match(source, /const emit = defineEmits\(\['submit', 'bind', 'clear-error', 'sign-out'\]\)/)
   assert.match(source, /emit\('submit', \{\s+username,\s+password,\s+mode: authForm\.value\.mode,\s+saveLogin: saveLogin\.value,/)
   assert.match(source, /<form class="terminal-form-view" @submit\.prevent="submitAuth">/)
 })
@@ -77,4 +77,25 @@ test('login view reveals complete title graphemes before mounting the authentica
   assert.match(source, /<h1 class="terminal-title" :aria-label="terminalTitle">\s*<span aria-hidden="true">\{\{ displayedTerminalTitle \}\}<\/span>\s*<span class="terminal-title-caret" aria-hidden="true"><\/span>\s*<\/h1>/)
   assert.match(source, /<Transition name="terminal-auth">\s*<div v-if="isTerminalTitleComplete" class="terminal-auth-wrapper">/)
   assert.doesNotMatch(source, /onMounted|onBeforeUnmount|matchMedia/)
+})
+
+test('login card switches between controlled auth and uid pages', async () => {
+  const source = await readFile(new URL('./LoginView.vue', import.meta.url), 'utf8')
+
+  assert.match(source, /import UidBindingPanel from '\.\/UidBindingPanel\.vue'/)
+  assert.match(source, /view: \{\s+type: String,\s+default: 'auth'/)
+  assert.match(source, /const cardTransitionName = computed\(\(\) => \(props\.view === 'uid' \? 'terminal-card-forward' : 'terminal-card-back'\)\)/)
+  assert.match(source, /<Transition :name="cardTransitionName" mode="out-in">/)
+  assert.match(source, /v-if="view === 'auth'"/)
+  assert.match(source, /<UidBindingPanel[\s\S]+:busy="uidBusy"[\s\S]+@bind="emit\('bind', \$event\)"[\s\S]+@cancel="emit\('sign-out'\)"/)
+})
+
+test('uid onboarding does not change the terminal homepage shell', async () => {
+  const source = await readFile(new URL('./LoginView.vue', import.meta.url), 'utf8')
+
+  assert.equal((source.match(/class="terminal-home"/g) || []).length, 1)
+  assert.equal((source.match(/class="terminal-navbar"/g) || []).length, 1)
+  assert.equal((source.match(/class="terminal-hero-content"/g) || []).length, 1)
+  assert.equal((source.match(/class="terminal-auth-card"/g) || []).length, 1)
+  assert.doesNotMatch(source, /uid-setup-shell|uid-setup-card|uid-setup-media/)
 })
