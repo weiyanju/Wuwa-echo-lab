@@ -62,8 +62,13 @@ def start_registration(username, password):
     try:
         with transaction.atomic():
             user = register_user(username, password)
-    except (UsernameAlreadyExists, IntegrityError):
+    except UsernameAlreadyExists:
         user = User.objects.get(username=username)
+        return _resume_registration(user, password)
+    except IntegrityError:
+        user = User.objects.filter(username=username).first()
+        if user is None:
+            raise
         return _resume_registration(user, password)
     return RegistrationResult(user=user, outcome="created")
 

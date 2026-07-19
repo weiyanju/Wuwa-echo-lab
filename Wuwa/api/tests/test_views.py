@@ -1,4 +1,5 @@
 import json
+from unittest.mock import patch
 
 from django.contrib.auth.models import User
 from django.db import connection
@@ -107,6 +108,47 @@ class ApiViewTests(TestCase):
         self.assertEqual(response.json()["code"], "registration_complete")
         self.assertEqual(User.objects.filter(username="tester").count(), 1)
         self.assertEqual(self.user.game_accounts.count(), 2)
+        self.assertEqual(self.client.get(reverse("me")).status_code, 401)
+
+    def test_register_rejects_completed_account_with_wrong_credentials_before_completion(self):
+        self.assertTrue(self.user.game_accounts.exclude(uid="").exists())
+
+        response = self.client.post(
+            reverse("register"),
+            data=json.dumps({"username": "tester", "password": "wrong-password"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["code"], "registration_credentials_invalid")
+        self.assertEqual(self.client.get(reverse("me")).status_code, 401)
+
+    def test_register_rejects_inactive_completed_account_before_completion(self):
+        self.assertTrue(self.user.game_accounts.exclude(uid="").exists())
+        self.user.is_active = False
+        self.user.save(update_fields=["is_active"])
+
+        response = self.client.post(
+            reverse("register"),
+            data=json.dumps({"username": "tester", "password": "pw12345"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["code"], "registration_credentials_invalid")
+        self.assertEqual(self.client.get(reverse("me")).status_code, 401)
+
+    def test_register_does_not_login_before_success_payload_is_serialized(self):
+        with patch("accounts.views.default_game_account", side_effect=GameAccount.DoesNotExist):
+            with self.assertRaises(GameAccount.DoesNotExist):
+                self.client.post(
+                    reverse("register"),
+                    data=json.dumps({"username": "broken-default", "password": "pw12345"}),
+                    content_type="application/json",
+                )
+
+        created_user = User.objects.get(username="broken-default")
+        self.assertIsNone(created_user.last_login)
         self.assertEqual(self.client.get(reverse("me")).status_code, 401)
 
     def test_game_account_list_create_and_bind_default(self):

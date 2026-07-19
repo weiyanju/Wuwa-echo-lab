@@ -42,14 +42,15 @@ def register(request):
             status=409,
             code="registration_complete",
         )
-    login(request, result.user)
     default_account = default_game_account(result.user)
+    serialized_default_account = serialize_game_account(default_account)
+    login(request, result.user)
     return success_response(
         {
             "id": result.user.id,
             "username": result.user.username,
             "registration_outcome": result.outcome,
-            "default_game_account": serialize_game_account(default_account),
+            "default_game_account": serialized_default_account,
         },
         status=201 if result.outcome == "created" else 200,
     )

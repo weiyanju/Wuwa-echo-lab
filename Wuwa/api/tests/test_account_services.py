@@ -21,3 +21,14 @@ class AccountServiceTests(TestCase):
         self.assertEqual(User.objects.filter(username="unfinished").count(), 1)
         self.assertEqual(unfinished_user.game_accounts.count(), 1)
         self.assertEqual(unfinished_user.game_accounts.get().id, unfinished_account.id)
+
+    def test_start_registration_reraises_unrelated_integrity_error(self):
+        integrity_error = IntegrityError("unrelated create failure")
+
+        try:
+            with patch("accounts.services.register_user", side_effect=integrity_error):
+                services.start_registration("missing-user", "pw12345")
+        except Exception as exc:
+            self.assertIs(exc, integrity_error)
+        else:
+            self.fail("Expected the original IntegrityError to be re-raised.")
