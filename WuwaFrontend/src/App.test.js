@@ -307,6 +307,11 @@ test('milestone 3 uses account login and locks workbench until default game uid 
   assert.match(appSource, /localStorage\.setItem\('wuwa-save-login', saveLogin \? 'true' : 'false'\)/)
   assert.match(appSource, /await auth\.signIn\(payload\)/)
   assert.match(appSource, /await gameAccount\.loadGameAccounts\(\)/)
+  assert.match(
+    appSource,
+    /if \(mode === 'register'\) \{\s+await auth\.signUp\(payload\)[\s\S]+await gameAccount\.loadGameAccounts\(\)[\s\S]+if \(gameAccount\.workspaceLocked\.value\)/,
+  )
+  assert.doesNotMatch(appSource, /registration_outcome|registration_complete|resumeRegistration/)
   assert.match(appSource, /const selectedGameAccountId = computed\(\(\) => gameAccount\.currentAccount\.value\?\.id \|\| null\)/)
   assert.match(appSource, /const boundPlayerUid = computed\(\(\) => gameAccount\.currentAccount\.value\?\.uid \|\| ''\)/)
   assert.match(appSource, /@bind="submitUidBinding"/)

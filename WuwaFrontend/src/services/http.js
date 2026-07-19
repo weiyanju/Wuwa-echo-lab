@@ -1,5 +1,14 @@
 const API_BASE_URL = import.meta.env?.VITE_API_BASE_URL || '/api'
 
+export class ApiError extends Error {
+  constructor(message, { status, code = '' } = {}) {
+    super(message)
+    this.name = 'ApiError'
+    this.status = status
+    this.code = code
+  }
+}
+
 function getCookie(name) {
   return document.cookie
     .split(';')
@@ -36,7 +45,10 @@ export async function request(path, options = {}) {
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok) {
-    throw new Error(data.error || `Backend responded with ${response.status}`)
+    throw new ApiError(
+      data.error || `Backend responded with ${response.status}`,
+      { status: response.status, code: data.code || '' },
+    )
   }
 
   return data
@@ -49,4 +61,3 @@ export function withGameAccount(path, gameAccountId) {
   const separator = path.includes('?') ? '&' : '?'
   return `${path}${separator}game_account_id=${encodeURIComponent(gameAccountId)}`
 }
-
