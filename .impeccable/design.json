@@ -594,6 +594,11 @@
         "section": "colors"
       },
       {
+        "name": "The Model Surface Derivation Rule",
+        "body": "评估子模型卡片使用 feature-local --model-surface-accent 作为卡片与内部判断摘要的共同表面色来源；不同模型保留不同色相，但背景、边框和标签必须使用同一派生公式与视觉强度。--model-accent 继续只承担数据图形语义，不能与卡片表面色混为同一颜色表。",
+        "section": "components"
+      },
+      {
         "name": "The Functional Graphic Exception Rule",
         "body": "Bayes Exact / Wildcard 路径标记、登录标题 4px 打字光标及真实表达进度、概率分布、模型路径或状态结构的线条属于功能图形，不按装饰性侧边条处理。",
         "section": "components"

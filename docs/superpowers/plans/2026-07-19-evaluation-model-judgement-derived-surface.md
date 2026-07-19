@@ -253,7 +253,7 @@ Add this object to `narrative.rules` immediately after `The Token Layering Rule`
 Run:
 
 ```powershell
-..\.tools\node\node.exe -e "JSON.parse(require('fs').readFileSync('.impeccable/design.json','utf8')); console.log('DESIGN_JSON_OK')"
+.\.tools\node\node.exe -e "JSON.parse(require('fs').readFileSync('.impeccable/design.json','utf8')); console.log('DESIGN_JSON_OK')"
 git diff --check -- DESIGN.md .impeccable/design.json
 ```
 
