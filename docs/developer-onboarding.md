@@ -166,6 +166,7 @@ Web 与 API 不同源时，再按实际地址设置逗号分隔的 `DJANGO_CORS_
 - Vue API 调用进入 `WuwaFrontend/src/services/`。
 - Vue 页面级功能进入 `WuwaFrontend/src/features/<owner>/`。
 - Vue 可复用状态进入 `src/composables/`，可复用 UI 进入 `src/components/`。
+- Vue 已稳定且被多个 feature 共同使用的纯逻辑进入 `src/shared/`；页面状态、API 调用和单页展示映射仍留在原 owner。
 - Vue 静态业务数据进入 `src/data/`。
 - 前端公开静态资源进入 `WuwaFrontend/public/`，源码内引用资源进入 `WuwaFrontend/src/assets/`。
 - WPF UI 只放在 `WuwaAssistant/WuwaAssistant/`，核心业务能力放在 `WuwaAssistant/WuwaAssistant.Core/`。

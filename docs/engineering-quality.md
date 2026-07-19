@@ -137,19 +137,21 @@ Vue 改动默认至少运行命中的前端测试或构建。
 
 当前已有测试覆盖：
 
-- API helper
-- `useAuth`
-- `useGameAccount`
-- 格式化
-- player UID
-- echo workflow
-- App 静态结构
+- API helper、错误形状和 `GameAccount` 作用域
+- `useAuth`、可恢复注册、UID 初始化与账号切换
+- 声骸工作台、识别复核、统计、评估和历史记录工作流
+- 跨 feature 的样本成熟度、评估就绪与空指标语义
+- 格式化、静态业务数据和展示映射
+- 可复用 UI 的状态、键盘交互与无障碍语义
+- App 编排、目录 owner、文件体积和样式归属等架构约束
+- 字体角色、主题 token、响应式布局和 `prefers-reduced-motion` 等视觉契约
 
 要求：
 
 - 改 API 请求形状时补 API helper 测试。
 - 改账号/UID 工作流时补 composable 或 App 测试。
-- 改 UI 大结构时至少做构建验证。
+- 改共享样本语义时同时覆盖统计、评估和工作台摘要。
+- 改 UI 大结构、共享状态或设计契约时运行命中测试，并至少做构建验证。
 
 ### 5.3 WPF 本地助手
 

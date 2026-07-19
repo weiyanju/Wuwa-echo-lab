@@ -118,13 +118,14 @@ Vue 新功能必须优先保持层次清楚。
 - `src/services/`：API 请求、HTTP helper、纯数据调用。
 - `src/composables/`：可复用状态和工作流。
 - `src/components/`：可复用 UI 组件。
+- `src/shared/`：已经稳定并被多个 feature 复用的纯逻辑。
 - `src/data/`：稳定静态业务数据。
 - `src/features/`：按业务 owner 组织页面、展示映射和 feature 工作流。
 - `src/styles/`：设计 token、基础规则、应用壳、共享控件和 feature 样式入口。
 - `src/assets/`：源码内引用的图片、图标、视觉资源。
 - `public/`：直接静态分发的大资源。
 
-只有出现稳定的跨 feature 纯逻辑时才新增 `src/shared/`，不为目录对称提前创建空层。
+`src/shared/` 当前已用于统一样本数量、成熟度、评估就绪和空指标语义。只在逻辑已经稳定且确实被多个 feature 复用时继续扩展该目录，不为目录对称创建空层，也不把页面状态、API 调用或单页展示映射迁入其中。
 
 规则：
 
@@ -451,6 +452,7 @@ WuwaFrontend/src/
   composables/
   data/
   features/
+  shared/
   services/
   styles/
   App.vue
@@ -463,6 +465,7 @@ WuwaFrontend/src/
 - `components/`：可复用 UI 组件。
 - `data/`：静态数据。
 - `features/`：按业务 owner 组织的页面级视图、展示映射和 feature composable。
+- `shared/`：稳定的跨 feature 纯逻辑；当前 `sampleExperience.js` 统一样本成熟度、评估就绪和空指标语义。
 - `assets/`：图片、图标和视觉资源。
 - `styles/tokens.css`：共享设计 token。
 - `styles/base.css`：全局基础元素规则。
@@ -483,6 +486,7 @@ WuwaFrontend/src/
 | feature 专属样式 | `src/styles/features/<owner>.css` |
 | 静态鸣潮数据 | `src/data/` |
 | 可复用 UI | `src/components/` |
+| 稳定跨 feature 纯逻辑 | `src/shared/` |
 | 页面级大模块 | `src/features/<owner>/`，不要回填到 `App.vue` |
 
 ### 7.2 Vue 约束

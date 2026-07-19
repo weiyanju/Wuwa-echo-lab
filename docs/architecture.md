@@ -256,6 +256,7 @@ Wuwa/
 
 ```text
 WuwaFrontend/src/
+  components/
   features/
     auth/
     evaluation/
@@ -265,6 +266,7 @@ WuwaFrontend/src/
     workspace/
   composables/
   data/
+  shared/
   services/
   styles/
   assets/
@@ -282,7 +284,9 @@ WuwaFrontend/src/
 - `features/evaluation/EvaluationBacktest.vue`：子模型列表、展开诊断和模型专属交互。
 - `features/history/`：浮动历史面板及其交互状态。
 - `features/auth/`：登录与注册表单视图。
+- `components/`：跨 feature 复用的 UI；当前按 `controls/`、`shell/` 和 `states/` 等明确职责组织。
 - `composables/`：跨 feature 的认证和 `GameAccount` 状态。
+- `shared/sampleExperience.js`：统计、评估与工作台摘要共享的样本数量、成熟度、评估就绪和空指标语义。
 - `styles/tokens.css`：全局设计 token。
 - `styles/base.css`：浏览器基础元素和应用根节点规则。
 - `styles/controls.css`：跨 feature 复用的主题、按钮、表单、卡片和标题语义。
@@ -296,7 +300,7 @@ WuwaFrontend/src/
 - feature 内页面状态和工作流进入对应 `features/*/use*.js`
 - 跨 feature 状态进入 `composables/`
 - 可复用 UI 进入 `components/`；页面级 UI 进入对应 `features/*`
-- 稳定共享格式化进入 `shared/`
+- 稳定的跨 feature 纯逻辑进入 `shared/`；页面状态、API 调用和 feature 展示映射不进入该目录
 - 业务数据常量进入 `data/`
 - 静态资源进入 `assets/` 或 `public/`
 - 不继续把大型功能堆进 `App.vue`
