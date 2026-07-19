@@ -11,12 +11,12 @@
 
 ## 文档边界
 
-- `DESIGN.md` 已更新为当前有效的百分号展示规则。
+- `DESIGN.md`、`docs/product-interface-principles.md`、`docs/web-ui-design-system-v2.md` 与 `.impeccable/design.json` 已同步为当前有效的百分号差值展示规则。
 - 既有计划和归档继续保留当时的原始设计事实，没有批量改写。
 
 ## 验证
 
 - `npm test`：通过。
 - `npm run build`：通过。
-- 活跃前端源码、测试和 `DESIGN.md` 的旧单位静态检查：无匹配。
+- 活跃前端源码、`DESIGN.md`、`docs/product-interface-principles.md`、`docs/web-ui-design-system-v2.md` 和 `.impeccable/design.json` 的旧单位静态检查：无匹配。
 - `git diff --check`：通过。

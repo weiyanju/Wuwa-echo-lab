@@ -614,6 +614,11 @@
         "section": "typography"
       },
       {
+        "name": "The Percent Delta Rule",
+        "body": "比例本身和两个比例的差值都使用 %；差值必须带正负号，并由“偏差”“相对某项新增”等业务标签说明，不能表述为相对增长率。",
+        "section": "typography"
+      },
+      {
         "name": "The Semantic Entry Rule",
         "body": "中文、普通拉丁、品牌、数据与 Mono 技术文本分别使用 `--font-cjk`、`--font-latin`、`--font-data` 和 `--font-mono`；中文字段标签和正文不得使用 Mono。",
         "section": "typography"
