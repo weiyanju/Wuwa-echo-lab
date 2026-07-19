@@ -2,11 +2,15 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 
-test('core backtest uses proportional comparison rows and percentage-point gains', async () => {
+test('core backtest uses proportional comparison rows and signed percent gains', async () => {
   const source = await readFile(new URL('./EvaluationCoreBacktest.vue', import.meta.url), 'utf8')
 
   assert.match(source, /import \{ getCoverageScale \} from '\.\/coverageScale\.js'/)
-  assert.match(source, /formatSignedPercentagePoints/)
+  assert.match(source, /formatSignedPercent/)
+  assert.match(
+    source,
+    /return `相对\$\{row\.deltaFrom\}新增 \$\{formatSignedPercent\(row\.delta\)\}`/,
+  )
   assert.match(source, /class="coverage-comparison"/)
   assert.match(source, /class="coverage-axis"/)
   assert.match(source, /class="coverage-row"/)
@@ -14,7 +18,6 @@ test('core backtest uses proportional comparison rows and percentage-point gains
   assert.match(source, /class="coverage-delta"/)
   assert.match(source, /row\.value \/ coverageScale\.value\.max/)
   assert.doesNotMatch(source, /coverage-band|coverageNodePosition|coverageNodeClass/)
-  assert.doesNotMatch(source, /\bformatSignedPercent\b/)
 })
 
 test('core backtest keeps calibration metrics factual and compact', async () => {

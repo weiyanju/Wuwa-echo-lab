@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 
-import { formatPercent, formatSignedPercentagePoints } from '../../services/formatters.js'
+import { formatPercent, formatSignedPercent } from '../../services/formatters.js'
 import { getCoverageScale } from './coverageScale.js'
 
 const props = defineProps({ evaluation: { type: Object, default: null } })
@@ -54,12 +54,12 @@ function coverageWidth(row) {
 
 function deltaText(row) {
   return Number.isFinite(row.delta)
-    ? formatSignedPercentagePoints(row.delta)
+    ? formatSignedPercent(row.delta)
     : '--'
 }
 
 function deltaAriaLabel(row) {
-  return `相对${row.deltaFrom}新增 ${(row.delta * 100).toFixed(2)} 个百分点`
+  return `相对${row.deltaFrom}新增 ${formatSignedPercent(row.delta)}`
 }
 </script>
 
