@@ -12,7 +12,6 @@ import RecognitionReviewPanel from './features/recognition/RecognitionReviewPane
 import { useRecognitionReview } from './features/recognition/useRecognitionReview'
 import StatisticsView from './features/statistics/StatisticsView.vue'
 import EchoWorkbenchView from './features/workspace/EchoWorkbenchView.vue'
-import UidSetupView from './features/workspace/UidSetupView.vue'
 import { useEchoWorkspace } from './features/workspace/useEchoWorkspace'
 import moonIcon from './assets/icons/moon.svg'
 import sunIcon from './assets/icons/sun.svg'
@@ -70,6 +69,7 @@ const {
 })
 const { openPage, page } = useDashboardNavigation({ refreshStats, refreshEvaluation })
 const appBusy = computed(() => saving.value || accountChanging.value)
+const uidFlowBusy = computed(() => accountChanging.value || gameAccount.loading.value || auth.loading.value)
 const {
   dispose: disposeRecognition,
   latestSession: latestRecognitionSession,
@@ -181,6 +181,7 @@ async function selectGameAccount(accountOrId) {
 }
 
 async function signOut() {
+  error.value = ''
   await auth.signOut()
   gameAccount.accounts.value = []
   resetWorkspaceState()
@@ -221,19 +222,14 @@ onBeforeUnmount(() => {
       </div>
     </section>
 
-    <LoginView v-else-if="!user" :error="error" @submit="submitAuth" />
-
-    <UidSetupView
-      v-else-if="gameAccount.workspaceLocked.value"
-      :bound-uid="boundPlayerUid"
-      :saving="accountChanging"
-      :loading="gameAccount.loading.value"
+    <LoginView
+      v-else-if="!user || gameAccount.workspaceLocked.value"
+      :view="user ? 'uid' : 'auth'"
+      :uid-busy="uidFlowBusy"
       :error="error"
-      :is-dark-theme="isDarkTheme"
-      :theme-toggle-label="themeToggleLabel"
+      @submit="submitAuth"
       @bind="submitUidBinding"
       @clear-error="error = ''"
-      @toggle-theme="toggleTheme"
       @sign-out="signOut"
     />
 
