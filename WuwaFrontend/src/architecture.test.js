@@ -7,6 +7,39 @@ async function lineCount(relativePath) {
   return source.split(/\r?\n/).length
 }
 
+function cssBlockBody(source, preludePattern) {
+  const match = source.match(preludePattern)
+  assert.ok(match, `missing CSS block matching ${preludePattern}`)
+
+  const openingBrace = source.indexOf('{', match.index + match[0].length)
+  assert.notEqual(openingBrace, -1, `missing opening brace for ${preludePattern}`)
+
+  let depth = 1
+  for (let index = openingBrace + 1; index < source.length; index += 1) {
+    if (source[index] === '{') depth += 1
+    if (source[index] !== '}') continue
+
+    depth -= 1
+    if (depth === 0) return source.slice(openingBrace + 1, index)
+  }
+
+  assert.fail(`missing closing brace for ${preludePattern}`)
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function assertCssDeclarations(ruleBody, expectedDeclarations) {
+  for (const [property, value] of Object.entries(expectedDeclarations)) {
+    assert.match(
+      ruleBody,
+      new RegExp(`^\\s*${escapeRegExp(property)}:\\s*${escapeRegExp(value)};\\s*$`, 'm'),
+      `expected ${property}: ${value}`,
+    )
+  }
+}
+
 test('frontend high-attraction entry files do not grow beyond the refactor baseline', async () => {
   assert.ok(await lineCount('./App.vue') <= 320, 'App.vue must not grow beyond 320 lines')
   assert.ok(await lineCount('./features/auth/LoginView.vue') <= 145, 'LoginView.vue must remain a focused terminal shell and card-stage owner')
@@ -137,8 +170,31 @@ test('history feature owns panel, filters, records, and responsive styles', asyn
 test('auth feature owns login layout, information, dark, and responsive styles', async () => {
   const entry = await readFile(new URL('./style.css', import.meta.url), 'utf8')
   const auth = await readFile(new URL('./styles/features/auth.css', import.meta.url), 'utf8')
+  const controls = await readFile(new URL('./styles/controls.css', import.meta.url), 'utf8')
+  const uidActions = cssBlockBody(auth, /\.terminal-uid-actions\s*(?=\{)/)
+  const uidPrimaryAction = cssBlockBody(auth, /\.terminal-uid-actions \.terminal-primary-btn\s*(?=\{)/)
+  const uidReturn = cssBlockBody(auth, /\.terminal-uid-return\s*(?=\{)/)
+  const uidReturnStates = cssBlockBody(
+    auth,
+    /\.terminal-uid-return:hover:not\(:disabled\),\s*\.terminal-uid-return:focus-visible,\s*\.terminal-uid-return:active\s*(?=\{)/,
+  )
+  const uidDisabledActions = cssBlockBody(
+    auth,
+    /\.terminal-uid-return:disabled,\s*\.terminal-primary-btn:disabled\s*(?=\{)/,
+  )
+  const reducedMotion = cssBlockBody(auth, /@media \(prefers-reduced-motion: reduce\)\s*(?=\{)/)
+  const compactLayout = cssBlockBody(auth, /@media \(max-width: 860px\)\s*(?=\{)/)
+  const narrowLayout = cssBlockBody(auth, /@media \(max-width: 520px\)\s*(?=\{)/)
+  const globalFocusRing = cssBlockBody(
+    controls,
+    /button:focus-visible,\s*input:focus-visible\s*(?=\{)/,
+  )
 
   assert.match(entry, /@import '\.\/styles\/features\/auth\.css';/)
+  assert.match(
+    entry,
+    /@import '\.\/styles\/features\/auth\.css';[\s\S]*@import '\.\/styles\/controls\.css';/,
+  )
   assert.match(auth, /\.terminal-home \{/)
   assert.match(auth, /\.terminal-navbar \{/)
   assert.match(auth, /\.terminal-container \{/)
@@ -146,19 +202,34 @@ test('auth feature owns login layout, information, dark, and responsive styles',
   assert.match(auth, /\.terminal-auth-card \{/)
   assert.match(auth, /\.terminal-tab-indicator \{/)
   assert.match(auth, /\.terminal-card-page \{/)
-  assert.match(auth, /\.terminal-uid-actions \{[^}]*margin-top: auto;/)
-  assert.match(
-    auth,
-    /\.terminal-uid-return \{[^}]*justify-self: center;[^}]*min-height: 44px;[^}]*border: 0;[^}]*color: var\(--terminal-secondary\);[^}]*background: transparent;/,
-  )
-  assert.match(
-    auth,
-    /\.terminal-uid-return:hover:not\(:disabled\),\s*\.terminal-uid-return:focus-visible,\s*\.terminal-uid-return:active \{[^}]*color: var\(--terminal-text\);/,
-  )
-  assert.match(
-    auth,
-    /@media \(prefers-reduced-motion: reduce\) \{[\s\S]+\.terminal-uid-return \{ transition: none; \}/,
-  )
+  assertCssDeclarations(uidActions, { 'margin-top': 'auto' })
+  assertCssDeclarations(uidPrimaryAction, { 'margin-top': '0' })
+  assertCssDeclarations(uidReturn, {
+    'justify-self': 'center',
+    'min-height': '44px',
+    border: '0',
+    color: 'var(--terminal-secondary)',
+    background: 'transparent',
+  })
+  assertCssDeclarations(uidReturnStates, { color: 'var(--terminal-text)' })
+  assertCssDeclarations(uidDisabledActions, {
+    cursor: 'not-allowed',
+    opacity: '0.56',
+  })
+  assertCssDeclarations(cssBlockBody(reducedMotion, /\.terminal-uid-return\s*(?=\{)/), {
+    transition: 'none',
+  })
+  assertCssDeclarations(cssBlockBody(compactLayout, /\.terminal-uid-actions\s*(?=\{)/), {
+    'margin-top': '24px',
+  })
+  assertCssDeclarations(cssBlockBody(narrowLayout, /\.terminal-uid-header\s*(?=\{)/), {
+    'margin-bottom': '24px',
+  })
+  assertCssDeclarations(globalFocusRing, {
+    outline: '3px solid rgba(0, 100, 224, 0.26)',
+    'outline-offset': '3px',
+  })
+  assert.doesNotMatch(auth, /\.terminal-uid-return[^{]*\{[^}]*\boutline(?:-offset)?:/)
   assert.doesNotMatch(auth, /\.terminal-uid-back/)
   assert.match(auth, /\.terminal-uid-input \{[\s\S]+font-family: var\(--font-data\);[\s\S]+font-variant-numeric: tabular-nums;/)
   assert.match(auth, /\.terminal-card-forward-enter-from \{[^}]+translateX\(16px\)/)
