@@ -123,41 +123,55 @@ test('evaluation cards use restrained perimeters while Bayes paths retain semant
   )
 })
 
-test('model judgement surfaces derive from their parent card surface family', async () => {
-  const evaluationStyle = await read('./styles/features/evaluation.css')
-  const card = bodiesFor(evaluationStyle, '.model-insight-card')
+test('model judgement surfaces inherit the visible disclosure row state', async () => {
+  const [evaluationStyle, layoutStyle] = await Promise.all([
+    read('./styles/features/evaluation.css'),
+    read('./styles/features/evaluation-layout.css'),
+  ])
+  const row = bodiesFor(evaluationStyle, '.model-bars > article')
+  const bestRow = bodiesFor(evaluationStyle, '.model-bars > article.best')
+  const disabledRow = bodiesFor(evaluationStyle, '.model-bars > article.disabled')
+  const detail = bodiesFor(evaluationStyle, '.model-row-detail')
+  const darkDetail = bodiesFor(evaluationStyle, '.app-shell.theme-dark .model-row-detail')
   const bayes = bodiesFor(evaluationStyle, '.model-insight-card.model-bayes')
   const markov = bodiesFor(evaluationStyle, '.model-insight-card.model-markov')
   const cycle = bodiesFor(evaluationStyle, '.model-insight-card.model-cycle')
-  const disabled = bodiesFor(evaluationStyle, '.model-insight-card.disabled')
+  const innerDisabled = bodiesFor(evaluationStyle, '.model-insight-card.disabled')
   const summary = bodiesFor(evaluationStyle, '.model-judgement-summary')
   const label = bodiesFor(evaluationStyle, '.model-judgement-label')
-  const darkCard = bodiesFor(evaluationStyle, '.app-shell.theme-dark .model-insight-card')
   const darkSummary = bodiesFor(evaluationStyle, '.app-shell.theme-dark .model-judgement-summary')
   const darkLabel = bodiesFor(evaluationStyle, '.app-shell.theme-dark .model-judgement-label')
+  const expandedSummary = bodiesFor(
+    layoutStyle,
+    '.evaluation-panel .model-backtest-card .model-bars > article.expanded > .model-bar-summary',
+  )
+  const bestSummary = bodiesFor(
+    layoutStyle,
+    '.evaluation-panel .model-backtest-card .model-bars > article.best > .model-bar-summary',
+  )
 
-  assert.match(card, /--model-surface-accent:\s*#1769d2;/)
-  assert.match(card, /--model-card-tint:\s*7%;/)
-  assert.match(card, /color-mix\(in srgb, var\(--model-surface-accent\) var\(--model-card-tint\), transparent\)/)
-  assert.match(bayes, /--model-surface-accent:\s*#7156be;/)
-  assert.match(bayes, /--model-card-tint:\s*9%;/)
-  assert.match(markov, /--model-surface-accent:\s*#ffb020;/)
-  assert.match(markov, /--model-card-tint:\s*11%;/)
-  assert.match(cycle, /--model-surface-accent:\s*#30a46c;/)
-  assert.match(cycle, /--model-card-tint:\s*10%;/)
-  assert.match(disabled, /--model-surface-accent:\s*#677481;/)
-  assert.match(disabled, /--model-card-tint:\s*8%;/)
+  assert.match(row, /--model-surface-accent:\s*#1769d2;/)
+  assert.match(bestRow, /--model-surface-accent:\s*#2c9f70;/)
+  assert.match(disabledRow, /--model-surface-accent:\s*#677481;/)
 
-  assert.match(summary, /var\(--model-surface-accent\) 10%, #d8e2ea/)
-  assert.match(summary, /var\(--model-surface-accent\) 4%, #f7f9fb/)
-  assert.match(label, /var\(--model-surface-accent\) 46%, #1e2b34/)
-  assert.doesNotMatch(summary, /var\(--model-accent\)/)
-  assert.doesNotMatch(label, /var\(--model-accent\)/)
+  for (const modelIdentityRule of [bayes, markov, cycle, innerDisabled]) {
+    assert.doesNotMatch(modelIdentityRule, /--model-surface-accent/)
+    assert.doesNotMatch(modelIdentityRule, /--model-card-tint/)
+  }
 
-  assert.match(darkCard, /var\(--model-surface-accent\) 13%, transparent/)
-  assert.match(darkSummary, /var\(--model-surface-accent\) 16%, var\(--hairline-soft\)/)
-  assert.match(darkSummary, /var\(--model-surface-accent\) 6%, var\(--surface-soft\)/)
-  assert.match(darkLabel, /var\(--model-surface-accent\) 46%, var\(--ink-deep\)/)
+  assert.match(detail, /var\(--model-surface-accent,\s*#1769d2\)/)
+  assert.match(darkDetail, /var\(--model-surface-accent,\s*#5da8ff\)/)
+  assert.doesNotMatch(detail, /rgba\(44,\s*159,\s*112/)
+  assert.doesNotMatch(darkDetail, /rgba\(55,\s*179,\s*127/)
+
+  assert.match(expandedSummary, /var\(--model-surface-accent,\s*#1769d2\)/)
+  assert.match(bestSummary, /var\(--model-surface-accent,\s*#2c9f70\)/)
+  assert.match(summary, /var\(--model-surface-accent,\s*#1769d2\) 10%, #d8e2ea/)
+  assert.match(summary, /var\(--model-surface-accent,\s*#1769d2\) 4%, #f7f9fb/)
+  assert.match(label, /var\(--model-surface-accent,\s*#1769d2\) 46%, #1e2b34/)
+  assert.match(darkSummary, /var\(--model-surface-accent,\s*#5da8ff\) 16%, var\(--hairline-soft\)/)
+  assert.match(darkSummary, /var\(--model-surface-accent,\s*#5da8ff\) 6%, var\(--surface-soft\)/)
+  assert.match(darkLabel, /var\(--model-surface-accent,\s*#5da8ff\) 46%, var\(--ink-deep\)/)
 
   assert.match(bodiesFor(evaluationStyle, '.model-bars-large b'), /var\(--model-accent\)/)
 })

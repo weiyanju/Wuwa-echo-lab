@@ -54,6 +54,21 @@ test('model detail summary uses one native disclosure button without nested cont
   assert.match(style, /\.model-bars article > \.model-bar-summary \{[\s\S]+border: 0;[\s\S]+background: transparent;[\s\S]+font: inherit;[\s\S]+appearance: none;/)
 })
 
+test('visible disclosure rows own state while inline model cards only identify data graphics', async () => {
+  const source = await readFile(new URL('./EvaluationBacktest.vue', import.meta.url), 'utf8')
+  const style = await readFile(new URL('../../styles/features/evaluation.css', import.meta.url), 'utf8')
+
+  assert.match(
+    source,
+    /:class="\{ best: row\.isBest, expanded: expandedModelDetailKey === row\.key, disabled: row\.disabled \}"/,
+  )
+  assert.match(source, /class="model-row-detail"/)
+  assert.match(source, /class="model-insight-card inline-model-insight"/)
+  assert.match(source, /:class="modelInsightClass\(model\)"/)
+  assert.match(style, /\.model-row-detail \.model-insight-card \{[^}]*background: transparent;/)
+  assert.doesNotMatch(source, /--model-surface-accent/)
+})
+
 test('submodel disclosure reveals expansion and preserves collapse position', async () => {
   const source = await readFile(new URL('./EvaluationBacktest.vue', import.meta.url), 'utf8')
 
