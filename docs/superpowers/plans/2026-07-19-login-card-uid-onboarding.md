@@ -32,13 +32,11 @@
 - Delete `WuwaFrontend/src/features/workspace/uidSetup.test.js`: validation tests move with their owner.
 - Delete `WuwaFrontend/src/styles/features/uid-setup.css`: obsolete standalone page styles.
 
-### Task 1: Move first-bind validation to the login entry feature
+### Task 1: Add first-bind validation to the login entry feature
 
 **Files:**
 - Create: `WuwaFrontend/src/features/auth/uidBinding.test.js`
 - Create: `WuwaFrontend/src/features/auth/uidBinding.js`
-- Delete: `WuwaFrontend/src/features/workspace/uidSetup.test.js`
-- Delete: `WuwaFrontend/src/features/workspace/uidSetup.js`
 
 - [ ] **Step 1: Write the failing validation test**
 
@@ -103,13 +101,11 @@ Run:
 
 Expected: 3 tests pass.
 
-- [ ] **Step 5: Remove the superseded workspace validator and commit**
-
-Delete `WuwaFrontend/src/features/workspace/uidSetup.js` and `WuwaFrontend/src/features/workspace/uidSetup.test.js`, then run:
+- [ ] **Step 5: Commit**
 
 ```powershell
-git add WuwaFrontend/src/features/auth/uidBinding.js WuwaFrontend/src/features/auth/uidBinding.test.js WuwaFrontend/src/features/workspace/uidSetup.js WuwaFrontend/src/features/workspace/uidSetup.test.js
-git commit -m "refactor: move uid binding validation into auth entry"
+git add WuwaFrontend/src/features/auth/uidBinding.js WuwaFrontend/src/features/auth/uidBinding.test.js
+git commit -m "feat: add auth entry uid binding validation"
 ```
 
 ### Task 2: Build the focused UID binding card page
@@ -290,6 +286,8 @@ git commit -m "feat: navigate uid onboarding inside login card"
 - Modify: `WuwaFrontend/src/App.vue`
 - Delete: `WuwaFrontend/src/features/workspace/UidSetupView.vue`
 - Delete: `WuwaFrontend/src/features/workspace/UidSetupView.test.js`
+- Delete: `WuwaFrontend/src/features/workspace/uidSetup.js`
+- Delete: `WuwaFrontend/src/features/workspace/uidSetup.test.js`
 
 - [ ] **Step 1: Replace standalone-page expectations with failing orchestration assertions**
 
@@ -342,7 +340,7 @@ Keep `submitAuth`, `submitUidBinding`, `changeGameAccount`, and `signOut` as orc
 
 - [ ] **Step 4: Delete the unused standalone view and run tests**
 
-Delete `UidSetupView.vue` and `UidSetupView.test.js`, then run:
+Delete `UidSetupView.vue`, `UidSetupView.test.js`, `uidSetup.js`, and `uidSetup.test.js`, then run:
 
 ```powershell
 & '..\.tools\node\node.exe' --test src\App.test.js src\features\auth\LoginView.test.js src\features\auth\UidBindingPanel.test.js
