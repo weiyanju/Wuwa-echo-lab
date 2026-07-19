@@ -16,6 +16,7 @@ obj/
 # Local tooling and secrets
 .tools/
 .superpowers/
+.worktrees/
 .env
 backups/
 docs/local-development.private.md
