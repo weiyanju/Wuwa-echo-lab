@@ -113,7 +113,6 @@ test('supporting views use the approved typography values', async () => {
   await assertStyleGroup(
     [
       './styles/features/auth.css',
-      './styles/features/uid-setup.css',
       './styles/features/history.css',
       './styles/features/recognition.css',
     ],

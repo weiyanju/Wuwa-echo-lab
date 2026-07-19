@@ -16,7 +16,6 @@ const styleFiles = [
   './styles/features/history.css',
   './styles/features/recognition.css',
   './styles/features/statistics.css',
-  './styles/features/uid-setup.css',
   './styles/features/workspace.css',
   './styles/features/workspace-active.css',
 ]
@@ -262,10 +261,9 @@ test('history dark theme reuses surface, text, and primary theme tokens without 
   assert.match(history, /color: var\(--primary-deep\);/)
 })
 
-test('remaining feature dark themes reuse exact semantic tokens without remapping feature colors', async () => {
+test('statistics and recognition dark themes reuse exact semantic tokens without remapping feature colors', async () => {
   const statistics = await read('./styles/features/statistics.css')
   const recognition = await read('./styles/features/recognition.css')
-  const uidSetup = await read('./styles/features/uid-setup.css')
 
   for (const value of ['#17232d', '#e7eef4', '#a9bac7', '#98aab7', '#5da8ff']) {
     assert.doesNotMatch(statistics, new RegExp(value, 'i'))
@@ -273,12 +271,8 @@ test('remaining feature dark themes reuse exact semantic tokens without remappin
   for (const value of ['#37b37f', '#e7eef4', '#a9bac7']) {
     assert.doesNotMatch(recognition, new RegExp(value, 'i'))
   }
-  for (const value of ['#98aab7', '#8dc3ff']) {
-    assert.doesNotMatch(uidSetup, new RegExp(value, 'i'))
-  }
   assert.match(statistics, /var\(--surface-soft\)/)
   assert.match(recognition, /var\(--success\)/)
-  assert.match(uidSetup, /var\(--primary-deep\)/)
 })
 
 test('shell and shared controls consume dark theme tokens while keeping one source definition', async () => {
