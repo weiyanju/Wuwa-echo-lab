@@ -29,7 +29,12 @@ const calibrationMetrics = computed(() => [
 
 const coverageAriaLabel = computed(() =>
   hitRateRows.value
-    .map((row) => `${row.label} ${metricText(row.value)}`)
+    .map((row) => {
+      const valueLabel = `${row.label} ${metricText(row.value)}`
+      return Number.isFinite(row.delta)
+        ? `${valueLabel}，${deltaAriaLabel(row)}`
+        : valueLabel
+    })
     .join('，'),
 )
 

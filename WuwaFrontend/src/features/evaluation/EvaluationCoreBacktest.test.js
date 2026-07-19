@@ -6,7 +6,14 @@ test('core backtest uses proportional comparison rows and signed percent gains',
   const source = await readFile(new URL('./EvaluationCoreBacktest.vue', import.meta.url), 'utf8')
 
   assert.match(source, /import \{ getCoverageScale \} from '\.\/coverageScale\.js'/)
-  assert.match(source, /formatSignedPercent/)
+  assert.match(
+    source,
+    /function deltaText\(row\) \{\s+return Number\.isFinite\(row\.delta\)\s+\? formatSignedPercent\(row\.delta\)\s+: '--'\s+\}/,
+  )
+  assert.match(
+    source,
+    /const coverageAriaLabel = computed\(\(\) =>[\s\S]*?return Number\.isFinite\(row\.delta\)\s+\? `\$\{valueLabel\}，\$\{deltaAriaLabel\(row\)\}`\s+: valueLabel[\s\S]*?\.join\('，'\),\s+\)/,
+  )
   assert.match(
     source,
     /return `相对\$\{row\.deltaFrom\}新增 \$\{formatSignedPercent\(row\.delta\)\}`/,
