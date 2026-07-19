@@ -123,6 +123,45 @@ test('evaluation cards use restrained perimeters while Bayes paths retain semant
   )
 })
 
+test('model judgement surfaces derive from their parent card surface family', async () => {
+  const evaluationStyle = await read('./styles/features/evaluation.css')
+  const card = bodiesFor(evaluationStyle, '.model-insight-card')
+  const bayes = bodiesFor(evaluationStyle, '.model-insight-card.model-bayes')
+  const markov = bodiesFor(evaluationStyle, '.model-insight-card.model-markov')
+  const cycle = bodiesFor(evaluationStyle, '.model-insight-card.model-cycle')
+  const disabled = bodiesFor(evaluationStyle, '.model-insight-card.disabled')
+  const summary = bodiesFor(evaluationStyle, '.model-judgement-summary')
+  const label = bodiesFor(evaluationStyle, '.model-judgement-label')
+  const darkCard = bodiesFor(evaluationStyle, '.app-shell.theme-dark .model-insight-card')
+  const darkSummary = bodiesFor(evaluationStyle, '.app-shell.theme-dark .model-judgement-summary')
+  const darkLabel = bodiesFor(evaluationStyle, '.app-shell.theme-dark .model-judgement-label')
+
+  assert.match(card, /--model-surface-accent:\s*#1769d2;/)
+  assert.match(card, /--model-card-tint:\s*7%;/)
+  assert.match(card, /color-mix\(in srgb, var\(--model-surface-accent\) var\(--model-card-tint\), transparent\)/)
+  assert.match(bayes, /--model-surface-accent:\s*#7156be;/)
+  assert.match(bayes, /--model-card-tint:\s*9%;/)
+  assert.match(markov, /--model-surface-accent:\s*#ffb020;/)
+  assert.match(markov, /--model-card-tint:\s*11%;/)
+  assert.match(cycle, /--model-surface-accent:\s*#30a46c;/)
+  assert.match(cycle, /--model-card-tint:\s*10%;/)
+  assert.match(disabled, /--model-surface-accent:\s*#677481;/)
+  assert.match(disabled, /--model-card-tint:\s*8%;/)
+
+  assert.match(summary, /var\(--model-surface-accent\) 10%, #d8e2ea/)
+  assert.match(summary, /var\(--model-surface-accent\) 4%, #f7f9fb/)
+  assert.match(label, /var\(--model-surface-accent\) 46%, #1e2b34/)
+  assert.doesNotMatch(summary, /var\(--model-accent\)/)
+  assert.doesNotMatch(label, /var\(--model-accent\)/)
+
+  assert.match(darkCard, /var\(--model-surface-accent\) 13%, transparent/)
+  assert.match(darkSummary, /var\(--model-surface-accent\) 16%, var\(--hairline-soft\)/)
+  assert.match(darkSummary, /var\(--model-surface-accent\) 6%, var\(--surface-soft\)/)
+  assert.match(darkLabel, /var\(--model-surface-accent\) 46%, var\(--ink-deep\)/)
+
+  assert.match(bodiesFor(evaluationStyle, '.model-bars-large b'), /var\(--model-accent\)/)
+})
+
 test('selected Sonata keeps its check while history filters use solid active pills', async () => {
   const [workbench, history, workspaceStyle, historyStyle] = await Promise.all([
     read('./features/workspace/EchoWorkbenchView.vue'),
