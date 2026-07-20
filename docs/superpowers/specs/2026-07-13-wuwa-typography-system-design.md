@@ -90,8 +90,8 @@ IBM 官方 Web 包提供 WOFF2 与字形切片 CSS。实施时自托管资源，
 
 --font-ui: var(--font-cjk);
 --font-title: var(--font-cjk);
---font-latin: "IBM Plex Sans SC", "IBM Plex Sans", system-ui, sans-serif;
---font-data: "IBM Plex Sans SC", "IBM Plex Sans", system-ui, sans-serif;
+--font-latin: "IBM Plex Sans SC", system-ui, sans-serif;
+--font-data: var(--font-latin);
 --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
 ```
 
@@ -272,17 +272,18 @@ letter-spacing: var(--tracking-data);
 
 | 层级 | 颜色令牌 | 适用 |
 |---|---|---|
-| 强标题/关键数字 | `--ink-deep` | 页面标题、核心结果 |
-| 正文/控件 | `--ink` | 正文、按钮、常规标签 |
-| 次级说明 | `--steel` | 描述、单位、表头 |
-| 低优先级 metadata | `--stone` | 时间、补充信息 |
+| 强标题/关键数字 | `--ink-strong` | 页面标题、核心结果 |
+| 正文/控件 | `--ink-main` | 正文、按钮、常规标签 |
+| 次级说明 | `--text-muted` | 描述、单位、表头 |
+| 低优先级 metadata | `--decorative-muted` | 时间、补充信息 |
 
 规则：
 
 - 不得只靠变细字重降低层级。
 - 12px 文字不得同时使用最低对比颜色。
 - 成功、警告、错误文本必须保持可读对比，并配合文字语义。
-- 暗色模式必须单独检查 `--steel` 和 `--stone`，不可直接沿用浅色值。
+- 暗色模式必须单独检查 `--text-muted` 和 `--decorative-muted`，不可直接沿用浅色值。
+- `--ink-deep`、`--ink`、`--steel` 和 `--stone` 仅作为迁移期兼容别名保留；新增或修改样式使用 canonical token。
 
 ## 12. 文本宽度、换行与截断
 
@@ -433,8 +434,8 @@ letter-spacing: var(--tracking-data);
   --font-cjk: "IBM Plex Sans SC", "Noto Sans SC", "Microsoft YaHei UI", system-ui, sans-serif;
   --font-ui: var(--font-cjk);
   --font-title: var(--font-cjk);
-  --font-latin: "IBM Plex Sans SC", "IBM Plex Sans", system-ui, sans-serif;
-  --font-data: "IBM Plex Sans SC", "IBM Plex Sans", system-ui, sans-serif;
+  --font-latin: "IBM Plex Sans SC", system-ui, sans-serif;
+  --font-data: var(--font-latin);
   --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
 
   --text-page-title: 1.75rem;

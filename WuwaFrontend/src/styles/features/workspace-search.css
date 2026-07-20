@@ -8,10 +8,10 @@
 .sonata-search-field input {
   width: 100%;
   min-height: 44px;
-  border: 1px solid var(--hairline);
+  border: 1px solid var(--border-strong);
   border-radius: 12px;
   padding: 10px 40px 10px 38px;
-  color: var(--ink-deep);
+  color: var(--ink-strong);
   background: var(--canvas);
   font-family: var(--font-ui);
   font-size: var(--text-body);
@@ -20,7 +20,7 @@
 }
 
 .sonata-search-field input::placeholder {
-  color: var(--steel);
+  color: var(--text-muted);
   opacity: 1;
 }
 
@@ -34,7 +34,7 @@
   z-index: 1;
   width: 16px;
   height: 16px;
-  color: var(--steel);
+  color: var(--text-muted);
 }
 
 .sonata-search-field:focus-within .sonata-search-icon { color: var(--primary-deep); }
@@ -50,12 +50,12 @@
   border: 0;
   border-radius: 8px;
   padding: 0;
-  color: var(--steel);
+  color: var(--text-muted);
   background: transparent;
   transition: color 100ms ease-out, background-color 100ms ease-out;
 }
 
-.sonata-search-clear:hover { color: var(--ink-deep); background: var(--surface-soft); }
+.sonata-search-clear:hover { color: var(--ink-strong); background: var(--surface-soft); }
 .sonata-search-clear:focus-visible { outline: 2px solid rgba(23, 105, 210, 0.46); outline-offset: 1px; }
 .sonata-search-clear-icon { width: 16px; height: 16px; }
 

@@ -151,7 +151,7 @@ UID 由顶部导航持续展示，摘要区不重复 UID，不展示 API 地址�
 
 - 超大营销标题。
 - 装饰性全屏背景。
-- 大面积渐变。
+- 浅色或营销式大面积装饰渐变；暗色主题的低对比度表面渐变按全局规则允许。
 - 为了视觉留白牺牲数据密度。
 - 没有操作意义的状态条。
 
@@ -218,9 +218,9 @@ UID 由顶部导航持续展示，摘要区不重复 UID，不展示 API 地址�
 
 阴影：
 
-- 默认面板主要依赖边框和背景层级。
-- 阴影只用于浮层、弹层或真正需要脱离背景的控件。
-- 禁止重阴影、发光边缘和多层装饰阴影。
+- 浅色默认面板主要依赖边框和背景层级，阴影只用于浮层、弹层或真正需要脱离背景的控件。
+- 暗色静态表面默认允许低对比度渐变和单层宽柔阴影辅助区分层级，无需逐项登记为例外。
+- 两种主题都禁止重阴影、发光边缘、高对比装饰渐变和多层装饰阴影。
 
 ## 7. 色彩
 
@@ -238,17 +238,21 @@ UID 由顶部导航持续展示，摘要区不重复 UID，不展示 API 地址�
 
 ```css
 --primary: #0064e0;
+--primary-soft: #f4f8ff;
 --surface-root: #f6f8fb;
---surface-panel: #ffffff;
+--canvas: #ffffff;
 --surface-soft: #f1f4f7;
 --border-soft: #dee3e9;
 --border-strong: #ced0d4;
---text-strong: #0a1317;
---text-main: #1c1e21;
+--ink-strong: #0a1317;
+--ink-main: #1c1e21;
 --text-muted: #5d6c7b;
+--decorative-muted: #8595a4;
 ```
 
-现有项目 token 可以继续沿用。只有当现有 token 无法表达稳定语义时，才新增 token。
+活动样式使用上述 canonical token。`--ink-deep`、`--ink`、`--steel`、`--stone`、`--hairline` 和 `--hairline-soft` 只作为等值兼容别名保留；新增或修改样式使用 canonical 名称。`--charcoal` 暂无可证明的单一对应关系，继续保留。只有当现有 token 无法表达稳定语义时，才新增 token。
+
+暗色主题可以默认使用低对比度表面渐变和单层宽柔阴影，以保持当前表面层级；这不放宽对霓虹发光、渐变文字、大面积 AI 配色或多层装饰阴影的禁止。
 
 ## 8. 字体
 
@@ -273,7 +277,7 @@ Web 字体以 `docs/superpowers/specs/2026-07-13-wuwa-typography-system-design.m
 --font-cjk: "IBM Plex Sans SC", "Noto Sans SC", "Microsoft YaHei UI", system-ui, sans-serif;
 --font-ui: var(--font-cjk);
 --font-title: var(--font-cjk);
---font-latin: "IBM Plex Sans SC", "IBM Plex Sans", system-ui, sans-serif;
+--font-latin: "IBM Plex Sans SC", system-ui, sans-serif;
 --font-data: var(--font-latin);
 --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
 ```

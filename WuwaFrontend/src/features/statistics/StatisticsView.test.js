@@ -226,7 +226,7 @@ test('sample stage weight guide uses the approved semantic matrix styling', asyn
   assert.match(popoverRule, /position: fixed/)
   assert.match(popoverRule, /width: 720px/)
   assert.match(popoverRule, /max-height: calc\(100vh - 24px\)/)
-  assert.match(popoverRule, /border: 1px solid var\(--hairline-soft\)/)
+  assert.match(popoverRule, /border: 1px solid var\(--border-soft\)/)
   assert.match(popoverRule, /border-radius: 12px/)
   assert.match(popoverRule, /background: var\(--canvas\)/)
   assert.doesNotMatch(popoverRule, /box-shadow|linear-gradient|radial-gradient/)
@@ -251,7 +251,7 @@ test('sample stage weight guide uses the approved semantic matrix styling', asyn
     /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.sample-stage-guide-enter-active,\s*\.sample-stage-guide-leave-active \{[^}]*transition: none;/,
   )
   assert.doesNotMatch(styles, /sample-reliability-basis-tag/)
-  assert.match(styles, /\.app-shell\.theme-dark \.sample-stage-weight-popover \{[^}]*border-color: var\(--hairline\);[^}]*background: var\(--surface-soft\);/s)
+  assert.match(styles, /\.app-shell\.theme-dark \.sample-stage-weight-popover \{[^}]*border-color: var\(--border-strong\);[^}]*background: var\(--surface-soft\);/s)
   assert.match(styles, /\.app-shell\.theme-dark \.sample-stage-weight-table tbody tr\.current \{[^}]*background: #1b2a35;/s)
   assert.match(styles, /\.app-shell\.theme-dark \.sample-stage-current-rail \{[^}]*background: #38b37f;/s)
   assert.match(styles, /\.app-shell\.theme-dark \.sample-stage-track b \{[^}]*background: #38b37f;/s)

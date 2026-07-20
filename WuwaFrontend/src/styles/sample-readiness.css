@@ -19,14 +19,14 @@
 .sample-activation-copy h3,
 .sample-activation-copy p { margin: 0; }
 .sample-activation-copy h3 {
-  color: var(--ink-deep);
+  color: var(--ink-strong);
   font-size: var(--text-section-title);
   font-weight: var(--weight-title);
   line-height: var(--leading-title);
 }
 .sample-activation-copy p {
   margin-top: 12px;
-  color: var(--steel);
+  color: var(--text-muted);
   font-size: var(--text-body);
   font-weight: var(--weight-body);
   line-height: var(--leading-body);
@@ -48,14 +48,14 @@
 
 .insight-request-state strong,
 .insight-request-state p { margin: 0; }
-.insight-request-state p { color: var(--steel); }
+.insight-request-state p { color: var(--text-muted); }
 .insight-request-state .button-secondary { justify-self: start; }
 .insight-skeleton { display: block; width: min(560px, 100%); height: 14px; border-radius: 8px; background: var(--surface-soft); }
 .insight-skeleton--title { width: min(260px, 70%); height: 21px; }
 .insight-skeleton--short { width: min(360px, 82%); }
 
 .metric-placeholder {
-  color: var(--steel);
+  color: var(--text-muted);
   font-family: var(--font-data);
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";

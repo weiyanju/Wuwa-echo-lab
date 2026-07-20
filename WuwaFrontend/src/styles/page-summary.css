@@ -68,7 +68,7 @@
   background: var(--surface-soft);
 }
 
-.page-summary-chip__value--empty { min-width: 2ch; color: var(--steel); }
+.page-summary-chip__value--empty { min-width: 2ch; color: var(--text-muted); }
 
 @media (max-width: 860px) {
   .page-summary-chips {
@@ -85,7 +85,7 @@
 
 .app-shell.theme-dark .page-summary-chip {
   border-color: rgba(63, 86, 102, 0.72);
-  color: var(--ink-deep);
+  color: var(--ink-strong);
   background:
     linear-gradient(180deg, rgba(30, 45, 57, 0.94), rgba(25, 39, 50, 0.92)),
     #1d2a35;
@@ -96,7 +96,7 @@
 }
 
 .app-shell.theme-dark .page-summary-chip__value {
-  color: var(--ink-deep);
+  color: var(--ink-strong);
 }
 
 .app-shell.theme-dark .page-summary-chip--state {

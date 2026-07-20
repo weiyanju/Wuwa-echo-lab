@@ -52,10 +52,10 @@
 
 .recognition-refresh-button,
 .recognition-review-row button {
-  border: 1px solid var(--hairline);
+  border: 1px solid var(--border-strong);
   border-radius: 999px;
   background: #fff;
-  color: var(--ink);
+  color: var(--ink-main);
   font-weight: var(--weight-control);
   cursor: pointer;
 }
@@ -128,7 +128,7 @@
 
 .recognition-state-copy strong {
   display: block;
-  color: var(--ink);
+  color: var(--ink-main);
   font-size: var(--text-control);
   font-weight: var(--weight-control);
   line-height: var(--leading-control);
@@ -152,7 +152,7 @@
 
 .recognition-metric-grid strong {
   display: block;
-  color: var(--ink);
+  color: var(--ink-main);
   font-family: var(--font-data);
   font-size: var(--text-data-md);
   font-variant-numeric: tabular-nums;
@@ -196,7 +196,7 @@
 
 .recognition-review-row strong {
   display: block;
-  color: var(--ink);
+  color: var(--ink-main);
   font-size: var(--text-control);
   font-weight: var(--weight-control);
   line-height: var(--leading-control);
@@ -255,7 +255,7 @@
 .app-shell.theme-dark .recognition-state-copy strong,
 .app-shell.theme-dark .recognition-metric-grid strong,
 .app-shell.theme-dark .recognition-review-row strong {
-  color: var(--ink-deep);
+  color: var(--ink-strong);
 }
 
 .app-shell.theme-dark .recognition-metric-grid span,
@@ -274,7 +274,7 @@
 .app-shell.theme-dark .recognition-refresh-button:hover,
 .app-shell.theme-dark .recognition-review-row button:hover:not(:disabled) {
   border-color: rgba(93, 168, 255, 0.46);
-  color: var(--ink-deep);
+  color: var(--ink-strong);
   background: rgba(38, 55, 70, 0.96);
 }
 

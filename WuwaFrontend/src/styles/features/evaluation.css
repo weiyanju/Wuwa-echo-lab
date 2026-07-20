@@ -35,7 +35,7 @@
 }
 
 .app-shell.theme-dark .model-bar-summary strong {
-  color: var(--ink-deep);
+  color: var(--ink-strong);
 }
 
 .app-shell.theme-dark .evaluation-panel {
@@ -53,7 +53,7 @@
 .app-shell.theme-dark .evaluation-brief .eyebrow,
 .app-shell.theme-dark .evaluation-brief h2,
 .app-shell.theme-dark .evaluation-brief p {
-  color: var(--ink-deep);
+  color: var(--ink-strong);
 }
 
 .app-shell.theme-dark .evaluation-section-title p,
@@ -126,7 +126,7 @@
 .app-shell.theme-dark .model-bars-large strong,
 .app-shell.theme-dark .model-metric-grid strong,
 .app-shell.theme-dark .evaluation-metrics strong {
-  color: var(--ink-deep);
+  color: var(--ink-strong);
 }
 
 .app-shell.theme-dark .evaluation-coverage-metrics i,
@@ -154,7 +154,7 @@
 }
 
 .app-shell.theme-dark .fusion-shared-legend small {
-  color: var(--steel);
+  color: var(--text-muted);
 }
 
 .app-shell.theme-dark .fusion-weight-grid article,
@@ -195,7 +195,7 @@
 
 .app-shell.theme-dark .summary-model-link-dominant {
   border-color: color-mix(in srgb, var(--summary-accent) 44%, #2c3c48);
-  color: color-mix(in srgb, var(--summary-accent) 42%, var(--ink-deep));
+  color: color-mix(in srgb, var(--summary-accent) 42%, var(--ink-strong));
   background: color-mix(in srgb, var(--summary-accent) 18%, var(--surface-soft));
 }
 
@@ -268,7 +268,7 @@
 }
 
 .app-shell.theme-dark .model-insight-tabs button.active {
-  color: var(--ink-deep);
+  color: var(--ink-strong);
   background: #263746;
 }
 
@@ -309,7 +309,7 @@
 }
 
 .app-shell.theme-dark .summary-model-link-auxiliary {
-  color: var(--steel);
+  color: var(--text-muted);
 }
 
 .app-shell.theme-dark .model-bars-head {
@@ -326,12 +326,12 @@
   border-top-color: color-mix(
     in srgb,
     var(--model-surface-accent, #5da8ff) 24%,
-    var(--hairline-soft)
+    var(--border-soft)
   );
   border-bottom-color: color-mix(
     in srgb,
     var(--model-surface-accent, #5da8ff) 18%,
-    var(--hairline-soft)
+    var(--border-soft)
   );
   background:
     linear-gradient(
@@ -405,7 +405,7 @@
   border-color: color-mix(
     in srgb,
     var(--model-surface-accent, #5da8ff) 16%,
-    var(--hairline-soft)
+    var(--border-soft)
   );
   color: #b9cad6;
   background: color-mix(
@@ -419,7 +419,7 @@
   color: color-mix(
     in srgb,
     var(--model-surface-accent, #5da8ff) 46%,
-    var(--ink-deep)
+    var(--ink-strong)
   );
 }
 
@@ -442,7 +442,7 @@
 .app-shell.theme-dark .model-weight-change,
 .app-shell.theme-dark .model-insight-side footer,
 .app-shell.theme-dark .model-side-status-row small {
-  color: var(--steel);
+  color: var(--text-muted);
 }
 
 .app-shell.theme-dark .model-weight-change {
@@ -536,7 +536,7 @@
 .app-shell.theme-dark .bayes-path-nodes span,
 .app-shell.theme-dark .bayes-path-list article.primary .bayes-path-nodes span:nth-child(3),
 .app-shell.theme-dark .bayes-path-list article.secondary .bayes-path-nodes span:nth-child(3) {
-  color: var(--ink-deep);
+  color: var(--ink-strong);
 }
 
 .app-shell.theme-dark .bayes-path-copy p {
@@ -585,7 +585,7 @@
 .app-shell.theme-dark .model-bars-large label,
 .app-shell.theme-dark .model-bars-large label strong,
 .app-shell.theme-dark .model-group-bars strong {
-  color: var(--ink-deep);
+  color: var(--ink-strong);
 }
 
 .app-shell.theme-dark .cycle-window-card-body span,
@@ -633,7 +633,7 @@
 }
 
 .app-shell.theme-dark .markov-axis-chart strong {
-  color: var(--ink-deep);
+  color: var(--ink-strong);
 }
 
 .app-shell.theme-dark .markov-axis-chart .markov-axis-legend span {
@@ -642,7 +642,7 @@
 
 .app-shell.theme-dark .markov-axis-chart .markov-axis-legend .normal-dot,
 .app-shell.theme-dark .markov-axis-legend .normal-dot {
-  border-color: var(--steel);
+  border-color: var(--text-muted);
   background: var(--surface-soft);
 }
 
@@ -682,7 +682,7 @@
 }
 
 .app-shell.theme-dark .context-check-name {
-  color: var(--ink-deep);
+  color: var(--ink-strong);
 }
 
 .app-shell.theme-dark .context-check-head {
@@ -714,7 +714,7 @@
 }
 
 .app-shell.theme-dark .model-evidence-panel li strong {
-  color: var(--ink-deep);
+  color: var(--ink-strong);
 }
 
 .app-shell.theme-dark .model-evidence-panel li span {
@@ -920,7 +920,7 @@
 }
 
 .fusion-weight-card.disabled b {
-  background: var(--stone);
+  background: var(--decorative-muted);
 }
 
 .fusion-weight-track::before {
@@ -935,11 +935,11 @@
   width: 2px;
   height: 24px;
   border-radius: 999px;
-  background: var(--steel);
+  background: var(--text-muted);
 }
 
 .fusion-weight-card.disabled .base-marker {
-  background: var(--stone);
+  background: var(--decorative-muted);
 }
 
 .fusion-weight-grid article small,
@@ -3976,7 +3976,7 @@
 }
 
 .calibration-metrics dt {
-  color: var(--steel);
+  color: var(--text-muted);
   font-size: var(--text-caption);
   font-weight: var(--weight-supporting);
   line-height: var(--leading-caption);
@@ -3984,7 +3984,7 @@
 
 .calibration-metrics dd {
   margin: 0;
-  color: var(--ink-deep);
+  color: var(--ink-strong);
   font-family: var(--font-data);
   font-size: var(--text-data-sm);
   font-variant-numeric: tabular-nums;
@@ -4011,7 +4011,7 @@
 
 .coverage-axis {
   min-height: 18px;
-  color: var(--stone);
+  color: var(--decorative-muted);
   font-family: var(--font-data);
   font-size: var(--text-micro);
   font-variant-numeric: tabular-nums;
@@ -4036,14 +4036,14 @@
 }
 
 .coverage-name strong {
-  color: var(--ink-deep);
+  color: var(--ink-strong);
   font-size: var(--text-body);
   font-weight: var(--weight-control);
   line-height: var(--leading-control);
 }
 
 .coverage-name span {
-  color: var(--steel);
+  color: var(--text-muted);
   font-size: var(--text-caption);
   font-weight: var(--weight-supporting);
   line-height: var(--leading-caption);
@@ -4052,8 +4052,8 @@
 .coverage-bar {
   position: relative;
   height: 12px;
-  border-right: 1px solid var(--hairline-soft);
-  border-left: 1px solid var(--hairline-soft);
+  border-right: 1px solid var(--border-soft);
+  border-left: 1px solid var(--border-soft);
   background: transparent;
 }
 
@@ -4061,7 +4061,7 @@
   position: absolute;
   inset: -9px 50% -9px auto;
   width: 1px;
-  background: var(--hairline-soft);
+  background: var(--border-soft);
   content: '';
 }
 
@@ -4069,7 +4069,7 @@
   position: absolute;
   inset: 50% 0 auto;
   height: 1px;
-  background: var(--hairline-soft);
+  background: var(--border-soft);
   content: '';
   transform: translateY(-50%);
 }
@@ -4092,7 +4092,7 @@
 }
 
 .coverage-value > strong {
-  color: var(--ink-deep);
+  color: var(--ink-strong);
   font-family: var(--font-data);
   font-size: var(--text-data-md);
   font-variant-numeric: tabular-nums;
@@ -4105,7 +4105,7 @@
   position: absolute;
   top: -8px;
   left: 98px;
-  color: var(--steel);
+  color: var(--text-muted);
   font-family: var(--font-data);
   font-size: var(--text-caption);
   font-variant-numeric: tabular-nums;
@@ -4464,7 +4464,7 @@
 }
 
 .app-shell.theme-dark .context-overall-progress strong {
-  color: var(--ink-deep);
+  color: var(--ink-strong);
 }
 
 .app-shell.theme-dark .context-overall-progress span {
@@ -4490,7 +4490,7 @@
   width: 2px;
   height: 12px;
   border-radius: 999px;
-  background: var(--steel);
+  background: var(--text-muted);
 }
 
 @keyframes summary-copy-refresh {

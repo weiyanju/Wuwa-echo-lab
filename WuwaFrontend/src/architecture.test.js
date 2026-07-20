@@ -98,11 +98,13 @@ test('global styles import shared tokens and base rules', async () => {
   assert.match(tokens, /--font-cjk: "IBM Plex Sans SC", "Noto Sans SC", "Microsoft YaHei UI", system-ui, sans-serif;/)
   assert.match(tokens, /--font-ui: var\(--font-cjk\);/)
   assert.match(tokens, /--font-title: var\(--font-cjk\);/)
-  assert.match(tokens, /--font-latin: "IBM Plex Sans SC", "IBM Plex Sans", system-ui, sans-serif;/)
+  assert.match(tokens, /--font-latin: "IBM Plex Sans SC", system-ui, sans-serif;/)
   assert.match(tokens, /--font-data: var\(--font-latin\);/)
   assert.match(tokens, /--font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;/)
+  assert.doesNotMatch(tokens, /"IBM Plex Sans"/)
   assert.doesNotMatch(tokens, /@fontsource\/noto-sans-sc/)
   assert.match(typographySpec, /IBM Plex Sans SC/)
+  assert.doesNotMatch(typographySpec, /"IBM Plex Sans"/)
   assert.doesNotMatch(typographySpec, /@fontsource\/noto-sans-sc/)
   assert.match(tokens, /--text-data-xl: 1\.875rem;/)
   assert.match(tokens, /--weight-emphasis: 700;/)
@@ -110,6 +112,64 @@ test('global styles import shared tokens and base rules', async () => {
   assert.match(base, /\.data-number,/)
   assert.match(base, /\.percent-value \{[\s\S]+font-family: var\(--font-data\);[\s\S]+font-variant-numeric: tabular-nums;[\s\S]+font-feature-settings: "tnum";/)
   assert.doesNotMatch(entry, /^:root \{/m)
+})
+
+test('global color tokens expose canonical names while legacy names remain aliases only', async () => {
+  const tokens = await readFile(new URL('./styles/tokens.css', import.meta.url), 'utf8')
+  const activeStylePaths = [
+    './styles/base.css',
+    './styles/controls.css',
+    './styles/page-summary.css',
+    './styles/sample-readiness.css',
+    './styles/shell-metrics.css',
+    './styles/shell.css',
+    './styles/features/auth.css',
+    './styles/features/evaluation-layout.css',
+    './styles/features/evaluation.css',
+    './styles/features/history.css',
+    './styles/features/recognition.css',
+    './styles/features/statistics.css',
+    './styles/features/workspace-active.css',
+    './styles/features/workspace-search.css',
+    './styles/features/workspace.css',
+  ]
+  const activeStyles = (await Promise.all(
+    activeStylePaths.map((relativePath) => readFile(new URL(relativePath, import.meta.url), 'utf8')),
+  )).join('\n')
+
+  for (const declaration of [
+    '--primary-soft: #f4f8ff;',
+    '--prediction: #2c9f70;',
+    '--prediction-ink: #166b4a;',
+    '--ink-strong: #0a1317;',
+    '--ink-main: #1c1e21;',
+    '--text-muted: #5d6c7b;',
+    '--decorative-muted: #8595a4;',
+    '--surface-root: #f6f8fb;',
+    '--surface-prediction: #f7f9fb;',
+    '--border-soft: #dee3e9;',
+    '--border-strong: #ced0d4;',
+    '--success-ink: #18723a;',
+    '--warning-ink: #6b4f00;',
+    '--critical-soft: #fff3f5;',
+  ]) {
+    assert.match(tokens, new RegExp(`^\\s*${escapeRegExp(declaration)}\\s*$`, 'm'))
+  }
+
+  for (const [legacy, canonical] of Object.entries({
+    '--ink-deep': '--ink-strong',
+    '--ink': '--ink-main',
+    '--steel': '--text-muted',
+    '--stone': '--decorative-muted',
+    '--hairline': '--border-strong',
+    '--hairline-soft': '--border-soft',
+  })) {
+    assert.match(
+      tokens,
+      new RegExp(`^\\s*${escapeRegExp(legacy)}:\\s*var\\(${escapeRegExp(canonical)}\\);\\s*$`, 'm'),
+    )
+    assert.doesNotMatch(activeStyles, new RegExp(`var\\(${escapeRegExp(legacy)}\\)`))
+  }
 })
 
 test('recognition feature owns its styles', async () => {

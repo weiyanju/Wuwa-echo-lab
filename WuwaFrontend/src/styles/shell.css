@@ -38,11 +38,11 @@
 }
 
 .app-shell.theme-dark .uid-chip-label {
-  color: var(--steel);
+  color: var(--text-muted);
 }
 
 .app-shell.theme-dark .uid-chip-value {
-  color: var(--ink-deep);
+  color: var(--ink-strong);
 }
 
 .app-shell.theme-dark .uid-chip-chevron {
@@ -60,7 +60,7 @@
   color: var(--primary-deep);
 }
 
-.app-shell.theme-dark .uid-switcher-menu { border-color: rgba(83, 107, 124, 0.72); color: var(--ink-deep); background: var(--surface-soft); box-shadow: 0 8px 12px rgba(0, 0, 0, 0.24); }
+.app-shell.theme-dark .uid-switcher-menu { border-color: rgba(83, 107, 124, 0.72); color: var(--ink-strong); background: var(--surface-soft); box-shadow: 0 8px 12px rgba(0, 0, 0, 0.24); }
 .app-shell.theme-dark .uid-switcher-submit { border-color: var(--primary); color: #07131d; background: var(--primary); }
 .app-shell.theme-dark .uid-switcher-submit:hover:not(:disabled) { border-color: #7cbcff; background: #7cbcff; }
 .app-shell.theme-dark .uid-switcher-add { border-color: rgba(93, 168, 255, 0.32); color: #9acbff; background: rgba(93, 168, 255, 0.08); }
@@ -71,7 +71,7 @@
 
 .app-shell.theme-dark .uid-switcher-field,
 .app-shell.theme-dark .uid-recent-list > span {
-  color: var(--steel);
+  color: var(--text-muted);
 }
 
 .app-shell.theme-dark .uid-recent-list button {
@@ -86,10 +86,10 @@
   background: rgba(32, 64, 55, 0.72);
 }
 
-.app-shell.theme-dark .uid-recent-list button.current { border-color: rgba(93, 168, 255, 0.36); color: var(--ink-deep); background: rgba(93, 168, 255, 0.13); }
+.app-shell.theme-dark .uid-recent-list button.current { border-color: rgba(93, 168, 255, 0.36); color: var(--ink-strong); background: rgba(93, 168, 255, 0.13); }
 
 .app-shell.theme-dark .uid-recent-list button.current:hover {
-  color: var(--ink-deep);
+  color: var(--ink-strong);
 }
 
 .app-shell.theme-dark .uid-recent-list button em {
@@ -106,7 +106,7 @@
 
 .app-shell.theme-dark .pill-tabs .active {
   border-color: rgba(93, 168, 255, 0.5);
-  color: var(--ink-deep);
+  color: var(--ink-strong);
   background: #263746;
   box-shadow: inset 0 0 0 1px rgba(93, 168, 255, 0.18);
 }
@@ -117,7 +117,7 @@
 
 .app-shell.theme-dark .wordmark,
 .app-shell.theme-dark .hero-stats strong {
-  color: var(--ink-deep);
+  color: var(--ink-strong);
 }
 
 .app-shell.theme-dark .hero-band p {
@@ -154,13 +154,13 @@
 }
 
 .app-shell.theme-dark .topbar .pill-tabs button:hover {
-  color: var(--ink-deep);
+  color: var(--ink-strong);
   background: rgba(93, 168, 255, 0.12);
 }
 
 .app-shell.theme-dark .topbar .pill-tabs .active {
   border-color: rgba(93, 168, 255, 0.56);
-  color: var(--ink-deep);
+  color: var(--ink-strong);
   background:
     linear-gradient(180deg, rgba(50, 73, 91, 0.94), rgba(38, 55, 70, 0.96)),
     #263746;
@@ -192,24 +192,24 @@
 }
 
 .pill-tabs button:hover {
-  border-color: var(--ink-deep);
+  border-color: var(--ink-strong);
 }
 
 .pill-tabs button {
-  border: 1px solid var(--hairline);
+  border: 1px solid var(--border-strong);
   padding: 8px 16px;
-  color: var(--ink);
+  color: var(--ink-main);
   background: var(--canvas);
 }
 
 .pill-tabs .active {
-  border-color: var(--ink-deep);
+  border-color: var(--ink-strong);
   color: var(--canvas);
-  background: var(--ink-deep);
+  background: var(--ink-strong);
 }
 
 .hero-band {
-  border: 1px solid var(--hairline-soft);
+  border: 1px solid var(--border-soft);
   border-radius: 24px;
   background: var(--canvas);
 }
@@ -244,7 +244,7 @@
 }
 
 .hero-stats span {
-  color: var(--steel);
+  color: var(--text-muted);
   font-size: var(--text-label);
   font-weight: var(--weight-label);
   line-height: var(--leading-label);
@@ -277,7 +277,7 @@
   align-items: center;
   justify-self: start;
   gap: 10px;
-  color: var(--ink-deep);
+  color: var(--ink-strong);
   font-family: var(--font-latin);
   font-size: 16px;
   font-weight: var(--weight-control);
@@ -405,7 +405,7 @@
   border: 1px solid rgba(206, 219, 231, 0.92);
   border-radius: 16px;
   padding: 16px;
-  color: var(--ink-deep);
+  color: var(--ink-strong);
   background: #ffffff;
   box-shadow: 0 8px 12px rgba(39, 55, 71, 0.1);
 }
@@ -659,7 +659,7 @@
   gap: 28px;
   overflow: hidden;
   padding: 28px 34px;
-  color: var(--ink-deep);
+  color: var(--ink-strong);
   background:
     radial-gradient(circle at 8% 18%, rgba(0, 100, 224, 0.1), transparent 34%),
     linear-gradient(135deg, #f8fbff 0%, #eef4f9 58%, #f8fafc 100%);

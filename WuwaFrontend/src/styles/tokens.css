@@ -8,25 +8,33 @@
 :root {
   --primary: #0064e0;
   --primary-deep: #0457cb;
+  --primary-soft: #f4f8ff;
+  --prediction: #2c9f70;
+  --prediction-ink: #166b4a;
   --ink-button: #000000;
-  --ink-deep: #0a1317;
-  --ink: #1c1e21;
+  --ink-strong: #0a1317;
+  --ink-main: #1c1e21;
   --charcoal: #444950;
-  --steel: #5d6c7b;
-  --stone: #8595a4;
+  --text-muted: #5d6c7b;
+  --decorative-muted: #8595a4;
   --canvas: #ffffff;
+  --surface-root: #f6f8fb;
   --surface-soft: #f1f4f7;
-  --hairline: #ced0d4;
-  --hairline-soft: #dee3e9;
+  --surface-prediction: #f7f9fb;
+  --border-soft: #dee3e9;
+  --border-strong: #ced0d4;
   --critical: #e41e3f;
   --critical-deep: #bd1730;
+  --critical-soft: #fff3f5;
   --warning: #f7b928;
+  --warning-ink: #6b4f00;
   --success: #31a24c;
+  --success-ink: #18723a;
   --shadow-rail: rgba(20, 22, 26, 0.22) 0 1px 4px 0;
   --font-cjk: "IBM Plex Sans SC", "Noto Sans SC", "Microsoft YaHei UI", system-ui, sans-serif;
   --font-ui: var(--font-cjk);
   --font-title: var(--font-cjk);
-  --font-latin: "IBM Plex Sans SC", "IBM Plex Sans", system-ui, sans-serif;
+  --font-latin: "IBM Plex Sans SC", system-ui, sans-serif;
   --font-data: var(--font-latin);
   --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
   --text-page-title: 1.75rem;
@@ -61,6 +69,14 @@
   --tracking-brand: 0.08em;
   --tracking-data: 0;
 
+  /* Legacy color aliases stay available during the compatibility window. */
+  --ink-deep: var(--ink-strong);
+  --ink: var(--ink-main);
+  --steel: var(--text-muted);
+  --stone: var(--decorative-muted);
+  --hairline: var(--border-strong);
+  --hairline-soft: var(--border-soft);
+
   /* Compatibility aliases for components migrated in later phases. */
   --text-metric-xl: var(--text-data-xl);
   --text-metric-lg: var(--text-data-lg);
@@ -73,7 +89,7 @@
   --leading-metric: var(--leading-data);
   --leading-ui: var(--leading-control);
   font-family: var(--font-ui);
-  color: var(--ink-deep);
+  color: var(--ink-strong);
   background: var(--canvas);
   font-synthesis: none;
   text-rendering: optimizeLegibility;

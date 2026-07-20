@@ -26,7 +26,6 @@
 - `docs/api-and-data-contracts.md`
 - `docs/security-privacy-and-data-boundaries.md`
 - `docs/performance-and-background-runtime.md`
-- `docs/performance-and-background-runtime.md`
 
 ## 文档优先级
 

@@ -6,6 +6,29 @@
 
 本文只是本次审计与实施证据，不是新的长期规范入口。
 
+## 后续裁决与实施状态
+
+以下裁决形成于初次审计之后，替代本文后续“待确认冲突”中的建议状态；原始冲突记录继续保留，用于说明当时证据和为什么需要裁决。
+
+| 冲突 | 最终裁决 | 当前状态 |
+| --- | --- | --- |
+| WPF 默认后端端口 | 独立 WPF 客户端统一使用 `127.0.0.1:8001`。 | 已在独立 `Wuwa-Assistant` 仓库完成并通过构建、测试和启动探针；WPF 已从本仓库拆出。 |
+| `GameAccount.server` / `nickname` | 两字段保留，不标记废弃；当前作为可选保留字段维持数据库与响应形状，现有写入行为不扩展。 | 长期 API 文档已明确该兼容语义，本次不修改 API、model、serializer 或 service。 |
+| 暗色静态表面的渐变与宽阴影 | 暗色主题默认允许低对比度表面渐变和单层宽柔阴影，无需逐项登记为项目例外。 | `DESIGN.md` 与 Web 长期/页面规范已同步；现有暗色 CSS 视觉值不变，仍禁止霓虹发光、高对比装饰渐变和多层阴影。 |
+| 结构化与活动 CSS token 命名 | 活动 CSS 迁移到 canonical token；可以证明等值的旧名称只作为兼容别名保留。 | `ink-deep`、`ink`、`steel`、`stone`、`hairline`、`hairline-soft` 的活动引用已分别迁移到 `ink-strong`、`ink-main`、`text-muted`、`decorative-muted`、`border-strong`、`border-soft`；`charcoal` 保留。 |
+| `--font-latin` 中的 IBM Plex Sans | 不新增独立字体包；拉丁与数据入口继续由 IBM Plex Sans SC 的配套字形承担。 | 未安装的 `"IBM Plex Sans"` 已从活动 token、有效规范示例和锁定测试移除。 |
+| WPF Core 文件落点 | WPF 结构由独立 `Wuwa-Assistant` 仓库继续管理。 | 本次不执行 Core 目录重构，也不修改独立仓库；该项不再属于 Wuwa 仓库的代码 owner。 |
+
+本轮只处理 Web token 等值命名迁移及相关设计文档，不改变最终色值、暗色视觉、字体资源、业务行为、API、数据库或 WPF 代码。
+
+后续实施验证：
+
+- `WuwaFrontend`: `npm test`，退出码 0，346 项通过。
+- `WuwaFrontend`: `npm run build`，退出码 0，Vite production build 成功。
+- 活动 CSS 扫描未发现六个旧颜色 token 的引用；旧名称只保留在 `tokens.css` 兼容别名和解释性文档中。
+- 未安装的 `"IBM Plex Sans"` 候选未出现在活动 token 或有效规范示例中。
+- 7 个修改后的 Markdown 文件相对链接均可解析。
+
 ## 审计范围与证据
 
 完整核对了仓库入口、产品与架构长期规范、工程与发布规则、API 和数据契约、安全隐私、后台性能、Web/WPF 职责、Web/WPF 设计规范、结构化设计配置、字体专项规格，以及相关的历史实施记录。

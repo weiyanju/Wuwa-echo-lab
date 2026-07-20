@@ -13,5 +13,5 @@
   font-weight: var(--weight-label);
 }
 
-.hero-confidence-value.metric-placeholder { min-width: 2ch; color: var(--steel); }
+.hero-confidence-value.metric-placeholder { min-width: 2ch; color: var(--text-muted); }
 .app-shell.theme-dark .hero-metric-skeleton { background: rgba(92, 113, 128, 0.24); }

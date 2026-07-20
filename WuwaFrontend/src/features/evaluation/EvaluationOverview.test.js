@@ -59,11 +59,11 @@ test('fusion weights use semantic blue with a neutral baseline and no 3 plus 2 l
     styles,
     /\.fusion-weight-grid article b \{[^}]*background: var\(--primary\);/s,
   )
-  assert.match(styles, /\.base-marker \{[^}]*background: var\(--steel\);/s)
+  assert.match(styles, /\.base-marker \{[^}]*background: var\(--text-muted\);/s)
   assert.doesNotMatch(styles, /\.base-marker \{[^}]*box-shadow:/s)
   assert.match(
     styles,
-    /\.fusion-weight-card\.disabled b \{[^}]*background: var\(--stone\);/s,
+    /\.fusion-weight-card\.disabled b \{[^}]*background: var\(--decorative-muted\);/s,
   )
   assert.match(
     layout,

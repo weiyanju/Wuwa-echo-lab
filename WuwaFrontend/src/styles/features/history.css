@@ -65,7 +65,7 @@
 .app-shell.theme-dark .echo-item-head > span,
 .app-shell.theme-dark .echo-roll-list small,
 .app-shell.theme-dark .echo-roll-empty {
-  color: var(--steel);
+  color: var(--text-muted);
 }
 
 .app-shell.theme-dark .history-filter-chip {
@@ -153,7 +153,7 @@
 
 .app-shell.theme-dark .floating-history-actions button.active {
   border-color: rgba(93, 168, 255, 0.58);
-  color: var(--ink-deep);
+  color: var(--ink-strong);
   background: #2b5f8d;
 }
 
@@ -171,7 +171,7 @@
 }
 
 .app-shell.theme-dark .echo-item strong {
-  color: var(--ink-deep);
+  color: var(--ink-strong);
 }
 
 .app-shell.theme-dark .echo-item em {
@@ -212,7 +212,7 @@
 }
 
 .echo-item:hover {
-  border-color: var(--ink-deep);
+  border-color: var(--ink-strong);
 }
 
 .echo-list::-webkit-scrollbar {
@@ -247,7 +247,7 @@
 
 .echo-item span,
 .echo-item small {
-  color: var(--steel);
+  color: var(--text-muted);
   font-size: var(--text-caption);
   font-weight: var(--weight-supporting);
   line-height: var(--leading-caption);
@@ -370,7 +370,7 @@
 .floating-history-count {
   grid-column: 1 / -1;
   margin: 2px 0 0;
-  color: var(--steel);
+  color: var(--text-muted);
   font-family: var(--font-data);
   font-size: var(--text-label);
   font-weight: var(--weight-data);
@@ -408,7 +408,7 @@
   border: 1px solid rgba(206, 219, 231, 0.9);
   border-radius: 999px;
   padding: 5px 9px 5px 12px;
-  color: var(--steel);
+  color: var(--text-muted);
   background: rgba(248, 250, 252, 0.86);
   font-size: var(--text-caption);
   font-weight: var(--weight-control);
@@ -684,7 +684,7 @@
   height: auto;
   width: 100%;
   overflow: hidden;
-  border: 1px solid var(--hairline-soft);
+  border: 1px solid var(--border-soft);
   border-radius: 16px;
   padding: 14px;
   text-align: left;
@@ -703,7 +703,7 @@
 }
 
 .echo-item small {
-  color: var(--steel);
+  color: var(--text-muted);
   font-size: var(--text-caption);
   font-weight: var(--weight-supporting);
 }
@@ -764,7 +764,7 @@
 }
 
 .echo-item-head > span {
-  color: var(--steel);
+  color: var(--text-muted);
   font-size: var(--text-caption);
   font-weight: var(--weight-supporting);
   line-height: var(--leading-caption);
@@ -791,7 +791,7 @@
 
 .echo-roll-list strong {
   display: block;
-  color: var(--ink-deep);
+  color: var(--ink-strong);
   font-size: var(--text-caption);
   font-weight: var(--weight-label);
   line-height: var(--leading-label);
@@ -802,7 +802,7 @@
 
 .echo-roll-list small,
 .echo-roll-empty {
-  color: var(--steel);
+  color: var(--text-muted);
   font-size: var(--text-caption);
   font-weight: var(--weight-supporting);
   line-height: var(--leading-caption);

@@ -15,20 +15,20 @@
   --primary: #5da8ff;
   --primary-deep: #8dc3ff;
   --ink-button: #e9f0f5;
-  --ink-deep: #e7eef4;
-  --ink: #cbd8e2;
+  --ink-strong: #e7eef4;
+  --ink-main: #cbd8e2;
   --charcoal: #a9bac7;
-  --steel: #98aab7;
-  --stone: #788998;
+  --text-muted: #98aab7;
+  --decorative-muted: #788998;
   --canvas: #0f1720;
   --surface-soft: #17232d;
-  --hairline: #2c3c48;
-  --hairline-soft: #243542;
+  --border-strong: #2c3c48;
+  --border-soft: #243542;
   --warning: #d9a33a;
   --success: #37b37f;
   --critical: #ef6b7a;
   --shadow-rail: rgba(0, 0, 0, 0.46) 0 1px 4px 0;
-  color: var(--ink-deep);
+  color: var(--ink-strong);
   background:
     linear-gradient(180deg, rgba(22, 34, 45, 0.98), rgba(15, 23, 32, 0.98)),
     var(--canvas);
@@ -57,7 +57,7 @@
 .app-shell.theme-dark h1,
 .app-shell.theme-dark h2,
 .app-shell.theme-dark h3 {
-  color: var(--ink-deep);
+  color: var(--ink-strong);
 }
 
 .app-shell.theme-dark .empty-text,
@@ -111,7 +111,7 @@
 }
 
 .brand-mark {
-  color: var(--steel);
+  color: var(--text-muted);
   font-family: var(--font-latin);
   font-size: var(--text-caption);
   font-weight: var(--weight-label);
@@ -121,7 +121,7 @@
 }
 
 .eyebrow {
-  color: var(--steel);
+  color: var(--text-muted);
   font-size: var(--text-caption);
   font-weight: var(--weight-label);
   line-height: var(--leading-label);
@@ -219,21 +219,21 @@ input:focus-visible {
 }
 
 .button-secondary {
-  border: 2px solid var(--ink-deep);
+  border: 2px solid var(--ink-strong);
   padding: 10px 18px;
-  color: var(--ink-deep);
+  color: var(--ink-strong);
   background: transparent;
 }
 
 .button-secondary:hover,
 .button-ghost:hover {
-  border-color: var(--ink-deep);
+  border-color: var(--ink-strong);
 }
 
 .button-ghost {
   border: 2px solid rgba(10, 19, 23, 0.12);
   padding: 10px 18px;
-  color: var(--ink-deep);
+  color: var(--ink-strong);
   background: transparent;
 }
 
@@ -244,7 +244,7 @@ input:focus-visible {
   justify-content: center;
   gap: 6px;
   min-height: 44px;
-  border: 1px solid var(--hairline-soft);
+  border: 1px solid var(--border-soft);
   padding: 10px 16px;
   background: var(--canvas);
 }
@@ -278,7 +278,7 @@ input:focus-visible {
 }
 
 .product-panel {
-  border: 1px solid var(--hairline-soft);
+  border: 1px solid var(--border-soft);
   border-radius: 24px;
   background: var(--canvas);
 }
@@ -290,7 +290,7 @@ input:focus-visible {
 label {
   display: grid;
   gap: 8px;
-  color: var(--ink);
+  color: var(--ink-main);
   font-size: var(--text-label);
   font-weight: var(--weight-label);
   line-height: var(--leading-label);
@@ -300,10 +300,10 @@ label {
 input {
   width: 100%;
   height: 44px;
-  border: 1px solid var(--hairline);
+  border: 1px solid var(--border-strong);
   border-radius: 8px;
   padding: 12px;
-  color: var(--ink);
+  color: var(--ink-main);
   background: var(--canvas);
   font-family: var(--font-ui);
   font-size: var(--text-body);
@@ -327,7 +327,7 @@ fieldset {
 
 legend {
   margin-bottom: 8px;
-  color: var(--ink);
+  color: var(--ink-main);
   font-size: var(--text-label);
   font-weight: var(--weight-label);
   line-height: var(--leading-label);
@@ -346,14 +346,14 @@ legend {
 }
 
 .section-heading p {
-  color: var(--steel);
+  color: var(--text-muted);
   font-size: var(--text-body);
   font-weight: var(--weight-body);
   line-height: var(--leading-body);
 }
 
 .empty-text {
-  color: var(--steel);
+  color: var(--text-muted);
   font-size: var(--text-caption);
   font-weight: var(--weight-body);
   line-height: var(--leading-caption);
