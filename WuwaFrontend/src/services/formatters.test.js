@@ -123,10 +123,12 @@ test('preserves manual rounded probability sums instead of forcing one', () => {
 
 test('stores current visible sonata effects with local icons', () => {
   assert.equal(sonataEffectsSource.url, 'https://wuwa.wiki/zh-hans/codex/sonataeffects')
-  assert.equal(sonataEffects.length, 31)
-  assert.equal(sonataEffects[0].id, 32)
-  assert.equal(sonataEffects[0].name, '碎梦亡鬼之魇')
-  assert.equal(sonataEffects[0].sourceIcon, 'Common/Image/IconElementAttri/T_IconElementAttriAdam')
+  assert.equal(sonataEffects.length, 34)
+  assert.equal(sonataEffects[0].id, 35)
+  assert.equal(sonataEffects[0].name, '冥途夜行之灯')
+  assert.equal(sonataEffects[0].sourceIcon, 'Common/Image/IconElementAttri/T_IconElementAttriJingran')
+  assert.ok(sonataEffects.some((effect) => effect.name === '羽落空尘之歌'))
+  assert.ok(sonataEffects.some((effect) => effect.name === '清邪荡煞之心'))
   assert.equal(sonataEffects.at(-1).name, '凝夜白霜')
   assert.ok(sonataEffects.some((effect) => effect.name === '啸谷长风'))
   assert.ok(sonataEffects.every((effect) => existsSync(`public${effect.icon}`)))

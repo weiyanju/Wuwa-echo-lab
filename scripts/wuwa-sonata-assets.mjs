@@ -2,7 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const DATA_REPO_RAW = "https://raw.githubusercontent.com/Arikatsu/WutheringWaves_Data/3.4";
+const DATA_REPO_RAW = "https://raw.githubusercontent.com/Arikatsu/WutheringWaves_Data/3.5";
 const ASSET_REPO_RAW = "https://raw.githubusercontent.com/alt3ri/WW_Asset/Global";
 const WUWA_CDN_BASE = "https://static-cloudflare-f8p1t7z8.wutheringwaves.wiki/transform/kuro/gameclient/Content/Aki/UI";
 const DEFAULT_OUT_DIR = path.resolve("tmp/wuwa-sonata-assets-github");
@@ -255,7 +255,7 @@ async function writeOutputs(summary, outDir) {
   const markdown = [
     "# Wuwa Sonata Effects Echoes",
     "",
-    `Data source: Arikatsu/WutheringWaves_Data 3.4`,
+    `Data source: Arikatsu/WutheringWaves_Data 3.5`,
     `Asset source: alt3ri/WW_Asset Global`,
     `Generated at: ${summary.generatedAt}`,
     `Sets: ${summary.setCount}`,

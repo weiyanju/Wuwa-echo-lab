@@ -1,6 +1,174 @@
-﻿{
-    "generatedAt":  "2026-07-04T18:33:04.812Z",
+{
+    "generatedAt":  "2026-07-20T14:12:24.103Z",
     "sets":  [
+                 {
+                     "id":  35,
+                     "name":  "冥途夜行之灯",
+                     "echoesByCost":  {
+                                          "cost4":  [
+                                                        {
+                                                            "id":  60002175,
+                                                            "name":  "万囮牢·朽躯",
+                                                            "cost":  4,
+                                                            "image":  "images/35_冥途夜行之灯/cost4_60002175_万囮牢·朽躯.avif"
+                                                        }
+                                                    ],
+                                          "cost3":  [
+                                                        {
+                                                            "id":  60002155,
+                                                            "name":  "霁息兽尊",
+                                                            "cost":  3,
+                                                            "image":  "images/35_冥途夜行之灯/cost3_60002155_霁息兽尊.avif"
+                                                        },
+                                                        {
+                                                            "id":  60002165,
+                                                            "name":  "封庭械囿",
+                                                            "cost":  3,
+                                                            "image":  "images/35_冥途夜行之灯/cost3_60002165_封庭械囿.avif"
+                                                        }
+                                                    ],
+                                          "cost1":  [
+                                                        {
+                                                            "id":  60002035,
+                                                            "name":  "瓷庭候",
+                                                            "cost":  1,
+                                                            "image":  "images/35_冥途夜行之灯/cost1_60002035_瓷庭候.avif"
+                                                        },
+                                                        {
+                                                            "id":  60002045,
+                                                            "name":  "石庭候",
+                                                            "cost":  1,
+                                                            "image":  "images/35_冥途夜行之灯/cost1_60002045_石庭候.avif"
+                                                        },
+                                                        {
+                                                            "id":  60002105,
+                                                            "name":  "心傀·悲",
+                                                            "cost":  1,
+                                                            "image":  "images/35_冥途夜行之灯/cost1_60002105_心傀·悲.avif"
+                                                        },
+                                                        {
+                                                            "id":  60002115,
+                                                            "name":  "心傀·恐",
+                                                            "cost":  1,
+                                                            "image":  "images/35_冥途夜行之灯/cost1_60002115_心傀·恐.avif"
+                                                        }
+                                                    ]
+                                      }
+                 },
+                 {
+                     "id":  34,
+                     "name":  "清邪荡煞之心",
+                     "echoesByCost":  {
+                                          "cost4":  [
+                                                        {
+                                                            "id":  60002175,
+                                                            "name":  "万囮牢·朽躯",
+                                                            "cost":  4,
+                                                            "image":  "images/34_清邪荡煞之心/cost4_60002175_万囮牢·朽躯.avif"
+                                                        }
+                                                    ],
+                                          "cost3":  [
+                                                        {
+                                                            "id":  60002155,
+                                                            "name":  "霁息兽尊",
+                                                            "cost":  3,
+                                                            "image":  "images/34_清邪荡煞之心/cost3_60002155_霁息兽尊.avif"
+                                                        },
+                                                        {
+                                                            "id":  60002165,
+                                                            "name":  "封庭械囿",
+                                                            "cost":  3,
+                                                            "image":  "images/34_清邪荡煞之心/cost3_60002165_封庭械囿.avif"
+                                                        }
+                                                    ],
+                                          "cost1":  [
+                                                        {
+                                                            "id":  60002055,
+                                                            "name":  "金庭候",
+                                                            "cost":  1,
+                                                            "image":  "images/34_清邪荡煞之心/cost1_60002055_金庭候.avif"
+                                                        },
+                                                        {
+                                                            "id":  60002075,
+                                                            "name":  "心傀·怒",
+                                                            "cost":  1,
+                                                            "image":  "images/34_清邪荡煞之心/cost1_60002075_心傀·怒.avif"
+                                                        },
+                                                        {
+                                                            "id":  60002085,
+                                                            "name":  "心傀·忧",
+                                                            "cost":  1,
+                                                            "image":  "images/34_清邪荡煞之心/cost1_60002085_心傀·忧.avif"
+                                                        },
+                                                        {
+                                                            "id":  60002095,
+                                                            "name":  "心傀·思",
+                                                            "cost":  1,
+                                                            "image":  "images/34_清邪荡煞之心/cost1_60002095_心傀·思.avif"
+                                                        }
+                                                    ]
+                                      }
+                 },
+                 {
+                     "id":  33,
+                     "name":  "羽落空尘之歌",
+                     "echoesByCost":  {
+                                          "cost4":  [
+                                                        {
+                                                            "id":  60002185,
+                                                            "name":  "千傀重楼",
+                                                            "cost":  4,
+                                                            "image":  "images/33_羽落空尘之歌/cost4_60002185_千傀重楼.avif"
+                                                        }
+                                                    ],
+                                          "cost3":  [
+                                                        {
+                                                            "id":  60002155,
+                                                            "name":  "霁息兽尊",
+                                                            "cost":  3,
+                                                            "image":  "images/33_羽落空尘之歌/cost3_60002155_霁息兽尊.avif"
+                                                        },
+                                                        {
+                                                            "id":  60002165,
+                                                            "name":  "封庭械囿",
+                                                            "cost":  3,
+                                                            "image":  "images/33_羽落空尘之歌/cost3_60002165_封庭械囿.avif"
+                                                        }
+                                                    ],
+                                          "cost1":  [
+                                                        {
+                                                            "id":  60002025,
+                                                            "name":  "融躯战士",
+                                                            "cost":  1,
+                                                            "image":  "images/33_羽落空尘之歌/cost1_60002025_融躯战士.avif"
+                                                        },
+                                                        {
+                                                            "id":  60002065,
+                                                            "name":  "心傀·喜",
+                                                            "cost":  1,
+                                                            "image":  "images/33_羽落空尘之歌/cost1_60002065_心傀·喜.avif"
+                                                        },
+                                                        {
+                                                            "id":  60002125,
+                                                            "name":  "霁息兽尊·身",
+                                                            "cost":  1,
+                                                            "image":  "images/33_羽落空尘之歌/cost1_60002125_霁息兽尊·身.avif"
+                                                        },
+                                                        {
+                                                            "id":  60002135,
+                                                            "name":  "霁息兽尊·首",
+                                                            "cost":  1,
+                                                            "image":  "images/33_羽落空尘之歌/cost1_60002135_霁息兽尊·首.avif"
+                                                        },
+                                                        {
+                                                            "id":  60002145,
+                                                            "name":  "不熄猎手",
+                                                            "cost":  1,
+                                                            "image":  "images/33_羽落空尘之歌/cost1_60002145_不熄猎手.avif"
+                                                        }
+                                                    ]
+                                      }
+                 },
                  {
                      "id":  32,
                      "name":  "碎梦亡鬼之魇",

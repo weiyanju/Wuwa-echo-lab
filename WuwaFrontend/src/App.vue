@@ -218,7 +218,7 @@ onBeforeUnmount(() => {
     <section v-if="loading" class="auth-shell">
       <div class="auth-copy">
         <span class="brand-mark">Tethys System</span>
-        <h1>正在连接声骸研究台</h1>
+        <h1>正在前往黑海岸</h1>
       </div>
     </section>
 

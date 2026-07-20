@@ -1,12 +1,15 @@
 export const sonataEffectsSource = Object.freeze({
   name: '呜哇维基 - 合鸣效果',
   url: 'https://wuwa.wiki/zh-hans/codex/sonataeffects',
-  capturedAt: '2026-05-20',
+  capturedAt: '2026-07-20',
 })
 
 const allAvailableCosts = Object.freeze([1, 3, 4])
 
 const sonataAvailableCostsById = Object.freeze({
+  35: allAvailableCosts,
+  34: allAvailableCosts,
+  33: allAvailableCosts,
   32: Object.freeze([4]),
   31: allAvailableCosts,
   30: allAvailableCosts,
@@ -41,6 +44,27 @@ const sonataAvailableCostsById = Object.freeze({
 })
 
 const sonataEffectRecords = Object.freeze([
+  {
+    id: 35,
+    name: '冥途夜行之灯',
+    slug: 'lamp-of-night-wandering',
+    icon: '/sonata-effects/lamp-of-night-wandering.avif',
+    sourceIcon: 'Common/Image/IconElementAttri/T_IconElementAttriJingran',
+  },
+  {
+    id: 34,
+    name: '清邪荡煞之心',
+    slug: 'heart-of-cleansing-evil',
+    icon: '/sonata-effects/heart-of-cleansing-evil.avif',
+    sourceIcon: 'Common/Image/IconElementAttri/T_IconElementAttriQingxiao',
+  },
+  {
+    id: 33,
+    name: '羽落空尘之歌',
+    slug: 'song-of-fallen-feathers',
+    icon: '/sonata-effects/song-of-fallen-feathers.avif',
+    sourceIcon: 'Common/Image/IconElementAttri/T_IconElementAttriYangyang',
+  },
   {
     id: 32,
     name: '碎梦亡鬼之魇',

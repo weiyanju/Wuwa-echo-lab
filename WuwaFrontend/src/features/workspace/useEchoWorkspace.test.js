@@ -898,7 +898,8 @@ test('reset clears account-scoped echo config before creating an empty account d
 test('echo workspace coerces unsupported costs when switching sonata', async () => {
   const originalDocument = globalThis.document
   const originalFetch = globalThis.fetch
-  const leadSet = sonataEffects[0]
+  const restrictedSet = sonataEffects.find((effect) => effect.id === 32)
+  assert.ok(restrictedSet)
   let updatedPayload = null
   globalThis.document = { cookie: 'csrftoken=test' }
   globalThis.fetch = async (url, options = {}) => {
@@ -943,10 +944,10 @@ test('echo workspace coerces unsupported costs when switching sonata', async () 
     })
 
     await workspace.refresh()
-    await workspace.applyEchoConfig({ sonata: leadSet.name })
+    await workspace.applyEchoConfig({ sonata: restrictedSet.name })
 
-    assert.deepEqual(leadSet.availableCosts, [4])
-    assert.equal(updatedPayload.set_name, leadSet.name)
+    assert.deepEqual(restrictedSet.availableCosts, [4])
+    assert.equal(updatedPayload.set_name, restrictedSet.name)
     assert.equal(updatedPayload.cost, 4)
     assert.ok(mainStatsByCost[4].includes(updatedPayload.main_stat))
     assert.equal(workspace.echoForm.value.cost, 4)

@@ -2,6 +2,12 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 
+test('startup transition says the user is heading to the Black Shores', async () => {
+  const source = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
+
+  assert.match(source, /<h1>正在前往黑海岸<\/h1>/)
+})
+
 test('app delegates sample summary and page refresh without owning zero-state copy', async () => {
   const source = await readFile(new URL('./App.vue', import.meta.url), 'utf8')
   assert.match(source, /import WorkspaceSummary from '\.\/components\/shell\/WorkspaceSummary\.vue'/)
