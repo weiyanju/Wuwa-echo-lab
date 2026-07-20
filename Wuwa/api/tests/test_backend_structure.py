@@ -1,12 +1,37 @@
 from importlib import import_module
 import json
 from pathlib import Path
+import subprocess
 
 from django.apps import apps
 from django.test import SimpleTestCase
 
 
 class BackendStructureTests(SimpleTestCase):
+    def test_desktop_client_is_owned_by_an_external_repository(self):
+        repository_root = Path(__file__).resolve().parents[3]
+
+        tracked_desktop_files = subprocess.run(
+            ["git", "ls-files", "--", "WuwaAssistant"],
+            cwd=repository_root,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout
+        self.assertEqual(tracked_desktop_files.strip(), "")
+
+        for relative_path in (
+            "AGENTS.md",
+            "README.md",
+            "docs/developer-onboarding.md",
+            "docs/architecture.md",
+            "docs/engineering-quality.md",
+        ):
+            with self.subTest(relative_path=relative_path):
+                source = (repository_root / relative_path).read_text(encoding="utf-8")
+                self.assertNotIn("WuwaAssistant/", source)
+                self.assertNotIn("wpf-assistant-ui-guidelines.md", source)
+
     def test_backend_is_split_into_domain_apps(self):
         installed_labels = {config.label for config in apps.get_app_configs()}
 

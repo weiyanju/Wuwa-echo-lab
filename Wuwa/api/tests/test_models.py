@@ -197,7 +197,7 @@ class RecognitionModelTests(TestCase):
         session = RecognitionSession.objects.create(
             user=self.user,
             game_account=self.game_account,
-            client_name="WuwaAssistant",
+            client_name="local-recognition-client",
             client_version="0.1.0",
         )
 

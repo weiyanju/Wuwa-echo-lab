@@ -17,8 +17,8 @@
 - `MVP / pre-release` 阶段
 - 暂不承诺稳定 SemVer
 - 暂不承诺公开自动更新通道
-- 先把本地助手 MVP、项目规范、代码质量和 UI 质量收口
-- 等 WPF 助手可安装、可登录、可后台识别、可提交、可诊断后，再进入正式版本线
+- 先把 Django、Vue、recognition API、项目规范、代码质量和 UI 质量收口
+- `Wuwa` 与 `Wuwa-Assistant` 独立版本、独立发布
 
 ---
 
@@ -45,16 +45,13 @@
 
 进入正式版本线前，至少应满足：
 
-- WPF 可安装或可稳定启动
 - 登录/注册稳定
 - `GameAccount` 与 UID 初始化稳定
-- 本地助手可低占用后台运行
-- fake pipeline 已被真实截图/OCR pipeline 替代或明确标记
 - 识别结果可提交、可去重、可回滚
-- OCR 不阻塞 UI，且具备 hash 缓存、结果缓存和可观测耗时
 - 后端数据持久化稳定
-- Web 可查看和分析 WPF 写入的数据
-- 诊断日志能解释主要失败原因
+- Web 可查看和复核外部本地识别客户端写入的数据
+- 服务端诊断能解释主要失败原因
+- 外部客户端可以继续消费稳定 API，或已获得明确兼容期
 - README 写清运行方式
 - 最低验证链可重复执行
 
@@ -88,19 +85,22 @@ MAJOR.MINOR.PATCH
 
 ## 6. 发布前最低验证
 
-当前 pre-release 阶段，准备交付给用户试用前至少应完成：
+当前 pre-release 阶段，准备交付给用户试用前至少应完成后端测试、Vue 测试和 Vue 生产构建。
 
 ```powershell
-dotnet run --project WuwaAssistant\WuwaAssistant.Tests\WuwaAssistant.Tests.csproj
-dotnet build WuwaAssistant\WuwaAssistant.slnx
+cd Wuwa
+.\.venv\Scripts\python.exe manage.py test
+
+cd ..\WuwaFrontend
+..\.tools\node\npm.cmd test
+..\.tools\node\npm.cmd run build
 ```
 
 并按改动范围补充：
 
-- 后端测试
-- Vue 测试或构建
-- WPF 启动探针
-- OCR/截图手动验证
+- API 响应形状和兼容测试
+- recognition ownership、幂等和回滚测试
+- 跨仓库客户端契约确认
 
 正式版本线建立后，应再补充：
 
@@ -168,10 +168,12 @@ dotnet build WuwaAssistant\WuwaAssistant.slnx
 - Web 前端部署
 - 数据库迁移
 - 用户账号与数据同步
-- 本地 WPF 连接云端 API
+- 外部本地识别客户端连接云端 API
 - 隐私与截图/OCR 边界
 
 云端部署不自动意味着云端 OCR。
+
+本仓库发布不包含 Windows 客户端构建产物。API 破坏性变化必须先提供兼容期，或协调 `Wuwa-Assistant` 同步发布。
 
 ---
 

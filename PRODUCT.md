@@ -34,7 +34,7 @@ The UI should not feel like a marketing landing page, a visual-effects showcase,
 1. Cross-surface behavior follows `docs/product-interface-principles.md`; current Web visual implementation follows `DESIGN.md`, then the page-specific Web guidelines.
 2. Account and UID context come before data operations.
 3. Data readability and trust are more important than display effects.
-4. Web is the deep workbench; WPF remains the low-distraction local assistant.
+4. Web is the deep workbench; the separately maintained Windows client remains the low-distraction local recognition assistant.
 5. Errors and unavailable states must explain what the user can do next.
 6. Historical plans and implementation notes provide context, but do not override current long-term rules.
 

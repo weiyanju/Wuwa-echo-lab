@@ -10,8 +10,8 @@
 
 - 新代码应该放在哪个目录
 - 什么情况必须新建文件夹或文件
-- `Service`、`Client`、`Provider`、`ViewModel`、`Page` 等命名如何使用
-- WPF、后端、Vue 各自哪些文件不能继续变厚
+- `Service`、`Client`、`Dto`、`Model` 等命名如何使用
+- 后端与 Vue 各自哪些文件不能继续变厚
 - 测试、注释和临时兼容代码应如何处理
 
 如果本文与 [`architecture.md`](./architecture.md) 冲突，以 `architecture.md` 的 owner 判断为准。
@@ -26,7 +26,7 @@
 
 默认顺序：
 
-1. 它属于后端、Vue，还是 WPF？
+1. 它属于后端、Vue，还是跨仓库 API 契约？
 2. 它属于账号、`GameAccount`、识别、截图、OCR、诊断、设置、统计、预测中的哪一个？
 3. 它是 UI、状态、API、业务规则、平台能力，还是存储？
 4. 它有没有现有目录可以承接？
@@ -46,7 +46,7 @@
 
 不能接受：
 
-- 为了快，把截图、OCR、识别逻辑继续写进 WPF 页面
+- 为了快，把识别服务端规则写进 Django view 或 Vue 页面
 - 为了少建文件，把多个无关 helper 放进同一个工具类
 - 为了目录少，把账号、UID、识别、设置混在一个 service 里
 
@@ -54,8 +54,6 @@
 
 以下文件是高吸力入口层：
 
-- `WuwaAssistant/WuwaAssistant/MainWindow.xaml.cs`
-- `WuwaAssistant/WuwaAssistant/LoginWindow.xaml.cs`
 - `WuwaFrontend/src/App.vue`
 - Django `views.py`
 
@@ -80,14 +78,14 @@
 
 ### 3.1 功能目录拆分
 
-前端、后端、WPF 都必须按功能和 owner 拆分目录。
+前端和后端都必须按功能和 owner 拆分目录。
 
 硬规则：
 
 - 不同业务功能默认进入不同目录或不同 app。
 - 不同层职责默认进入不同目录，例如 API、状态、UI、业务规则、平台能力、资源。
 - 找不到 owner 时，先补 owner 判断或目录说明，不要塞进入口层。
-- 共享能力必须进入明确 shared owner，不要散落在页面、view 或 code-behind。
+- 共享能力必须进入明确 shared owner，不要散落在页面或 view。
 - 临时放置必须说明退出条件，不能把临时目录当长期事实。
 
 ### 3.2 后端目录拆分
@@ -133,47 +131,10 @@ Vue 新功能必须优先保持层次清楚。
 - 页面不能直接复制一套 API 请求和状态管理。
 - 公共图标、图片、颜色、间距、状态样式不能散落在单页样式里。
 
-### 3.4 WPF 目录拆分
-
-WPF 必须保持 UI 项目和 Core 项目分层。
-
-UI owner：
-
-- `Views/`：页面视图。
-- `ViewModels/`：页面状态和命令编排。
-- `Styles/`：共享颜色、按钮、布局、状态标签、输入框样式。
-- `LoginWindow.xaml`、`MainWindow.xaml`：窗口壳和薄编排。
-
-Core owner：
-
-- `Api/`：API client、DTO、session 适配。
-- `Auth/`：登录、注册、认证状态。
-- `GameAccounts/`：UID、默认账号、账号选择规则。
-- `Connection/`：后端连接检测。
-- `Capture/`：窗口检测、截图、DPI/区域、截图 hash。
-- `Ocr/`：OCR provider、cache、parser、normalize。
-- `Recognition/`：识别状态机、pipeline、payload builder、提交编排。
-- `Diagnostics/`：日志、耗时指标、错误事件。
-- `Settings/`：本地设置。
-- `Storage/`：本地缓存、临时文件、持久化辅助。
-
-规则：
-
-- 新截图能力不进入 `Views/` 或 code-behind。
-- 新 OCR 能力不进入页面或 ViewModel。
-- 新样式不复制进多个 XAML 页面。
-- 公共资源统一进 `Styles/` 或明确资源目录。
-
-### 3.5 共享资源归属表
+### 3.4 共享资源归属表
 
 | 资源或能力 | 归属 |
 | --- | --- |
-| WPF 颜色 token | `WuwaAssistant/WuwaAssistant/Styles/Colors.xaml` |
-| WPF 按钮、输入、状态样式 | `WuwaAssistant/WuwaAssistant/Styles/Controls.xaml` |
-| WPF 布局、面板、间距样式 | `WuwaAssistant/WuwaAssistant/Styles/Layout.xaml` |
-| WPF 页面状态 | `WuwaAssistant/WuwaAssistant/ViewModels/` |
-| WPF 页面视图 | `WuwaAssistant/WuwaAssistant/Views/` |
-| WPF 核心业务 | `WuwaAssistant/WuwaAssistant.Core/<Feature>/` |
 | Vue API 请求 | `WuwaFrontend/src/services/` |
 | Vue 可复用状态 | `WuwaFrontend/src/composables/` |
 | Vue 可复用 UI | `WuwaFrontend/src/components/` |
@@ -230,159 +191,24 @@ Core owner：
 不适合：
 
 - 包装一个简单函数却叫 service
-- 直接访问 WPF 控件
+- 直接访问 UI 控件
 - 混入平台 API 细节
 
-### 4.3 `Provider`
-
-用于可替换的外部能力或实现。
-
-适合：
-
-- OCR 引擎
-- 截图实现
-- 窗口检测实现
-- 本地存储实现
-
-规则：
-
-- Provider 必须能被 fake 实现替换。
-- Provider 不应知道 WPF 页面。
-- Provider 输出结构化结果，不直接改 UI。
-
-### 4.4 `ViewModel`
-
-用于 WPF 页面状态和命令编排。
-
-适合：
-
-- 页面展示字段
-- 按钮命令
-- loading/error 状态
-- 调用 Core service
-
-不适合：
-
-- 直接实现 HTTP 细节
-- 直接执行 OCR 引擎
-- 直接管理截图缓存
-
-### 4.5 `Page` / `Window`
-
-用于 WPF 可视界面。
-
-规则：
-
-- `Window` 用于独立窗口，例如登录窗口、主窗口。
-- `Page` 或 `UserControl` 用于主窗口内的功能页面。
-- XAML 负责布局和绑定。
-- code-behind 只保留 UI 生命周期和必要事件桥接。
-
-### 4.6 `Dto` / `Model`
+### 4.3 `Dto` / `Model`
 
 建议区分：
 
 - `Dto`：API 传输结构，形状跟接口有关。
 - `Model`：领域对象或数据库模型，形状跟业务有关。
-- `ViewModel`：页面状态，形状跟 UI 有关。
+- 页面状态对象：形状跟 UI 有关。
 
 不要把同一个类同时当作 API DTO、业务模型和页面状态。
 
 ---
 
-## 5. WPF 代码组织
+## 5. 外部桌面客户端边界
 
-当前 WPF 分为：
-
-```text
-WuwaAssistant/
-  WuwaAssistant/
-    Views/
-    ViewModels/
-    Styles/
-    MainWindow.xaml
-    LoginWindow.xaml
-  WuwaAssistant.Core/
-    Api/
-    Auth/
-    Capture/
-    Connection/
-    Diagnostics/
-    GameAccounts/
-    Ocr/
-    Recognition/
-    Settings/
-    Storage/
-```
-
-### 5.1 UI 项目
-
-`WuwaAssistant/WuwaAssistant` 只放 UI 层：
-
-- XAML 窗口
-- XAML 页面
-- ViewModel
-- ResourceDictionary
-- UI 状态绑定
-
-不放：
-
-- OCR 引擎调用
-- 截图实现
-- HTTP 请求细节
-- 识别业务规则
-- 本地缓存实现
-
-### 5.2 Core 项目
-
-`WuwaAssistant/WuwaAssistant.Core` 放可脱离 WPF UI 测试的核心能力。
-
-默认 owner：
-
-- `Api/`：API endpoint client、request/response DTO、session 适配。
-- `Auth/`：登录、注册、认证状态。
-- `GameAccounts/`：UID、默认账号、账号选择规则。
-- `Connection/`：后端连接检测、健康检查。
-- `Capture/`：窗口检测、截图、DPI/区域、截图 hash。
-- `Ocr/`：OCR provider、OCR cache、parser、normalize。
-- `Recognition/`：识别状态机、pipeline、payload builder、提交编排。
-- `Diagnostics/`：诊断日志、耗时指标、错误事件。
-- `Settings/`：本地设置读取、保存、默认值。
-- `Storage/`：本地缓存、临时文件、持久化辅助。
-
-### 5.3 WPF 新功能落点
-
-新增功能时默认这样放：
-
-| 功能 | 默认落点 |
-| --- | --- |
-| 新页面 | `WuwaAssistant/Views/` |
-| 页面状态 | `WuwaAssistant/ViewModels/` |
-| 按钮/输入/状态样式 | `WuwaAssistant/Styles/` |
-| 后端 API 调用 | `WuwaAssistant.Core/Api/` 或对应 feature 目录 |
-| 登录注册规则 | `WuwaAssistant.Core/Auth/` |
-| UID 选择规则 | `WuwaAssistant.Core/GameAccounts/` |
-| 窗口检测/截图 | `WuwaAssistant.Core/Capture/` |
-| OCR 引擎与解析 | `WuwaAssistant.Core/Ocr/` |
-| 识别流水线 | `WuwaAssistant.Core/Recognition/` |
-| 性能与错误日志 | `WuwaAssistant.Core/Diagnostics/` |
-| 本地设置 | `WuwaAssistant.Core/Settings/` |
-
-### 5.4 WPF 文件大小信号
-
-出现以下情况，应考虑拆文件：
-
-- code-behind 同时处理 3 个以上业务流程。
-- 单个 ViewModel 同时管理多个页面。
-- 一个类同时访问 API、管理 UI 状态、处理缓存。
-- 一个文件新增内容需要滚动很久才能读完。
-- 测试很难只针对一个行为编写。
-
-拆分优先级：
-
-1. 先按 owner 拆。
-2. 再按接口边界拆。
-3. 最后才按“看起来整齐”拆。
+本仓库不新增桌面客户端源码。桌面 UI、窗口检测、截图、OCR、缓存、本地设置和客户端运行时由独立客户端仓库维护；跨仓库协作只通过公开 API 契约。
 
 ---
 
@@ -502,22 +328,7 @@ WuwaFrontend/src/
 
 测试必须跟风险匹配。
 
-### 8.1 WPF / .NET
-
-默认规则：
-
-- Core 能力优先写可脱离 UI 的测试。
-- API client 使用 fake HTTP handler 测试。
-- XAML shell 结构可以用静态契约测试锁住。
-- OCR、截图、缓存、parser 必须有单元测试。
-
-测试文件位置：
-
-```text
-WuwaAssistant/WuwaAssistant.Tests/
-```
-
-### 8.2 Django
+### 8.1 Django
 
 默认规则：
 
@@ -531,7 +342,7 @@ WuwaAssistant/WuwaAssistant.Tests/
 Wuwa/<app>/tests/
 ```
 
-### 8.3 Vue
+### 8.2 Vue
 
 默认规则：
 
@@ -572,7 +383,7 @@ TODO 必须包含原因或后续动作。不要留下无法追踪的模糊 TODO�
 
 - 同一业务规则只保留一个 owner。
 - 同一 API 调用只保留一个 client/helper。
-- 同一状态转换只保留一个 service 或 ViewModel 编排点。
+- 同一状态转换只保留一个 service 或状态编排点。
 - 同一 UI 语义优先复用现有组件、样式或 token。
 - 第三次出现相似代码时，必须判断是否需要抽取复用。
 
@@ -586,7 +397,6 @@ TODO 必须包含原因或后续动作。不要留下无法追踪的模糊 TODO�
 
 - 多个页面各写一套相同 API 请求。
 - 多个页面各写一套按钮、状态标签、错误提示样式。
-- WPF 多个 ViewModel 重复实现同一账号或识别状态规则。
 - 后端多个 view 重复写相同 ownership 校验或业务流程。
 - 为了少建文件把无关逻辑堆到一个 helper 里。
 
@@ -604,14 +414,6 @@ TODO 必须包含原因或后续动作。不要留下无法追踪的模糊 TODO�
 - 重复 UI 进入 `components/`。
 - 重复格式化进入 formatter 或 shared helper。
 - 页面级样式不能复制成多个相似 class 后长期保留。
-
-### 10.4 WPF 复用
-
-- 核心业务进入 `WuwaAssistant.Core/*`。
-- 页面状态进入 `ViewModels/`。
-- 重复 XAML 样式进入 `Styles/`。
-- 重复命令、状态映射、错误文案应抽到清晰 owner。
-- code-behind 不作为复用中心。
 
 复用不是为了“抽象好看”，而是为了减少重复错误、降低维护成本，并让后续开发者能找到唯一规则来源。
 
@@ -653,7 +455,7 @@ TODO 必须包含原因或后续动作。不要留下无法追踪的模糊 TODO�
 - 类名是否准确表达职责？
 - UI、业务、平台能力是否分开？
 - 是否复制了已有 API、业务规则、样式或组件？
-- 是否可以复用现有 service、component、ViewModel、Style 或 helper？
+- 是否可以复用现有 service、component、状态模块、样式或 helper？
 - 重要逻辑是否可脱离 UI 测试？
 - 是否影响 `GameAccount`、OCR、截图、后台性能或持久化？
 - 是否有与风险匹配的测试或验证？
@@ -680,7 +482,7 @@ TODO 必须包含原因或后续动作。不要留下无法追踪的模糊 TODO�
 - 不同功能默认拆进不同目录。
 - 公共资源必须统一管理。
 - 入口层只做薄编排。
-- WPF Core 能测的逻辑不要写进 XAML code-behind。
+- 本仓库不新增桌面客户端源码；跨仓库协作只通过公开 API 契约。
 - 不为了目录漂亮做无收益大搬迁。
 - 当文件开始变厚，应优先按 owner 拆，而不是继续补小块。
 - 不用复制粘贴制造多个相似实现。

@@ -24,8 +24,7 @@
 - [`security-privacy-and-data-boundaries.md`](./security-privacy-and-data-boundaries.md) 定义账号、截图、OCR、日志和云端边界。
 - [`performance-and-background-runtime.md`](./performance-and-background-runtime.md) 定义后台运行、OCR 触发、缓存和性能验收。
 - [`product-principles-and-scope.md`](./product-principles-and-scope.md) 定义产品边界。
-- [`product-interface-principles.md`](./product-interface-principles.md) 定义三端共同界面原则。
-- [`wpf-assistant-ui-guidelines.md`](./wpf-assistant-ui-guidelines.md) 定义 WPF 本地助手 UI 边界。
+- [`product-interface-principles.md`](./product-interface-principles.md) 定义跨端共同界面原则。
 - [`roadmap-and-prioritization.md`](./roadmap-and-prioritization.md) 定义优先级。
 
 ---
@@ -46,11 +45,9 @@
 
 以下做法默认都是越界信号：
 
-- 为了图快，把逻辑补进 `MainWindow.xaml.cs`
 - 为了修一个点，在 Vue `App.vue` 继续堆新业务
 - 让页面绕过 API service 直接碰后端细节
-- 让 WPF UI 事件处理器承接 OCR、截图、识别业务
-- 让本地助手直接写数据库
+- 让外部本地识别客户端直接写数据库
 
 ### 3.3 兼容壳可以存在，但必须变薄
 
@@ -82,7 +79,6 @@
 
 典型例子：
 
-- WPF 某个按钮样式不统一
 - 某个 API 错误提示文案不准确
 - 某个前端格式化显示错误
 - 某个测试断言需要跟随既有契约更新
@@ -103,11 +99,11 @@
 
 典型例子：
 
-- 看起来是 WPF UI bug，但本质涉及 `GameAccount` 状态
+- 看起来是外部客户端 UI bug，但本质涉及 `GameAccount` 状态
 - 看起来是 Web 显示问题，但本质是后端 API 字段含义不清
 - 看起来是 OCR 失败，但本质是截图区域、缓存、parser 边界不清
 - 看起来是“卡顿”，但本质是后台状态机、OCR 队列或缓存策略不清
-- 看起来是接口小改，但本质会影响 WPF、Web 和数据库契约
+- 看起来是接口小改，但本质会影响外部本地识别客户端、Web 和数据库契约
 - 看起来是诊断增强，但本质会改变截图、日志或隐私边界
 
 要求：
@@ -128,9 +124,7 @@
 
 典型例子：
 
-- 拆 `MainWindow.xaml.cs` 中的厚业务
 - Vue `App.vue` 大规模拆分
-- OCR pipeline 从 UI 中迁到 core
 - 后端 API 契约调整
 - 本地后端迁移到云端服务
 
@@ -150,10 +144,8 @@
 - 需要改后端 API 契约
 - 需要改数据库结构
 - 需要上传截图或改变 OCR 隐私边界
-- 需要让 WPF 直接访问数据库
-- 需要在 `MainWindow.xaml.cs` 继续加入新业务流程
+- 需要让外部本地识别客户端直接访问数据库
 - 需要让 Vue `App.vue` 承接新的完整功能
-- 需要引入 Tauri、GPUI 或其他 UI 技术栈评估
 - 实施者说不清“这段逻辑到底该归谁”
 
 ---
@@ -162,12 +154,8 @@
 
 当前需要重点防止回流的区域：
 
-- WPF `MainWindow.xaml.cs`
-- WPF `LoginWindow.xaml.cs`
 - Vue `App.vue`
 - 后端 `api/` 兼容层
-- `WuwaApiClient.cs`
-- 未来 OCR provider 实现
 
 这些区域可以改，但默认应先问：
 
@@ -184,27 +172,18 @@
 - 跑命中的专项测试
 - 或做能证明问题的最小验证
 
-WPF 结构或 XAML 修改：
-
-```powershell
-dotnet run --project WuwaAssistant\WuwaAssistant.Tests\WuwaAssistant.Tests.csproj
-dotnet build WuwaAssistant\WuwaAssistant.slnx
-```
-
 后端 API 或模型修改：
 
 - 跑命中的 Django 测试
 - 检查 migration 风险
+- API 或 recognition 修复如果改变外部客户端契约，必须同步独立客户端仓库或保留兼容
 
 Vue 工作流修改：
 
 - 跑命中的前端测试
 - 必要时运行 build
 
-OCR/截图修改：
-
-- 跑 parser/cache/hash 单元测试
-- 用代表性截图验证
+外部客户端的 OCR、截图和桌面 UI 修改由独立客户端仓库验证。
 
 ---
 

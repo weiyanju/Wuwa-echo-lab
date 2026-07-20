@@ -4,11 +4,10 @@
 
 ## 项目结构
 
-`Wuwa` 是一个前后端与本地助手分离的开发环境：
+`Wuwa` 是一个前后端分离的开发环境：
 
 - `Wuwa/`: Django 后端，负责账号、声骸、识别记录、统计和 API。
 - `WuwaFrontend/`: Vue + Vite Web 工作台。
-- `WuwaAssistant/`: WPF 本地助手与可脱离 UI 测试的 Core 项目。
 - `PRODUCT.md`: 面向设计工具和协作者的精简产品上下文。
 - `DESIGN.md`: Web 视觉 token、字体、组件语言和交互状态的当前总入口。
 - `.impeccable/design.json`: 与 `DESIGN.md` 同步的结构化设计系统。
@@ -16,6 +15,8 @@
 - `docs/archive/`: 已完成阶段、实现记录和历史背景。
 - `docs/superpowers/`: 阶段计划和规格记录，作为背景材料保留。
 - `memory/`: 聚焦性能问题的专项调查与历史决策，不作为长期规范入口。
+
+Windows 本地识别客户端由独立的 `Wuwa-Assistant` 项目维护，通过公开 API 与本仓库协作。
 
 不要把 `tmp/`、`.venv/`、`node_modules/`、`dist/`、`build/`、`db.sqlite3`、日志、IDE 配置或本地私有说明提交到仓库。
 
@@ -36,7 +37,6 @@
    - [Web 设计系统总入口](../DESIGN.md)
    - [Web UI 设计系统 V2.1](./web-ui-design-system-v2.md)
    - [Web 工作台 UI 规范](./web-workbench-ui-guidelines.md)
-   - [WPF 本地助手 UI 规范](./wpf-assistant-ui-guidelines.md)
 11. [版本与发布策略](./versioning-and-release-policy.md)
 
 如果正在接手某个具体功能，再补读 `docs/archive/` 或 `docs/superpowers/` 里与该功能相关的历史记录。
@@ -169,9 +169,8 @@ Web 与 API 不同源时，再按实际地址设置逗号分隔的 `DJANGO_CORS_
 - Vue 已稳定且被多个 feature 共同使用的纯逻辑进入 `src/shared/`；页面状态、API 调用和单页展示映射仍留在原 owner。
 - Vue 静态业务数据进入 `src/data/`。
 - 前端公开静态资源进入 `WuwaFrontend/public/`，源码内引用资源进入 `WuwaFrontend/src/assets/`。
-- WPF UI 只放在 `WuwaAssistant/WuwaAssistant/`，核心业务能力放在 `WuwaAssistant/WuwaAssistant.Core/`。
 
-入口文件要薄。不要继续把复杂业务塞进 `App.vue`、Django `views.py` 或 WPF code-behind。
+入口文件要薄。不要继续把复杂业务塞进 `App.vue` 或 Django `views.py`。
 
 ## 设计与 UI 规则
 
@@ -184,10 +183,6 @@ Web 工作台开发必须遵循：
 - [Web UI 设计系统 V2.1](./web-ui-design-system-v2.md)
 
 涉及字体、字重、字距或数字排版时，还必须阅读 [Web 字体设计系统](./superpowers/specs/2026-07-13-wuwa-typography-system-design.md)。
-
-WPF 本地助手开发必须遵循：
-
-- [WPF 本地助手 UI 规范](./wpf-assistant-ui-guidelines.md)
 
 UI 改动不要只以“能显示”为完成标准。需要检查响应式布局、视觉层级、交互状态、暗色/浅色主题、空状态、错误状态，以及是否复用了已有 token、组件和样式入口。
 
@@ -211,13 +206,6 @@ cd WuwaFrontend
 ```powershell
 cd Wuwa
 .\.venv\Scripts\python.exe manage.py test
-```
-
-WPF 相关改动还需要：
-
-```powershell
-dotnet run --project WuwaAssistant\WuwaAssistant.Tests\WuwaAssistant.Tests.csproj
-dotnet build WuwaAssistant\WuwaAssistant.slnx
 ```
 
 提交时只 stage 本次需要进入仓库的文件，不要无脑 `git add .`。特别确认 `tmp/`、本地数据库、日志、缓存和私有说明没有被加入。
@@ -271,6 +259,7 @@ git push origin --delete codex/<feature-name>
 - 没有把复杂逻辑塞进入口层。
 - 没有重复实现已有 API、service、component、style 或 formatter。
 - API、数据库、权限、隐私、OCR、截图或后台运行边界变更已经同步相关文档。
+- API 契约变化已评估外部本地识别客户端兼容性。
 - 测试和构建范围与风险匹配。
 - 必要的实现记录已经写入 `docs/archive/`。
 - 长期规则变化已经同步到 `docs/` 顶层规范。

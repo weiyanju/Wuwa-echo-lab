@@ -853,7 +853,7 @@ class RecognitionApiViewTests(TestCase):
             data=json.dumps(
                 {
                     "game_account_id": self.account.id,
-                    "client_name": "WuwaAssistant",
+                    "client_name": "local-recognition-client",
                     "client_version": "0.1.0",
                     "game_window_title": "Wuthering Waves",
                     "screen_resolution": "2560x1440",

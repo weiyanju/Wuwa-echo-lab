@@ -1,16 +1,16 @@
 # 产品界面统一原则
 
-> 本文档负责沉淀 `Wuwa` 三端共同产品气质、账号/UID 心智、数据可信与边界判断。Web 当前视觉 token、字体和组件语言以根目录 [`DESIGN.md`](../DESIGN.md) 为准，Web 长期方向以 [`web-ui-design-system-v2.md`](./web-ui-design-system-v2.md) 为准。
+> 本文档负责沉淀 `Wuwa` Web 与外部本地识别客户端共同的产品气质、账号/UID 心智、数据可信与边界判断。Web 当前视觉 token、字体和组件语言以根目录 [`DESIGN.md`](../DESIGN.md) 为准，Web 长期方向以 [`web-ui-design-system-v2.md`](./web-ui-design-system-v2.md) 为准。
 
 ## 1. 文档定位
 
 本文定义 `Wuwa` 所有用户界面共同遵守的长期原则。
 
-它不替代 WPF 本地助手的具体 UI 规则，也不替代 Web 工作台的页面规范；它提供跨端一致的产品判断基线。
+它不替代独立客户端仓库内的具体 UI 规则，也不替代 Web 工作台的页面规范；它提供跨端一致的产品判断基线。
 
 适用范围：
 
-- WPF 本地助手。
+- 外部本地识别客户端。
 - Vue Web 首页与工作台。
 - 后续可能出现的云端管理页或轻量辅助页面。
 
@@ -37,11 +37,11 @@
 - 像视觉特效展示。
 - 像需要学习大量参数才能使用的软件。
 
-## 3. 三端角色
+## 3. 界面角色
 
-### 3.1 WPF 本地助手
+### 3.1 外部本地识别客户端
 
-WPF 是日常助手入口。
+外部本地识别客户端是日常助手入口。
 
 它应该：
 
@@ -57,7 +57,7 @@ WPF 是日常助手入口。
 - 做成全屏工作台。
 - 暴露后端地址等开发者信息。
 
-具体规则见 [`wpf-assistant-ui-guidelines.md`](./wpf-assistant-ui-guidelines.md)。
+具体 UI、XAML、页面和 Style owner 规则由独立客户端仓库维护。
 
 ### 3.2 Web 首页
 
@@ -94,7 +94,7 @@ Web 是深度工作台。
 
 它不应该：
 
-- 复制 WPF 的后台识别职责。
+- 复制外部本地识别客户端的后台识别职责。
 - 为了视觉展示牺牲数据可读性。
 - 创造另一套账号或 UID 心智。
 - 变成 VS Code 客户端式完整 IDE Shell。
@@ -189,7 +189,7 @@ Web 字体以 `docs/superpowers/specs/2026-07-13-wuwa-typography-system-design.m
 - 圆角收敛到少数档位。
 - 卡片、输入框、按钮的圆角应统一。
 - Web 工作台可采用现代圆角工具型风格。
-- WPF 小窗口仍以紧凑、清晰为优先。
+- 外部本地识别客户端仍以紧凑、清晰为优先。
 - 阴影只用于浮层或真正需要层级的元素。
 - 不用重阴影制造“高级感”。
 - 不强行回到旧 V2.0 的极小圆角 IDE 风。
@@ -198,7 +198,7 @@ Web 字体以 `docs/superpowers/specs/2026-07-13-wuwa-typography-system-design.m
 
 规则：
 
-- WPF 偏紧凑。
+- 外部本地识别客户端偏紧凑。
 - Web 可以更高信息密度。
 - 操作区和内容区要有明确分隔。
 - 密集数据区域优先使用表格、分组和筛选，而不是装饰卡片堆叠。
@@ -268,7 +268,7 @@ Web 字体以 `docs/superpowers/specs/2026-07-13-wuwa-typography-system-design.m
 规则：
 
 - Web 数据管理优先使用表格、筛选、排序、详情。
-- WPF 只展示最近结果和关键状态，不承载完整数据表。
+- 外部本地识别客户端只展示最近结果和关键状态，不承载完整数据表。
 - 图表必须服务判断，不做装饰。
 - 概率、置信度、数量和 UID 等关键值应格式稳定。
 - 比例本身和两个比例的差值都使用 `%`；差值必须带正负号，并由“偏差”“相对某项新增”等业务标签说明，不能表述为相对增长率。
@@ -293,11 +293,11 @@ Web 字体以 `docs/superpowers/specs/2026-07-13-wuwa-typography-system-design.m
 
 ## 8. 响应式与窗口适配
 
-WPF 和 Web 都必须考虑不同尺寸。
+外部本地识别客户端和 Web 都必须考虑不同尺寸。
 
 规则：
 
-- WPF 首先保证小窗口可用。
+- 外部本地识别客户端首先保证小窗口可用。
 - Web 首先保证桌面数据工作台可用，同时移动端不崩。
 - 当前工作台重构阶段可以先聚焦桌面，但不能产生严重横向溢出、文字裁切或控件重叠。
 - 文本不能溢出按钮、卡片、状态标签。
@@ -318,7 +318,6 @@ WPF 和 Web 都必须考虑不同尺寸。
 
 - 产品边界见 [`product-principles-and-scope.md`](./product-principles-and-scope.md)。
 - 架构 owner 见 [`architecture.md`](./architecture.md)。
-- WPF 具体 UI 见 [`wpf-assistant-ui-guidelines.md`](./wpf-assistant-ui-guidelines.md)。
 - Web 首页见 [`web-homepage-terminal-design.md`](./web-homepage-terminal-design.md)。
 - Web 工作台见 [`web-workbench-ui-guidelines.md`](./web-workbench-ui-guidelines.md)。
 - Web 视觉系统见 [`web-ui-design-system-v2.md`](./web-ui-design-system-v2.md)。
@@ -332,6 +331,6 @@ WPF 和 Web 都必须考虑不同尺寸。
 - 不把“看起来像某个产品”当作最终设计依据。
 - 可以引用外部产品作为阶段性审美参照，但最终必须写成 `Wuwa` 自己的规则。
 - 不再按旧 V2.0 的完整 IDE 化方向推进 Web 工作台。
-- WPF 和 Web 可以有不同密度，但必须保持同一产品气质。
+- 外部本地识别客户端和 Web 可以有不同密度，但必须保持同一产品气质。
 - UI 改动不能脱离账号、UID、数据可信、后台低打扰这些核心产品约束。
 - 文档与实现冲突时先确认预期，不静默修改长期规则去迎合现有代码。

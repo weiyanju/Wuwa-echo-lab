@@ -26,11 +26,6 @@
 - `docs/api-and-data-contracts.md`
 - `docs/security-privacy-and-data-boundaries.md`
 - `docs/performance-and-background-runtime.md`
-
-WPF 任务还必须阅读：
-
-- `docs/wpf-assistant-ui-guidelines.md`
-- `docs/security-privacy-and-data-boundaries.md`
 - `docs/performance-and-background-runtime.md`
 
 ## 文档优先级
@@ -44,8 +39,9 @@ WPF 任务还必须阅读：
 ## 开发规则
 
 - 新功能和独立重构使用功能分支，不直接在 `main` 上开发。
-- 代码必须落在正确 owner 下，不继续加厚 `App.vue`、Django view 或 WPF code-behind。
+- 代码必须落在正确 owner 下，不继续加厚 `App.vue` 或 Django view。
 - 影响产品流程、API、数据库、安全、隐私、OCR、后台性能或公共 UI 规则时，先更新或确认对应文档。
+- recognition、认证、`GameAccount` 或稳定响应字段变化时，必须把外部本地识别客户端视为兼容调用方。
 - UI 改动复用现有 token、字体角色、组件状态和 feature CSS，不为单页引入新视觉体系。
 - 提交前运行与风险匹配的测试和构建，并记录没有执行的验证及原因。
 - 独立功能完成后，将实际结果写入 `docs/archive/`，阶段计划不能代替实施记录。

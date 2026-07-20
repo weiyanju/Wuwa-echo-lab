@@ -1,10 +1,11 @@
 # Wuwa
 
-Wuwa 是一个前后端与本地助手分离的开发环境：
+Wuwa 是一个前后端分离的开发环境：
 
 - `Wuwa/`: Django 后端。
 - `WuwaFrontend/`: Vue + Vite Web 工作台。
-- `WuwaAssistant/`: WPF 本地助手与核心客户端。
+
+Windows 本地识别客户端由独立的 `Wuwa-Assistant` 项目维护，通过公开 API 与本仓库协作。
 
 新开发者必须先阅读 [开发者入门手册](docs/developer-onboarding.md)，再按本 README 启动本地环境。进行前端或 UI 开发前，还必须阅读 [Web 设计系统总入口](DESIGN.md)。
 
@@ -27,7 +28,6 @@ Wuwa 是一个前后端与本地助手分离的开发环境：
 - [产品界面统一原则](docs/product-interface-principles.md)
 - [Web UI 设计系统 V2.1](docs/web-ui-design-system-v2.md)
 - [Web 首页设计](docs/web-homepage-terminal-design.md)
-- [WPF 本地助手 UI 规范](docs/wpf-assistant-ui-guidelines.md)
 - [Web 工作台 UI 规范](docs/web-workbench-ui-guidelines.md)
 - [路线图与优先级](docs/roadmap-and-prioritization.md)
 - [版本与发布策略](docs/versioning-and-release-policy.md)
@@ -44,7 +44,6 @@ Wuwa 是一个前后端与本地助手分离的开发环境：
 - Python 虚拟环境：`Wuwa/.venv/`，用于运行 Django 后端。
 - PostgreSQL：默认连接 `127.0.0.1:5432/wuwa_dev`。
 - Node.js：优先使用仓库内的 `.tools/node/`。
-- .NET SDK 10：用于 `WuwaAssistant` WPF 本地助手。
 
 不要提交 `.venv/`、`node_modules/`、`dist/`、`build/`、`tmp/`、本地数据库、日志或私有配置。
 
@@ -150,21 +149,6 @@ http://127.0.0.1:5173/
 
 Vite 会把 `/api` 请求代理到 `http://127.0.0.1:8001`，所以前端开发时直接调用 `/api/...`。
 
-### WuwaAssistant
-
-本地助手位于 `WuwaAssistant/`，包含 WPF UI、Core 客户端和测试项目。
-
-```powershell
-dotnet build WuwaAssistant\WuwaAssistant.slnx
-dotnet run --project WuwaAssistant\WuwaAssistant\WuwaAssistant.csproj
-```
-
-运行 Assistant 测试：
-
-```powershell
-dotnet run --project WuwaAssistant\WuwaAssistant.Tests\WuwaAssistant.Tests.csproj
-```
-
 ### 验证
 
 前端：
@@ -180,13 +164,6 @@ cd WuwaFrontend
 ```powershell
 cd Wuwa
 .\.venv\Scripts\python.exe manage.py test
-```
-
-WPF Assistant：
-
-```powershell
-dotnet build WuwaAssistant\WuwaAssistant.slnx
-dotnet run --project WuwaAssistant\WuwaAssistant.Tests\WuwaAssistant.Tests.csproj
 ```
 
 ### 常见问题

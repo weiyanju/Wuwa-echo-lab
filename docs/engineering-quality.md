@@ -32,7 +32,7 @@ API 字段、持久化和跨端数据契约见 [`api-and-data-contracts.md`](./a
 - `GameAccount` 隔离可信
 - 识别结果可追踪、可去重、可回滚
 - 后端持久化稳定
-- Web 与 WPF 看到的是同一套业务状态
+- Web 与外部本地识别客户端消费同一服务端状态
 
 ### 2.2 代码质量与 owner 清晰
 
@@ -49,11 +49,8 @@ API 字段、持久化和跨端数据契约见 [`api-and-data-contracts.md`](./a
 
 关注软件是否：
 
-- WPF 长时间后台运行低 CPU、低内存
-- WPF 用户操作低延迟、快速响应
-- 截图和 OCR 按需触发
-- OCR 缓存和截图 hash 能减少重复工作
-- OCR 准确性、置信度和回滚路径可验证
+- 外部本地识别客户端遵守低占用、按需 OCR 和不阻塞 UI 的跨仓库契约
+- 服务端对识别准确性、置信度、数据归属和回滚保持保护
 - Web 页面统计和预测计算不会无意义重复
 - 后端 API 与数据库查询成本可解释
 
@@ -99,7 +96,6 @@ API 字段、持久化和跨端数据契约见 [`api-and-data-contracts.md`](./a
 
 - 文件组织是否合理
 - 是否符合 [`code-organization-and-style.md`](./code-organization-and-style.md)
-- WPF 是否继续变厚
 - Vue 是否继续堆在 `App.vue`
 - 后端 API 是否清楚绑定 `GameAccount`
 - UI 是否符合 [`product-interface-principles.md`](./product-interface-principles.md)、根目录 [`DESIGN.md`](../DESIGN.md) 和对应端的 UI 规范
@@ -153,50 +149,25 @@ Vue 改动默认至少运行命中的前端测试或构建。
 - 改共享样本语义时同时覆盖统计、评估和工作台摘要。
 - 改 UI 大结构、共享状态或设计契约时运行命中测试，并至少做构建验证。
 
-### 5.3 WPF 本地助手
+### 5.3 跨仓库客户端兼容
 
-WPF 改动默认至少运行：
+API、recognition、认证、`GameAccount` 或稳定响应字段变化必须运行兼容响应测试，并确认外部本地识别客户端仍可消费现有契约。破坏性变化必须同步客户端仓库或提供兼容期。
 
-```powershell
-dotnet run --project WuwaAssistant\WuwaAssistant.Tests\WuwaAssistant.Tests.csproj
-dotnet build WuwaAssistant\WuwaAssistant.slnx
-```
-
-触及 XAML resource、窗口启动、登录窗口、主窗口结构时，还应执行启动探针。
-
-要求：
-
-- 新增 API client 方法必须有 fake HTTP handler 测试。
-- 新增重要 shell 规则时，至少有静态 XAML/code 测试锁住。
-- 改识别、截图、OCR pipeline 时，应补可脱离 WPF UI 的 core 测试。
-
-### 5.4 OCR 与截图
-
-OCR/截图改动默认要求：
-
-- parser 单元测试
-- normalize 单元测试
-- screenshot hash 测试
-- cache key 测试
-- 重复截图抑制测试
-- 代表性截图手动或自动验证
+外部客户端自身的窗口检测、截图、OCR、缓存、桌面性能和启动验证由独立客户端仓库负责。本仓库不以服务端测试替代客户端验收。
 
 ---
 
 ## 6. 性能优化规则
 
-WPF 本地助手大部分时间会在后台运行，因此性能优化必须服务真实场景。
+服务端与 Web 的性能优化必须服务真实场景；外部客户端还必须满足跨仓库运行契约。
 
-后台运行、窗口检测、截图、OCR、缓存和队列的长期规则见 [`performance-and-background-runtime.md`](./performance-and-background-runtime.md)。本文只保留工程质量层面的默认约束。
+后端、Web 与外部客户端的责任边界见 [`performance-and-background-runtime.md`](./performance-and-background-runtime.md)。本文只保留工程质量层面的默认约束。
 
 允许的优化：
 
-- 低频窗口检测
-- 触发候选后短时间提高检测频率
-- 截图 hash 去重
-- OCR 结果缓存
-- OCR 引擎按需加载
-- 长时间空闲释放重资源
+- 避免无界列表和重复数据库访问
+- 避免 Web 重复请求与重复计算
+- 保持加载、错误、过期和刷新状态可见
 - 后台错误可恢复
 
 不允许的“优化”：
@@ -213,14 +184,7 @@ WPF 本地助手大部分时间会在后台运行，因此性能优化必须服�
 - 增加的复杂度
 - 回退策略
 
-涉及后台识别、截图、OCR、缓存、诊断的改动，默认还必须满足性能文档中的验收门槛。尤其是：
-
-- 自动识别关闭时不触发 OCR
-- 未找到游戏窗口时不触发 OCR
-- 相同截图 hash 不重复 OCR
-- OCR 不阻塞 UI 线程
-- 同一时间最多运行 1 个 OCR worker
-- OCR 耗时和缓存命中情况可观测
+改变外部客户端契约时，必须同步独立客户端仓库或提供兼容期，并由客户端仓库执行截图、OCR、缓存、队列和桌面性能验收。
 
 ---
 
@@ -228,10 +192,6 @@ WPF 本地助手大部分时间会在后台运行，因此性能优化必须服�
 
 当前需要持续高警惕的质量热点：
 
-- WPF 登录和 UID 初始化流程
-- WPF `MainWindow.xaml.cs`
-- WPF 样式资源字典
-- WPF 未来截图/OCR pipeline
 - 后端 `GameAccount` 隔离
 - 后端 recognition snapshot 写入和回滚
 - Vue `App.vue`

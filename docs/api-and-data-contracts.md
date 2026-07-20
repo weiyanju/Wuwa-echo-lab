@@ -2,7 +2,7 @@
 
 ## 1. 文档定位
 
-本文定义 `Wuwa` 后端 API、数据库持久化、WPF 本地助手、Vue Web 工作台之间的长期数据契约。
+本文定义 `Wuwa` Django 后端、数据库持久化、Vue Web 工作台与外部本地识别客户端之间的长期数据契约。
 
 它不是接口清单的替代品，而是规定哪些数据由谁拥有、哪些字段属于稳定契约、哪些变化需要迁移或兼容。
 
@@ -26,7 +26,7 @@
 - 回滚状态
 - 统计、预测、评估所依赖的基础数据
 
-WPF 和 Web 可以缓存或展示这些数据，但不能成为唯一真实来源。
+外部本地识别客户端和 Web 可以缓存或展示这些数据，但不能成为唯一真实来源。
 
 ### 2.2 所有业务数据必须绑定用户和 `GameAccount`
 
@@ -93,8 +93,8 @@ POST /api/recognition/snapshots/{id}/revert/
 
 规则：
 
-- Web 和 WPF 都必须通过 API 访问后端。
-- 不允许前端或 WPF 直接写数据库。
+- Web 和外部本地识别客户端都必须通过 API 访问后端。
+- 不允许 Web 或外部本地识别客户端直接写数据库。
 - API 返回的错误应有稳定 `error` 字段。
 - 写请求必须考虑 CSRF/session 或后续认证方案。
 
@@ -122,13 +122,17 @@ POST /api/recognition/snapshots/{id}/revert/
 - 空 UID 表示 workspace locked。
 - locked `GameAccount` 不能写入正式声骸和识别结果。
 - 修改 UID 必须走后端 API。
-- Web 和 WPF 必须共享同一套 `GameAccount` 列表和默认选择结果。
+- Web 和外部本地识别客户端必须共享同一套 `GameAccount` 列表和默认选择结果。
+- `server` 与 `nickname` 是未废弃的预留可选字段。
+- 当前响应保持空字符串兼容，当前写入继续忽略。
+- 客户端不能依赖 `server` 或 `nickname` 具有非空语义。
+- 启用真实语义前必须另行确认校验、权限、迁移与 UI。
 
 ---
 
 ## 5. 识别会话契约
 
-`RecognitionSession` 表示一次 WPF 本地助手识别运行周期。
+`RecognitionSession` 表示一次本地识别客户端运行周期。
 
 稳定语义：
 
@@ -143,7 +147,7 @@ POST /api/recognition/snapshots/{id}/revert/
 
 - session 不能跨用户。
 - session 不能跨 `GameAccount`。
-- WPF 启动识别时创建或复用 session。
+- 外部本地识别客户端启动识别时创建或复用 session。
 - Web 可以读取 session 作为复核和统计入口。
 - PATCH session 只允许修改稳定状态，例如 `active`、`ended`、`expired`。
 - session 进入 `ended` 或 `expired` 时必须有 `ended_at`。
@@ -186,7 +190,7 @@ POST /api/recognition/snapshots/{id}/revert/
 
 常规 API 不接收完整截图作为 OCR 输入。
 
-WPF 向后端提交的是结构化识别结果，而不是完整截图。
+外部本地识别客户端向后端提交的是结构化识别结果，而不是完整截图。
 
 允许提交：
 
@@ -218,14 +222,14 @@ WPF 向后端提交的是结构化识别结果，而不是完整截图。
 新增字段应满足：
 
 - 后端有默认值或可空策略。
-- Web 和 WPF 老版本不会因此崩溃。
+- Web 和外部本地识别客户端的旧版本不会因此崩溃。
 - 测试覆盖关键序列化结果。
 
 ### 8.2 删除或改名字段
 
 删除或改名字段属于破坏性变更。
 
-必须先确认 Web 和 WPF 调用方，提供过渡期或同步修改，并更新测试和文档。
+必须先确认 Web 和外部本地识别客户端调用方，提供兼容期或同步修改，并更新测试和文档。
 
 ### 8.3 状态值变更
 
@@ -242,7 +246,7 @@ WPF 向后端提交的是结构化识别结果，而不是完整截图。
 
 ---
 
-## 9. 前端与 WPF 调用规则
+## 9. Web 与外部客户端调用规则
 
 Web 端：
 
@@ -250,11 +254,11 @@ Web 端：
 - `GameAccount` 状态通过 composable 统一处理。
 - 不在页面里手写复杂 API URL。
 
-WPF 端：
+外部本地识别客户端：
 
-- API 调用放在 `WuwaAssistant.Core/Api/` 或对应 feature owner。
-- DTO 与 UI ViewModel 分开。
-- WPF 不直接拼数据库语义。
+- 客户端 API 消费实现由独立客户端仓库维护。
+- 本仓库只约束服务端响应、权限和向后兼容。
+- 客户端不能直接拼接或绕过数据库语义。
 
 共同规则：
 
@@ -272,11 +276,11 @@ WPF 端：
 - `GameAccount` 隔离测试
 - serializer 或 response shape 测试
 - Web API helper 测试
-- WPF API client fake handler 测试
+- 外部客户端兼容响应测试
 - 识别幂等或 duplicate hash 测试
 - 回滚测试
 
-如果字段被 Web 和 WPF 同时消费，必须同时考虑两端测试或构建验证。
+如果字段被 Web 和外部本地识别客户端同时消费，必须运行本仓库兼容响应测试，并同步客户端仓库或提供兼容期。
 
 ---
 
@@ -296,4 +300,4 @@ WPF 端：
 - 不让客户端成为重要业务数据的唯一来源。
 - 不把完整截图纳入常规 API 契约。
 - 不随意改动状态值。
-- API 字段变化必须同步考虑后端、Web、WPF 和测试。
+- API 字段变化必须同步考虑后端、Web、外部本地识别客户端和测试。
