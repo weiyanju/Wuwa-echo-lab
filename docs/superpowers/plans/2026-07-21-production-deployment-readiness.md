@@ -585,7 +585,7 @@ git commit -m "docs(server): add production deployment runbook"
 From `Wuwa/`:
 
 ```powershell
-.\.venv\Scripts\python.exe -m unittest discover -v
+.\.venv\Scripts\python.exe manage.py test --keepdb -v 1
 ```
 
 Expected: all backend tests pass.
