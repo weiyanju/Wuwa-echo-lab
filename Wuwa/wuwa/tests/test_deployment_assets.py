@@ -46,3 +46,26 @@ class DeploymentAssetTests(unittest.TestCase):
         self.assertIn("DB_USER=wuwa_app", environment)
         self.assertNotIn("DB_PASSWORD=root", environment)
         self.assertNotIn("wuwa-local-development-secret-key", environment)
+
+    def test_systemd_service_uses_dedicated_unprivileged_identity(self):
+        service = self.read_repository_file("deploy/wuwa.service")
+
+        self.assertIn("User=piaobozhe", service)
+        self.assertIn("Group=piaobozhe", service)
+        self.assertIn("WorkingDirectory=/srv/wuwa/app/Wuwa", service)
+        self.assertIn("EnvironmentFile=/etc/wuwa/wuwa.env", service)
+        self.assertIn("/srv/wuwa/app/.venv/bin/gunicorn", service)
+        self.assertIn("--bind 127.0.0.1:8001", service)
+        self.assertIn("wuwa.wsgi:application", service)
+        self.assertIn("NoNewPrivileges=true", service)
+        self.assertNotIn("User=root", service)
+
+    def test_nginx_serves_spa_and_proxies_only_the_api(self):
+        nginx = self.read_repository_file("deploy/nginx.conf")
+
+        self.assertIn("root /var/www/wuwa;", nginx)
+        self.assertIn("location /api/", nginx)
+        self.assertIn("proxy_pass http://127.0.0.1:8001;", nginx)
+        self.assertIn("proxy_set_header X-Forwarded-Proto $scheme;", nginx)
+        self.assertIn("try_files $uri $uri/ /index.html;", nginx)
+        self.assertNotIn("0.0.0.0:8001", nginx)
