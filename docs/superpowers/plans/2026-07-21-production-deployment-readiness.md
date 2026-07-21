@@ -616,7 +616,7 @@ $env:DB_PORT = '5432'
 .\.venv\Scripts\python.exe manage.py check --deploy
 ```
 
-Remove those process-scoped variables immediately after the command. Expected: `System check identified no issues` without requiring a database connection.
+Remove those process-scoped variables immediately after the command. Expected: exit code 0 without requiring a database connection. With the approved staged HSTS defaults, the only accepted warnings are `security.W005` and `security.W021`; any other deployment warning must be investigated. After subdomain HSTS and preload are deliberately enabled, the command should report no issues.
 
 - [ ] **Step 3: Run frontend tests and production build**
 

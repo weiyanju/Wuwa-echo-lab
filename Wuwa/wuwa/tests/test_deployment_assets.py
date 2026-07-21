@@ -124,6 +124,8 @@ class DeploymentAssetTests(unittest.TestCase):
             "pg_dump",
             "check --deploy",
             "/api/health/",
+            "security.W005",
+            "security.W021",
         )
         for fragment in required_runbook_fragments:
             with self.subTest(fragment=fragment):

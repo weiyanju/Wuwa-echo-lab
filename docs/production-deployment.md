@@ -265,7 +265,7 @@ runuser --preserve-environment -u piaobozhe -- \
 '
 ```
 
-预期输出为 `System check identified no issues`。若有警告或错误，不要跳过后继续公开服务。
+初始 HSTS 策略下，该命令应以 0 退出，并且只允许出现 `security.W005`（尚未覆盖所有子域）与 `security.W021`（尚未进入 preload）两条已知警告。它们与本手册第 9 节的分阶段启用策略一致。若出现任何其他部署警告或错误，先修复再继续；当未来显式启用子域 HSTS 与 preload 后，检查应变为 `System check identified no issues`。
 
 ## 11. 发布后验收
 
