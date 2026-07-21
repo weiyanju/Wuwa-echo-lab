@@ -73,3 +73,53 @@ class DatabaseSettingsTests(unittest.TestCase):
         self.assertEqual(settings.ALLOWED_HOSTS, ["api.example.test"])
         self.assertEqual(settings.CORS_ALLOWED_ORIGINS, [])
         self.assertEqual(settings.CSRF_TRUSTED_ORIGINS, [])
+
+    def test_development_transport_security_defaults_remain_disabled(self):
+        settings = self.load_settings_with_env({"WUWA_ENV": "development"})
+
+        self.assertIsNone(settings.SECURE_PROXY_SSL_HEADER)
+        self.assertFalse(settings.SECURE_SSL_REDIRECT)
+        self.assertFalse(settings.SESSION_COOKIE_SECURE)
+        self.assertFalse(settings.CSRF_COOKIE_SECURE)
+        self.assertEqual(settings.SECURE_HSTS_SECONDS, 0)
+        self.assertFalse(settings.SECURE_HSTS_INCLUDE_SUBDOMAINS)
+        self.assertFalse(settings.SECURE_HSTS_PRELOAD)
+
+    def test_production_enables_https_cookie_proxy_and_hsts_settings(self):
+        settings = self.load_settings_with_env(
+            {
+                "WUWA_ENV": "production",
+                "DJANGO_SECRET_KEY": "test-only-secret",
+                "DB_PASSWORD": "test-only-password",
+                "DJANGO_ALLOWED_HOSTS": "api.example.test",
+            }
+        )
+
+        self.assertEqual(
+            settings.SECURE_PROXY_SSL_HEADER,
+            ("HTTP_X_FORWARDED_PROTO", "https"),
+        )
+        self.assertTrue(settings.SECURE_SSL_REDIRECT)
+        self.assertTrue(settings.SESSION_COOKIE_SECURE)
+        self.assertTrue(settings.CSRF_COOKIE_SECURE)
+        self.assertEqual(settings.SECURE_HSTS_SECONDS, 3600)
+        self.assertFalse(settings.SECURE_HSTS_INCLUDE_SUBDOMAINS)
+        self.assertFalse(settings.SECURE_HSTS_PRELOAD)
+        self.assertEqual(settings.STATIC_ROOT, settings.BASE_DIR / "staticfiles")
+
+    def test_production_hsts_settings_accept_explicit_overrides(self):
+        settings = self.load_settings_with_env(
+            {
+                "WUWA_ENV": "production",
+                "DJANGO_SECRET_KEY": "test-only-secret",
+                "DB_PASSWORD": "test-only-password",
+                "DJANGO_ALLOWED_HOSTS": "api.example.test",
+                "DJANGO_SECURE_HSTS_SECONDS": "86400",
+                "DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS": "true",
+                "DJANGO_SECURE_HSTS_PRELOAD": "true",
+            }
+        )
+
+        self.assertEqual(settings.SECURE_HSTS_SECONDS, 86400)
+        self.assertTrue(settings.SECURE_HSTS_INCLUDE_SUBDOMAINS)
+        self.assertTrue(settings.SECURE_HSTS_PRELOAD)
