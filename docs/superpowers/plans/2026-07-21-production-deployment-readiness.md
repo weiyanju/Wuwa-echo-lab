@@ -78,7 +78,7 @@ Extend `DatabaseSettingsTests` with these assertions:
 Run from `Wuwa/`:
 
 ```powershell
-..\.tools\python\python.exe -m unittest wuwa.tests.test_database_settings -v
+.\.venv\Scripts\python.exe -m unittest wuwa.tests.test_database_settings -v
 ```
 
 Expected: the three new tests fail because the production transport-security settings and `STATIC_ROOT` do not yet exist.
@@ -115,7 +115,7 @@ Keep these values disabled in development so local HTTP continues working. HSTS 
 Run:
 
 ```powershell
-..\.tools\python\python.exe -m unittest wuwa.tests.test_database_settings -v
+.\.venv\Scripts\python.exe -m unittest wuwa.tests.test_database_settings -v
 ```
 
 Expected: all database/settings tests pass.
@@ -195,7 +195,7 @@ class DeploymentAssetTests(unittest.TestCase):
 Run from `Wuwa/`:
 
 ```powershell
-..\.tools\python\python.exe -m unittest wuwa.tests.test_deployment_assets -v
+.\.venv\Scripts\python.exe -m unittest wuwa.tests.test_deployment_assets -v
 ```
 
 Expected: the Gunicorn assertion fails and `.env.example` is missing.
@@ -236,7 +236,7 @@ Do not include the actual server IP, domain, secret key, or database password.
 Run:
 
 ```powershell
-..\.tools\python\python.exe -m unittest wuwa.tests.test_deployment_assets -v
+.\.venv\Scripts\python.exe -m unittest wuwa.tests.test_deployment_assets -v
 ```
 
 Expected: both tests pass.
@@ -290,7 +290,7 @@ Add these methods to `DeploymentAssetTests`:
 Run:
 
 ```powershell
-..\.tools\python\python.exe -m unittest wuwa.tests.test_deployment_assets -v
+.\.venv\Scripts\python.exe -m unittest wuwa.tests.test_deployment_assets -v
 ```
 
 Expected: the service and Nginx tests fail because `deploy/` does not exist.
@@ -368,7 +368,7 @@ server {
 Run:
 
 ```powershell
-..\.tools\python\python.exe -m unittest wuwa.tests.test_deployment_assets -v
+.\.venv\Scripts\python.exe -m unittest wuwa.tests.test_deployment_assets -v
 ```
 
 Expected: all deployment-asset tests pass.
@@ -429,7 +429,7 @@ Add this method to `DeploymentAssetTests`:
 Run:
 
 ```powershell
-..\.tools\python\python.exe -m unittest wuwa.tests.test_deployment_assets -v
+.\.venv\Scripts\python.exe -m unittest wuwa.tests.test_deployment_assets -v
 ```
 
 Expected: the deployment-script test fails because `deploy/deploy.sh` is missing.
@@ -462,7 +462,7 @@ Use quoted variables throughout. Keep the deployment sequence intentionally non-
 Run:
 
 ```powershell
-..\.tools\python\python.exe -m unittest wuwa.tests.test_deployment_assets -v
+.\.venv\Scripts\python.exe -m unittest wuwa.tests.test_deployment_assets -v
 & 'C:\Program Files\Git\bin\bash.exe' -n deploy/deploy.sh
 ```
 
@@ -520,7 +520,7 @@ Add this method to `DeploymentAssetTests`:
 Run:
 
 ```powershell
-..\.tools\python\python.exe -m unittest wuwa.tests.test_deployment_assets -v
+.\.venv\Scripts\python.exe -m unittest wuwa.tests.test_deployment_assets -v
 ```
 
 Expected: the runbook test fails because the production deployment guide does not yet exist or is not linked.
@@ -561,7 +561,7 @@ Update:
 Run:
 
 ```powershell
-..\.tools\python\python.exe -m unittest wuwa.tests.test_deployment_assets -v
+.\.venv\Scripts\python.exe -m unittest wuwa.tests.test_deployment_assets -v
 git diff --check
 ```
 
@@ -585,7 +585,7 @@ git commit -m "docs(server): add production deployment runbook"
 From `Wuwa/`:
 
 ```powershell
-..\.tools\python\python.exe -m unittest discover -v
+.\.venv\Scripts\python.exe -m unittest discover -v
 ```
 
 Expected: all backend tests pass.
@@ -605,7 +605,7 @@ $env:DB_USER = 'wuwa_app'
 $env:DB_PASSWORD = 'test-only-production-database-password'
 $env:DB_HOST = '127.0.0.1'
 $env:DB_PORT = '5432'
-..\.tools\python\python.exe manage.py check --deploy
+.\.venv\Scripts\python.exe manage.py check --deploy
 ```
 
 Remove those process-scoped variables immediately after the command. Expected: `System check identified no issues` without requiring a database connection.
