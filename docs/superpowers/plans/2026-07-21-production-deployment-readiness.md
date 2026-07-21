@@ -385,6 +385,7 @@ git commit -m "feat(server): add systemd and nginx templates"
 **Files:**
 
 - Modify: `Wuwa/wuwa/tests/test_deployment_assets.py`
+- Modify: `.gitignore`
 - Create: `deploy/deploy.sh`
 
 - [ ] **Step 1: Add a failing deployment workflow contract test**
@@ -422,6 +423,11 @@ Add this method to `DeploymentAssetTests`:
 
         self.assertNotIn("git reset --hard", script)
         self.assertNotIn("git clean", script)
+
+    def test_collected_static_output_cannot_dirty_the_deployment_checkout(self):
+        gitignore = self.read_repository_file(".gitignore")
+
+        self.assertIn("staticfiles/", gitignore.splitlines())
 ```
 
 - [ ] **Step 2: Run the deployment-asset test and confirm RED**
@@ -432,7 +438,7 @@ Run:
 .\.venv\Scripts\python.exe -m unittest wuwa.tests.test_deployment_assets -v
 ```
 
-Expected: the deployment-script test fails because `deploy/deploy.sh` is missing.
+Expected: the deployment-script test fails because `deploy/deploy.sh` is missing, and the static-output test fails because `staticfiles/` is not ignored.
 
 - [ ] **Step 3: Implement the root-orchestrated deployment script**
 
@@ -450,10 +456,11 @@ Create `deploy/deploy.sh` with these exact behaviors:
 10. Run Django `check --deploy` before building or migrating.
 11. Run `npm ci` and `npm run build` in `WuwaFrontend`.
 12. Run `migrate --noinput` and `collectstatic --noinput`.
-13. Publish `WuwaFrontend/dist/` to `/var/www/wuwa/` using `rsync -a --delete`, then set `root:www-data` ownership.
-14. Restart `wuwa.service` and require it to be active.
-15. Retry the external health URL up to 12 times with a five-second delay.
-16. On failure, print the failed step, `systemctl status`, and the last 80 service journal lines.
+13. Ignore `staticfiles/` in `.gitignore` so `collectstatic` cannot make later deployments fail the clean-tree preflight.
+14. Publish `WuwaFrontend/dist/` to `/var/www/wuwa/` using `rsync -a --delete`, then set `root:www-data` ownership.
+15. Restart `wuwa.service` and require it to be active.
+16. Retry the external health URL up to 12 times with a five-second delay.
+17. On failure, print the failed step, `systemctl status`, and the last 80 service journal lines.
 
 Use quoted variables throughout. Keep the deployment sequence intentionally non-destructive: failure after migration may leave the new schema applied, but the script must never erase the repository, database, or prior deployment output as a rollback shortcut.
 
@@ -471,7 +478,7 @@ Expected: all tests pass and Bash exits 0 with no output.
 - [ ] **Step 5: Commit the deployment script**
 
 ```powershell
-git add Wuwa/wuwa/tests/test_deployment_assets.py deploy/deploy.sh
+git add Wuwa/wuwa/tests/test_deployment_assets.py .gitignore deploy/deploy.sh
 git commit -m "feat(server): add repeatable deployment script"
 ```
 

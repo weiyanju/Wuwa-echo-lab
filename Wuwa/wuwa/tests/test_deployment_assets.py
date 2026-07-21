@@ -69,3 +69,39 @@ class DeploymentAssetTests(unittest.TestCase):
         self.assertIn("proxy_set_header X-Forwarded-Proto $scheme;", nginx)
         self.assertIn("try_files $uri $uri/ /index.html;", nginx)
         self.assertNotIn("0.0.0.0:8001", nginx)
+
+    def test_deployment_script_is_locked_fail_fast_and_health_checked(self):
+        script = self.read_repository_file("deploy/deploy.sh")
+
+        required_fragments = (
+            "set -Eeuo pipefail",
+            'APP_USER="piaobozhe"',
+            'APP_ROOT="/srv/wuwa/app"',
+            'ENV_FILE="/etc/wuwa/wuwa.env"',
+            'LOCK_FILE="/var/lock/wuwa-deploy.lock"',
+            "flock -n 9",
+            "git fetch origin main",
+            "git merge --ff-only origin/main",
+            "pip install",
+            "manage.py check --deploy",
+            "npm ci",
+            "npm run build",
+            "manage.py migrate --noinput",
+            "manage.py collectstatic --noinput",
+            "rsync -a --delete",
+            "systemctl restart",
+            "systemctl is-active --quiet",
+            "WUWA_HEALTHCHECK_URL",
+            "curl --fail",
+        )
+        for fragment in required_fragments:
+            with self.subTest(fragment=fragment):
+                self.assertIn(fragment, script)
+
+        self.assertNotIn("git reset --hard", script)
+        self.assertNotIn("git clean", script)
+
+    def test_collected_static_output_cannot_dirty_the_deployment_checkout(self):
+        gitignore = self.read_repository_file(".gitignore")
+
+        self.assertIn("staticfiles/", gitignore.splitlines())
