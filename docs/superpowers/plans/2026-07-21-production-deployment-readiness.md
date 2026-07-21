@@ -282,6 +282,7 @@ Add these methods to `DeploymentAssetTests`:
         self.assertIn("proxy_pass http://127.0.0.1:8001;", nginx)
         self.assertIn("proxy_set_header X-Forwarded-Proto $scheme;", nginx)
         self.assertIn("try_files $uri $uri/ /index.html;", nginx)
+        self.assertIn("location ~ /\\.(?!well-known(?:/|$))", nginx)
         self.assertNotIn("0.0.0.0:8001", nginx)
 ```
 
@@ -357,7 +358,7 @@ server {
         try_files $uri $uri/ /index.html;
     }
 
-    location ~ /\. {
+    location ~ /\.(?!well-known(?:/|$)) {
         deny all;
     }
 }

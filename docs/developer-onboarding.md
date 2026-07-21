@@ -153,9 +153,11 @@ Vite 会把 `/api` 代理到 `http://127.0.0.1:8001`，前端开发时直接调�
 
 ### 生产配置边界
 
-服务器部署必须设置 `WUWA_ENV=production`，并通过部署环境显式提供 `DJANGO_SECRET_KEY`、`DB_PASSWORD` 和逗号分隔的 `DJANGO_ALLOWED_HOSTS`。生产模式默认关闭 `DEBUG`，不继承本地数据库密码和 localhost 的 CORS/CSRF 来源；缺少必需值或显式开启调试时会拒绝启动。
+服务器部署必须设置 `WUWA_ENV=production`，并通过部署环境显式提供 `DJANGO_SECRET_KEY`、`DB_PASSWORD` 和逗号分隔的 `DJANGO_ALLOWED_HOSTS`。生产模式默认关闭 `DEBUG`，不继承本地数据库密码和 localhost 的 CORS/CSRF 来源，并启用 HTTPS 重定向、安全 Cookie、代理 HTTPS 识别和初始 HSTS；缺少必需值或显式开启调试时会拒绝启动。
 
 Web 与 API 不同源时，再按实际地址设置逗号分隔的 `DJANGO_CORS_ALLOWED_ORIGINS` 与 `DJANGO_CSRF_TRUSTED_ORIGINS`。所有真实密码、域名、远端地址和私有路径只保留在服务器或不入库的本地配置中。
+
+Ubuntu 24.04 的首次安装、`piaobozhe` 服务身份、服务器 PostgreSQL、Nginx/systemd、HTTPS、发布和备份流程统一遵循 [生产部署手册](./production-deployment.md)。生产服务器只从干净的 `main` 做 fast-forward 更新，或部署经过明确验收的发布提交；不得直接部署尚未合并的功能分支。
 
 ## 代码落点规则
 

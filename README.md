@@ -117,17 +117,9 @@ http://127.0.0.1:8001/api/health/
 
 ### 生产配置门槛
 
-设置 `WUWA_ENV=production` 后，Django 不会继承本地数据库密码、localhost 主机白名单或本地 CORS/CSRF 来源，并强制 `DEBUG` 关闭。启动前必须显式提供：
+设置 `WUWA_ENV=production` 后，Django 强制关闭 `DEBUG`，要求显式提供密钥、数据库密码和主机白名单，并启用 HTTPS 重定向、安全 Cookie、反向代理 HTTPS 识别及分阶段 HSTS。真实密码、域名和远端地址不得提交到仓库。
 
-```powershell
-$env:WUWA_ENV = "production"
-$env:DJANGO_SECRET_KEY = "由部署环境安全提供"
-$env:DB_PASSWORD = "由部署环境安全提供"
-$env:DJANGO_ALLOWED_HOSTS = "api.example.com"
-$env:DJANGO_DEBUG = "false"
-```
-
-`DJANGO_ALLOWED_HOSTS` 使用逗号分隔。只有 Web 与 API 不同源时，才按实际部署地址设置逗号分隔的 `DJANGO_CORS_ALLOWED_ORIGINS` 和 `DJANGO_CSRF_TRUSTED_ORIGINS`。缺少必需值或在生产模式开启调试时，Django 会拒绝启动。真实密码、域名和远端地址仍不得提交到仓库。
+生产环境采用 Nginx、Gunicorn、systemd 与服务器本机 PostgreSQL。完整的 Ubuntu 24.04 首次安装、HTTPS、发布、验收、备份与后续更新步骤见 [生产部署手册](docs/production-deployment.md)。服务器只部署已合并到 `main` 或明确指定的发布提交，不直接部署功能分支。
 
 ### 前端
 

@@ -75,8 +75,13 @@
 - `DJANGO_DEBUG` 必须为 false；生产模式不允许开启调试。
 - 生产模式不使用本地数据库密码回退，也不继承 localhost 的 host、CORS 或 CSRF 默认值。
 - Web 与 API 不同源时，通过逗号分隔的 `DJANGO_CORS_ALLOWED_ORIGINS` 和 `DJANGO_CSRF_TRUSTED_ORIGINS` 显式提供实际来源；同源部署可以保持为空。
+- 生产环境启用 HTTPS 重定向、`SESSION_COOKIE_SECURE`、`CSRF_COOKIE_SECURE` 和可信反向代理 HTTPS 头；Nginx 必须覆盖客户端传入的 `X-Forwarded-Proto`，Gunicorn 不直接暴露公网。
+- HSTS 初始时长为 3600 秒；`includeSubDomains` 和 preload 默认关闭。只有证书续期、所有子域和恢复路径都验证稳定后才能分阶段开启。
+- 真实环境变量仅存放在服务器 `/etc/wuwa/wuwa.env`，权限为 `root:piaobozhe 0640`。仓库内的 `.env.example` 只能包含占位值。
+- Gunicorn 只监听 `127.0.0.1:8001`，PostgreSQL 只供服务器本机使用；安全组和主机防火墙不得开放 8001 或 5432。
+- 生产业务数据属于服务器 PostgreSQL 的 `wuwa` 数据库，由 `wuwa_app` 角色访问；它与开发电脑的 `wuwa_dev` 数据库完全独立，必须纳入服务器备份和恢复演练。
 
-当前门槛只防止把开发配置误带入生产，不代表系统已经完成部署验收。任何服务器部署开始前，仍必须准备不入库的真实配置、执行安全检查，并在目标环境完成验证；完成该阶段后，应删除仓库中的本地密码默认值。
+服务器安装、发布、验收和数据库备份的具体步骤见 [生产部署手册](./production-deployment.md)。当前门槛只防止把开发配置误带入生产，不代表系统已经完成部署验收。任何服务器部署开始前，仍必须准备不入库的真实配置、执行安全检查，并在目标环境完成验证；完成该阶段后，应删除仓库中的本地密码默认值。
 
 ---
 

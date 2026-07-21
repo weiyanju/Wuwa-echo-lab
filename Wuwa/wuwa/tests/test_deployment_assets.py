@@ -68,6 +68,7 @@ class DeploymentAssetTests(unittest.TestCase):
         self.assertIn("proxy_pass http://127.0.0.1:8001;", nginx)
         self.assertIn("proxy_set_header X-Forwarded-Proto $scheme;", nginx)
         self.assertIn("try_files $uri $uri/ /index.html;", nginx)
+        self.assertIn("location ~ /\\.(?!well-known(?:/|$))", nginx)
         self.assertNotIn("0.0.0.0:8001", nginx)
 
     def test_deployment_script_is_locked_fail_fast_and_health_checked(self):
@@ -105,3 +106,28 @@ class DeploymentAssetTests(unittest.TestCase):
         gitignore = self.read_repository_file(".gitignore")
 
         self.assertIn("staticfiles/", gitignore.splitlines())
+
+    def test_production_deployment_runbook_is_linked_and_complete(self):
+        runbook = self.read_repository_file("docs/production-deployment.md")
+        readme = self.read_repository_file("README.md")
+        onboarding = self.read_repository_file("docs/developer-onboarding.md")
+
+        required_runbook_fragments = (
+            "Ubuntu 24.04",
+            "piaobozhe",
+            "wuwa_app",
+            "/etc/wuwa/wuwa.env",
+            "deploy/wuwa.service",
+            "deploy/nginx.conf",
+            "deploy/deploy.sh",
+            "certbot",
+            "pg_dump",
+            "check --deploy",
+            "/api/health/",
+        )
+        for fragment in required_runbook_fragments:
+            with self.subTest(fragment=fragment):
+                self.assertIn(fragment, runbook)
+
+        self.assertIn("docs/production-deployment.md", readme)
+        self.assertIn("production-deployment.md", onboarding)
