@@ -20,3 +20,5 @@
 
 - `node --test scripts/wuwa-sonata-assets.test.mjs`：6 项通过。
 - `npm test -- src\data\sonataEffects.test.js src\services\formatters.test.js`：15 项通过。
+- 合并前复验 `npm test`：348 项通过，0 项失败。
+- 合并前复验 `npm run build`：退出码 0，Vite 生产构建成功。
