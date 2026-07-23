@@ -5,7 +5,12 @@ import test from 'node:test'
 import { createRenderer, defineComponent } from 'vue'
 
 import {
-  TITLE_CHARACTER_INTERVAL_MS,
+  TITLE_AUTH_HANDOFF_DELAY_MS,
+  TITLE_FINAL_HOLD_MS,
+  TITLE_INDICATOR_HIDE_DELAY_MS,
+  TITLE_INDICATOR_STATE,
+  TITLE_INDICATOR_TRANSITION_MS,
+  TITLE_PHASE,
   TITLE_START_DELAY_MS,
 } from './titleAnimation.js'
 import { useTitleAnimation } from './useTitleAnimation.js'
@@ -157,56 +162,60 @@ test('title animation composable owns browser preferences, lifecycle, and cleanu
   assert.match(source, /windowTarget\?\.matchMedia\?\.\('\(prefers-reduced-motion: reduce\)'\)/)
   assert.match(source, /windowTarget\?\.matchMedia\?\.\('\(max-width: 520px\)'\)/)
   assert.match(source, /const displayedTitle = ref\(shouldPlay \? '' : text\)/)
-  assert.match(source, /const isComplete = ref\(!shouldPlay\)/)
+  assert.match(source, /const phase = ref\(shouldPlay \? TITLE_PHASE\.PREPARING : TITLE_PHASE\.STATIC\)/)
+  assert.match(source, /const indicatorState = ref\(TITLE_INDICATOR_STATE\.HIDDEN\)/)
+  assert.match(source, /const isAuthReady = ref\(!shouldPlay\)/)
   assert.match(source, /let fontPreparation = null/)
   assert.match(source, /let stopped = false/)
   assert.match(source, /onMounted\(async \(\) => \{/)
   assert.match(source, /if \(documentTarget\?\.hidden \|\| reducedMotionQuery\.matches \|\| compactViewportQuery\.matches\) \{\s+complete\(\)/)
   assert.match(source, /fontPreparation = createTitleFontPreparation\(\{\s+text,\s+fontSet: documentTarget\?\.fonts,/)
   assert.match(source, /fontPreparation\.start\(\)\s+const fontReady = await fontPreparation\.ready/)
-  assert.match(source, /if \(stopped \|\| isComplete\.value\) return/)
+  assert.match(source, /if \(stopped \|\| phase\.value === TITLE_PHASE\.STATIC\) return/)
   assert.match(source, /if \(!fontReady \|\| documentTarget\?\.hidden \|\| reducedMotionQuery\.matches \|\| compactViewportQuery\.matches\) \{\s+complete\(\)/)
-  assert.match(source, /animation = createTitleAnimation\(\{[\s\S]+onComplete: \(\) => \{\s+isComplete\.value = true/)
+  assert.match(source, /onPhaseChange: \(nextPhase\) => \{\s+phase\.value = nextPhase/)
+  assert.match(source, /onIndicatorChange: \(nextState\) => \{\s+indicatorState\.value = nextState/)
+  assert.match(source, /onAuthReady: \(\) => \{\s+isAuthReady\.value = true/)
   assert.match(source, /documentTarget\?\.addEventListener\('visibilitychange', handleDocumentVisibility\)/)
   assert.match(source, /stopped = true\s+fontPreparation\?\.cancel\(\)/)
   assert.match(source, /onBeforeUnmount\(\(\) => \{[\s\S]+animation\?\.cancel\(\)[\s\S]+removeEventListener/)
-  assert.match(source, /return \{ displayedTitle, isComplete \}/)
+  assert.match(source, /return \{ displayedTitle, phase, indicatorState, isAuthReady \}/)
 })
 
-test('title animation waits for ready fonts and gates completion until typing finishes', async (context) => {
+test('title animation hands auth over before the archived indicator exits', async (context) => {
   context.mock.timers.enable({ apis: ['setTimeout'] })
   const fontLoad = createDeferred()
-  const loadCalls = []
-  const targets = createBrowserTargets({
-    load(font, text) {
-      loadCalls.push({ font, text })
-      return fontLoad.promise
-    },
-  })
+  const targets = createBrowserTargets({ load: () => fontLoad.promise })
   const { state, unmount } = mountTitleAnimation('题', targets)
 
   assert.equal(state.displayedTitle.value, '')
-  assert.equal(state.isComplete.value, false)
-  assert.equal(loadCalls.length, 1)
-
-  context.mock.timers.tick(TITLE_START_DELAY_MS)
-  assert.equal(state.displayedTitle.value, '')
-  assert.equal(state.isComplete.value, false)
+  assert.equal(state.phase.value, TITLE_PHASE.PREPARING)
+  assert.equal(state.indicatorState.value, TITLE_INDICATOR_STATE.HIDDEN)
+  assert.equal(state.isAuthReady.value, false)
 
   fontLoad.resolve([{}])
   await flushMicrotasks()
-  assert.equal(state.displayedTitle.value, '')
-  assert.equal(state.isComplete.value, false)
+  assert.equal(state.phase.value, TITLE_PHASE.TYPING)
+  assert.equal(state.indicatorState.value, TITLE_INDICATOR_STATE.BAR)
 
   context.mock.timers.tick(TITLE_START_DELAY_MS)
   assert.equal(state.displayedTitle.value, '题')
-  assert.equal(state.isComplete.value, false)
 
-  context.mock.timers.tick(TITLE_CHARACTER_INTERVAL_MS - 1)
-  assert.equal(state.isComplete.value, false)
-  context.mock.timers.tick(1)
-  assert.equal(state.displayedTitle.value, '题')
-  assert.equal(state.isComplete.value, true)
+  context.mock.timers.tick(TITLE_FINAL_HOLD_MS)
+  assert.equal(state.phase.value, TITLE_PHASE.RESOLVING)
+  assert.equal(state.indicatorState.value, TITLE_INDICATOR_STATE.DOT)
+  assert.equal(state.isAuthReady.value, false)
+
+  context.mock.timers.tick(TITLE_AUTH_HANDOFF_DELAY_MS)
+  assert.equal(state.isAuthReady.value, true)
+  assert.equal(state.phase.value, TITLE_PHASE.RESOLVING)
+
+  context.mock.timers.tick(TITLE_INDICATOR_HIDE_DELAY_MS - TITLE_AUTH_HANDOFF_DELAY_MS)
+  assert.equal(state.indicatorState.value, TITLE_INDICATOR_STATE.HIDDEN)
+  assert.equal(state.phase.value, TITLE_PHASE.RESOLVING)
+
+  context.mock.timers.tick(TITLE_INDICATOR_TRANSITION_MS)
+  assert.equal(state.phase.value, TITLE_PHASE.COMPLETED)
 
   unmount()
 })
@@ -217,14 +226,20 @@ test('empty font readiness completes the title statically without typing', async
   const { state, unmount } = mountTitleAnimation('完整标题', targets)
 
   assert.equal(state.displayedTitle.value, '')
-  assert.equal(state.isComplete.value, false)
+  assert.equal(state.phase.value, TITLE_PHASE.PREPARING)
+  assert.equal(state.indicatorState.value, TITLE_INDICATOR_STATE.HIDDEN)
+  assert.equal(state.isAuthReady.value, false)
   await flushMicrotasks()
   assert.equal(state.displayedTitle.value, '完整标题')
-  assert.equal(state.isComplete.value, true)
+  assert.equal(state.phase.value, TITLE_PHASE.STATIC)
+  assert.equal(state.indicatorState.value, TITLE_INDICATOR_STATE.HIDDEN)
+  assert.equal(state.isAuthReady.value, true)
 
   context.mock.timers.tick(1_000)
   assert.equal(state.displayedTitle.value, '完整标题')
-  assert.equal(state.isComplete.value, true)
+  assert.equal(state.phase.value, TITLE_PHASE.STATIC)
+  assert.equal(state.indicatorState.value, TITLE_INDICATOR_STATE.HIDDEN)
+  assert.equal(state.isAuthReady.value, true)
 
   unmount()
 })
@@ -247,16 +262,22 @@ test('pending font preparation completes statically on visibility and preference
     assert.equal(targets.compactViewportQuery.listenerCount('change'), 1, name)
     makeStatic(targets)
     assert.equal(state.displayedTitle.value, '完整标题', name)
-    assert.equal(state.isComplete.value, true, name)
+    assert.equal(state.phase.value, TITLE_PHASE.STATIC, name)
+    assert.equal(state.indicatorState.value, TITLE_INDICATOR_STATE.HIDDEN, name)
+    assert.equal(state.isAuthReady.value, true, name)
 
     fontLoad.resolve([{}])
     await flushMicrotasks()
     assert.equal(state.displayedTitle.value, '完整标题', name)
-    assert.equal(state.isComplete.value, true, name)
+    assert.equal(state.phase.value, TITLE_PHASE.STATIC, name)
+    assert.equal(state.indicatorState.value, TITLE_INDICATOR_STATE.HIDDEN, name)
+    assert.equal(state.isAuthReady.value, true, name)
 
     context.mock.timers.tick(1_000)
     assert.equal(state.displayedTitle.value, '完整标题', name)
-    assert.equal(state.isComplete.value, true, name)
+    assert.equal(state.phase.value, TITLE_PHASE.STATIC, name)
+    assert.equal(state.indicatorState.value, TITLE_INDICATOR_STATE.HIDDEN, name)
+    assert.equal(state.isAuthReady.value, true, name)
     unmount()
   }
 })
@@ -268,7 +289,9 @@ test('unmount cancels pending font preparation and ignores its late result', asy
   const { state, unmount } = mountTitleAnimation('完整标题', targets)
 
   assert.equal(state.displayedTitle.value, '')
-  assert.equal(state.isComplete.value, false)
+  assert.equal(state.phase.value, TITLE_PHASE.PREPARING)
+  assert.equal(state.indicatorState.value, TITLE_INDICATOR_STATE.HIDDEN)
+  assert.equal(state.isAuthReady.value, false)
   unmount()
   assert.equal(targets.documentTarget.listenerCount('visibilitychange'), 0)
   assert.equal(targets.reducedMotionQuery.listenerCount('change'), 0)
@@ -279,5 +302,7 @@ test('unmount cancels pending font preparation and ignores its late result', asy
   await flushMicrotasks()
   context.mock.timers.tick(1_000)
   assert.equal(state.displayedTitle.value, '')
-  assert.equal(state.isComplete.value, false)
+  assert.equal(state.phase.value, TITLE_PHASE.PREPARING)
+  assert.equal(state.indicatorState.value, TITLE_INDICATOR_STATE.HIDDEN)
+  assert.equal(state.isAuthReady.value, false)
 })
