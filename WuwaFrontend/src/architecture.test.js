@@ -62,6 +62,7 @@ test('frontend high-attraction entry files do not grow beyond the refactor basel
   assert.ok(await lineCount('./styles/shell.css') <= 920, 'shell.css must not grow beyond 920 lines')
   assert.ok(await lineCount('./styles/features/history.css') <= 940, 'history.css must not grow beyond 940 lines')
   assert.ok(await lineCount('./styles/features/auth.css') <= 420, 'auth.css must keep the terminal entry and uid card flow bounded')
+  assert.ok(await lineCount('./styles/features/auth-motion.css').catch(() => Infinity) <= 80, 'auth-motion.css must remain a focused homepage motion owner')
   assert.ok(await lineCount('./styles/features/workspace.css') <= 710, 'workspace.css must not grow beyond 710 lines')
   assert.ok(await lineCount('./styles/features/workspace-active.css') <= 390, 'workspace-active.css must not grow beyond 390 lines')
   assert.ok(await lineCount('./styles/features/evaluation.css') <= 4700, 'evaluation.css must not grow beyond 4700 lines')
@@ -124,6 +125,7 @@ test('global color tokens expose canonical names while legacy names remain alias
     './styles/shell-metrics.css',
     './styles/shell.css',
     './styles/features/auth.css',
+    './styles/features/auth-motion.css',
     './styles/features/evaluation-layout.css',
     './styles/features/evaluation.css',
     './styles/features/history.css',
@@ -134,7 +136,10 @@ test('global color tokens expose canonical names while legacy names remain alias
     './styles/features/workspace.css',
   ]
   const activeStyles = (await Promise.all(
-    activeStylePaths.map((relativePath) => readFile(new URL(relativePath, import.meta.url), 'utf8')),
+    activeStylePaths.map((relativePath) => readFile(new URL(relativePath, import.meta.url), 'utf8').catch((error) => {
+      if (relativePath === './styles/features/auth-motion.css') return ''
+      throw error
+    })),
   )).join('\n')
 
   for (const declaration of [
@@ -230,6 +235,7 @@ test('history feature owns panel, filters, records, and responsive styles', asyn
 test('auth feature owns login layout, information, dark, and responsive styles', async () => {
   const entry = await readFile(new URL('./style.css', import.meta.url), 'utf8')
   const auth = await readFile(new URL('./styles/features/auth.css', import.meta.url), 'utf8')
+  const authMotion = await readFile(new URL('./styles/features/auth-motion.css', import.meta.url), 'utf8').catch(() => '')
   const controls = await readFile(new URL('./styles/controls.css', import.meta.url), 'utf8')
   const uidActions = cssBlockBody(auth, /\.terminal-uid-actions\s*(?=\{)/)
   const uidPrimaryAction = cssBlockBody(auth, /\.terminal-uid-actions \.terminal-primary-btn\s*(?=\{)/)
@@ -251,6 +257,7 @@ test('auth feature owns login layout, information, dark, and responsive styles',
   )
 
   assert.match(entry, /@import '\.\/styles\/features\/auth\.css';/)
+  assert.match(auth, /^@import '\.\/auth-motion\.css';/)
   assert.match(
     entry,
     /@import '\.\/styles\/features\/auth\.css';[\s\S]*@import '\.\/styles\/controls\.css';/,
@@ -297,7 +304,8 @@ test('auth feature owns login layout, information, dark, and responsive styles',
   assert.match(auth, /@media \(max-width: 860px\)/)
   assert.match(auth, /@media \(max-width: 520px\)/)
   assert.match(auth, /@media \(max-width: 860px\)[\s\S]+\.terminal-container \{[\s\S]+grid-template-columns: 1fr;/)
-  assert.match(auth, /@media \(max-width: 520px\)[\s\S]+\.terminal-title \{[\s\S]+white-space: normal;[\s\S]+\.terminal-title-caret \{ display: none; \}/)
+  assert.match(auth, /@media \(max-width: 520px\)[\s\S]+\.terminal-title \{[\s\S]+white-space: normal;/)
+  assert.match(authMotion, /@media \(max-width: 520px\) \{[\s\S]+\.terminal-title-indicator \{[^}]+display: none;/)
   assert.doesNotMatch(entry, /\.auth-shell \{/)
   assert.doesNotMatch(entry, /\.terminal-home \{/)
 })

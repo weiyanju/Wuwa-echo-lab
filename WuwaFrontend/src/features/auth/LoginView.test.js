@@ -58,14 +58,15 @@ test('login view announces form errors and associates them with every credential
 
 test('login view keeps content visible without motion and defines a complete dark palette', async () => {
   const style = await readFile(new URL('../../styles/features/auth.css', import.meta.url), 'utf8')
+  const motion = await readFile(new URL('../../styles/features/auth-motion.css', import.meta.url), 'utf8').catch(() => '')
 
   assert.match(style, /\.terminal-subtitle \{[\s\S]+opacity: 1;[\s\S]+animation:[^;]+ both;/)
   assert.match(style, /\.terminal-features-grid \{[\s\S]+opacity: 1;[\s\S]+animation:[^;]+ both;/)
   assert.match(style, /\.terminal-auth-wrapper \{ opacity: 1; \}/)
-  assert.match(style, /\.terminal-auth-enter-active \{[^}]+160ms/)
+  assert.match(motion, /\.terminal-auth-enter-active \{[^}]+260ms/)
   assert.match(style, /\.app-shell\.theme-dark \.terminal-home \{[\s\S]+--terminal-page: #0f1720;[\s\S]+--terminal-card: #17232d;[\s\S]+--terminal-text: #e7eef4;/)
   assert.match(style, /\.app-shell\.theme-dark \.terminal-navbar \{[^}]+background: rgba\(15, 23, 32, 0\.85\);/)
-  assert.match(style, /@media \(prefers-reduced-motion: reduce\) \{[\s\S]+\.terminal-title-caret \{ display: none; \}[\s\S]+\.terminal-auth-enter-active \{ transition: none; \}/)
+  assert.match(motion, /@media \(prefers-reduced-motion: reduce\) \{[\s\S]+\.terminal-title-indicator \{[^}]+display: none;[\s\S]+\.terminal-auth-enter-active \{[^}]+transition: none;/)
 })
 
 test('login view reveals complete title graphemes before mounting the authentication card', async () => {
@@ -73,9 +74,11 @@ test('login view reveals complete title graphemes before mounting the authentica
 
   assert.match(source, /import \{ useTitleAnimation \} from '\.\/useTitleAnimation\.js'/)
   assert.match(source, /const terminalTitle = '欢迎回家，漂泊者'/)
-  assert.match(source, /const \{ displayedTitle: displayedTerminalTitle, isComplete: isTerminalTitleComplete \} = useTitleAnimation\(terminalTitle\)/)
-  assert.match(source, /<h1 class="terminal-title" :aria-label="terminalTitle">\s*<span aria-hidden="true">\{\{ displayedTerminalTitle \}\}<\/span>\s*<span class="terminal-title-caret" aria-hidden="true"><\/span>\s*<\/h1>/)
-  assert.match(source, /<Transition name="terminal-auth">\s*<div v-if="isTerminalTitleComplete" class="terminal-auth-wrapper">/)
+  assert.match(source, /displayedTitle: displayedTerminalTitle,[\s\S]+phase: terminalTitlePhase,[\s\S]+indicatorState: terminalTitleIndicator,[\s\S]+isAuthReady: isTerminalAuthReady/)
+  assert.match(source, /const showsTerminalTitleIndicator = computed\(\(\) => \['typing', 'punctuation', 'resolving'\]\.includes\(terminalTitlePhase\.value\)\)/)
+  assert.match(source, /<h1 class="terminal-title" :aria-label="terminalTitle">[\s\S]+<span aria-hidden="true">\{\{ displayedTerminalTitle \}\}<\/span>[\s\S]+<span[\s\S]+v-if="showsTerminalTitleIndicator"[\s\S]+class="terminal-title-indicator"[\s\S]+:class="`terminal-title-indicator--\$\{terminalTitleIndicator\}`"[\s\S]+aria-hidden="true"/)
+  assert.match(source, /<Transition name="terminal-auth">\s*<div v-if="isTerminalAuthReady" class="terminal-auth-wrapper">/)
+  assert.doesNotMatch(source, /terminal-title-caret|isTerminalTitleComplete/)
   assert.doesNotMatch(source, /onMounted|onBeforeUnmount|matchMedia/)
 })
 

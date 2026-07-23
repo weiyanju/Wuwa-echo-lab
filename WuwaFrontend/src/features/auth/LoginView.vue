@@ -16,7 +16,8 @@ const props = defineProps({
 const emit = defineEmits(['submit', 'bind', 'clear-error', 'sign-out'])
 
 const terminalTitle = '欢迎回家，漂泊者'
-const { displayedTitle: displayedTerminalTitle, isComplete: isTerminalTitleComplete } = useTitleAnimation(terminalTitle)
+const { displayedTitle: displayedTerminalTitle, phase: terminalTitlePhase, indicatorState: terminalTitleIndicator, isAuthReady: isTerminalAuthReady } = useTitleAnimation(terminalTitle)
+const showsTerminalTitleIndicator = computed(() => ['typing', 'punctuation', 'resolving'].includes(terminalTitlePhase.value))
 
 const terminalFeatures = [
   { title: '历史调谐记录', path: 'M4 21v-7m0-4V3m8 18v-9m0-4V3m8 18v-5m0-4V3M1 14h6m2-6h6m2 8h6' },
@@ -84,7 +85,7 @@ function submitAuth() {
           <div class="terminal-title-wrapper">
             <h1 class="terminal-title" :aria-label="terminalTitle">
               <span aria-hidden="true">{{ displayedTerminalTitle }}</span>
-              <span class="terminal-title-caret" aria-hidden="true"></span>
+              <span v-if="showsTerminalTitleIndicator" class="terminal-title-indicator" :class="`terminal-title-indicator--${terminalTitleIndicator}`" aria-hidden="true"></span>
             </h1>
           </div>
           <div class="terminal-features-grid">
@@ -96,7 +97,7 @@ function submitAuth() {
         </div>
 
         <Transition name="terminal-auth">
-          <div v-if="isTerminalTitleComplete" class="terminal-auth-wrapper">
+          <div v-if="isTerminalAuthReady" class="terminal-auth-wrapper">
             <div class="terminal-auth-card">
               <Transition :name="cardTransitionName" mode="out-in">
                 <div v-if="view === 'auth'" key="auth" class="terminal-card-page terminal-credentials-page">

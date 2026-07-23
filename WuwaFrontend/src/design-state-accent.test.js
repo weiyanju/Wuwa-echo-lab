@@ -12,6 +12,7 @@ const styleFiles = [
   './styles/shell.css',
   './styles/tokens.css',
   './styles/features/auth.css',
+  './styles/features/auth-motion.css',
   './styles/features/evaluation.css',
   './styles/features/history.css',
   './styles/features/recognition.css',
@@ -21,7 +22,7 @@ const styleFiles = [
 ]
 
 const functionalSideLineSelectors = new Set([
-  '.terminal-title-caret',
+  '.terminal-title-indicator',
   '.terminal-brand-icon::after',
   '.wordmark-symbol::after',
   '.bayes-path-list article::before',
@@ -70,7 +71,11 @@ function hasPseudoSideStripe(selector, body) {
 }
 
 test('Web styles avoid oversized colored side accents except named functional graphics', async () => {
-  const sources = await Promise.all(styleFiles.map(read))
+  const sources = await Promise.all(styleFiles.map((relativePath) => (
+    relativePath === './styles/features/auth-motion.css'
+      ? read(relativePath).catch(() => '')
+      : read(relativePath)
+  )))
   const rules = sources.flatMap(cssRules)
   const violations = rules.filter(({ selector, body }) => {
     const parts = selectorParts(selector)
@@ -212,13 +217,19 @@ test('polished states stay flat and model summaries use an explicit reading labe
   assert.match(evaluationStyle, /\.model-judgement-label \{/)
 })
 
-test('the functional login caret follows complete glyphs without width clipping', async () => {
+test('the login output indicator archives the completed system message without looping', async () => {
   const authStyle = await read('./styles/features/auth.css')
+  const motionStyle = await read('./styles/features/auth-motion.css').catch(() => '')
 
   assert.match(authStyle, /\.terminal-title \{[\s\S]+display: inline-flex;[\s\S]+align-items: baseline;/)
-  assert.match(authStyle, /\.terminal-title-caret \{[\s\S]+width: 4px;[\s\S]+margin-inline-start: 0\.14em;[\s\S]+animation: terminal-blink/)
-  assert.match(authStyle, /\.terminal-auth-enter-active \{[\s\S]+160ms/)
-  assert.match(authStyle, /\.terminal-auth-enter-from \{[\s\S]+opacity: 0;[\s\S]+translateY\(12px\)/)
+  assert.match(motionStyle, /\.terminal-title-indicator \{[\s\S]+width: 2px;[\s\S]+flex: 0 0 2px;[\s\S]+margin-inline-start: 0\.14em;/)
+  assert.match(bodiesFor(motionStyle, '.terminal-title-indicator--compressed'), /opacity:\s*0\.45;[\s\S]+scaleY\(0\.68\)/)
+  assert.match(bodiesFor(motionStyle, '.terminal-title-indicator--dot'), /opacity:\s*0\.9;[\s\S]+scaleX\(2\.2\)[\s\S]+scaleY\(0\.12\)/)
+  assert.match(bodiesFor(motionStyle, '.terminal-title-indicator--hidden'), /opacity:\s*0;[\s\S]+scaleX\(2\.2\)[\s\S]+scaleY\(0\.08\)/)
+  assert.match(motionStyle, /\.terminal-auth-enter-active \{[\s\S]+260ms cubic-bezier\(0\.16, 1, 0\.3, 1\)/)
+  assert.match(motionStyle, /\.terminal-auth-enter-from \{[\s\S]+opacity: 0;[\s\S]+translateY\(12px\)/)
+  assert.doesNotMatch(motionStyle, /animation:|@keyframes|infinite/)
+  assert.doesNotMatch(authStyle, /terminal-title-caret|terminal-blink/)
   assert.doesNotMatch(authStyle, /@keyframes terminal-typing/)
   assert.doesNotMatch(authStyle, /\.terminal-title \{[^}]+(?:width: 0|overflow: hidden|border-right:)/)
 })
