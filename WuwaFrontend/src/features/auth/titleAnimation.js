@@ -1,6 +1,28 @@
-export const TITLE_START_DELAY_MS = 150
-export const TITLE_CHARACTER_INTERVAL_MS = 70
-export const TITLE_PUNCTUATION_PAUSE_MS = 120
+export const TITLE_START_DELAY_MS = 180
+export const TITLE_GRAPHEME_DELAYS_MS = Object.freeze([90, 64, 98, 70, 250, 94, 72])
+export const TITLE_DEFAULT_INTERVAL_MS = 70
+export const TITLE_PUNCTUATION_COMPRESS_MS = 170
+export const TITLE_FINAL_HOLD_MS = 166
+export const TITLE_AUTH_HANDOFF_DELAY_MS = 40
+export const TITLE_INDICATOR_HIDE_DELAY_MS = 420
+export const TITLE_INDICATOR_TRANSITION_MS = 220
+export const TITLE_COMPLETE_DELAY_MS = TITLE_INDICATOR_HIDE_DELAY_MS + TITLE_INDICATOR_TRANSITION_MS
+
+export const TITLE_PHASE = Object.freeze({
+  PREPARING: 'preparing',
+  TYPING: 'typing',
+  PUNCTUATION: 'punctuation',
+  RESOLVING: 'resolving',
+  COMPLETED: 'completed',
+  STATIC: 'static',
+})
+
+export const TITLE_INDICATOR_STATE = Object.freeze({
+  BAR: 'bar',
+  COMPRESSED: 'compressed',
+  DOT: 'dot',
+  HIDDEN: 'hidden',
+})
 
 export function splitTitleGraphemes(text, Segmenter = globalThis.Intl?.Segmenter) {
   if (!Segmenter) return Array.from(text)
@@ -12,58 +34,106 @@ export function shouldAnimateTitle({ reduceMotion, compactViewport, documentHidd
   return !reduceMotion && !compactViewport && !documentHidden
 }
 
-function delayAfter(grapheme) {
-  return TITLE_CHARACTER_INTERVAL_MS
-    + (grapheme === '，' ? TITLE_PUNCTUATION_PAUSE_MS : 0)
+function delayAfter(index) {
+  return TITLE_GRAPHEME_DELAYS_MS[index] ?? TITLE_DEFAULT_INTERVAL_MS
 }
 
 export function createTitleAnimation({
   text,
   onFrame,
+  onPhaseChange = () => {},
+  onIndicatorChange = () => {},
+  onAuthReady = () => {},
   onComplete,
   schedule = globalThis.setTimeout,
   cancel = globalThis.clearTimeout,
 }) {
   const graphemes = splitTitleGraphemes(text)
+  const timerIds = new Set()
   let currentIndex = 0
-  let timerId = null
   let started = false
   let finished = false
+  let authReady = false
 
-  function clearScheduledFrame() {
-    if (timerId == null) return
-    cancel(timerId)
-    timerId = null
+  function clearScheduledFrames() {
+    for (const timerId of timerIds) cancel(timerId)
+    timerIds.clear()
   }
 
-  function finish({ revealFullTitle = true } = {}) {
+  function notifyAuthReady() {
+    if (finished || authReady) return
+    authReady = true
+    onAuthReady()
+  }
+
+  function finishStatic() {
     if (finished) return
     finished = true
-    clearScheduledFrame()
-    if (revealFullTitle) onFrame(text)
+    clearScheduledFrames()
+    onFrame(text)
+    onPhaseChange(TITLE_PHASE.STATIC)
+    onIndicatorChange(TITLE_INDICATOR_STATE.HIDDEN)
+    if (!authReady) {
+      authReady = true
+      onAuthReady()
+    }
     onComplete()
   }
 
-  function scheduleNext(callback, delay) {
+  function finishArchive() {
+    if (finished) return
+    finished = true
+    clearScheduledFrames()
+    onPhaseChange(TITLE_PHASE.COMPLETED)
+    onComplete()
+  }
+
+  function scheduleFrame(callback, delay) {
+    if (finished) return
     try {
-      timerId = schedule(callback, delay)
+      let timerId = null
+      timerId = schedule(() => {
+        timerIds.delete(timerId)
+        callback()
+      }, delay)
+      timerIds.add(timerId)
     } catch {
-      finish()
+      finishStatic()
     }
+  }
+
+  function beginArchive() {
+    if (finished) return
+    onPhaseChange(TITLE_PHASE.RESOLVING)
+    onIndicatorChange(TITLE_INDICATOR_STATE.DOT)
+    scheduleFrame(notifyAuthReady, TITLE_AUTH_HANDOFF_DELAY_MS)
+    scheduleFrame(
+      () => onIndicatorChange(TITLE_INDICATOR_STATE.HIDDEN),
+      TITLE_INDICATOR_HIDE_DELAY_MS,
+    )
+    scheduleFrame(finishArchive, TITLE_COMPLETE_DELAY_MS)
   }
 
   function advance() {
     if (finished) return
+    const grapheme = graphemes[currentIndex]
     currentIndex += 1
     onFrame(graphemes.slice(0, currentIndex).join(''))
+
+    if (grapheme === '，') {
+      onPhaseChange(TITLE_PHASE.PUNCTUATION)
+      onIndicatorChange(TITLE_INDICATOR_STATE.COMPRESSED)
+      scheduleFrame(() => {
+        onIndicatorChange(TITLE_INDICATOR_STATE.BAR)
+        onPhaseChange(TITLE_PHASE.TYPING)
+      }, TITLE_PUNCTUATION_COMPRESS_MS)
+    }
+
     if (currentIndex >= graphemes.length) {
-      scheduleNext(
-        () => finish({ revealFullTitle: false }),
-        TITLE_CHARACTER_INTERVAL_MS,
-      )
+      scheduleFrame(beginArchive, TITLE_FINAL_HOLD_MS)
       return
     }
-    scheduleNext(advance, delayAfter(graphemes[currentIndex - 1]))
+    scheduleFrame(advance, delayAfter(currentIndex - 1))
   }
 
   return {
@@ -71,19 +141,21 @@ export function createTitleAnimation({
       if (started || finished) return
       started = true
       onFrame('')
+      onPhaseChange(TITLE_PHASE.TYPING)
+      onIndicatorChange(TITLE_INDICATOR_STATE.BAR)
       if (!graphemes.length) {
-        finish()
+        finishStatic()
         return
       }
-      scheduleNext(advance, TITLE_START_DELAY_MS)
+      scheduleFrame(advance, TITLE_START_DELAY_MS)
     },
     complete() {
-      finish()
+      finishStatic()
     },
     cancel() {
       if (finished) return
       finished = true
-      clearScheduledFrame()
+      clearScheduledFrames()
     },
   }
 }
