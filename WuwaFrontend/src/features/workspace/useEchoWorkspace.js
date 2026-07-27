@@ -137,8 +137,6 @@ export function useEchoWorkspace({ selectedGameAccountId, boundPlayerUid, worksp
     refreshActiveInBackground()
     if (!isCurrent()) return
     await refreshStats()
-    if (!isCurrent()) return
-    await refreshEvaluation()
   }
 
   function replaceEcho(nextEcho) {

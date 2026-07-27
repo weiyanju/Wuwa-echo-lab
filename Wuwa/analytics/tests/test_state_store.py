@@ -6,7 +6,6 @@ from django.utils import timezone
 
 from accounts.models import GameAccount
 from analytics.models import GameAccountAnalyticsState
-from analytics.services.roll_summary import build_roll_summary
 from analytics.services.state_rebuild import rebuild_game_account_state
 from analytics.services.state_store import (
     AnalyticsStateUnavailable,
@@ -130,7 +129,7 @@ class StateStoreTests(TestCase):
         self.assertNotEqual(state.total_rolls, 1)
         self.assertNotEqual(state.last_roll_id, earlier.id)
 
-    def test_moving_existing_roll_dirties_old_and_new_accounts_and_invalidates_both_caches(self):
+    def test_moving_existing_roll_dirties_old_and_new_accounts(self):
         second_account = GameAccount.objects.create(user=self.account.user, uid="987654321")
         third_account = GameAccount.objects.create(user=self.account.user, uid="456789123")
         second_echo = EchoRecord.objects.create(
@@ -150,8 +149,6 @@ class StateStoreTests(TestCase):
         rebuild_game_account_state(self.account)
         rebuild_game_account_state(second_account)
         third_state = rebuild_game_account_state(third_account).state
-        self.assertEqual(build_roll_summary(self.account).total_rolls, 1)
-        self.assertEqual(build_roll_summary(second_account).total_rolls, 0)
 
         roll.echo = second_echo
         roll.save()
@@ -162,5 +159,3 @@ class StateStoreTests(TestCase):
         self.assertEqual(self.account.analytics_state.status, GameAccountAnalyticsState.Status.DIRTY)
         self.assertEqual(second_account.analytics_state.status, GameAccountAnalyticsState.Status.DIRTY)
         self.assertEqual(third_state.status, GameAccountAnalyticsState.Status.READY)
-        self.assertEqual(build_roll_summary(self.account).total_rolls, 0)
-        self.assertEqual(build_roll_summary(second_account).total_rolls, 1)

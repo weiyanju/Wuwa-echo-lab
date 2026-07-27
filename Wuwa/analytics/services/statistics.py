@@ -1,5 +1,5 @@
 from echoes.constants import SAMPLE_STAGES, SUBSTAT_LABELS, SUBSTAT_TYPES
-# Kept as a patchable legacy seam until batch C removes roll_summary entirely.
+# Kept as a patchable compatibility seam; ready reads use persistent state.
 from .roll_summary import build_roll_summary
 from .state_store import state_snapshot_for_account
 

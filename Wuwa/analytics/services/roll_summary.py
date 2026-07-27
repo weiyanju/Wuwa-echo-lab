@@ -1,6 +1,5 @@
 from collections import Counter
 from dataclasses import dataclass
-from threading import RLock
 
 from echoes.constants import SUBSTAT_TYPES
 from echoes.models import SubstatRoll
@@ -15,40 +14,10 @@ class RollSummary:
     total_rolls: int
 
 
-_summary_cache = {}
-_summary_cache_lock = RLock()
-
-
-def _owner_cache_key(owner):
-    return (owner._meta.label_lower, owner.pk)
-
-
 def _roll_filter_for_owner(owner):
     if owner._meta.model_name == "gameaccount":
         return {"echo__game_account": owner}
     return {"echo__user": owner}
-
-
-def clear_roll_summary_cache():
-    with _summary_cache_lock:
-        _summary_cache.clear()
-
-
-def invalidate_roll_summary(owner):
-    if not owner or not owner.pk:
-        return
-    with _summary_cache_lock:
-        _summary_cache.pop(_owner_cache_key(owner), None)
-
-
-def invalidate_roll_summary_for_echo(echo):
-    if not echo:
-        return
-    with _summary_cache_lock:
-        if echo.game_account_id:
-            _summary_cache.pop(("accounts.gameaccount", echo.game_account_id), None)
-        if echo.user_id:
-            _summary_cache.pop(("auth.user", echo.user_id), None)
 
 
 def _load_roll_summary(owner):
@@ -86,12 +55,5 @@ def _load_roll_summary(owner):
 
 
 def build_roll_summary(owner):
-    key = _owner_cache_key(owner)
-    with _summary_cache_lock:
-        cached = _summary_cache.get(key)
-        if cached is not None:
-            return cached
-
-    summary = _load_roll_summary(owner)
-    with _summary_cache_lock:
-        return _summary_cache.setdefault(key, summary)
+    """Load a compatibility summary without process-level historical reuse."""
+    return _load_roll_summary(owner)

@@ -126,6 +126,7 @@ API 字段、持久化和跨端数据契约见 [`api-and-data-contracts.md`](./a
 - 改 `GameAccount`、声骸、识别、统计、预测逻辑时，必须跑命中的后端测试。
 - 改 schema 时必须确认 migration。
 - 改认证或权限时必须覆盖跨用户访问风险。
+- 改 analytics 增量状态时，必须覆盖 append、delete、乱序、Echo/roll 旧新账户影响、单账户 rebuild 与 ready 读取不回放历史；不得以性能名义削弱 `GameAccount` ownership。
 
 ### 5.2 Vue 前端
 
@@ -169,12 +170,14 @@ API、recognition、认证、`GameAccount` 或稳定响应字段变化必须运�
 - 避免 Web 重复请求与重复计算
 - 保持加载、错误、过期和刷新状态可见
 - 后台错误可恢复
+- ready analytics 读取不重复扫描全历史；dirty repair 限定在一个账户并保留稳定 `503` / `analytics_state_unavailable` 失败契约
 
 不允许的“优化”：
 
 - 为了降低占用破坏识别正确性
 - 为了减少代码量取消必要缓存或去重
 - 没有测量依据就引入复杂多线程或复杂调度
+- 在没有明确需求与测量依据时把 Redis 或 dedicated worker 引入 analytics 主路径
 - 为了追求任务管理器数字牺牲用户主路径响应
 
 性能优化必须说明：

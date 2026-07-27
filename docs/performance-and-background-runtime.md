@@ -11,11 +11,20 @@
 - 后端不可达或请求失败时返回稳定错误，不以静默部分写入换取吞吐。
 - 性能优化不能削弱数据归属、冲突、低置信度和回滚保护。
 
+### Analytics 读取与重建
+
+- `EchoRecord` 与 `SubstatRoll` 是事实源；每个 `GameAccount` 的 analytics state 是可重建的后端派生数据。
+- ready 的 statistics、prediction、evaluation 不得回放账户全历史；新增调谐走增量追加。
+- 删除、乱序、roll 移动到旧/新账户及 Echo 上下文变化必须只标脏关联账户，随后只对该单账户以 iterator 流式重建。
+- repair 竞争在限定次数后仍不能提供 ready state 时，API 返回 `503` / `analytics_state_unavailable`，不返回部分或跨账户数据。
+- 不引入 Redis 或 dedicated worker 作为本阶段前提；Redis 未来仅可选作加速/协调，不能取代数据库事实与 ownership。
+
 ## Web 原则
 
 - 统计、预测和评估避免无意义重复请求与重复计算。
 - 加载、空、错误、过期和刷新状态必须可见。
 - 性能改动运行命中测试与生产构建，不以隐藏信息替代优化。
+- 工作台初始 refresh 只请求统计并后台刷新当前声骸 prediction；evaluation 保留页面进入与 retry 的独立请求、loading 和错误状态。
 
 ## 外部本地识别客户端契约
 

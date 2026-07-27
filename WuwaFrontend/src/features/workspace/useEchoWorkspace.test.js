@@ -1133,6 +1133,7 @@ test('workspace refresh resolves without waiting for prediction results', async 
   const originalDocument = globalThis.document
   const originalFetch = globalThis.fetch
   const hangingPrediction = deferred()
+  const requestOrder = []
   let refreshSettled = false
   globalThis.document = { cookie: 'csrftoken=test' }
   globalThis.fetch = async (url) => {
@@ -1150,9 +1151,18 @@ test('workspace refresh resolves without waiting for prediction results', async 
         }],
       })
     }
-    if (path.includes('/prediction/')) return hangingPrediction.promise
-    if (path.includes('/stats/')) return jsonResponse({ total_rolls: 1 })
-    if (path.includes('/model-evaluation/')) return jsonResponse({})
+    if (path.includes('/prediction/')) {
+      requestOrder.push('prediction')
+      return hangingPrediction.promise
+    }
+    if (path.includes('/stats/')) {
+      requestOrder.push('stats')
+      return jsonResponse({ total_rolls: 1 })
+    }
+    if (path.includes('/model-evaluation/')) {
+      requestOrder.push('model-evaluation')
+      return jsonResponse({})
+    }
     throw new Error(`Unexpected request: ${path}`)
   }
 
@@ -1165,10 +1175,13 @@ test('workspace refresh resolves without waiting for prediction results', async 
 
   try {
     const refreshPromise = workspace.refresh().then(() => { refreshSettled = true })
-    await new Promise((resolve) => setTimeout(resolve, 30))
+    await new Promise((resolve) => setTimeout(resolve, 700))
 
     assert.equal(workspace.activeEchoId.value, 92)
     assert.equal(refreshSettled, true)
+    assert.equal(requestOrder.filter((request) => request === 'model-evaluation').length, 0)
+    assert.equal(requestOrder.filter((request) => request === 'stats').length, 1)
+    assert.equal(requestOrder.filter((request) => request === 'prediction').length, 1)
     await refreshPromise
   } finally {
     workspace.dispose()

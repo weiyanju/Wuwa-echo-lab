@@ -131,6 +131,14 @@ Vue 的 `App.vue` 与 Django 的 view 层都属于本仓库的高吸力入口层
 - locked `GameAccount` 不能写入正式声骸和识别结果。
 - 外部本地识别客户端和 Vue 不能绕过后端直接写数据库。
 
+#### Analytics 派生状态
+
+`EchoRecord` 与 `SubstatRoll` 是统计、预测和评估的事实源；`analytics/` 以每个 `GameAccount` 为 owner 维护可重建的持久化派生状态。ready 的 statistics、prediction 和 evaluation 三类读取只消费该账户 ready state，不回放全量调谐历史。
+
+正常新增调谐以追加方式更新状态。删除、乱序写入、既有 `SubstatRoll` 移动到另一声骸/账户，以及影响上下文的 Echo 变更，必须只将相关的旧/新账户标为 dirty；下一次读取只对该账户流式重建。此机制不能放宽认证或 `GameAccount` ownership。
+
+Redis 可以在将来作为可选加速或分布式协调层，但不是业务事实，也不能替代数据库中的原始记录或该可重建状态。
+
 ### 4.2 Vue Web 工作台通道
 
 Vue 前端负责：
@@ -154,6 +162,7 @@ Vue 前端不负责：
 - Vue 必须把 `GameAccount` 作为业务数据边界。
 - Vue 不应为新正式声骸记录本地分配持久 ID，如果后端已经拥有分配能力。
 - Vue 可以做更完整的数据管理，但不能创造另一套账号或 UID 模型。
+- 工作台初始 refresh 只等待统计，并在后台启动 active prediction；评估只在进入评估页或用户重试时请求，以保持评估页自己的 loading、error 与 retry 状态。
 
 ### 4.3 外部客户端协作边界
 
