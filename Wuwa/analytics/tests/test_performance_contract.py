@@ -4,18 +4,25 @@ from unittest.mock import patch
 from django.test import SimpleTestCase
 
 from analytics.services.evaluation import build_model_evaluation
-from analytics.services.incremental_state import empty_payload
+from analytics.services.incremental_state import empty_payload, persistent_payload
 from analytics.services.prediction import predict_next_substat
 from analytics.services.statistics import build_user_statistics
 
 
 class ReadyStatePerformanceContractTests(SimpleTestCase):
+    def test_evaluation_rejects_an_unsupported_history_threshold(self):
+        with self.assertRaisesRegex(ValueError, "fixed at 20"):
+            build_model_evaluation(object(), min_history=19)
+
     def test_prediction_uses_ready_state_without_the_legacy_summary_loader(self):
-        state = SimpleNamespace(total_rolls=0, payload=empty_payload())
+        state = SimpleNamespace(total_rolls=0, payload=persistent_payload(empty_payload()))
         echo = SimpleNamespace(id=1, game_account=object())
 
         with patch("analytics.services.prediction._legal_candidates", return_value=["crit_rate", "flat_atk"]), patch(
             "analytics.services.prediction.state_snapshot_for_account", return_value=state,
+        ), patch(
+            "analytics.services.prediction.pattern_tables_for_state",
+            return_value={"1": {}, "2": {}, "3": {}},
         ), patch(
             "analytics.services.roll_summary._load_roll_summary",
             side_effect=AssertionError("ready prediction must not replay history"),

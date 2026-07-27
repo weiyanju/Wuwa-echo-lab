@@ -422,6 +422,16 @@ class ApiViewTests(TestCase):
             set_name="Set",
             main_stat="atk_percent",
         )
+        for position, (substat_type, tier_value) in enumerate(
+            (("flat_atk", 40), ("crit_damage", 12.6), ("energy_regen", 6.8)),
+            start=1,
+        ):
+            SubstatRoll.objects.create(
+                echo=echo,
+                position=position,
+                substat_type=substat_type,
+                tier_value=tier_value,
+            )
 
         with CaptureQueriesContext(connection) as queries:
             response = self.client.post(
@@ -431,7 +441,10 @@ class ApiViewTests(TestCase):
             )
 
         self.assertEqual(response.status_code, 201)
-        self.assertLessEqual(len(queries.captured_queries), 8)
+        # Includes session/auth, transaction boundaries, the fact insert, the
+        # bounded pattern lookup/upsert, the analytics-state update, and Echo
+        # status maintenance.
+        self.assertLessEqual(len(queries.captured_queries), 12)
 
     def test_create_echo_allocates_uid_when_missing(self):
         self.client.login(username="tester", password="pw12345")

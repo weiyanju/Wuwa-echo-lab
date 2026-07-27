@@ -1414,3 +1414,69 @@ git commit -m "docs: record incremental analytics architecture"
 - [ ] Cross-user and cross-`GameAccount` tests pass.
 - [ ] Redis is not required for correctness or availability in this phase.
 - [ ] Window-size and weight-schedule tuning remain unchanged and separately testable.
+
+---
+
+## Post-review hardening addendum
+
+The high-entropy review invalidated the assumption that the single state JSON stays small. The following work keeps the model semantics but moves pattern transitions into independently updated aggregate rows.
+
+### Task 11: Stabilize top-probability ties
+
+**Files:**
+- Modify: `Wuwa/analytics/services/metrics.py`
+- Modify: `Wuwa/analytics/services/incremental_state.py`
+- Modify: `Wuwa/analytics/services/prediction.py`
+- Test: `Wuwa/analytics/tests/test_incremental_state.py`
+
+- [ ] Add a randomized parity test proving incremental and replay dynamic weights match at the 20/120/500 boundaries.
+- [ ] Run the test and verify it fails because mathematically tied probabilities choose different keys after floating-point rounding.
+- [ ] Add one shared tolerance-aware stable top-key helper and use it in both replay and incremental paths.
+- [ ] Re-run the focused parity tests.
+
+### Task 12: Persist pattern aggregates separately
+
+**Files:**
+- Modify: `Wuwa/analytics/models.py`
+- Create: `Wuwa/analytics/migrations/0002_pattern_aggregates_and_rebuild_lease.py`
+- Create: `Wuwa/analytics/services/pattern_store.py`
+- Modify: `Wuwa/analytics/services/state_store.py`
+- Modify: `Wuwa/analytics/services/state_rebuild.py`
+- Modify: `Wuwa/analytics/services/prediction.py`
+- Test: `Wuwa/analytics/tests/test_state_store.py`
+- Test: `Wuwa/analytics/tests/test_state_rebuild.py`
+
+- [ ] Add failing tests proving ready payloads contain no `patterns`, prediction loads only the current exact/wildcard contexts, append upserts at most three prefix rows, and rebuild replaces the account-scoped aggregate set.
+- [ ] Add `GameAccountPatternAggregate(game_account, length, prefix, anchor, next_counts)` with a unique `(game_account, length, prefix)` constraint and an `(game_account, length, anchor)` index.
+- [ ] Keep full pattern dictionaries only during pure rebuild computation; strip them before saving `GameAccountAnalyticsState.payload`.
+- [ ] Load the exact length-1/2/3 contexts plus the length-2 wildcard anchor in one query for prediction/append.
+- [ ] Upsert only the three affected prefix rows on normal append; rebuild replaces all rows only after its compare-and-swap succeeds.
+- [ ] Bump the private schema/model version so existing rows are rebuilt rather than consumed as version 1.
+
+### Task 13: Make rebuild attempts single-flight
+
+**Files:**
+- Modify: `Wuwa/analytics/models.py`
+- Modify: `Wuwa/analytics/services/state_rebuild.py`
+- Test: `Wuwa/analytics/tests/test_state_rebuild.py`
+
+- [ ] Add failing tests for a second active rebuild and for an obsolete failed attempt trying to overwrite a newer ready attempt.
+- [ ] Store a UUID rebuild token and start time; active leases return without replaying history.
+- [ ] Allow expired leases to be replaced, and require token plus source version to match before success/failure writes.
+
+### Task 14: Close mutation boundaries and verify performance
+
+**Files:**
+- Modify: `Wuwa/analytics/signals.py`
+- Modify: `Wuwa/analytics/services/incremental_state.py`
+- Modify: `Wuwa/analytics/services/statistics.py`
+- Test: `Wuwa/analytics/tests/test_state_store.py`
+- Modify: `docs/api-and-data-contracts.md`
+- Modify: `docs/performance-and-background-runtime.md`
+- Modify: `docs/engineering-quality.md`
+- Modify: `docs/archive/2026-07-27-incremental-analytics-performance-implementation.md`
+
+- [ ] Add failing tests for stable ascending account invalidation, raw fixture saves, and a literal `__other__` set name that must not collide with overflow.
+- [ ] Sort all multi-account invalidation IDs, skip raw initialization signals, and persist overflow separately from real set names.
+- [ ] Run focused tests, all backend tests, `makemigrations --check`, `git diff --check`, and the 10k/50k random high-entropy benchmark.
+- [ ] Record PostgreSQL verification as pending if the local service remains unavailable.

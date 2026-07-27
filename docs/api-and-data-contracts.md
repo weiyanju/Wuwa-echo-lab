@@ -42,11 +42,13 @@
 
 ### 2.4 Analytics 派生状态与修复契约
 
-`EchoRecord` 与 `SubstatRoll` 是 analytics 的事实源。后端可按 `GameAccount` 保存可重建的派生 state，供 statistics、prediction 与 evaluation 的 ready 读取使用；该 state 是后端私有实现，Web 和外部本地识别客户端不消费其表、字段或状态值。
+`EchoRecord` 与 `SubstatRoll` 是 analytics 的事实源。后端可按 `GameAccount` 保存可重建的小型派生 state 与独立 pattern 聚合，供 statistics、prediction 与 evaluation 的 ready 读取使用；这些表是后端私有实现，Web 和外部本地识别客户端不消费其字段或状态值。
 
 追加的新调谐正常增量写入 state；删除、乱序、`SubstatRoll` 的旧/新账户迁移，或 Echo 上下文变化会标脏相应账户。dirty state 的修复只流式重建该账户，仍以认证和 ownership 过滤原始数据。若有限次竞争安全 repair 后仍无法得到 ready state，公开 analytics API 返回 `503`，稳定 `code` 为 `analytics_state_unavailable`。
 
-本阶段 analytics 成功响应字段不变。未来 Redis 只能作为可选加速或分布式协调，不能成为原始记录、`GameAccount` ownership 或 analytics state 的事实源。
+prediction 与 evaluation 的成功响应字段不变。statistics 的 `context_factors.set_name` 增加 `overflow_count`，用于报告未进入具名分组的样本数。未来 Redis 只能作为可选加速或分布式协调，不能成为原始记录、`GameAccount` ownership 或 analytics state 的事实源。
+
+statistics 的 `context_factors.set_name.groups` 最多返回 128 个真实分组，正常游戏套装名保持原名；超出容量的计数进入同级 `overflow_count`，不再借用可能与真实套装名冲突的 `__other__` key。
 
 ---
 

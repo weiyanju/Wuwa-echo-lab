@@ -1,4 +1,6 @@
 from dataclasses import dataclass
+from datetime import timedelta
+from uuid import uuid4
 
 from django.db import transaction
 from django.utils import timezone
@@ -7,7 +9,16 @@ from accounts.models import GameAccount
 from analytics.models import GameAccountAnalyticsState
 from echoes.models import SubstatRoll
 
-from .incremental_state import CURRENT_MODEL_VERSION, CURRENT_SCHEMA_VERSION, build_payload_from_events
+from .incremental_state import (
+    CURRENT_MODEL_VERSION,
+    CURRENT_SCHEMA_VERSION,
+    build_payload_from_events,
+    persistent_payload,
+)
+from .pattern_store import replace_pattern_aggregates
+
+
+REBUILD_LEASE = timedelta(minutes=30)
 
 
 @dataclass(frozen=True)
@@ -32,10 +43,23 @@ def rebuild_game_account_state(game_account):
     with transaction.atomic():
         account = GameAccount.objects.select_for_update().get(pk=game_account_id)
         state, _ = GameAccountAnalyticsState.objects.select_for_update().get_or_create(game_account=account)
+        started_at = timezone.now()
+        if (
+            state.status == GameAccountAnalyticsState.Status.BUILDING
+            and state.rebuild_token is not None
+            and state.rebuild_started_at is not None
+            and started_at - state.rebuild_started_at < REBUILD_LEASE
+        ):
+            return RebuildResult(state=state, saved=False, processed_rolls=0)
         source_version = state.source_version
+        rebuild_token = uuid4()
         state.status = GameAccountAnalyticsState.Status.BUILDING
         state.error_code = ""
-        state.save(update_fields=["status", "error_code", "updated_at"])
+        state.rebuild_token = rebuild_token
+        state.rebuild_started_at = started_at
+        state.save(update_fields=[
+            "status", "error_code", "rebuild_token", "rebuild_started_at", "updated_at",
+        ])
     processed = 0
     last_event = None
     try:
@@ -50,20 +74,32 @@ def rebuild_game_account_state(game_account):
         with transaction.atomic():
             GameAccount.objects.select_for_update().get(pk=game_account_id)
             state = GameAccountAnalyticsState.objects.select_for_update().get(game_account_id=game_account_id)
-            if state.source_version == source_version:
+            if state.source_version == source_version and state.rebuild_token == rebuild_token:
                 state.status = GameAccountAnalyticsState.Status.FAILED
                 state.error_code = "analytics_rebuild_failed"
-                state.save(update_fields=["status", "error_code", "updated_at"])
+                state.rebuild_token = None
+                state.rebuild_started_at = None
+                state.save(update_fields=[
+                    "status", "error_code", "rebuild_token", "rebuild_started_at", "updated_at",
+                ])
         raise
     with transaction.atomic():
         GameAccount.objects.select_for_update().get(pk=game_account_id)
         state = GameAccountAnalyticsState.objects.select_for_update().get(game_account_id=game_account_id)
-        if state.source_version != source_version:
-            if state.status == GameAccountAnalyticsState.Status.BUILDING:
+        if state.source_version != source_version or state.rebuild_token != rebuild_token:
+            if (
+                state.status == GameAccountAnalyticsState.Status.BUILDING
+                and state.rebuild_token == rebuild_token
+            ):
                 state.status = GameAccountAnalyticsState.Status.DIRTY
-                state.save(update_fields=["status", "updated_at"])
+                state.rebuild_token = None
+                state.rebuild_started_at = None
+                state.save(update_fields=[
+                    "status", "rebuild_token", "rebuild_started_at", "updated_at",
+                ])
             return RebuildResult(state=state, saved=False, processed_rolls=processed)
-        state.payload = payload
+        replace_pattern_aggregates(game_account_id, payload["patterns"])
+        state.payload = persistent_payload(payload)
         state.total_rolls = payload["total_rolls"]
         state.last_tuned_at = last_event["tuned_at"] if last_event else None
         state.last_roll_id = last_event["id"] if last_event else None
@@ -71,6 +107,8 @@ def rebuild_game_account_state(game_account):
         state.model_version = CURRENT_MODEL_VERSION
         state.status = GameAccountAnalyticsState.Status.READY
         state.error_code = ""
+        state.rebuild_token = None
+        state.rebuild_started_at = None
         state.built_at = timezone.now()
         state.save()
         return RebuildResult(state=state, saved=True, processed_rolls=processed)

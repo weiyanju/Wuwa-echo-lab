@@ -4,7 +4,8 @@ from math import exp
 from echoes.constants import MODEL_LABELS, SUBSTAT_LABELS, SUBSTAT_TYPES, TIER_TABLES
 from .roll_summary import build_roll_summary
 from .incremental_state import distributions_from_payload, dynamic_weights_from_payload
-from .state_store import state_snapshot_for_account
+from .metrics import stable_top_key
+from .state_store import pattern_tables_for_state, state_snapshot_for_account
 from .model_config import (
     DYNAMIC_WEIGHT_BACKTEST_WINDOW,
     DYNAMIC_WEIGHT_MIN_EVENTS,
@@ -614,9 +615,7 @@ def _context_distribution_for_candidates(candidates):
 
 
 def _top_key(distribution):
-    if not distribution:
-        return None
-    return max(distribution.items(), key=lambda item: item[1])[0]
+    return stable_top_key(distribution)
 
 
 def _normalize_weights(weights):
@@ -715,7 +714,8 @@ def _serializable_tier_table(substat_type):
 def predict_next_substat(echo, include_diagnostics=True):
     candidates = _legal_candidates(echo)
     state = state_snapshot_for_account(echo.game_account)
-    payload = state.payload
+    payload = dict(state.payload)
+    payload["patterns"] = pattern_tables_for_state(state)
     sequence = list(payload["recent_sequence"])
     total_rolls = state.total_rolls
     base_weights = _model_weights(total_rolls)

@@ -38,7 +38,8 @@ def _online_totals(payload):
 def build_model_evaluation(owner, min_history=MIN_BACKTEST_HISTORY):
     # The persisted accumulator is intentionally configured with the stable
     # default history threshold.  Altering it at read time would require replay.
-    del min_history
+    if min_history != MIN_BACKTEST_HISTORY:
+        raise ValueError("Incremental evaluation history is fixed at 20 events.")
     state = state_snapshot_for_account(owner)
     totals = _online_totals(state.payload)
     evaluated = totals["evaluated"]

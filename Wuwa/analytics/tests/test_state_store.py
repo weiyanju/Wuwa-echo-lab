@@ -1,7 +1,9 @@
 from datetime import timedelta
+from unittest.mock import patch
+from types import SimpleNamespace
 
 from django.contrib.auth.models import User
-from django.test import TestCase
+from django.test import TestCase, TransactionTestCase
 from django.utils import timezone
 
 from accounts.models import GameAccount
@@ -31,11 +33,12 @@ class StateStoreTests(TestCase):
             main_stat="atk_percent",
         )
 
-    def test_one_state_per_account_defaults_to_dirty_and_empty_payload(self):
-        state = GameAccountAnalyticsState.objects.create(game_account=self.account)
+    def test_new_game_account_starts_with_ready_empty_state(self):
+        self.assertTrue(GameAccountAnalyticsState.objects.filter(game_account=self.account).exists())
+        state = GameAccountAnalyticsState.objects.get(game_account=self.account)
 
-        self.assertEqual(state.status, GameAccountAnalyticsState.Status.DIRTY)
-        self.assertEqual(state.payload, {})
+        self.assertEqual(state.status, GameAccountAnalyticsState.Status.READY)
+        self.assertEqual(state.payload["total_rolls"], 0)
         self.assertEqual(state.pk, self.account.pk)
 
     def test_dirty_mark_advances_version_and_ready_lookup_is_account_scoped(self):
@@ -101,6 +104,121 @@ class StateStoreTests(TestCase):
         self.account.analytics_state.refresh_from_db()
         self.assertEqual(self.account.analytics_state.status, GameAccountAnalyticsState.Status.DIRTY)
 
+    def test_context_change_rolls_back_when_state_cannot_be_marked_dirty(self):
+        SubstatRoll.objects.create(
+            echo=self.echo,
+            position=1,
+            substat_type="crit_rate",
+            tier_value=6.3,
+        )
+        rebuild_game_account_state(self.account)
+
+        with patch(
+            "analytics.signals.mark_game_account_state_dirty",
+            side_effect=RuntimeError("forced analytics failure"),
+        ):
+            with self.assertRaises(RuntimeError):
+                update_echo(self.echo, {"set_name": "Changed Set"})
+
+        self.echo.refresh_from_db()
+        self.account.analytics_state.refresh_from_db()
+        self.assertEqual(self.echo.set_name, "Moonlit")
+        self.assertEqual(self.account.analytics_state.status, GameAccountAnalyticsState.Status.READY)
+        self.assertEqual(self.account.analytics_state.payload["set_counts"], {"Moonlit": 1})
+
+    def test_direct_context_save_rolls_back_when_state_cannot_be_marked_dirty(self):
+        rebuild_game_account_state(self.account)
+        self.echo.set_name = "Changed Set"
+
+        with patch(
+            "analytics.signals.mark_game_account_state_dirty",
+            side_effect=RuntimeError("forced analytics failure"),
+        ):
+            with self.assertRaises(RuntimeError):
+                self.echo.save(update_fields=["set_name", "updated_at"])
+
+        self.echo.refresh_from_db()
+        self.assertEqual(self.echo.set_name, "Moonlit")
+
+    def test_semantically_invalid_ready_state_is_rebuilt_before_use(self):
+        SubstatRoll.objects.create(
+            echo=self.echo,
+            position=1,
+            substat_type="crit_rate",
+            tier_value=6.3,
+        )
+        state = rebuild_game_account_state(self.account).state
+        state.payload["online_evaluation"]["evaluated"] = 20
+        state.save(update_fields=["payload", "updated_at"])
+
+        repaired = state_snapshot_for_account(self.account)
+
+        self.assertEqual(repaired.status, GameAccountAnalyticsState.Status.READY)
+        self.assertEqual(repaired.payload["online_evaluation"]["evaluated"], 0)
+
+    def test_invalid_pattern_aggregate_marks_state_dirty_before_prediction_can_read_it(self):
+        SubstatRoll.objects.create(
+            echo=self.echo,
+            position=1,
+            substat_type="crit_rate",
+            tier_value=6.3,
+        )
+        SubstatRoll.objects.create(
+            echo=self.echo,
+            position=2,
+            substat_type="flat_atk",
+            tier_value=40,
+        )
+        second_echo = EchoRecord.objects.create(
+            user=self.account.user,
+            game_account=self.account,
+            echo_uid="invalid-pattern-second",
+            cost=1,
+            set_name="Moonlit",
+            main_stat="atk_percent",
+        )
+        SubstatRoll.objects.create(
+            echo=second_echo,
+            position=1,
+            substat_type="crit_rate",
+            tier_value=6.3,
+        )
+        state = rebuild_game_account_state(self.account).state
+        from analytics.models import GameAccountPatternAggregate
+        from analytics.services.state_store import AnalyticsStateUnavailable, pattern_tables_for_state
+
+        aggregate = GameAccountPatternAggregate.objects.get(
+            game_account=self.account,
+            length=1,
+            prefix="crit_rate",
+        )
+        aggregate.next_counts = []
+        aggregate.save(update_fields=["next_counts"])
+
+        with self.assertRaises(AnalyticsStateUnavailable):
+            pattern_tables_for_state(state)
+
+        state.refresh_from_db()
+        self.assertEqual(state.status, GameAccountAnalyticsState.Status.DIRTY)
+
+    def test_invalid_extra_metric_value_is_rebuilt_without_a_validator_error(self):
+        SubstatRoll.objects.create(
+            echo=self.echo,
+            position=1,
+            substat_type="crit_rate",
+            tier_value=6.3,
+        )
+        state = rebuild_game_account_state(self.account).state
+        state.payload["online_evaluation"]["top_hits"]["unexpected"] = "bad"
+        state.save(update_fields=["payload", "updated_at"])
+
+        try:
+            repaired = state_snapshot_for_account(self.account)
+        except Exception as exc:  # pragma: no cover - the assertion records the regression cleanly.
+            self.fail(f"state validation raised instead of rebuilding: {exc}")
+
+        self.assertNotIn("unexpected", repaired.payload["online_evaluation"]["top_hits"])
+
     def test_snapshot_rejects_unowned_numeric_account_ids(self):
         with self.assertRaises(AnalyticsStateUnavailable):
             state_snapshot_for_account(self.account.id)
@@ -159,3 +277,73 @@ class StateStoreTests(TestCase):
         self.assertEqual(self.account.analytics_state.status, GameAccountAnalyticsState.Status.DIRTY)
         self.assertEqual(second_account.analytics_state.status, GameAccountAnalyticsState.Status.DIRTY)
         self.assertEqual(third_state.status, GameAccountAnalyticsState.Status.READY)
+
+    def test_roll_move_invalidates_accounts_in_stable_ascending_order(self):
+        from analytics.signals import advance_analytics_after_roll_save
+
+        instance = SimpleNamespace(
+            echo=SimpleNamespace(game_account_id=1),
+            _analytics_previous_game_account_id=65,
+        )
+        with patch("analytics.signals.mark_game_account_state_dirty") as mark_dirty:
+            advance_analytics_after_roll_save(SubstatRoll, instance, created=False)
+
+        self.assertEqual(
+            [call.args[0] for call in mark_dirty.call_args_list],
+            [1, 65],
+        )
+
+    def test_raw_game_account_fixture_save_does_not_create_derived_state(self):
+        from analytics.signals import initialize_analytics_state_for_new_account
+
+        with patch("analytics.signals.GameAccountAnalyticsState.objects.create") as create_state:
+            initialize_analytics_state_for_new_account(
+                GameAccount,
+                self.account,
+                created=True,
+                raw=True,
+            )
+
+        create_state.assert_not_called()
+
+    def test_raw_roll_fixture_save_does_not_advance_derived_state(self):
+        from analytics.signals import advance_analytics_after_roll_save
+
+        with patch("analytics.signals.advance_state_for_roll") as advance_state:
+            advance_analytics_after_roll_save(
+                SubstatRoll,
+                SimpleNamespace(),
+                created=True,
+                raw=True,
+            )
+
+        advance_state.assert_not_called()
+
+
+class StateMutationAtomicityTests(TransactionTestCase):
+    def test_direct_roll_insert_rolls_back_when_state_advance_fails(self):
+        account = User.objects.create_user(username="atomic-roll", password="pw").game_accounts.get()
+        account.uid = "123456789"
+        account.save(update_fields=["uid", "updated_at"])
+        echo = EchoRecord.objects.create(
+            user=account.user,
+            game_account=account,
+            echo_uid="atomic-roll-echo",
+            cost=1,
+            set_name="Moonlit",
+            main_stat="atk_percent",
+        )
+
+        with patch(
+            "analytics.signals.advance_state_for_roll",
+            side_effect=RuntimeError("forced analytics failure"),
+        ):
+            with self.assertRaises(RuntimeError):
+                SubstatRoll.objects.create(
+                    echo=echo,
+                    position=1,
+                    substat_type="crit_rate",
+                    tier_value=6.3,
+                )
+
+        self.assertFalse(SubstatRoll.objects.filter(echo=echo).exists())

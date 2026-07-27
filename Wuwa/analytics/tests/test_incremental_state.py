@@ -1,3 +1,4 @@
+import json
 from unittest import TestCase
 
 from analytics.services.incremental_state import (
@@ -7,7 +8,7 @@ from analytics.services.incremental_state import (
     dynamic_weights_from_payload,
     empty_payload,
 )
-from analytics.services.model_config import DYNAMIC_WEIGHT_BACKTEST_WINDOW
+from analytics.services.model_config import DYNAMIC_WEIGHT_BACKTEST_WINDOW, MODEL_KEYS
 from analytics.services.state_store import _candidates_from_earlier_types
 from analytics.services.prediction import (
     _bayes_distribution_from_sequence,
@@ -32,6 +33,48 @@ def _event(index, substat_type):
 
 
 class IncrementalStateTests(TestCase):
+    def test_dynamic_weights_match_replay_when_cycle_probabilities_are_nearly_tied(self):
+        rows = [
+            (197, "flat_def", "set-13"),
+            (20, "heavy_attack_damage", "set-16"),
+            (248, "atk_percent", "set-9"),
+            (244, "liberation_damage", "set-18"),
+            (111, "def_percent", "set-4"),
+            (144, "basic_attack_damage", "set-3"),
+            (128, "def_percent", "set-19"),
+            (75, "heavy_attack_damage", "set-3"),
+            (37, "flat_hp", "set-10"),
+            (241, "def_percent", "set-3"),
+            (181, "atk_percent", "set-10"),
+            (104, "def_percent", "set-15"),
+            (226, "def_percent", "set-8"),
+            (31, "flat_def", "set-17"),
+            (7, "crit_damage", "set-12"),
+            (0, "flat_atk", "set-15"),
+            (170, "skill_damage", "set-10"),
+            (32, "skill_damage", "set-18"),
+            (113, "skill_damage", "set-4"),
+            (278, "hp_percent", "set-2"),
+        ]
+        events = [
+            {"id": index + 1, "echo_id": echo_id, "substat_type": substat_type, "set_name": set_name}
+            for index, (echo_id, substat_type, set_name) in enumerate(rows)
+        ]
+
+        expected_weights, expected_details = _dynamic_weight_result_from_events(
+            events,
+            _model_weights(len(events)),
+        )
+        payload = build_payload_from_events(events)
+        actual_weights, actual_details = dynamic_weights_from_payload(
+            payload,
+            base_weights=_model_weights(len(events)),
+            include_details=True,
+        )
+
+        self.assertEqual(actual_weights, expected_weights)
+        self.assertEqual(actual_details, expected_details)
+
     def test_apply_event_accumulates_once_and_bounds_windows(self):
         payload = empty_payload()
         for index in range(10_000):
@@ -42,6 +85,43 @@ class IncrementalStateTests(TestCase):
         self.assertEqual(len(payload["recent_sequence"]), 30)
         self.assertEqual(len(payload["dynamic_outcomes"]), DYNAMIC_WEIGHT_BACKTEST_WINDOW)
         self.assertEqual(sum(sum(next_counts.values()) for next_counts in payload["patterns"]["1"].values()), 9_999)
+
+    def test_persisted_state_keeps_compact_outcomes_and_bounded_set_groups(self):
+        events = [
+            {
+                **_event(index, SUBSTAT_TYPES[index % len(SUBSTAT_TYPES)]),
+                "set_name": f"untrusted-set-{index}",
+            }
+            for index in range(1_000)
+        ]
+
+        payload = build_payload_from_events(events)
+
+        self.assertLessEqual(len(payload["set_counts"]), 128)
+        self.assertLess(len(json.dumps(payload, separators=(",", ":")).encode()), 64 * 1024)
+        for outcome in payload["dynamic_outcomes"]:
+            self.assertEqual(set(outcome), {"evaluated", "hits"})
+            self.assertIsInstance(outcome["evaluated"], bool)
+            self.assertEqual(set(outcome["hits"]), set(MODEL_KEYS))
+            self.assertTrue(all(isinstance(hit, bool) for hit in outcome["hits"].values()))
+
+    def test_literal_other_set_name_does_not_collide_with_overflow(self):
+        events = [
+            {**_event(0, "crit_rate"), "set_name": "__other__"},
+            *[
+                {
+                    **_event(index + 1, SUBSTAT_TYPES[(index + 1) % len(SUBSTAT_TYPES)]),
+                    "set_name": f"set-{index}",
+                }
+                for index in range(200)
+            ],
+        ]
+
+        payload = build_payload_from_events(events)
+
+        self.assertEqual(payload["set_counts"]["__other__"], 1)
+        self.assertEqual(len(payload["set_counts"]), 128)
+        self.assertEqual(payload["set_counts_overflow"], 73)
 
     def test_distribution_and_dynamic_weights_have_stable_public_shape(self):
         payload = empty_payload()

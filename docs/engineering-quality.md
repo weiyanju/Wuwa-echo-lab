@@ -127,6 +127,7 @@ API 字段、持久化和跨端数据契约见 [`api-and-data-contracts.md`](./a
 - 改 schema 时必须确认 migration。
 - 改认证或权限时必须覆盖跨用户访问风险。
 - 改 analytics 增量状态时，必须覆盖 append、delete、乱序、Echo/roll 旧新账户影响、单账户 rebuild 与 ready 读取不回放历史；不得以性能名义削弱 `GameAccount` ownership。
+- analytics 状态测试必须验证动态回测窗口只持久化命中摘要、自由文本分组有明确上限且 overflow 不与真实名称冲突、state 主行不保存完整 pattern、损坏的状态或已读取 pattern 聚合不会被消费；随机合法历史必须保持增量/回放权重一致。已有历史时新增词条完整 API 的 SQLite 查询预算当前为最多 12 条（包含 session/auth、pattern 切片与 upsert、事务边界）。
 
 ### 5.2 Vue 前端
 
@@ -171,6 +172,7 @@ API、recognition、认证、`GameAccount` 或稳定响应字段变化必须运�
 - 保持加载、错误、过期和刷新状态可见
 - 后台错误可恢复
 - ready analytics 读取不重复扫描全历史；dirty repair 限定在一个账户并保留稳定 `503` / `analytics_state_unavailable` 失败契约
+- analytics 派生状态不得持久化可由命中结果替代的完整模型概率分布，不得把完整 pattern 表塞回 state 主行，也不得让自由文本 key 使单账户状态无界增长
 
 不允许的“优化”：
 

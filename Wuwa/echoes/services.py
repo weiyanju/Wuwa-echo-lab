@@ -105,17 +105,25 @@ def build_roll_from_payload(echo, payload, position):
         enhance_phase=clean_string(payload, "enhance_phase"),
         tuning_order=payload.get("tuning_order"),
     )
-    roll.clean_fields()
+    # ``echo`` was already loaded through the ownership boundary; validating
+    # the ForeignKey again would add a redundant existence query.
+    roll.clean_fields(exclude=["echo"])
     roll.clean()
     return roll
 
 
 @transaction.atomic
 def create_substat_roll(echo, payload, existing_roll_count=None):
+    earlier_types = None
     if existing_roll_count is None:
-        existing_roll_count = echo.substat_rolls.count()
+        earlier_types = list(
+            echo.substat_rolls.order_by("tuned_at", "id").values_list("substat_type", flat=True)
+        )
+        existing_roll_count = len(earlier_types)
     position = int(payload.get("position", existing_roll_count + 1))
     roll = build_roll_from_payload(echo, payload, position=position)
+    if earlier_types is not None:
+        roll._analytics_earlier_types = earlier_types
     roll.save(validate=False, mark_echo=False)
     echo.mark_tuned(roll_count=max(existing_roll_count + 1, roll.position), tuned_at=roll.tuned_at)
     return roll

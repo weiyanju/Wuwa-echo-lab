@@ -1,6 +1,21 @@
 import math
 
 
+PROBABILITY_TIE_TOLERANCE = 1e-12
+
+
+def stable_top_key(distribution, *, tolerance=PROBABILITY_TIE_TOLERANCE):
+    """Return the first key within tolerance of the mathematical maximum."""
+    if not distribution:
+        return None
+    maximum = max(distribution.values())
+    return next(
+        key
+        for key, value in distribution.items()
+        if maximum - value <= tolerance
+    )
+
+
 def log_loss(prediction, actual):
     return -math.log(max(prediction.get(actual, 0), 1e-15))
 

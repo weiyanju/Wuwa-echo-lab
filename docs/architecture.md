@@ -133,9 +133,9 @@ Vue 的 `App.vue` 与 Django 的 view 层都属于本仓库的高吸力入口层
 
 #### Analytics 派生状态
 
-`EchoRecord` 与 `SubstatRoll` 是统计、预测和评估的事实源；`analytics/` 以每个 `GameAccount` 为 owner 维护可重建的持久化派生状态。ready 的 statistics、prediction 和 evaluation 三类读取只消费该账户 ready state，不回放全量调谐历史。
+`EchoRecord` 与 `SubstatRoll` 是统计、预测和评估的事实源；`analytics/` 以每个 `GameAccount` 为 owner 维护可重建的持久化派生状态。小型 state 行保存总计数、最近窗口和在线评估摘要，长度 1～3 的 pattern 计数保存在独立聚合行中。ready 的 statistics、prediction 和 evaluation 三类读取不回放全量调谐历史；prediction 只读取当前精确前缀和长度 2 通配所需的有限聚合切片。
 
-正常新增调谐以追加方式更新状态。删除、乱序写入、既有 `SubstatRoll` 移动到另一声骸/账户，以及影响上下文的 Echo 变更，必须只将相关的旧/新账户标为 dirty；下一次读取只对该账户流式重建。此机制不能放宽认证或 `GameAccount` ownership。
+正常新增调谐以追加方式更新小型 state，并最多 upsert 三个 pattern 前缀聚合。删除、乱序写入、既有 `SubstatRoll` 移动到另一声骸/账户，以及影响上下文的 Echo 变更，必须只将相关的旧/新账户标为 dirty；下一次读取只对该账户流式重建。并发 rebuild 使用带租约的任务 token，旧任务不得覆盖新任务结果。此机制不能放宽认证或 `GameAccount` ownership。
 
 Redis 可以在将来作为可选加速或分布式协调层，但不是业务事实，也不能替代数据库中的原始记录或该可重建状态。
 

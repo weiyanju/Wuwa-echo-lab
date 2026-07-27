@@ -1,7 +1,9 @@
 from django.core.management.base import BaseCommand
+from django.db.models import Q
 
 from accounts.models import GameAccount
 from analytics.models import GameAccountAnalyticsState
+from analytics.services.incremental_state import CURRENT_MODEL_VERSION, CURRENT_SCHEMA_VERSION
 from analytics.services.state_rebuild import rebuild_game_account_state
 
 
@@ -20,7 +22,12 @@ class Command(BaseCommand):
         elif options["all_accounts"]:
             accounts = GameAccount.objects.all()
         else:
-            accounts = GameAccount.objects.filter(analytics_state__status=GameAccountAnalyticsState.Status.DIRTY)
+            accounts = GameAccount.objects.filter(
+                Q(analytics_state__isnull=True)
+                | ~Q(analytics_state__status=GameAccountAnalyticsState.Status.READY)
+                | ~Q(analytics_state__schema_version=CURRENT_SCHEMA_VERSION)
+                | ~Q(analytics_state__model_version=CURRENT_MODEL_VERSION)
+            ).distinct()
         attempted = saved = stale = failed = 0
         for account in accounts.iterator(chunk_size=200):
             attempted += 1

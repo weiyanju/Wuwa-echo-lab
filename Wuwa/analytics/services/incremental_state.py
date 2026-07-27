@@ -4,15 +4,16 @@ from math import exp
 
 from echoes.constants import SUBSTAT_TYPES
 
-from .metrics import brier_score, log_loss, top_k_hit
+from .metrics import brier_score, log_loss, stable_top_key, top_k_hit
 from .model_config import (
     CYCLE_DIRECT_WINDOW, DYNAMIC_WEIGHT_BACKTEST_WINDOW, DYNAMIC_WEIGHT_MIN_EVENTS,
     MAX_SHIFT, MODEL_KEYS, RECENT_SEQUENCE_WINDOW, base_model_weights, normalize_weights,
 )
 
-CURRENT_SCHEMA_VERSION = 1
-CURRENT_MODEL_VERSION = "incremental-v1"
+CURRENT_SCHEMA_VERSION = 2
+CURRENT_MODEL_VERSION = "incremental-v2"
 DIRECT_SEQUENCE_CAPACITY = max(RECENT_SEQUENCE_WINDOW, CYCLE_DIRECT_WINDOW, 3)
+MAX_SET_COUNT_KEYS = 128
 
 BAYES_ALPHA_MIN, BAYES_ALPHA_MAX, BAYES_ALPHA_DECAY_SAMPLES = 1.0, 5.0, 500
 BAYES_PATTERN_WEIGHTS = {1: 1.0, 2: 3.0, 3: 5.0}
@@ -28,9 +29,17 @@ MIN_BACKTEST_HISTORY = 20
 
 def empty_payload():
     return {
-        "total_rolls": 0, "counts": {}, "set_counts": {}, "patterns": {"1": {}, "2": {}, "3": {}},
+        "total_rolls": 0, "counts": {}, "set_counts": {}, "set_counts_overflow": 0,
+        "patterns": {"1": {}, "2": {}, "3": {}},
         "recent_sequence": [], "dynamic_outcomes": [], "online_evaluation": _empty_evaluation(),
     }
+
+
+def persistent_payload(payload):
+    """Return the small state-row payload; pattern aggregates live separately."""
+    result = dict(payload)
+    result.pop("patterns", None)
+    return result
 
 
 def _empty_evaluation():
@@ -177,7 +186,7 @@ def distributions_from_payload(payload, candidates):
     return {"rule": _rule(payload["counts"], payload["total_rolls"], candidates), "bayes": _bayes(payload,candidates), "markov": _markov(payload["recent_sequence"],candidates), "cycle": _cycle(payload,candidates), "context": _uniform(candidates)}
 
 
-def _top(distribution): return max(distribution.items(),key=lambda row:row[1])[0] if distribution else None
+def _top(distribution): return stable_top_key(distribution)
 
 
 def dynamic_weights_from_payload(payload, base_weights=None, include_details=False):
@@ -195,10 +204,9 @@ def dynamic_weights_from_payload(payload, base_weights=None, include_details=Fal
     if len(outcomes) < DYNAMIC_WEIGHT_MIN_EVENTS: return (base, _flat(0)) if include_details else base
     hits=Counter(); evaluated=0
     for outcome in outcomes:
-        actual=outcome["actual"]
-        if actual not in outcome["candidates"]: continue
-        for key, distribution in outcome["distributions"].items():
-            if _top(distribution)==actual: hits[key]+=1
+        if not outcome["evaluated"]: continue
+        for key, hit in outcome["hits"].items():
+            if hit: hits[key]+=1
         evaluated+=1
     if evaluated < DYNAMIC_WEIGHT_MIN_EVENTS: return (base,_flat(evaluated)) if include_details else base
     rates={key:hits[key]/evaluated for key in MODEL_KEYS}; active=[key for key in MODEL_KEYS if base.get(key,0)>0]; average=sum(rates[key] for key in active)/len(active)
@@ -224,16 +232,38 @@ def record_online_outcomes(payload, distributions, weights, actual, candidates):
         model=evaluation["models"][key]; model["evaluated"]+=1; model["hits"]+=int(top_k_hit(distribution,actual,1)); model["loss_total"]+=log_loss(distribution,actual)
 
 
+def _record_dynamic_outcome(payload, distributions, actual, candidates):
+    evaluated = actual in candidates
+    payload["dynamic_outcomes"].append({
+        "evaluated": evaluated,
+        "hits": {
+            key: bool(evaluated and _top(distribution) == actual)
+            for key, distribution in distributions.items()
+        },
+    })
+    del payload["dynamic_outcomes"][:-DYNAMIC_WEIGHT_BACKTEST_WINDOW]
+
+
+def _record_set_count(payload, set_name):
+    counts = payload["set_counts"]
+    if set_name in counts:
+        counts[set_name] += 1
+        return
+    if len(counts) < MAX_SET_COUNT_KEYS:
+        counts[set_name] = 1
+        return
+    payload["set_counts_overflow"] += 1
+
+
 def apply_event(payload, event, candidates):
     """Mutate *payload* exactly once, scoring the event before observing it."""
     distributions=distributions_from_payload(payload,candidates); weights=dynamic_weights_from_payload(payload)
     actual=event["substat_type"]; record_online_outcomes(payload,distributions,weights,actual,candidates)
-    payload["dynamic_outcomes"].append({"actual":actual,"candidates":candidates,"distributions":distributions})
-    del payload["dynamic_outcomes"][:-DYNAMIC_WEIGHT_BACKTEST_WINDOW]
+    _record_dynamic_outcome(payload, distributions, actual, candidates)
     sequence=payload["recent_sequence"]; prior=list(sequence)
     sequence.append(actual); del sequence[:-DIRECT_SEQUENCE_CAPACITY]
     counts=payload["counts"]; counts[actual]=counts.get(actual,0)+1
-    set_name=event.get("set_name",""); payload["set_counts"][set_name]=payload["set_counts"].get(set_name,0)+1
+    _record_set_count(payload, event.get("set_name", ""))
     for length in (1,2,3):
         prefix=prior[-length:]
         if len(prefix)==length:

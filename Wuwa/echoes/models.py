@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
 from django.utils import timezone
 
 from .constants import MAIN_STATS_BY_COST, SUBSTAT_TYPES, TIER_TABLES
@@ -83,6 +83,7 @@ class EchoRecord(models.Model):
         if save:
             self.save(update_fields=["status", "updated_at"])
 
+    @transaction.atomic
     def save(self, *args, **kwargs):
         if not self.game_account_id and self.user_id:
             self.game_account = self.user.game_accounts.get(is_default=True)
@@ -153,6 +154,7 @@ class SubstatRoll(models.Model):
         if self.recognition_snapshot_id and self.recognition_snapshot.game_account_id != self.echo.game_account_id:
             raise ValidationError({"recognition_snapshot": "Snapshot must belong to the same game account."})
 
+    @transaction.atomic(savepoint=False)
     def save(self, *args, validate=True, mark_echo=True, **kwargs):
         if validate:
             self.full_clean(validate_constraints=False)

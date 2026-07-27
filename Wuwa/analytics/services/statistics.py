@@ -45,6 +45,7 @@ def build_user_statistics(owner):
                 "status": context_status,
                 "sample_size": total_rolls,
                 "groups": dict(state.payload["set_counts"]),
+                "overflow_count": state.payload.get("set_counts_overflow", 0),
                 "message": "套装变量后台持续监控；证据不足时不参与预测。",
             },
             "cost": {"status": context_status, "sample_size": total_rolls},
