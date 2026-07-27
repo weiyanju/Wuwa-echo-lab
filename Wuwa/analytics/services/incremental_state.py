@@ -119,25 +119,37 @@ def _gap(sequence, group):
 def _cycle(payload, candidates):
     recent, counts, total = payload["recent_sequence"][-CYCLE_DIRECT_WINDOW:], payload["counts"], payload["total_rolls"]
     if not candidates: return {}
-    if len(recent) < 8: return _uniform(candidates)
     # Same recent signals as prediction; all-time group rate comes from persistent counts.
-    group_probs = {}
-    for name, group in SUBSTAT_GROUPS.items():
-        r5, r12, r30 = _group_rate(recent, group, 5), _group_rate(recent, group, 12), _group_rate(recent, group, 30)
-        global_rate = sum(counts.get(key, 0) for key in group) / total
-        streak = 0
-        for value in reversed(recent):
-            if value not in group: break
-            streak += 1
-        group_probs[name] = max(.01, .35 + 1.30 * max(r12-global_rate, 0) + .90*r5 + .55*max(r12-r30, 0) + .035*min(_gap(recent, group),12) - .25*max(streak-2,0))
-    normalizer = sum(group_probs.values()); group_probs = {key: value/normalizer for key, value in group_probs.items()}
+    if len(recent) < 8:
+        group_probs = {name: 1 / len(SUBSTAT_GROUPS) for name in SUBSTAT_GROUPS}
+    else:
+        group_probs = {}
+        for name, group in SUBSTAT_GROUPS.items():
+            r5, r12, r30 = _group_rate(recent, group, 5), _group_rate(recent, group, 12), _group_rate(recent, group, 30)
+            global_rate = sum(counts.get(key, 0) for key in group) / total
+            streak = 0
+            for value in reversed(recent):
+                if value not in group: break
+                streak += 1
+            group_probs[name] = max(.01, .35 + 1.30 * max(r12-global_rate, 0) + .90*r5 + .55*max(r12-r30, 0) + .035*min(_gap(recent, group),12) - .25*max(streak-2,0))
+        normalizer = sum(group_probs.values()); group_probs = {key: value/normalizer for key, value in group_probs.items()}
     general = {key: 1.0 for key in candidates}
     for name, group in SUBSTAT_GROUPS.items():
         for key in group:
             if key in general: general[key] *= .70 + 1.80 * group_probs[name]
     general = _normal(general, candidates)
     # Preserve the exact critical-cycle weighting from the replay implementation.
-    if not any(key in candidates for key in CRIT_SUBSTATS): return general
+    if not any(key in candidates for key in CRIT_SUBSTATS):
+        crit = _uniform(candidates)
+        return _normal({key:.75*crit[key]+.25*general[key] for key in candidates},candidates)
+    if len(recent) < 8:
+        raw_states = {"double": .25, "single_rate": .25, "single_damage": .25, "cooldown": .25}
+        multipliers={"double":(1.3,1.3),"single_rate":(1.45,.92),"single_damage":(.92,1.45),"cooldown":(.72,.72)}
+        crit={key:0 for key in candidates}
+        for state, probability in raw_states.items():
+            state_distribution = _normal({key: multipliers[state][0] if key == "crit_rate" else multipliers[state][1] if key == "crit_damage" else 1 for key in candidates}, candidates)
+            for key in candidates: crit[key] += probability * state_distribution[key]
+        return _normal({key:.75*crit[key]+.25*general[key] for key in candidates},candidates)
     r5r, r5d = _rate(recent,"crit_rate",5), _rate(recent,"crit_damage",5)
     r12 = _group_rate(recent, CRIT_SUBSTATS, 12); r30 = _group_rate(recent, CRIT_SUBSTATS, 30)
     global_crit = sum(counts.get(key,0) for key in CRIT_SUBSTATS)/total
@@ -202,10 +214,8 @@ def record_online_outcomes(payload, distributions, weights, actual, candidates):
         model=evaluation["models"][key]; model["evaluated"]+=1; model["hits"]+=int(top_k_hit(distribution,actual,1)); model["loss_total"]+=log_loss(distribution,actual)
 
 
-def apply_event(payload, event):
+def apply_event(payload, event, candidates):
     """Mutate *payload* exactly once, scoring the event before observing it."""
-    echo_seen=payload.setdefault("echo_seen",{}).setdefault(str(event["echo_id"]),[])
-    candidates=[key for key in SUBSTAT_TYPES if key not in echo_seen]
     distributions=distributions_from_payload(payload,candidates); weights=dynamic_weights_from_payload(payload)
     actual=event["substat_type"]; record_online_outcomes(payload,distributions,weights,actual,candidates)
     payload["dynamic_outcomes"].append({"actual":actual,"candidates":candidates,"distributions":distributions})
@@ -219,12 +229,16 @@ def apply_event(payload, event):
         if len(prefix)==length:
             table=payload["patterns"][str(length)].setdefault(_key(prefix), {})
             table[actual]=table.get(actual,0)+1
-    if actual not in echo_seen: echo_seen.append(actual)
     payload["total_rolls"]=payload.get("total_rolls",0)+1
     return payload
 
 
 def build_payload_from_events(events):
     payload=empty_payload()
-    for event in events: apply_event(payload,event)
+    seen_by_echo = {}
+    for event in events:
+        echo_seen = seen_by_echo.setdefault(event["echo_id"], set())
+        candidates = [key for key in SUBSTAT_TYPES if key not in echo_seen]
+        apply_event(payload, event, candidates)
+        echo_seen.add(event["substat_type"])
     return payload

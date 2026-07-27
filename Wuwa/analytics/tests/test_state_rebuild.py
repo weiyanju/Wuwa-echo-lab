@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from unittest.mock import patch
 
+from accounts.models import GameAccount
 from analytics.models import GameAccountAnalyticsState
 from analytics.services.state_store import mark_game_account_state_dirty
 from analytics.services.state_rebuild import rebuild_game_account_state
@@ -37,3 +38,13 @@ class StateRebuildTests(TestCase):
 
         self.assertFalse(result.saved)
         self.assertEqual(result.state.status, "dirty")
+
+    def test_moving_echo_dirties_both_game_account_projections(self):
+        second_account = GameAccount.objects.create(user=self.account.user, uid="987654321")
+        self.assertFalse(GameAccountAnalyticsState.objects.filter(game_account=self.account).exists())
+
+        self.echo.game_account = second_account
+        self.echo.save(update_fields=["game_account"])
+
+        self.assertEqual(GameAccountAnalyticsState.objects.get(game_account=self.account).status, "dirty")
+        self.assertEqual(GameAccountAnalyticsState.objects.get(game_account=second_account).status, "dirty")

@@ -2,6 +2,7 @@ from unittest import TestCase
 
 from analytics.services.incremental_state import (
     apply_event,
+    build_payload_from_events,
     distributions_from_payload,
     dynamic_weights_from_payload,
     empty_payload,
@@ -32,7 +33,7 @@ class IncrementalStateTests(TestCase):
     def test_apply_event_accumulates_once_and_bounds_windows(self):
         payload = empty_payload()
         for index in range(10_000):
-            apply_event(payload, _event(index, SUBSTAT_TYPES[index % len(SUBSTAT_TYPES)]))
+            apply_event(payload, _event(index, SUBSTAT_TYPES[index % len(SUBSTAT_TYPES)]), SUBSTAT_TYPES)
 
         self.assertEqual(payload["total_rolls"], 10_000)
         self.assertEqual(sum(payload["counts"].values()), 10_000)
@@ -44,7 +45,7 @@ class IncrementalStateTests(TestCase):
         payload = empty_payload()
         candidates = SUBSTAT_TYPES[:5]
         for index in range(30):
-            apply_event(payload, _event(index, SUBSTAT_TYPES[index % len(SUBSTAT_TYPES)]))
+            apply_event(payload, _event(index, SUBSTAT_TYPES[index % len(SUBSTAT_TYPES)]), candidates)
 
         distributions = distributions_from_payload(payload, candidates)
         weights = dynamic_weights_from_payload(payload)
@@ -57,8 +58,7 @@ class IncrementalStateTests(TestCase):
     def test_projection_matches_replay_helpers_for_multi_echo_history(self):
         payload = empty_payload()
         events = [_event(index, SUBSTAT_TYPES[(index * 2 + index // 3) % len(SUBSTAT_TYPES)]) for index in range(180)]
-        for event in events:
-            apply_event(payload, event)
+        payload = build_payload_from_events(events)
         candidates = SUBSTAT_TYPES[:]
         sequence = [event["substat_type"] for event in events]
         replay = {
@@ -74,3 +74,34 @@ class IncrementalStateTests(TestCase):
         expected_weights, _ = _dynamic_weight_result_from_events(events, _model_weights(len(events)))
         for key, value in expected_weights.items():
             self.assertAlmostEqual(dynamic_weights_from_payload(payload)[key], value, places=12)
+
+    def test_cycle_matches_legacy_before_eight_events(self):
+        events = [_event(index, SUBSTAT_TYPES[index]) for index in range(7)]
+        payload = build_payload_from_events(events)
+        candidates = SUBSTAT_TYPES[:5]
+
+        expected = _cycle_window_distribution_from_sequence(
+            [event["substat_type"] for event in events], candidates,
+        )
+
+        for key, value in expected.items():
+            self.assertAlmostEqual(distributions_from_payload(payload, candidates)["cycle"][key], value, places=12)
+
+    def test_cycle_matches_legacy_without_critical_candidates(self):
+        events = [_event(index, SUBSTAT_TYPES[index % len(SUBSTAT_TYPES)]) for index in range(12)]
+        payload = build_payload_from_events(events)
+        candidates = ["atk_percent", "hp_percent", "flat_atk"]
+
+        expected = _cycle_window_distribution_from_sequence(
+            [event["substat_type"] for event in events], candidates,
+        )
+
+        for key, value in expected.items():
+            self.assertAlmostEqual(distributions_from_payload(payload, candidates)["cycle"][key], value, places=12)
+
+    def test_payload_never_persists_per_echo_seen_map(self):
+        events = [_event(index, "crit_rate") for index in range(500)]
+
+        payload = build_payload_from_events(events)
+
+        self.assertNotIn("echo_seen", payload)

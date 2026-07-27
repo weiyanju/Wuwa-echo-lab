@@ -24,3 +24,11 @@ class StateStoreTests(TestCase):
 
         self.assertEqual(second.source_version, 2)
         self.assertEqual(ready_state_for_account(self.account).pk, self.account.pk)
+
+    def test_dirty_mark_records_requested_error_and_non_ready_lookup_raises(self):
+        mark_game_account_state_dirty(self.account, error_code="analytics_source_changed")
+
+        with self.assertRaises(GameAccountAnalyticsState.DoesNotExist):
+            ready_state_for_account(self.account.pk)
+        state = GameAccountAnalyticsState.objects.get(game_account=self.account)
+        self.assertEqual(state.error_code, "analytics_source_changed")
