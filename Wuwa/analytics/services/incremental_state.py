@@ -180,8 +180,18 @@ def distributions_from_payload(payload, candidates):
 def _top(distribution): return max(distribution.items(),key=lambda row:row[1])[0] if distribution else None
 
 
-def dynamic_weights_from_payload(payload, include_details=False):
-    base = base_model_weights(payload.get("total_rolls",0)); outcomes=payload["dynamic_outcomes"]
+def dynamic_weights_from_payload(payload, base_weights=None, include_details=False):
+    """Derive bounded dynamic weights without replaying historical rows.
+
+    ``include_details`` used to be the second positional argument.  Keep that
+    call form working while allowing request orchestration to supply the
+    already-selected base schedule.
+    """
+    if isinstance(base_weights, bool) and include_details is False:
+        include_details = base_weights
+        base_weights = None
+    base = dict(base_model_weights(payload.get("total_rolls", 0)) if base_weights is None else base_weights)
+    outcomes=payload["dynamic_outcomes"]
     if len(outcomes) < DYNAMIC_WEIGHT_MIN_EVENTS: return (base, _flat(0)) if include_details else base
     hits=Counter(); evaluated=0
     for outcome in outcomes:

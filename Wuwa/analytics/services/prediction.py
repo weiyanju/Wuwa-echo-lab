@@ -3,6 +3,8 @@ from math import exp
 
 from echoes.constants import MODEL_LABELS, SUBSTAT_LABELS, SUBSTAT_TYPES, TIER_TABLES
 from .roll_summary import build_roll_summary
+from .incremental_state import distributions_from_payload, dynamic_weights_from_payload
+from .state_store import state_snapshot_for_account
 from .model_config import (
     DYNAMIC_WEIGHT_BACKTEST_WINDOW,
     DYNAMIC_WEIGHT_MIN_EVENTS,
@@ -698,21 +700,18 @@ def _serializable_tier_table(substat_type):
 
 def predict_next_substat(echo, include_diagnostics=True):
     candidates = _legal_candidates(echo)
-    owner = echo.game_account
-    summary = build_roll_summary(owner)
-    events = [dict(event) for event in summary.events]
-    sequence = list(summary.sequence)
-    counts = Counter(summary.counts)
-    total_rolls = summary.total_rolls
+    state = state_snapshot_for_account(echo.game_account)
+    payload = state.payload
+    sequence = list(payload["recent_sequence"])
+    total_rolls = state.total_rolls
     base_weights = _model_weights(total_rolls)
-    weights, weight_adjustments = _dynamic_weight_result_from_events(events, base_weights)
-    distributions = {
-        "rule": _rule_distribution_from_counts(counts, total_rolls, candidates),
-        "bayes": _bayes_distribution_from_sequence(sequence, candidates),
-        "markov": _markov_distribution_from_sequence(sequence, candidates),
-        "cycle": _cycle_window_distribution_from_sequence(sequence, candidates),
-        "context": _context_distribution_for_candidates(candidates),
-    }
+    weights, weight_adjustments = dynamic_weights_from_payload(
+        payload,
+        base_weights=base_weights,
+        include_details=True,
+    )
+    distributions = distributions_from_payload(payload, candidates)
+    distributions["context"] = _context_distribution_for_candidates(candidates)
     final = _weighted_distribution(distributions, weights)
     diagnostics = _model_diagnostics(sequence, candidates, total_rolls, weights, distributions) if include_diagnostics else None
 

@@ -75,6 +75,28 @@ class IncrementalStateTests(TestCase):
         for key, value in expected_weights.items():
             self.assertAlmostEqual(dynamic_weights_from_payload(payload)[key], value, places=12)
 
+    def test_payload_weights_match_replay_at_every_schedule_boundary(self):
+        """State-backed reads retain the replay model's 12/30/120 schedule semantics."""
+        for size in (0, 20, 499, 500, 2999, 3000):
+            with self.subTest(size=size):
+                events = [
+                    _event(index, SUBSTAT_TYPES[(index * 2 + index // 7) % len(SUBSTAT_TYPES)])
+                    for index in range(size)
+                ]
+                payload = build_payload_from_events(events)
+                base_weights = _model_weights(size)
+
+                expected, expected_details = _dynamic_weight_result_from_events(events, base_weights)
+                actual, actual_details = dynamic_weights_from_payload(
+                    payload,
+                    base_weights=base_weights,
+                    include_details=True,
+                )
+
+                for key in expected:
+                    self.assertAlmostEqual(actual[key], expected[key], places=12)
+                    self.assertEqual(actual_details[key], expected_details[key])
+
     def test_cycle_matches_legacy_before_eight_events(self):
         events = [_event(index, SUBSTAT_TYPES[index]) for index in range(7)]
         payload = build_payload_from_events(events)

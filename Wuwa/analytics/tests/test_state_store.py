@@ -1,13 +1,32 @@
 from django.contrib.auth.models import User
 from django.test import TestCase
 
+from accounts.models import GameAccount
 from analytics.models import GameAccountAnalyticsState
-from analytics.services.state_store import mark_game_account_state_dirty, ready_state_for_account
+from analytics.services.state_rebuild import rebuild_game_account_state
+from analytics.services.state_store import (
+    AnalyticsStateUnavailable,
+    mark_game_account_state_dirty,
+    ready_state_for_account,
+    state_snapshot_for_account,
+)
+from echoes.models import EchoRecord, SubstatRoll
+from echoes.services import update_echo
 
 
 class StateStoreTests(TestCase):
     def setUp(self):
         self.account = User.objects.create_user(username="analytics-state", password="pw").game_accounts.get()
+        self.account.uid = "123456789"
+        self.account.save(update_fields=["uid", "updated_at"])
+        self.echo = EchoRecord.objects.create(
+            user=self.account.user,
+            game_account=self.account,
+            echo_uid="analytics-state-echo",
+            cost=1,
+            set_name="Moonlit",
+            main_stat="atk_percent",
+        )
 
     def test_one_state_per_account_defaults_to_dirty_and_empty_payload(self):
         state = GameAccountAnalyticsState.objects.create(game_account=self.account)
@@ -32,3 +51,53 @@ class StateStoreTests(TestCase):
             ready_state_for_account(self.account.pk)
         state = GameAccountAnalyticsState.objects.get(game_account=self.account)
         self.assertEqual(state.error_code, "analytics_source_changed")
+
+    def test_new_direct_orm_roll_advances_a_ready_state_without_rebuild(self):
+        rebuild_game_account_state(self.account)
+
+        roll = SubstatRoll.objects.create(
+            echo=self.echo,
+            position=1,
+            substat_type="crit_rate",
+            tier_value=6.3,
+        )
+
+        state = state_snapshot_for_account(self.account)
+        self.assertEqual(state.status, GameAccountAnalyticsState.Status.READY)
+        self.assertEqual(state.total_rolls, 1)
+        self.assertEqual(state.payload["counts"]["crit_rate"], 1)
+        self.assertEqual(state.last_roll_id, roll.id)
+
+    def test_delete_marks_only_the_owning_account_dirty(self):
+        roll = SubstatRoll.objects.create(
+            echo=self.echo,
+            position=1,
+            substat_type="crit_rate",
+            tier_value=6.3,
+        )
+        other_account = GameAccount.objects.create(user=self.account.user, uid="987654321")
+        rebuild_game_account_state(self.account)
+        other_state = rebuild_game_account_state(other_account).state
+
+        roll.delete()
+
+        self.account.analytics_state.refresh_from_db()
+        other_state.refresh_from_db()
+        self.assertEqual(self.account.analytics_state.status, GameAccountAnalyticsState.Status.DIRTY)
+        self.assertEqual(self.account.analytics_state.error_code, "roll_deleted")
+        self.assertEqual(other_state.status, GameAccountAnalyticsState.Status.READY)
+
+    def test_context_change_dirties_but_image_change_does_not(self):
+        rebuild_game_account_state(self.account)
+
+        update_echo(self.echo, {"echo_image": "/echo-images/preview.png"})
+        self.account.analytics_state.refresh_from_db()
+        self.assertEqual(self.account.analytics_state.status, GameAccountAnalyticsState.Status.READY)
+
+        update_echo(self.echo, {"set_name": "Changed Set"})
+        self.account.analytics_state.refresh_from_db()
+        self.assertEqual(self.account.analytics_state.status, GameAccountAnalyticsState.Status.DIRTY)
+
+    def test_snapshot_rejects_unowned_numeric_account_ids(self):
+        with self.assertRaises(AnalyticsStateUnavailable):
+            state_snapshot_for_account(self.account.id)

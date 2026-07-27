@@ -7,6 +7,7 @@ from django.test import TestCase
 from django.utils import timezone
 from unittest.mock import patch
 
+from analytics.services.state_rebuild import rebuild_game_account_state
 from analytics.services.evaluation import brier_score, build_model_evaluation, empty_evaluation, log_loss, top_k_hit
 from echoes.models import EchoRecord, SubstatRoll
 
@@ -109,6 +110,21 @@ class ModelEvaluationBacktestTests(TestCase):
         self.assertEqual(result["sample_size"], len(sequence))
         self.assertLess(result["evaluated_count"], 20)
         self.assertIsNone(result["top_1_hit_rate"])
+
+    def test_ready_evaluation_does_not_replay_history(self):
+        sequence = ["crit_rate", "crit_damage", "atk_percent", "flat_atk", "skill_damage"] * 10
+        for index, substat_type in enumerate(sequence):
+            self._add_roll(index, substat_type)
+        rebuild_game_account_state(self.user.game_accounts.get())
+
+        with patch(
+            "analytics.services.evaluation._historical_roll_events",
+            side_effect=AssertionError("evaluation GET must not replay history"),
+        ):
+            result = build_model_evaluation(self.user.game_accounts.get())
+
+        self.assertEqual(result["sample_size"], len(sequence))
+        self.assertIn(result["status"], {"insufficient_data", "ready"})
 
     def test_model_evaluation_backtests_user_history_with_real_scores(self):
         sequence = [

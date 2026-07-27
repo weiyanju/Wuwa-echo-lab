@@ -2,7 +2,9 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.utils import timezone
 from datetime import timedelta
+from unittest.mock import patch
 
+from analytics.services.state_rebuild import rebuild_game_account_state
 from analytics.services.prediction import (
     _bayes_component_weights,
     _bayes_distribution_from_sequence,
@@ -48,6 +50,19 @@ class PredictionServiceTests(TestCase):
         self.assertIn("candidates", result)
         self.assertGreater(len(result["candidates"]), 0)
         self.assertIsNone(result["model_diagnostics"])
+
+    def test_ready_prediction_does_not_load_legacy_summary(self):
+        SubstatRoll.objects.create(echo=self.echo, position=1, substat_type="crit_rate", tier_value=6.3)
+        rebuild_game_account_state(self.echo.game_account)
+
+        with patch(
+            "analytics.services.roll_summary._load_roll_summary",
+            side_effect=AssertionError("prediction must use ready analytics state"),
+        ):
+            result = predict_next_substat(self.echo)
+
+        self.assertEqual(result["sample_size"], 1)
+        self.assertNotIn("crit_rate", [row["substat_type"] for row in result["candidates"]])
 
     def test_rule_baseline_balances_overrepresented_cross_echo_substats(self):
         for index in range(10):

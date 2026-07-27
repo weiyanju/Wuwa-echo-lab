@@ -10,6 +10,7 @@ from django.urls import reverse
 from accounts.models import GameAccount
 from echoes.models import EchoRecord, SubstatRoll
 from recognition.models import RecognitionSession, RecognitionSnapshot
+from analytics.services.state_store import AnalyticsStateUnavailable
 
 
 class ApiViewTests(TestCase):
@@ -719,6 +720,30 @@ class ApiViewTests(TestCase):
             with self.subTest(url=url):
                 response = self.client.post(url)
                 self.assertEqual(response.status_code, 405)
+
+    def test_analytics_endpoints_hide_refresh_failure_details(self):
+        self.client.login(username="tester", password="pw12345")
+        echo = EchoRecord.objects.create(
+            user=self.user,
+            echo_uid="analytics-unavailable",
+            cost=1,
+            set_name="Set",
+            main_stat="atk_percent",
+        )
+        cases = (
+            (reverse("echo_prediction", args=[echo.id]), "analytics.views.predict_next_substat"),
+            (reverse("stats"), "analytics.views.build_user_statistics"),
+            (reverse("model_evaluation"), "analytics.views.build_model_evaluation"),
+        )
+
+        for url, target in cases:
+            with self.subTest(url=url), patch(target, side_effect=AnalyticsStateUnavailable()):
+                response = self.client.get(url)
+            self.assertEqual(response.status_code, 503)
+            self.assertEqual(response.json(), {
+                "error": "Analytics state is refreshing. Retry shortly.",
+                "code": "analytics_state_unavailable",
+            })
 
     def test_patch_echo_parses_boolean_strings(self):
         self.client.login(username="tester", password="pw12345")

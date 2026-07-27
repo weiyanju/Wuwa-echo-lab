@@ -9,6 +9,7 @@ from echoes.services import owned_echo
 from .services.evaluation import build_model_evaluation
 from .services.prediction import predict_next_substat
 from .services.statistics import build_user_statistics
+from .services.state_store import AnalyticsStateUnavailable
 
 
 @api_login_required
@@ -19,7 +20,14 @@ def echo_prediction(request, echo_id):
     except ObjectDoesNotExist:
         return error_response("声骸不存在。", status=404)
     include_diagnostics = request.GET.get("mode") != "fast"
-    return success_response(predict_next_substat(echo, include_diagnostics=include_diagnostics))
+    try:
+        return success_response(predict_next_substat(echo, include_diagnostics=include_diagnostics))
+    except AnalyticsStateUnavailable:
+        return error_response(
+            "Analytics state is refreshing. Retry shortly.",
+            status=503,
+            code="analytics_state_unavailable",
+        )
 
 
 @api_login_required
@@ -29,7 +37,14 @@ def stats(request):
         game_account = game_account_for_user(request.user, request.GET.get("game_account_id"))
     except ObjectDoesNotExist:
         return error_response("Game account not found.", status=404)
-    return success_response(build_user_statistics(game_account))
+    try:
+        return success_response(build_user_statistics(game_account))
+    except AnalyticsStateUnavailable:
+        return error_response(
+            "Analytics state is refreshing. Retry shortly.",
+            status=503,
+            code="analytics_state_unavailable",
+        )
 
 
 @api_login_required
@@ -39,4 +54,11 @@ def model_evaluation(request):
         game_account = game_account_for_user(request.user, request.GET.get("game_account_id"))
     except ObjectDoesNotExist:
         return error_response("Game account not found.", status=404)
-    return success_response(build_model_evaluation(game_account))
+    try:
+        return success_response(build_model_evaluation(game_account))
+    except AnalyticsStateUnavailable:
+        return error_response(
+            "Analytics state is refreshing. Retry shortly.",
+            status=503,
+            code="analytics_state_unavailable",
+        )

@@ -1,44 +1,11 @@
-import math
-from collections import Counter
-
-from echoes.constants import SUBSTAT_TYPES
-from analytics.services.prediction import (
-    MODEL_KEYS,
-    _bayes_distribution_from_sequence,
-    _context_distribution_for_candidates,
-    _cycle_window_distribution_from_sequence,
-    _dynamic_weight_result_from_events,
-    _historical_roll_events,
-    _markov_distribution_from_sequence,
-    _model_weights,
-    _rule_distribution_from_counts,
-    _weighted_distribution,
-)
+from .metrics import brier_score, log_loss, top_k_hit  # re-exported public helpers
+from .model_config import MODEL_KEYS
+from .prediction import _historical_roll_events  # legacy patch seam; never called on reads
+from .state_store import AnalyticsStateUnavailable, state_snapshot_for_account
 
 
 MIN_BACKTEST_HISTORY = 20
 MIN_EVALUATED_SAMPLES = 20
-
-
-def log_loss(prediction, actual):
-    probability = max(prediction.get(actual, 0), 1e-15)
-    return -math.log(probability)
-
-
-def brier_score(prediction, actual):
-    total = 0
-    for label in set(prediction) | {actual}:
-        probability = prediction.get(label, 0)
-        expected = 1 if label == actual else 0
-        total += (probability - expected) ** 2
-    return total
-
-
-def top_k_hit(prediction, actual, k):
-    if k <= 0:
-        return False
-    ranked = sorted(prediction.items(), key=lambda item: item[1], reverse=True)
-    return actual in [label for label, _ in ranked[:k]]
 
 
 def empty_evaluation():
@@ -56,87 +23,54 @@ def empty_evaluation():
     }
 
 
-def _average(values):
-    return sum(values) / len(values) if values else None
+def _online_totals(payload):
+    totals = payload.get("online_evaluation")
+    required = {"evaluated", "loss_total", "brier_total", "top_hits", "models"}
+    if not isinstance(totals, dict) or not required.issubset(totals):
+        raise AnalyticsStateUnavailable()
+    if not all(str(key) in totals["top_hits"] for key in (1, 3, 5)):
+        raise AnalyticsStateUnavailable()
+    if not all(key in totals["models"] for key in MODEL_KEYS):
+        raise AnalyticsStateUnavailable()
+    return totals
 
 
-def _distributions_for_prefix(sequence, counts, total, candidates):
-    return {
-        "rule": _rule_distribution_from_counts(counts, total, candidates),
-        "bayes": _bayes_distribution_from_sequence(sequence, candidates),
-        "markov": _markov_distribution_from_sequence(sequence, candidates),
-        "cycle": _cycle_window_distribution_from_sequence(sequence, candidates),
-        "context": _context_distribution_for_candidates(candidates),
-    }
-
-
-def build_model_evaluation(user, min_history=MIN_BACKTEST_HISTORY):
-    events = _historical_roll_events(user)
-    if len(events) <= min_history:
-        result = empty_evaluation()
-        result["sample_size"] = len(events)
-        return result
-
-    sequence = []
-    counts = Counter()
-    total = 0
-    seen_by_echo = {}
-    top_hits = {1: 0, 3: 0, 5: 0}
-    losses = []
-    brier_scores = []
-    model_hits = Counter()
-    model_losses = {key: [] for key in MODEL_KEYS}
-    evaluated = 0
-
-    for index, event in enumerate(events):
-        actual = event["substat_type"]
-        echo_seen = seen_by_echo.setdefault(event["echo_id"], set())
-        candidates = [substat_type for substat_type in SUBSTAT_TYPES if substat_type not in echo_seen]
-        should_evaluate = index >= min_history and actual in candidates
-
-        if should_evaluate:
-            distributions = _distributions_for_prefix(sequence, counts, total, candidates)
-            base_weights = _model_weights(total)
-            weights, _ = _dynamic_weight_result_from_events(events[:index], base_weights)
-            final_distribution = _weighted_distribution(distributions, weights)
-            losses.append(log_loss(final_distribution, actual))
-            brier_scores.append(brier_score(final_distribution, actual))
-            for k in top_hits:
-                if top_k_hit(final_distribution, actual, k):
-                    top_hits[k] += 1
-            for key, distribution in distributions.items():
-                if top_k_hit(distribution, actual, 1):
-                    model_hits[key] += 1
-                model_losses[key].append(log_loss(distribution, actual))
-            evaluated += 1
-
-        echo_seen.add(actual)
-        sequence.append(actual)
-        counts[actual] += 1
-        total += 1
-
+def build_model_evaluation(owner, min_history=MIN_BACKTEST_HISTORY):
+    # The persisted accumulator is intentionally configured with the stable
+    # default history threshold.  Altering it at read time would require replay.
+    del min_history
+    state = state_snapshot_for_account(owner)
+    totals = _online_totals(state.payload)
+    evaluated = totals["evaluated"]
+    if not isinstance(evaluated, int) or evaluated < 0:
+        raise AnalyticsStateUnavailable()
     if evaluated < MIN_EVALUATED_SAMPLES:
         result = empty_evaluation()
-        result["sample_size"] = len(events)
+        result["sample_size"] = state.total_rolls
         result["evaluated_count"] = evaluated
         return result
 
+    model_scores = {}
+    for key in MODEL_KEYS:
+        model = totals["models"][key]
+        denominator = model.get("evaluated") if isinstance(model, dict) else None
+        if not isinstance(denominator, int) or denominator <= 0:
+            raise AnalyticsStateUnavailable()
+        model_scores[key] = {
+            "hit_rate": model["hits"] / denominator,
+            "loss": model["loss_total"] / denominator,
+            "evaluated": denominator,
+        }
+
     return {
         "status": "ready",
-        "sample_size": len(events),
+        "sample_size": state.total_rolls,
         "evaluated_count": evaluated,
-        "log_loss": _average(losses),
-        "brier_score": _average(brier_scores),
-        "top_1_hit_rate": top_hits[1] / evaluated,
-        "top_3_hit_rate": top_hits[3] / evaluated,
-        "top_5_hit_rate": top_hits[5] / evaluated,
-        "model_scores": {
-            key: {
-                "hit_rate": model_hits[key] / len(model_losses[key]) if model_losses[key] else None,
-                "loss": _average(model_losses[key]),
-                "evaluated": len(model_losses[key]),
-            }
-            for key in MODEL_KEYS
-        },
+        "log_loss": totals["loss_total"] / evaluated,
+        "brier_score": totals["brier_total"] / evaluated,
+        "top_1_hit_rate": totals["top_hits"]["1"] / evaluated,
+        "top_3_hit_rate": totals["top_hits"]["3"] / evaluated,
+        "top_5_hit_rate": totals["top_hits"]["5"] / evaluated,
+        "model_scores": model_scores,
         "message": "ready",
     }

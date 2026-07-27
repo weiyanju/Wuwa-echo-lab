@@ -110,6 +110,7 @@ def build_roll_from_payload(echo, payload, position):
     return roll
 
 
+@transaction.atomic
 def create_substat_roll(echo, payload, existing_roll_count=None):
     if existing_roll_count is None:
         existing_roll_count = echo.substat_rolls.count()

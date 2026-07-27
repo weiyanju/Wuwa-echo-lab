@@ -1,5 +1,7 @@
 from echoes.constants import SAMPLE_STAGES, SUBSTAT_LABELS, SUBSTAT_TYPES
+# Kept as a patchable legacy seam until batch C removes roll_summary entirely.
 from .roll_summary import build_roll_summary
+from .state_store import state_snapshot_for_account
 
 
 def _sample_stage(total_rolls):
@@ -16,14 +18,14 @@ def _context_status(total_rolls):
 
 
 def build_user_statistics(owner):
-    summary = build_roll_summary(owner)
-    total_rolls = summary.total_rolls
-    counts = summary.counts
+    state = state_snapshot_for_account(owner)
+    total_rolls = state.total_rolls
+    counts = state.payload["counts"]
     baseline = 1 / len(SUBSTAT_TYPES)
 
     substat_frequency = {}
     for substat_type in SUBSTAT_TYPES:
-        count = counts[substat_type]
+        count = counts.get(substat_type, 0)
         observed = count / total_rolls if total_rolls else 0
         substat_frequency[substat_type] = {
             "label": SUBSTAT_LABELS[substat_type],
@@ -42,7 +44,7 @@ def build_user_statistics(owner):
             "set_name": {
                 "status": context_status,
                 "sample_size": total_rolls,
-                "groups": dict(summary.set_counts),
+                "groups": dict(state.payload["set_counts"]),
                 "message": "套装变量后台持续监控；证据不足时不参与预测。",
             },
             "cost": {"status": context_status, "sample_size": total_rolls},
