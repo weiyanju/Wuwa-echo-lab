@@ -1110,6 +1110,9 @@ test('reset clears loaded insights after tier entry', async () => {
     })
     await workspace.refresh()
     assert.equal(workspace.stats.value.total_rolls, 1)
+    assert.equal(workspace.evaluation.value, null)
+
+    await workspace.refreshEvaluation()
     assert.equal(workspace.evaluation.value.status, 'ready')
 
     await workspace.clickTier(

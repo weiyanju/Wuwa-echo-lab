@@ -34,7 +34,7 @@ No database migration, `migrate`, or development backfill/rebuild was executed o
 
 ## Commands/results
 
-- `npm test -- --test-name-pattern="workspace refresh|dashboard navigation"`: passed, 55 tests in the sandbox-external rerun (the Node runner loaded the full suite under this pattern).
+- From `WuwaFrontend/`, `..\.tools\node\npm.cmd test`: passed, 348/348 tests.
 - `npm run build`: passed (Vite 8.0.10 production build).
 - From `Wuwa/`, `.\.venv\Scripts\python.exe manage.py test analytics.tests.test_incremental_state analytics.tests.test_performance_contract --keepdb -v 1`: passed, 12/12 tests.
 - `py -3 -m compileall -q analytics api`: passed.
