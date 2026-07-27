@@ -4,11 +4,14 @@ from django.dispatch import receiver
 from echoes.models import EchoRecord, SubstatRoll
 
 from .services.roll_summary import invalidate_roll_summary_for_echo
+from .services.state_store import mark_game_account_state_dirty
 
 
 @receiver([post_save, post_delete], sender=SubstatRoll)
 def invalidate_roll_summary_after_roll_change(sender, instance, **kwargs):
     invalidate_roll_summary_for_echo(instance.echo)
+    if instance.echo.game_account_id:
+        mark_game_account_state_dirty(instance.echo.game_account)
 
 
 @receiver(post_save, sender=EchoRecord)
@@ -17,3 +20,5 @@ def invalidate_roll_summary_after_context_change(sender, instance, update_fields
         return
     if {"set_name", "cost", "main_stat", "game_account", "user"} & set(update_fields):
         invalidate_roll_summary_for_echo(instance)
+        if instance.game_account_id:
+            mark_game_account_state_dirty(instance.game_account)

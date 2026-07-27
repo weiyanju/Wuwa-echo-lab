@@ -1,14 +1,22 @@
 from collections import Counter
 from math import exp
 
-from echoes.constants import MODEL_LABELS, MODEL_WEIGHT_SCHEDULE, SUBSTAT_LABELS, SUBSTAT_TYPES, TIER_TABLES
+from echoes.constants import MODEL_LABELS, SUBSTAT_LABELS, SUBSTAT_TYPES, TIER_TABLES
 from .roll_summary import build_roll_summary
+from .model_config import (
+    DYNAMIC_WEIGHT_BACKTEST_WINDOW,
+    DYNAMIC_WEIGHT_MIN_EVENTS,
+    MAX_SHIFT as DYNAMIC_WEIGHT_MAX_SHIFT,
+    MODEL_KEYS,
+    RECENT_SEQUENCE_WINDOW,
+    base_model_weights,
+    normalize_weights,
+)
 
 
 BAYES_ALPHA_MIN = 1.0
 BAYES_ALPHA_MAX = 5.0
 BAYES_ALPHA_DECAY_SAMPLES = 500
-RECENT_SEQUENCE_WINDOW = 12
 RECENT_BALANCE_STRENGTH = 0.85
 RECENT_OVERHEAT_MIN_COUNT = 3
 GLOBAL_BALANCE_STRENGTH = 0.65
@@ -33,10 +41,6 @@ SUBSTAT_GROUPS = {
 }
 CYCLE_CRIT_SIGNAL_WEIGHT = 0.75
 CYCLE_GENERAL_SIGNAL_WEIGHT = 0.25
-MODEL_KEYS = ("rule", "bayes", "markov", "cycle", "context")
-DYNAMIC_WEIGHT_MIN_EVENTS = 20
-DYNAMIC_WEIGHT_BACKTEST_WINDOW = 120
-DYNAMIC_WEIGHT_MAX_SHIFT = 0.025
 
 
 def _existing_substats(echo):
@@ -65,13 +69,11 @@ def _historical_roll_events(owner):
 
 
 def _model_weights(total_rolls):
-    for stage in MODEL_WEIGHT_SCHEDULE:
-        if total_rolls >= stage["min"] and (stage["max"] is None or total_rolls < stage["max"]):
-            return dict(stage["weights"])
-    return dict(MODEL_WEIGHT_SCHEDULE[-1]["weights"])
+    return base_model_weights(total_rolls)
 
 
 def _weight_stage(total_rolls):
+    from echoes.constants import MODEL_WEIGHT_SCHEDULE
     for stage in MODEL_WEIGHT_SCHEDULE:
         if total_rolls >= stage["min"] and (stage["max"] is None or total_rolls < stage["max"]):
             if stage["max"] is None:
@@ -602,10 +604,7 @@ def _top_key(distribution):
 
 
 def _normalize_weights(weights):
-    total = sum(weights.values())
-    if not total:
-        return weights
-    return {key: value / total for key, value in weights.items()}
+    return normalize_weights(weights)
 
 
 def _dynamic_weight_result_from_events(events, base_weights):
