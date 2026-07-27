@@ -8,6 +8,7 @@ from django.utils import timezone
 from unittest.mock import patch
 
 from analytics.services.state_rebuild import rebuild_game_account_state
+from analytics.services.state_store import state_snapshot_for_account
 from analytics.services.evaluation import brier_score, build_model_evaluation, empty_evaluation, log_loss, top_k_hit
 from echoes.models import EchoRecord, SubstatRoll
 
@@ -160,7 +161,7 @@ class ModelEvaluationBacktestTests(TestCase):
             self.assertIsInstance(score["hit_rate"], float)
             self.assertIsInstance(score["loss"], float)
 
-    def test_model_evaluation_uses_prefix_dynamic_weights_for_fusion(self):
+    def test_model_evaluation_reads_accumulated_prior_outcomes(self):
         sequence = [
             "crit_rate",
             "crit_damage",
@@ -174,20 +175,12 @@ class ModelEvaluationBacktestTests(TestCase):
         for index, substat_type in enumerate(sequence):
             self._add_roll(index, substat_type)
 
-        calls = []
-
-        def fake_dynamic_weight_result(events, base_weights):
-            calls.append(len(events))
-            weights = {key: 0 for key in base_weights}
-            weights["context"] = 1
-            return weights, {}
-
-        with patch(
-            "analytics.services.evaluation._dynamic_weight_result_from_events",
-            side_effect=fake_dynamic_weight_result,
-        ):
-            result = build_model_evaluation(self.user)
+        state = state_snapshot_for_account(self.user.game_accounts.get())
+        result = build_model_evaluation(self.user)
 
         self.assertEqual(result["status"], "ready")
-        self.assertGreaterEqual(len(calls), 20)
-        self.assertTrue(all(call_size < len(sequence) for call_size in calls))
+        self.assertEqual(result["evaluated_count"], state.payload["online_evaluation"]["evaluated"])
+        self.assertEqual(
+            result["model_scores"]["rule"]["evaluated"],
+            state.payload["online_evaluation"]["models"]["rule"]["evaluated"],
+        )

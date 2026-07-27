@@ -325,7 +325,13 @@ def _recent_crit_streak(sequence):
     return streak
 
 
-def _cycle_window_probabilities_from_sequence(sequence):
+def _all_time_group_rate(all_time_counts, total_rolls, group):
+    if not total_rolls:
+        return 0
+    return sum(all_time_counts.get(substat_type, 0) for substat_type in group) / total_rolls
+
+
+def _cycle_window_probabilities_from_sequence(sequence, all_time_counts=None, total_rolls=None):
     if len(sequence) < 8:
         return {"double": 0.25, "single_rate": 0.25, "single_damage": 0.25, "cooldown": 0.25}
 
@@ -333,7 +339,11 @@ def _cycle_window_probabilities_from_sequence(sequence):
     recent_5_damage = _rate(sequence, "crit_damage", 5)
     recent_12_group = _crit_group_rate(sequence, 12)
     recent_30_group = _crit_group_rate(sequence, 30)
-    global_group = _crit_group_rate(sequence, len(sequence))
+    global_group = (
+        _crit_group_rate(sequence, len(sequence))
+        if all_time_counts is None
+        else _all_time_group_rate(all_time_counts, total_rolls, CRIT_SUBSTATS)
+    )
     gap_rate = _gap_since(sequence, "crit_rate")
     gap_damage = _gap_since(sequence, "crit_damage")
     gap_any = _gap_since_any(sequence, CRIT_SUBSTATS)
@@ -415,7 +425,7 @@ def _group_streak(sequence, group):
     return streak
 
 
-def _general_cycle_group_probabilities_from_sequence(sequence):
+def _general_cycle_group_probabilities_from_sequence(sequence, all_time_counts=None, total_rolls=None):
     if len(sequence) < 8:
         probability = 1 / len(SUBSTAT_GROUPS)
         return {group_name: probability for group_name in SUBSTAT_GROUPS}
@@ -425,7 +435,11 @@ def _general_cycle_group_probabilities_from_sequence(sequence):
         recent_5_rate = _group_rate(sequence, group, 5)
         recent_12_rate = _group_rate(sequence, group, 12)
         recent_30_rate = _group_rate(sequence, group, 30)
-        global_rate = _group_rate(sequence, group, len(sequence))
+        global_rate = (
+            _group_rate(sequence, group, len(sequence))
+            if all_time_counts is None
+            else _all_time_group_rate(all_time_counts, total_rolls, group)
+        )
         gap = _gap_since_any(sequence, group)
         streak = _group_streak(sequence, group)
         trend = recent_12_rate - global_rate
@@ -538,11 +552,11 @@ def _context_diagnostics(total_rolls, weights):
     }
 
 
-def _model_diagnostics(sequence, candidates, total_rolls, weights, distributions):
-    bayes_weights = _bayes_component_weights(len(sequence))
+def _model_diagnostics(sequence, candidates, total_rolls, weights, distributions, all_time_counts=None):
+    bayes_weights = _bayes_component_weights(total_rolls)
     dominant = _dominant_model(weights)
-    cycle_windows = _cycle_window_probabilities_from_sequence(sequence)
-    cycle_groups = _general_cycle_group_probabilities_from_sequence(sequence)
+    cycle_windows = _cycle_window_probabilities_from_sequence(sequence, all_time_counts, total_rolls)
+    cycle_groups = _general_cycle_group_probabilities_from_sequence(sequence, all_time_counts, total_rolls)
     markov_counts = _markov_recent_counts_from_sequence(sequence)
     markov_penalties = _markov_penalties_from_sequence(sequence, candidates)
     top_rule = _top_key(distributions.get("rule", {}))
@@ -565,7 +579,7 @@ def _model_diagnostics(sequence, candidates, total_rolls, weights, distributions
         "bayes": {
             "exact_weight": bayes_weights["exact"],
             "wildcard_weight": bayes_weights["wildcard"],
-            "alpha": _bayes_dirichlet_alpha(len(sequence)),
+            "alpha": _bayes_dirichlet_alpha(total_rolls),
             "player_note": "周期规律正在比较精确片段和通配片段。",
         },
         "markov": {
@@ -713,7 +727,18 @@ def predict_next_substat(echo, include_diagnostics=True):
     distributions = distributions_from_payload(payload, candidates)
     distributions["context"] = _context_distribution_for_candidates(candidates)
     final = _weighted_distribution(distributions, weights)
-    diagnostics = _model_diagnostics(sequence, candidates, total_rolls, weights, distributions) if include_diagnostics else None
+    diagnostics = (
+        _model_diagnostics(
+            sequence,
+            candidates,
+            total_rolls,
+            weights,
+            distributions,
+            all_time_counts=payload["counts"],
+        )
+        if include_diagnostics
+        else None
+    )
 
     rows = []
     for substat_type in candidates:

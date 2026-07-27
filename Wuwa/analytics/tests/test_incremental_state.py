@@ -8,11 +8,13 @@ from analytics.services.incremental_state import (
     empty_payload,
 )
 from analytics.services.model_config import DYNAMIC_WEIGHT_BACKTEST_WINDOW
+from analytics.services.state_store import _candidates_from_earlier_types
 from analytics.services.prediction import (
     _bayes_distribution_from_sequence,
     _cycle_window_distribution_from_sequence,
     _dynamic_weight_result_from_events,
     _markov_distribution_from_sequence,
+    _model_diagnostics,
     _model_weights,
     _rule_distribution_from_counts,
 )
@@ -127,3 +129,47 @@ class IncrementalStateTests(TestCase):
         payload = build_payload_from_events(events)
 
         self.assertNotIn("echo_seen", payload)
+
+    def test_candidate_derivation_uses_prior_types_even_with_unusual_positions(self):
+        candidates = _candidates_from_earlier_types([
+            {"position": 99, "substat_type": "crit_rate"},
+            {"position": 1, "substat_type": "crit_rate"},
+            {"position": 0, "substat_type": "not_a_substat"},
+            {"position": 8, "substat_type": "flat_atk"},
+        ])
+
+        self.assertNotIn("crit_rate", candidates)
+        self.assertNotIn("flat_atk", candidates)
+        self.assertEqual(len(candidates), len(SUBSTAT_TYPES) - 2)
+
+    def test_diagnostics_keep_all_time_bayes_and_cycle_signals_after_recent_window_rolls(self):
+        events = [_event(index, SUBSTAT_TYPES[(index * 3 + index // 5) % len(SUBSTAT_TYPES)]) for index in range(180)]
+        payload = build_payload_from_events(events)
+        sequence = [event["substat_type"] for event in events]
+        candidates = SUBSTAT_TYPES[:]
+        weights = _model_weights(len(events))
+        legacy_distributions = {
+            "rule": _rule_distribution_from_counts(Counter(sequence), len(sequence), candidates),
+            "bayes": _bayes_distribution_from_sequence(sequence, candidates),
+            "markov": _markov_distribution_from_sequence(sequence, candidates),
+            "cycle": _cycle_window_distribution_from_sequence(sequence, candidates),
+            "context": {key: 1 / len(candidates) for key in candidates},
+        }
+
+        expected = _model_diagnostics(sequence, candidates, len(sequence), weights, legacy_distributions)
+        actual = _model_diagnostics(
+            payload["recent_sequence"],
+            candidates,
+            len(sequence),
+            weights,
+            distributions_from_payload(payload, candidates),
+            all_time_counts=payload["counts"],
+        )
+
+        self.assertAlmostEqual(actual["bayes"]["exact_weight"], expected["bayes"]["exact_weight"])
+        self.assertAlmostEqual(actual["bayes"]["wildcard_weight"], expected["bayes"]["wildcard_weight"])
+        self.assertAlmostEqual(actual["bayes"]["alpha"], expected["bayes"]["alpha"])
+        for key, value in expected["cycle"]["windows"].items():
+            self.assertAlmostEqual(actual["cycle"]["windows"][key], value)
+        for key, value in expected["cycle"]["group_scores"].items():
+            self.assertAlmostEqual(actual["cycle"]["group_scores"][key], value)

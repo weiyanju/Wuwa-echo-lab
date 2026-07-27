@@ -1,5 +1,8 @@
+from datetime import timedelta
+
 from django.contrib.auth.models import User
 from django.test import TestCase
+from django.utils import timezone
 
 from accounts.models import GameAccount
 from analytics.models import GameAccountAnalyticsState
@@ -101,3 +104,27 @@ class StateStoreTests(TestCase):
     def test_snapshot_rejects_unowned_numeric_account_ids(self):
         with self.assertRaises(AnalyticsStateUnavailable):
             state_snapshot_for_account(self.account.id)
+
+    def test_missing_state_with_any_existing_account_history_stays_dirty(self):
+        later = SubstatRoll.objects.create(
+            echo=self.echo,
+            position=2,
+            substat_type="flat_atk",
+            tier_value=30,
+            tuned_at=timezone.now(),
+        )
+        GameAccountAnalyticsState.objects.filter(game_account=self.account).delete()
+
+        earlier = SubstatRoll.objects.create(
+            echo=self.echo,
+            position=1,
+            substat_type="crit_rate",
+            tier_value=6.3,
+            tuned_at=later.tuned_at - timedelta(minutes=1),
+        )
+
+        state = GameAccountAnalyticsState.objects.get(game_account=self.account)
+        self.assertEqual(state.status, GameAccountAnalyticsState.Status.DIRTY)
+        self.assertEqual(state.error_code, "roll_state_missing_with_history")
+        self.assertNotEqual(state.total_rolls, 1)
+        self.assertNotEqual(state.last_roll_id, earlier.id)

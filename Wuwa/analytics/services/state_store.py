@@ -142,24 +142,28 @@ def _roll_is_after(roll, state):
     return (roll.tuned_at, roll.id) > (state.last_tuned_at, state.last_roll_id)
 
 
-def _earlier_rolls_exist(account, roll):
-    return SubstatRoll.objects.filter(echo__game_account=account).exclude(pk=roll.pk).filter(
-        Q(tuned_at__lt=roll.tuned_at) | Q(tuned_at=roll.tuned_at, id__lt=roll.id)
-    ).exists()
+def _other_rolls_exist(account, roll):
+    return SubstatRoll.objects.filter(echo__game_account=account).exclude(pk=roll.pk).exists()
+
+
+def _candidates_from_earlier_types(earlier_types):
+    seen = set()
+    for earlier_type in earlier_types:
+        substat_type = (
+            earlier_type.get("substat_type")
+            if isinstance(earlier_type, dict)
+            else earlier_type
+        )
+        if substat_type in SUBSTAT_TYPES:
+            seen.add(substat_type)
+    return [substat_type for substat_type in SUBSTAT_TYPES if substat_type not in seen]
 
 
 def _candidates_before_roll(roll):
-    earlier_types = SubstatRoll.objects.filter(
-        echo_id=roll.echo_id,
-        position__lt=roll.position,
-    ).exclude(pk=roll.pk).filter(
+    earlier_types = SubstatRoll.objects.filter(echo_id=roll.echo_id).exclude(pk=roll.pk).filter(
         Q(tuned_at__lt=roll.tuned_at) | Q(tuned_at=roll.tuned_at, id__lt=roll.id)
-    ).order_by("position", "tuned_at", "id").values_list("substat_type", flat=True)
-    seen = set()
-    for substat_type in earlier_types:
-        if substat_type != roll.substat_type and len(seen) < 5:
-            seen.add(substat_type)
-    return [substat_type for substat_type in SUBSTAT_TYPES if substat_type not in seen]
+    ).order_by("tuned_at", "id").values_list("substat_type", flat=True)
+    return _candidates_from_earlier_types(earlier_types)
 
 
 def advance_state_for_roll(roll):
@@ -174,9 +178,9 @@ def advance_state_for_roll(roll):
             created = True
 
         if created:
-            if _earlier_rolls_exist(account, roll):
+            if _other_rolls_exist(account, roll):
                 state.save(force_insert=True)
-                return _mark_dirty_locked(state, "roll_out_of_order")
+                return _mark_dirty_locked(state, "roll_state_missing_with_history")
             state.payload = empty_payload()
             state.total_rolls = 0
             state.schema_version = CURRENT_SCHEMA_VERSION
