@@ -246,6 +246,14 @@ test('floating history presents echo names instead of internal ids', async () =>
   assert.doesNotMatch(source, /displayEchoNumericId/)
 })
 
+test('floating history formats each substat tier with its own unit type', async () => {
+  const source = await readFile(new URL('./FloatingHistoryPanel.vue', import.meta.url), 'utf8')
+
+  assert.match(source, /import \{ formatSubstatTierValue \} from '\.\.\/\.\.\/services\/formatters'/)
+  assert.match(source, /\{\{ formatSubstatTierValue\(roll\.substat_type, roll\.tier_value\) \}\}/)
+  assert.doesNotMatch(source, /\{\{ roll\.tier_value \}\}%/)
+})
+
 test('floating history presents echo config as the pre-pill inline metadata row', async () => {
   const source = await readFile(new URL('./FloatingHistoryPanel.vue', import.meta.url), 'utf8')
   const style = await readFile(new URL('../../styles/features/history.css', import.meta.url), 'utf8')

@@ -4,7 +4,7 @@ const aezrSharedTable = Object.freeze([
   { value: 7.9, probability: 0.2039 },
   { value: 8.6, probability: 0.2427 },
   { value: 9.4, probability: 0.1748 },
-  { value: 10.2, probability: 0.1456 },
+  { value: 10.1, probability: 0.1456 },
   { value: 10.9, probability: 0.0583 },
   { value: 11.6, probability: 0.0291 },
 ])

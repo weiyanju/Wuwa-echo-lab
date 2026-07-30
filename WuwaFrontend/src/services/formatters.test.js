@@ -109,6 +109,21 @@ test('stores reference sheet tier probabilities for the workbench matrix', () =>
   ])
 })
 
+test('stores the reference 10.1 percent tier for every shared damage and percent stat', () => {
+  const sharedSubstatTypes = [
+    'basic_attack_damage',
+    'skill_damage',
+    'heavy_attack_damage',
+    'liberation_damage',
+    'atk_percent',
+    'hp_percent',
+  ]
+
+  for (const substatType of sharedSubstatTypes) {
+    assert.deepEqual(tierTables[substatType][5], { value: 10.1, probability: 0.1456 }, substatType)
+  }
+})
+
 test('allows hp percent as a 3 cost main stat', () => {
   assert.ok(mainStatsByCost[3].includes('hp_percent'))
 })

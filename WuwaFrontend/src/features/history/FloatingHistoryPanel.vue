@@ -8,6 +8,7 @@ import historyTerminalIcon from '../../assets/icons/rovers-terminal-expand.png'
 import { mainStatLabels, substatLabels } from '../../data/substats'
 import { displayEchoName } from '../../services/echoDisplay'
 import { sortVisibleEchoHistory, statusBadge } from '../../services/echoWorkflow'
+import { formatSubstatTierValue } from '../../services/formatters'
 import { HISTORY_PANEL_MODE, initialHistoryPanelState, resolveHistoryPanelTransition } from './floatingHistoryMode.js'
 import { readFloatingHistoryPosition } from './floatingHistoryPosition.js'
 
@@ -598,7 +599,7 @@ onBeforeUnmount(() => {
         <div v-if="echo.substats.length" class="echo-roll-list">
           <span v-for="roll in echo.substats" :key="roll.id">
             <strong>{{ roll.position }}. {{ substatLabels[roll.substat_type] }}</strong>
-            <small>{{ roll.tier_value }}%</small>
+            <small>{{ formatSubstatTierValue(roll.substat_type, roll.tier_value) }}</small>
           </span>
         </div>
         <small v-else class="echo-roll-empty">尚未录入副词条</small>

@@ -37,7 +37,7 @@ class ConstantsTests(SimpleTestCase):
             self.assertEqual(constants.TIER_TABLES[key], first)
 
         self.assertEqual(first[0], {"value": 6.4, "probability": 0.0680})
-        self.assertEqual(first[5], {"value": 10.2, "probability": 0.1456})
+        self.assertEqual(first[5], {"value": 10.1, "probability": 0.1456})
         self.assertEqual(first[-1], {"value": 11.6, "probability": 0.0291})
 
     def test_each_tier_table_probability_sums_to_one(self):
